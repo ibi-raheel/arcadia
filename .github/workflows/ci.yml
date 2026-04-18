@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  # Cancel in-flight runs for the same branch/PR so only the latest commit is
+  # verified. Does not touch `main` pushes — those always run to completion.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  ci:
+    name: format · lint · typecheck · test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prettier check
+        run: npm run format:check
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: TypeScript check
+        run: npm run typecheck
+
+      - name: Vitest
+        # TEST_SUPABASE_* secrets drive the RLS leakage suite in apps/web.
+        # Without them the suite describe.skips with a console warning; the
+        # other tests (packages/shared level-threshold tests) still run.
+        env:
+          TEST_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          TEST_SUPABASE_ANON_KEY: ${{ secrets.TEST_SUPABASE_ANON_KEY }}
+          TEST_SUPABASE_SERVICE_KEY: ${{ secrets.TEST_SUPABASE_SERVICE_KEY }}
+        run: npm test
+
+      - name: Game-server production build
+        # Catches ERR_REQUIRE_ESM and other packaging regressions before
+        # Railway's Nixpacks does. The start script carries the
+        # --experimental-require-module flag; this step only compiles.
+        run: npm run build --workspace=@arcadia/game-server
+
+      - name: Web production build
+        run: npm run build --workspace=@arcadia/web
