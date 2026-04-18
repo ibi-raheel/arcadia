@@ -4,7 +4,7 @@
 
 This document is the complete art-order spec for the Arcadia MVP. Hand it verbatim to a commissioned illustrator, or use it as a shopping list when evaluating pre-made isometric asset packs. Nothing in this document is negotiable without amending the PRD / TAD.
 
-> **Note on `/docs/art/`.** This folder is new — sibling of `/docs/api/`, `/docs/guides/`, `/docs/mvp/`. Create a matching entry in the `CLAUDE.md` routing table when the next `/init` pass runs. Until then, this file is the canonical art reference.
+> **Scope.** `/docs/art/` is the art-order workspace — sibling of `/docs/api/`, `/docs/guides/`, `/docs/mvp/`. Routed in `CLAUDE.md` and `docs/CONTEXT.md`. Art is produced in-house by the user; no external artist is commissioned.
 
 ---
 

@@ -2,12 +2,12 @@
 
 ## What we are building
 
-Arcadia is a browser-based 2D isometric virtual world platform. Creators host communities called Realms. Members join free, move as avatars, chat in real time (Tavern), take courses (Academy), and browse offerings (Market). V1 uses a shared engine for all Realms. V2 introduces customisable worlds via swappable sprites on the same codebase.
+Arcadia is a browser-based 2.5D isometric virtual world platform. Creators host communities called Realms. Members join free, move as avatars, chat in real time (Tavern), take courses (Academy), and browse offerings (Market). V1 uses a shared engine for all Realms. V2 introduces customisable worlds via swappable sprites on the same codebase.
 
 ## Technical scope
 
 - Browser-based, no downloads required
-- 2D isometric rendering
+- 2.5D isometric rendering
 - Real-time multiplayer (avatars, chat)
 - Course delivery (video, written, interactive)
 - Gamification layer (progression, achievements)

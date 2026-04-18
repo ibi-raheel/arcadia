@@ -37,17 +37,19 @@ See `/docs/mvp/tad.md` §1.1 for the exact service-responsibility split and §2 
 
 **`/apps/web`**
 - **Claude in Chrome MCP** (installed) — primary tool for exercising the rendered client.
+- **Vercel MCP** (installed — ADR 0002) — preview URLs, env vars, build + runtime logs, deploy status.
+- **Supabase MCP** (installed, `--read-only` — ADR 0002) — RLS checks, schema diffs, query inspection.
+- **GitHub MCP** (installed — ADR 0002) — PR review and Actions logs for anything touching `/apps/web`.
 - **Chrome DevTools MCP** (proposed) — frame-time and network profiling.
 - **Playwright MCP** (proposed) — scripted E2E.
-- **Supabase MCP** (proposed) — RLS checks, schema diffs, query inspection.
-- **Vercel MCP** (proposed) — preview URLs, env vars, deploy status.
-- **Cloudflare Stream MCP** (proposed) — upload / transcode status / signed URL generation.
+- **Cloudflare Stream MCP** (proposed) — upload / transcode status / signed URL generation. Install with Phase 3 Week 9.
 - **Phaser scene skill** (proposed, via `skill-creator`) — scaffold new scenes with iso-math boilerplate.
 - `/review` (installed) — before any PR merge.
 - `/security-review` (installed) — **run before every merge that touches auth, RLS, tokens, API routes, or creator / member permissions.**
 
 **`/apps/game-server`**
 - **Claude in Chrome MCP** (installed) — open two tabs, drive both, verify presence and chat sync.
-- **Railway MCP** (proposed) — Colyseus deploy status, logs, env vars.
+- **GitHub MCP** (installed — ADR 0002) — workflow runs for game-server CI + deploy status.
+- **Railway MCP** (deferred per ADR 0002) — no mature community option. Use Railway dashboard + CLI until a viable MCP lands.
 - **Realtime test harness skill** (proposed, via `skill-creator`) — codifies the multi-tab test pattern.
 - `/review` (installed) — before any PR merge.

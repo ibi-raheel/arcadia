@@ -8,6 +8,7 @@ API reference, user-facing guides, and the changelog. Written for two audiences:
 
 - `/mvp` — canonical MVP master documents: `prd.md`, `tad.md`, `phase-plan.md`. Source of truth for scope, architecture, and sequencing. Read first before any MVP work.
 - `/api` — API reference, keyed to the server endpoints (future `/apps/web/api`).
+- `/art` — art-order specs. `sprite-requirements.md` is the complete deliverable list for the in-house art pipeline (avatars, tilesets, facades, UI, brand).
 - `/guides` — how-to docs for creators and members (kebab-case topic names, e.g. `creator-dashboard-guide.md`).
 - `/changelog` — dated entries (`YYYY-MM-DD_change-summary.md`) for anything user-visible.
 

@@ -34,8 +34,10 @@ Deployment, infrastructure, monitoring, and operational scripts.
 
 - **`schedule` skill** (installed) — wire any recurring `/scripts` job (cleanup, sync, backup) through this rather than cron-on-a-server.
 - **scheduled-tasks MCP** (installed) — create / list / update the tasks the `schedule` skill produces.
-- **GitHub MCP** (proposed) — CI/CD workflows, release tags, Actions runs.
-- **Deploy target MCP** (proposed — Vercel / Cloudflare / Fly, per the deploy ADR) — deploy status, env var management, rollback.
+- **GitHub MCP** (installed — ADR 0002) — CI/CD workflows, release tags, Actions runs.
+- **Vercel MCP** (installed — ADR 0002) — `/apps/web` deploy status, env var management, rollback, build + runtime logs.
+- **Railway MCP** (deferred per ADR 0002) — use Railway dashboard + CLI for `/apps/game-server` deploy ops until a viable MCP lands.
+- **Supabase MCP** (installed, `--read-only` — ADR 0002) — useful from ops for schema audits and RLS spot-checks.
 - **Sentry MCP** (proposed) — error tracking. Wire in before first prod push.
 - **PagerDuty MCP** or **Opsgenie MCP** (proposed) — incident alerting. Post-launch.
-- **Mux MCP** or **Cloudflare Stream MCP** (proposed, per the video ADR) — upload/playback ops for course video.
+- **Cloudflare Stream MCP** (proposed, per ADR 0001) — upload/playback ops for course video. Install with Phase 3 Week 9.
