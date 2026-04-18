@@ -60,22 +60,54 @@ Source plan: `phase-00_plan.md`. Status entries are chronological, newest at the
 - Mac Mini M4, macOS 26.2, Xcode CLT present
 - Homebrew not installed — not required (all CLIs direct-downloaded)
 
-**Remaining Phase 0 steps:**
+- Step 16 ✅ Next.js auth-gate middleware shipped. Commit `d07da6f`.
+  - `@supabase/ssr` wired: `lib/supabase/client.ts` (createBrowserClient) + `lib/supabase/server.ts` (createServerClient bound to next/headers cookies).
+  - `middleware.ts` — refreshes session via `supabase.auth.getUser()`; redirects unauthed users on protected routes to `/login?next=<path>`; bounces authed users off `/login`/`/signup`. Public allowlist: `/`, `/login`, `/signup`, `/api/health`, `/api/stream/webhook`, `/spike`.
+  - `/login` and `/signup` pages — functional forms calling `supabase.auth.signInWithPassword` / `signUp`.
+- Step 17 ✅ Cross-member + cross-realm RLS leakage suite. Commit `e9b8bb2`.
+  - 13 Vitest assertions in `apps/web/tests/rls-cross-member-leakage.test.ts` covering: same-realm lesson_progress/enrolments leakage, INSERT/UPDATE spoof attempts, cross-realm leakage (both directions), positive controls.
+  - `helpers.ts` refuses to run if `TEST_SUPABASE_URL` points at the production project ref (`eqbzltiasmuckgsapkye`) — hard block against accidental destructive runs.
+  - Skips locally when `TEST_SUPABASE_{URL,ANON_KEY,SERVICE_KEY}` env vars are missing; populate `apps/web/.env.test.local` (gitignored) to run. Same var names for GitHub secrets (Step 18).
+- Step 18 ✅ GitHub Actions CI workflow. Commit `169a1a6`.
+  - `.github/workflows/ci.yml` — runs `format:check`, `lint`, `typecheck`, `test`, and both production builds (web + game-server) on every PR and main push. Node 22, concurrency-cancel on PR updates.
+  - Companion doc `ops/deploy/github-actions-secrets.md` lists the three `TEST_SUPABASE_*` secrets to add.
+- Step 19 ✅ Isometric spike at `/spike`. Commit `aecfc12`.
+  - `apps/web/components/game/` — `SpikeGame.tsx` (dynamic-imported client mount) + `scenes/SpikeScene.ts` (10×10 orthogonal tilemap per TAD §4.1, two y-sorted avatar rectangles bobbing on y-axis, FPS + min-FPS overlay).
+  - Procedural textures; real iso art lands in Phase 1 Week 3.
+  - `/spike` added to middleware public allowlist for unauth'd testing during Phase 0; remove when Phase 1 ships a real `/world`.
+  - `planning/architecture/rendering.md` — design doc + measurement protocol + empty results table to fill after the 6× CPU-throttle run.
 
-- Step 15 — Supabase Auth config (email/password + Google OAuth). Dashboard work; user-driven. I'll provide step-by-step instructions for the OAuth consent screen when we start.
-- Step 16 — Next.js auth-gate middleware. Pure code.
-- Step 17 — Cross-member leakage test (Vitest against `arcadia-test`). Pure code.
-- Step 18 — GitHub Actions CI (typecheck + lint + vitest on PRs). Pure code.
-- Step 19 — Isometric spike (Phaser scene, 60 FPS under Chrome 6× CPU throttle). Pure code + user verification on Mac Mini M4.
+### Phase 0 exit criteria — status
 
-**Open risks:** reference mid-range laptop for final NFR validation still unresolved. Not blocking Phase 0 exit (CPU-throttle proxy accepted). Needed before Phase 5 Loom recording.
+| Criterion | Status |
+|---|---|
+| Stack ADR exists in `planning/decisions/` | ✅ ADR 0001 |
+| All three services reachable (`/api/health`, Railway `/health`, Supabase) | ✅ verified 2026-04-18 |
+| Supabase schema + RLS + signup trigger + seed live on both projects | ✅ both `arcadia` and `arcadia-test` |
+| Next.js auth-gate middleware in place | ✅ Step 16 |
+| Cross-member leakage Vitest suite green against `arcadia-test` | ⏳ pending user: add `.env.test.local` + GitHub secrets, confirm green |
+| CI on `main` green (format + lint + typecheck + test + both builds) | ⏳ pending user: verify first workflow run at https://github.com/ibi-raheel/arcadia/actions |
+| Supabase Auth: user can register → signup trigger → login → session persists | ⏳ pending user: end-to-end test on https://arcadia-web-swart.vercel.app/signup (email/password is default-on; verify) |
+| Google OAuth provider enabled | ⏳ pending user: Supabase dashboard → Auth → Providers → Google; add Google Cloud OAuth app credentials |
+| Isometric spike sustains 60 FPS for 60 seconds under 6× CPU throttle | ⏳ pending user: run protocol in `planning/architecture/rendering.md` §4, fill §5 measurement log |
+| Art: colour palette + 1-character style sample | ⏳ pending user: in-house art delivery (end of Phase 0 Week 2 per plan) |
 
-**Scope decisions standing:**
+### Phase 0 code is done. Five things pending user action before Phase 0 exits:
+
+1. **Verify first CI run is green** (`/actions` on the repo). Expect RLS suite to skip until secrets are added. Format, lint, typecheck, and builds should all pass immediately.
+2. **Add `TEST_SUPABASE_{URL,ANON_KEY,SERVICE_KEY}` GitHub secrets** per `ops/deploy/github-actions-secrets.md`, then re-run CI. RLS suite should go from 13 skipped → 13 passed.
+3. **End-to-end auth test** on the live Vercel URL: `/signup` → confirmation email → `/login` → verify session persists across a refresh. Supabase MCP can confirm a `memberships` row was created for the new user.
+4. **Run the 60-FPS spike protocol** on the Mac Mini M4 — `rendering.md` §4 has the exact steps, §5 has the measurement log table to fill.
+5. **Enable Google OAuth in Supabase** (if desired for the PRD §4.1 OAuth option — not strictly required if email/password is acceptable for the Loom demo). I can walk through the Google Cloud Console + Supabase dashboard steps when you want.
+
+### Open risk carrying into Phase 1
+
+- Reference mid-range laptop for final 60 FPS validation: not blocking Phase 0 exit (CPU-throttle proxy accepted), but must be resolved before Phase 5 Loom recording.
+
+### Scope decisions standing
 
 - CF Stream deferred Phase 0 → Phase 3.
 - Mac Mini M4 as dev device; 60 FPS NFR validated via Chrome DevTools 6× CPU throttle as proxy.
 - MVP UI desktop-only; sprites still @1x/@2x/@3x per `/docs/art/sprite-requirements.md`.
 - Art produced in-house by user.
-- Node 22 across all three workspaces (bumped from original Node 20 plan — 20 broke on Colyseus's ESM-only `rou3` transitive dep).
-
-**Next:** Step 16 (Next.js auth-gate middleware) — pure code, doesn't depend on anything external being reconfigured.
+- Node 22.x runtime pin + `--experimental-require-module` on the game-server start script (needed because Nixpacks' nixpkgs resolves `nodejs_22` to 22.11 and `require(ESM)` only became unflagged in 22.12). Full rationale in ADR 0001 addendum.
