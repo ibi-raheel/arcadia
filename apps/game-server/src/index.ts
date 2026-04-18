@@ -8,10 +8,15 @@ import { monitor } from '@colyseus/monitor';
 import { RealmRoom } from './rooms/RealmRoom';
 
 const PORT = Number(process.env.PORT ?? 2567);
+const HOST = process.env.HOST ?? '0.0.0.0';
 const REDIS_URL = process.env.REDIS_URL;
+
+console.log(`[game-server] boot — port=${PORT} host=${HOST} redis=${REDIS_URL ? 'on' : 'off'}`);
 
 const app = express();
 
+// Keep /health liveness-independent of Colyseus state so healthchecks always
+// answer even if rooms or Redis are misbehaving.
 app.get('/health', (_req, res) => {
   res.json({
     status: 'ok',
@@ -38,7 +43,16 @@ const gameServer = new Server({
 gameServer.define('world-realm1', RealmRoom);
 gameServer.define('tavern-realm1', RealmRoom);
 
-gameServer.listen(PORT).then(() => {
-  console.log(`[game-server] listening on :${PORT}`);
-  console.log(`[game-server] redis: ${REDIS_URL ? 'on' : 'in-memory (no REDIS_URL)'}`);
-});
+// Bind explicitly to 0.0.0.0 so container platforms (Railway, Fly) can route
+// to the service. Node's default is all interfaces, but being explicit avoids
+// surprises when IPv6-only listeners are the default.
+gameServer
+  .listen(PORT, HOST)
+  .then(() => {
+    console.log(`[game-server] listening on ${HOST}:${PORT}`);
+    console.log(`[game-server] redis: ${REDIS_URL ? 'on' : 'in-memory'}`);
+  })
+  .catch((err: unknown) => {
+    console.error('[game-server] listen failed:', err);
+    process.exit(1);
+  });
