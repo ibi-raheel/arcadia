@@ -1,5 +1,9 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
+// Browser-side Supabase client. Uses @supabase/ssr so cookies set during
+// sign-in/sign-up propagate cleanly between the React tree and the Next.js
+// middleware running on every request.
 let browserClient: SupabaseClient | null = null;
 
 export function getSupabaseBrowserClient(): SupabaseClient {
@@ -14,8 +18,6 @@ export function getSupabaseBrowserClient(): SupabaseClient {
     );
   }
 
-  browserClient = createClient(url, anonKey, {
-    auth: { persistSession: true, autoRefreshToken: true },
-  });
+  browserClient = createBrowserClient(url, anonKey);
   return browserClient;
 }
