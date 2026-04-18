@@ -1,6 +1,6 @@
 # Identity
 
-You are a technical assistant helping build Arcadia — a browser-based 2D isometric virtual world platform for content creators and their communities.
+You are a technical assistant helping build Arcadia — a browser-based 2.5D isometric virtual world platform for content creators and their communities.
 
 This project workspace is strictly for the **technical build**. Strategy, positioning, and business ideas are out of scope here.
 
@@ -37,7 +37,7 @@ Codebase layout (per TAD): monorepo with `/apps/web` (Next.js), `/apps/game-serv
 - `/planning` — Specs, architecture, decision records.
 - `/apps` — Deployable applications: `/apps/web` (Next.js on Vercel), `/apps/game-server` (Colyseus on Railway).
 - `/packages` — Shared code across apps: `/packages/shared` (types, constants, protocol definitions).
-- `/docs` — Canonical MVP docs (`/docs/mvp`), API docs, guides, changelog.
+- `/docs` — Canonical MVP docs (`/docs/mvp`), API docs, guides, changelog, and the art-order spec (`/docs/art`).
 - `/ops` — Deploy, monitoring, scripts.
 
 Always read the root `CONTEXT.md`, `REFERENCES.md`, and the three canonical MVP documents in `/docs/mvp/` first. Then read the `CONTEXT.md` of the workspace you are entering.
@@ -62,6 +62,7 @@ The MVP documents are the source of truth for scope, architecture, and sequencin
 | Game server (Colyseus — presence, avatar sync, room state) | `/apps/game-server` | `apps/CONTEXT.md` | Claude in Chrome MCP (two-tab manual tests); Railway MCP (proposed); `/review` |
 | Shared types / constants / protocol | `/packages/shared` | `packages/CONTEXT.md` | `/review`; GitHub MCP (proposed) |
 | API reference | `/docs/api` | `docs/CONTEXT.md` | Custom `api-reference` skill via `skill-creator` (proposed) |
+| Art assets / sprite requirements | `/docs/art` | `docs/art/sprite-requirements.md` | — (hand-authored by the user) |
 | Creator / member guides | `/docs/guides` | `docs/CONTEXT.md` | `docx`; `pdf` |
 | Changelog entry | `/docs/changelog` | `docs/CONTEXT.md` | GitHub MCP (proposed) |
 | Deploy config / CI | `/ops/deploy` | `ops/CONTEXT.md` | GitHub MCP + deploy-target MCP (Vercel / Cloudflare / Fly) — all proposed, per ADR |
@@ -113,21 +114,20 @@ This is the plug-and-play layer. Tools are wired into the workspaces above — t
 ### MCPs — installed now
 
 - **Claude in Chrome** — browser automation. Primary tool for exercising the client, running exploratory multiplayer tests (two tabs, both controlled), and debugging rendering issues.
+- **Vercel MCP** (hosted, OAuth — ADR 0002) — deploy status, env var management, build/runtime logs, preview URLs. Drives all `/apps/web` deploy ops.
+- **GitHub MCP** (stdio via `@modelcontextprotocol/server-github` + `gh` PAT — ADR 0002) — PRs, issues, Actions workflow runs, release tags. Fallback from the Copilot-gated hosted endpoint (see ADR 0002 for the rationale and the swap-back path).
+- **Supabase MCP** (stdio via `@supabase/mcp-server-supabase` with `--read-only` — ADR 0002) — schema inspection, RLS policy checks, row counts, query execution. Write access is intentionally disabled; relaxing it requires a new ADR.
 - **mcp-registry** — search the registry (`search_mcp_registry`) and suggest connectors (`suggest_connectors`).
 - **plugins** — search plugin bundles (`search_plugins`) and install them (`suggest_plugin_install`).
 - **scheduled-tasks** — create / list / update scheduled tasks for `/ops/scripts`.
 - **cowork** — workspace helpers (file presentation, directory requests).
 - **session_info** — read prior sessions; useful for carrying context across phases.
+- **computer-use** — full-screen + app-switching automation. Used sparingly, primarily for native-app workflows not covered by other MCPs.
 
 ### MCPs — proposed (install as the stack comes online)
 
-The stack is locked (see Tech stack section). These MCPs map one-to-one to it.
-
-- **GitHub MCP** — source control. PRs, issues, actions, releases. **Install as soon as the repo goes on GitHub** — every other workspace leans on it.
-- **Supabase MCP** — DB inspection, RLS checks, schema diffs. Install alongside Phase 0 Week 1.
-- **Vercel MCP** — Next.js deploy status, env var management, preview URLs.
-- **Railway MCP** — Colyseus deploy status, logs, env vars. (Newly added for the MVP stack.)
-- **Cloudflare Stream MCP** — video upload / transcode status / signed URL generation.
+- **Railway MCP** — Colyseus deploy status, logs, env vars. **Deferred** per ADR 0002 — no sufficiently mature community MCP as of 2026-04-18. Use Railway dashboard + CLI until then.
+- **Cloudflare Stream MCP** — video upload / transcode status / signed URL generation. Install alongside Phase 3 Week 9 when CF Stream comes online.
 - **Playwright MCP** — scripted E2E tests once the client has real routes.
 - **Chrome DevTools MCP** — performance profiling (frame times, network) for rendering and realtime work.
 - **Sentry MCP** — error tracking in prod.

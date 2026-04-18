@@ -16,16 +16,19 @@ Architecture, feature specs, and decision records. This is where the **how** and
 - **Architecture docs** cover cross-cutting concerns: rendering, realtime protocol, data model, auth, payments. One file per topic. Updated as the system evolves.
 - **Decision records** capture every meaningful technical choice. Short. Dated. Titled with the decision, not the question. Format: **Context → Options considered → Decision → Consequences.**
 
-## Expected early ADRs
+## ADRs on file
 
-These decisions should have an ADR on file before `/src` gets meaningful code:
+- **ADR 0001** (`2026-04-18_locked-stack.md`) — locks the full MVP stack: Next.js 14+, Phaser 3.88+, Colyseus 0.17+, Supabase, Cloudflare Stream, Tailwind 3+, TypeScript 5+, Tiled. Covers the original "early ADR" questions (rendering engine, realtime transport, backend platform, video delivery, language, monorepo layout) in one document.
+- **ADR 0002** (`2026-04-18_add-vercel-github-supabase-mcps.md`) — promotes Vercel / GitHub / Supabase MCPs to installed. Railway MCP deferred.
 
-- Rendering engine (Phaser.js vs alternative)
-- Realtime transport (Socket.io vs Liveblocks vs Ably vs custom)
-- Backend / auth / DB platform (Supabase vs Firebase vs self-hosted)
-- Video delivery (Mux vs Cloudflare Stream)
-- Language / build tooling (TypeScript assumed; confirm)
-- Monorepo vs polyrepo
+## Expected future ADRs
+
+Open a new ADR whenever one of the following is decided or changes:
+
+- Deploy-target details beyond what's in ADR 0001 (e.g. CDN, domain strategy, multi-region).
+- Observability (Sentry, alerting routing).
+- Any stack change that would amend ADR 0001 (model upgrade, engine swap, etc.).
+- Any new MCP install (per the Adding a new tool later protocol in `CLAUDE.md`).
 
 ## What good looks like
 
@@ -41,7 +44,7 @@ These decisions should have an ADR on file before `/src` gets meaningful code:
 
 ## Tooling
 
-- **GitHub MCP** (proposed) — for linking ADRs and specs to the PRs, issues, or commits that implemented them.
+- **GitHub MCP** (installed — ADR 0002) — for linking ADRs and specs to the PRs, issues, or commits that implemented them.
 - **`pptx` skill** (installed) — use only when an architecture doc needs a stakeholder-facing deck. Default output for this workspace is markdown.
 - **`skill-creator`** (installed) — if a recurring planning pattern appears (e.g. a standard ADR template filler), bake it into a skill rather than rewriting it by hand each time.
 - `/review` (installed) — when a spec or ADR is up for review as a PR.

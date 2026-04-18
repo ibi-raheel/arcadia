@@ -30,6 +30,6 @@ Shared code consumed by more than one app in `/apps/*`. Types, constants, protoc
 ## Tooling
 
 - `/review` (installed) — before any PR merge.
-- **GitHub MCP** (proposed) — linking types changes to the PRs that consume them.
+- **GitHub MCP** (installed — ADR 0002) — linking types changes to the PRs that consume them.
 
 No MCPs beyond that. This is pure code; no integrations to wire in.
