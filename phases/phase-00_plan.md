@@ -12,7 +12,7 @@
 |---|---|
 | GitHub repo | `arcadia` (private, personal account) |
 | Vercel project | `arcadia-web` |
-| Railway project | `arcadia-game-server` |
+| Railway project / service | `arcadia` (service live at `arcadia-production-c635.up.railway.app`) |
 | Supabase — production | `arcadia` |
 | Supabase — test (cross-member leakage) | `arcadia-test` |
 | Colyseus rooms | `world-realm1`, `tavern-realm1` (locked by TAD §5.1) |
@@ -33,7 +33,7 @@ Install status (all local tooling in place as of 2026-04-18):
 | `git` | 2.50 (Apple) | system |
 | Xcode CLT | — | system |
 | `nvm` | 0.40.1 | curl install script, user-local (`~/.nvm`) |
-| Node / npm | **v24.15.0 LTS** / 11.12.1 | `nvm install --lts` (Node 24 is current LTS as of Apr 2026; supersedes the earlier "Node 20" placeholder) |
+| Node (local) / npm | **v24.15.0 LTS** / 11.12.1 | `nvm install --lts` (local dev); production pins: root `package.json` engines = `22.x`, `.nvmrc` = `22`, `nixpacks.toml` selects `nodejs_22` so Railway gets Node 22.11. The game-server start script passes `--experimental-require-module` to unlock `require(ESM)` on 22.11 (unflagged from 22.12). See ADR 0001 addendum. |
 | `gh` CLI | 2.90.0 | direct binary download to `~/.local/bin/gh` |
 | `supabase` CLI | 2.90.0 | direct binary download to `~/.local/bin/supabase` |
 | Homebrew | ~~not installed~~ | Not required — all CLIs installed without it. |
@@ -108,14 +108,14 @@ Summary (~220 raster assets total):
 
 All must pass before Phase 1 starts:
 
-- A user can register via email/password on the deployed Vercel preview; the signup trigger creates their `memberships` row; they can log in; session persists across refresh.
-- Cross-member leakage Vitest suite passes green against the `arcadia-test` Supabase project.
-- All three services reachable: Vercel `/api/health` returns 200; Railway Colyseus WS accepts a connection; Supabase REST + Auth endpoints respond.
-- CI on `main` is green — typecheck + ESLint + Vitest across all three workspaces.
-- Isometric spike sustains 60 FPS for 60 continuous seconds while both avatars move, on the specified mid-range target. Frame-time overlay recorded as a screen capture in `planning/architecture/rendering.md`.
-- Cloudflare Stream round-trip verified (upload + signed playback) — logged in `ops/scripts/verify-cf-stream.sh`.
-- Stack ADR exists in `planning/decisions/`.
-- Art asset sourcing: at least a **colour palette + avatar style sample (1 character, 1 direction, walk cycle)** approved by end of Phase 0 Week 2 so Phase 1 Week 3 can start against the agreed direction. Full avatar + tileset delivery is Phase 1 Week 3 blocking, not Phase 0 exit.
+- A user can register via email/password on the deployed Vercel preview; the signup trigger creates their `memberships` row; they can log in; session persists across refresh. *(Step 15 + 16)*
+- Cross-member leakage Vitest suite passes green against the `arcadia-test` Supabase project. *(Step 17)*
+- All three services reachable: Vercel `/api/health` returns 200; Railway Colyseus `/health` returns 200 and accepts WS upgrade; Supabase REST + Auth endpoints respond. *(**✅ verified 2026-04-18**)*
+- CI on `main` is green — typecheck + ESLint + Vitest across all three workspaces. *(Step 18)*
+- Isometric spike sustains 60 FPS for 60 continuous seconds while both avatars move, under Chrome DevTools 6× CPU throttling as the mid-range proxy (true mid-range laptop validation deferred to pre-Loom in Phase 5). Frame-time overlay recorded as a screen capture in `planning/architecture/rendering.md`. *(Step 19)*
+- ~~Cloudflare Stream round-trip verified~~ — **deferred to Phase 3** per scope decision; no longer a Phase 0 exit criterion.
+- Stack ADR exists in `planning/decisions/`. *(**✅** — ADR 0001)*
+- Art asset sourcing: at least a **colour palette + avatar style sample (1 character, 1 direction, walk cycle)** produced in-house by end of Phase 0 Week 2 so Phase 1 Week 3 can start against the agreed direction. Full avatar + tileset delivery is Phase 1 Week 3 blocking, not Phase 0 exit.
 
 ---
 
@@ -129,12 +129,13 @@ All must pass before Phase 1 starts:
 
 | # | Item | Action |
 |---|---|---|
-| 1 | GitHub auth | User runs `! gh auth login` in prompt when Step 2 starts. OAuth-in-browser, one-time. |
-| 2 | ~~Artist / art source~~ | **Resolved 2026-04-18:** user produces all art in-house per `/docs/art/sprite-requirements.md`. Style-sample milestone at end of Phase 0 Week 2 is now user-self-delivered. |
-| 3 | Google OAuth credentials | Requires Google Cloud project + OAuth consent screen. User creates in Google Cloud Console; I supply exact steps when Step 15 starts. |
-| 4 | Reference mid-range laptop for final NFR validation | Not required for Phase 0 exit (CPU throttle proxy accepted). Needed before Phase 5 Loom recording. Source: borrow a Windows laptop or a MacBook Air from 2020–2022 era. |
-| 5 | ~~Supabase account + two empty projects~~ | **Resolved 2026-04-18:** user confirms accounts created. Exact project slugs (`arcadia` + `arcadia-test`) to be verified when Step 7 starts. |
-| 6 | ~~Vercel + Railway accounts~~ | **Resolved 2026-04-18:** user confirms accounts created. |
+| 1 | ~~GitHub auth~~ | **Resolved:** `gh` authenticated as `ibi-raheel`; repo pushed. |
+| 2 | ~~Artist / art source~~ | **Resolved 2026-04-18:** user produces all art in-house. Style sample due end of Phase 0 Week 2. |
+| 3 | Google OAuth credentials | Requires Google Cloud project + OAuth consent screen. User creates; I supply exact steps when Step 15 starts. |
+| 4 | Reference mid-range laptop for final NFR validation | Not required for Phase 0 exit (CPU throttle proxy accepted). Needed before Phase 5 Loom. |
+| 5 | ~~Supabase accounts~~ | **Resolved:** both projects provisioned; schemas + RLS + signup trigger + seed applied. |
+| 6 | ~~Vercel + Railway accounts + first deploys~~ | **Resolved:** both services live and health-verified 2026-04-18. |
+| 7 | Node runtime quirk (discovered during Railway Step 12) | Colyseus 0.17's `rou3` transitive dep is ESM-only. Needs Node 22.12+ unflagged OR Node 22.11 with `--experimental-require-module`. Fixed via the `start` script flag; also noted in ADR 0001 addendum so future stack decisions see it. |
 
 **Mobile scope confirmed:** sprites stay at @1x/@2x/@3x per `/docs/art/sprite-requirements.md`. MVP UI desktop-only per PRD §5/§6 unchanged.
 
@@ -146,6 +147,4 @@ Explicitly deferred to later phases: Phaser scenes beyond the spike, Colyseus ro
 
 ---
 
-**Next:** confirm this plan (or amend) and resolve risks #2 (CF Stream budget), #3 (reference device), #4 (mobile scope), #5 (art source). #1 and #6 I can guide step-by-step the moment we start executing.
-
-Once approved, I open `phases/phase-00_status.md` and begin with Step 1 (the stack ADR), then Step 2 (git init + GitHub repo push) — nothing further until I can verify prereqs.
+**Current position (as of 2026-04-18):** Steps 1–14 complete; infrastructure stack is fully live. Next step is **Step 16** (Next.js auth-gate middleware) since it's pure code and doesn't depend on any further external provisioning. Step 15 (Supabase Auth + Google OAuth) runs in parallel as user-driven dashboard work.
