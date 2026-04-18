@@ -11,11 +11,12 @@ type CookieToSet = { name: string; value: string; options: CookieOptions };
 // Public paths (no session required):
 //   /                 — landing
 //   /login, /signup   — auth forms
+//   /spike            — Phase 0 Step 19 isometric spike; remove when Phase 1 ships
 //   /api/health       — liveness probe
 //   /api/stream/webhook — Cloudflare Stream webhook (verified by signature, Phase 3)
 //   /_next/*, static assets — handled by the matcher config below
 
-const EXACT_PUBLIC_PATHS = new Set(['/', '/login', '/signup']);
+const EXACT_PUBLIC_PATHS = new Set(['/', '/login', '/signup', '/spike']);
 const PUBLIC_PREFIXES = ['/api/health', '/api/stream/webhook'];
 
 function isPublicPath(pathname: string): boolean {
