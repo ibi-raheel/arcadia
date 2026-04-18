@@ -1,0 +1,13 @@
+node_modules
+dist
+build
+.next
+coverage
+*.lock
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Markdown is hand-authored — not Prettier's concern.
+# CI checks format only for code files (see root package.json scripts).
+*.md

@@ -6,10 +6,20 @@ Source plan: `phase-00_plan.md`. Status entries are chronological, newest at the
 
 ## 2026-04-18 — Phase 0 kickoff
 
-**In flight:**
+**Done:**
 
 - Step 1 ✅ Stack ADR written at `planning/decisions/2026-04-18_locked-stack.md`. Promotes TAD §2 selections; documents rejected alternatives; notes CF Stream deferral to Phase 3.
-- Step 2 🔄 Local git init pending. `gh auth login` (user-interactive) still needed before `gh repo create`.
+- Step 2 ✅ Git initialised (main), initial commit `007329a` (17 files, 2189 insertions), GitHub repo created at **https://github.com/ibi-raheel/arcadia** (private), origin pushed. Auth: `gh` as `ibi-raheel`, token scopes repo + workflow.
+  - Noted: git auto-configured committer identity from hostname (`Aria <aria@Arias-Mac-mini.local>`). User can run `git config --global user.email <email>` at their leisure; not modified without permission.
+
+- Step 3 ✅ Root monorepo chassis in place. Files: `package.json` (npm workspaces `apps/*` + `packages/*`, engine ≥ Node 20), `tsconfig.base.json` (strict TS 5, ES2022, bundler resolution, decorators enabled for Colyseus schemas), `.prettierrc.json` + `.prettierignore` (markdown excluded — hand-authored), `eslint.config.mjs` (flat config, TS rules), `vitest.workspace.ts` (per-workspace config discovery), `README.md`.
+  - Gates pass locally: `npm run format:check` ✓, `npx eslint` ✓, `npx tsc --noEmit` ✓, `npm test` ✓ (passes with no tests yet via `--passWithNoTests`).
+  - 158 dev dependencies installed.
+  - Uncommitted on `main` — awaiting commit-cadence instruction from user.
+
+**In flight:**
+
+- Step 4 next — scaffold `/apps/web` (Next.js 14 App Router + Tailwind 3 + TypeScript 5 + Supabase client + health route).
 
 **Environment status:**
 
