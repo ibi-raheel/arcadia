@@ -10,8 +10,13 @@ import { RealmRoom } from './rooms/RealmRoom';
 const PORT = Number(process.env.PORT ?? 2567);
 const HOST = process.env.HOST ?? '0.0.0.0';
 const REDIS_URL = process.env.REDIS_URL;
+// Redis presence/driver is only needed when running more than one Colyseus
+// replica. MVP (20 CCU target, PRD §5) ships a single replica, so Redis is
+// opt-in via USE_REDIS=true. Defaulting off avoids Server.listen() blocking on
+// presence.onReady() / driver.onReady() when the Redis plugin isn't fully up.
+const USE_REDIS = process.env.USE_REDIS === 'true' && Boolean(REDIS_URL);
 
-console.log(`[game-server] boot — port=${PORT} host=${HOST} redis=${REDIS_URL ? 'on' : 'off'}`);
+console.log(`[game-server] boot — port=${PORT} host=${HOST} redis=${USE_REDIS ? 'on' : 'off (in-memory)'}`);
 
 const app = express();
 
@@ -35,8 +40,8 @@ const httpServer = createServer(app);
 
 const gameServer = new Server({
   transport: new WebSocketTransport({ server: httpServer }),
-  presence: REDIS_URL ? new RedisPresence(REDIS_URL) : undefined,
-  driver: REDIS_URL ? new RedisDriver(REDIS_URL) : undefined,
+  presence: USE_REDIS && REDIS_URL ? new RedisPresence(REDIS_URL) : undefined,
+  driver: USE_REDIS && REDIS_URL ? new RedisDriver(REDIS_URL) : undefined,
 });
 
 // Two rooms defined in TAD §5.1 — both use the same RealmRoom class for MVP.
@@ -50,9 +55,17 @@ gameServer
   .listen(PORT, HOST)
   .then(() => {
     console.log(`[game-server] listening on ${HOST}:${PORT}`);
-    console.log(`[game-server] redis: ${REDIS_URL ? 'on' : 'in-memory'}`);
+    console.log(`[game-server] presence: ${USE_REDIS ? 'redis' : 'in-memory'}`);
   })
   .catch((err: unknown) => {
     console.error('[game-server] listen failed:', err);
     process.exit(1);
   });
+
+// Watchdog: if listen() hasn't resolved within 30s, log loudly. Helps diagnose
+// future presence/driver hangs without having to ship another commit.
+setTimeout(() => {
+  if (!httpServer.listening) {
+    console.error('[game-server] WATCHDOG: 30s elapsed and httpServer is still not listening');
+  }
+}, 30_000).unref();
