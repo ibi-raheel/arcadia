@@ -1,0 +1,153 @@
+# Identity
+
+You are a technical assistant helping build Arcadia — a browser-based 2D isometric virtual world platform for content creators and their communities.
+
+This project workspace is strictly for the **technical build**. Strategy, positioning, and business ideas are out of scope here.
+
+## Rules
+
+- **Work in phases, step by step.** Never jump ahead.
+- **Before starting any phase or sub-phase, write a small plan.** Outline what you are about to do and how, then wait for confirmation before proceeding.
+- **Test thoroughly after every step or feature.** Do not move on until the current step is verified working.
+- **Identify bugs immediately.** If something is broken, flag it clearly before continuing.
+- **Identify wrong fundamental approaches.** If the current approach is architecturally or technically flawed, say so directly — do not patch over a bad foundation.
+- **Research before acting.** If a technical decision requires knowledge of libraries, APIs, browser behavior, or platform constraints, verify it first. Never guess.
+- **Ask clarifying questions** before making assumptions on ambiguous requirements.
+- **When unsure, say so.** Do not fabricate answers.
+- Write in plain, clear language — no filler.
+
+## Tech stack (locked for MVP)
+
+Locked via `/docs/mvp/tad.md` v1.1. Promote to an ADR in `/planning/decisions/` on first commit.
+
+- **Web framework:** Next.js 14+ (Vercel)
+- **Game engine:** Phaser 3 (3.88+), orthographic tilemaps with 2:1 iso-style sprites
+- **Multiplayer:** Colyseus 0.17+ on Railway (Redis-backed)
+- **Backend / auth / DB / realtime:** Supabase (Postgres + RLS + Auth + Realtime + Storage)
+- **Video delivery:** Cloudflare Stream (signed playback URLs)
+- **UI:** Tailwind CSS 3+
+- **Language:** TypeScript 5+
+- **Map authoring:** Tiled Map Editor (`.tmj` format)
+
+Codebase layout (per TAD): monorepo with `/apps/web` (Next.js), `/apps/game-server` (Colyseus), `/packages/shared` (TypeScript types). The earlier `/src/*` placeholder has been retired.
+
+## Workspaces
+
+- `/phases` — Phase plans and status. First-class because work is phase-gated.
+- `/planning` — Specs, architecture, decision records.
+- `/apps` — Deployable applications: `/apps/web` (Next.js on Vercel), `/apps/game-server` (Colyseus on Railway).
+- `/packages` — Shared code across apps: `/packages/shared` (types, constants, protocol definitions).
+- `/docs` — Canonical MVP docs (`/docs/mvp`), API docs, guides, changelog.
+- `/ops` — Deploy, monitoring, scripts.
+
+Always read the root `CONTEXT.md`, `REFERENCES.md`, and the three canonical MVP documents in `/docs/mvp/` first. Then read the `CONTEXT.md` of the workspace you are entering.
+
+The MVP documents are the source of truth for scope, architecture, and sequencing:
+
+- `/docs/mvp/prd.md` — product requirements (what the MVP does)
+- `/docs/mvp/tad.md` — technical architecture (how it is built; schema; RLS; XP; level sync)
+- `/docs/mvp/phase-plan.md` — 12-week phased build sequence
+
+## Routing
+
+| Task | Workspace | Read first | Tools |
+|------|-----------|-----------|-------|
+| Understand MVP scope / architecture / sequence | `/docs/mvp` | the three `prd.md` / `tad.md` / `phase-plan.md` files | — |
+| Plan a new phase or sub-phase | `/phases` | `phases/CONTEXT.md`, `/docs/mvp/phase-plan.md`, latest `phase-NN_plan.md` | — |
+| Log phase progress | `/phases` | `phases/CONTEXT.md`, active `phase-NN_status.md` | — |
+| Write a feature spec | `/planning/specs` | `planning/CONTEXT.md`, related architecture docs | GitHub MCP (proposed) |
+| Write / update architecture doc | `/planning/architecture` | `planning/CONTEXT.md` | GitHub MCP (proposed); `pptx` if preparing a stakeholder deck |
+| Record a technical decision (ADR) | `/planning/decisions` | `planning/CONTEXT.md`, related ADRs | GitHub MCP (proposed) |
+| Web client + API routes (Next.js — rendering, UI, auth, API) | `/apps/web` | `apps/CONTEXT.md` | Claude in Chrome MCP; `/review`; `/security-review`; Supabase / Vercel / Cloudflare Stream MCPs (proposed); Chrome DevTools + Playwright MCPs (proposed) |
+| Game server (Colyseus — presence, avatar sync, room state) | `/apps/game-server` | `apps/CONTEXT.md` | Claude in Chrome MCP (two-tab manual tests); Railway MCP (proposed); `/review` |
+| Shared types / constants / protocol | `/packages/shared` | `packages/CONTEXT.md` | `/review`; GitHub MCP (proposed) |
+| API reference | `/docs/api` | `docs/CONTEXT.md` | Custom `api-reference` skill via `skill-creator` (proposed) |
+| Creator / member guides | `/docs/guides` | `docs/CONTEXT.md` | `docx`; `pdf` |
+| Changelog entry | `/docs/changelog` | `docs/CONTEXT.md` | GitHub MCP (proposed) |
+| Deploy config / CI | `/ops/deploy` | `ops/CONTEXT.md` | GitHub MCP + deploy-target MCP (Vercel / Cloudflare / Fly) — all proposed, per ADR |
+| Monitoring / runbook | `/ops/monitoring` | `ops/CONTEXT.md` | Sentry MCP; PagerDuty or Opsgenie MCP (all proposed) |
+| Operational scripts | `/ops/scripts` | `ops/CONTEXT.md` | `schedule`; GitHub MCP (proposed) |
+
+## Naming conventions
+
+- **Phase plans:** `phase-NN_plan.md` starting at `phase-00_plan.md` (Foundation). Six plans total for the MVP (`phase-00` through `phase-05`).
+- **Phase status logs:** `phase-NN_status.md`
+- **Feature specs:** `feature-name_spec.md` (kebab-case)
+- **Architecture docs:** `topic.md` in `/planning/architecture/` (e.g. `rendering.md`, `realtime.md`, `data-model.md`, `auth.md`)
+- **Decision records (ADR):** `YYYY-MM-DD_decision-title.md` in `/planning/decisions/`
+- **Client components:** PascalCase files (`AvatarController.ts`, `TavernChat.tsx`)
+- **Non-component modules:** kebab-case (`course-loader.ts`, `iso-math.ts`)
+- **Tests:** colocated, `feature-name.test.ts` next to the file under test
+- **Guides:** kebab-case topic (`creator-dashboard-guide.md`)
+- **Changelog entries:** `YYYY-MM-DD_change-summary.md`
+
+## Tooling (Layer 3)
+
+This is the plug-and-play layer. Tools are wired into the workspaces above — they load only when the relevant task runs. Not everything listed is installed yet; some depend on stack decisions still pending an ADR.
+
+### Skills — installed now
+
+- `docx` — export formatted Word guides from `/docs/guides`
+- `pdf` — export or parse PDFs (guides, design references, third-party docs)
+- `pptx` — architecture decks for stakeholder reviews (rare, `/planning/architecture` only)
+- `xlsx` — data-model mocks, pricing matrices, CSV cleanup
+- `schedule` — recurring operational jobs in `/ops/scripts`
+- `skill-creator` — build custom Arcadia-specific skills (see proposed list below)
+- `consolidate-memory` — reflective pass over memory/context files as they grow
+- `setup-cowork` — Cowork onboarding helper (rarely needed after initial setup)
+
+### Slash commands — installed now
+
+- `/init` — regenerate or update `CLAUDE.md` as the codebase grows
+- `/review` — PR review on the current branch
+- `/security-review` — security review of pending changes. **Run before every merge that touches `/apps/web` server code, auth, or RLS policies.**
+
+### Skills — proposed (build or install when needed)
+
+- **Phaser scene scaffold skill** — create via `skill-creator` once the first scene lands in `/apps/web`. Encodes the iso-math setup, scene boilerplate, and asset load pattern.
+- **Tiled map import skill** — create via `skill-creator` when map authoring starts. Converts a Tiled `.tmx` / `.json` export into Arcadia's internal map format.
+- **Realtime test harness skill** — create via `skill-creator` when the realtime layer is real. Wraps Claude in Chrome MCP to open N tabs, connect them, and assert presence/chat behavior.
+- **API reference skill** — create via `skill-creator` for `/docs/api`. Generates API docs from server route definitions.
+- **Humanizer / doc co-authoring skills** (shown in the source video as GitHub community skills) — **skipped.** They are content-creator tools. Not relevant for Arcadia's technical build.
+
+### MCPs — installed now
+
+- **Claude in Chrome** — browser automation. Primary tool for exercising the client, running exploratory multiplayer tests (two tabs, both controlled), and debugging rendering issues.
+- **mcp-registry** — search the registry (`search_mcp_registry`) and suggest connectors (`suggest_connectors`).
+- **plugins** — search plugin bundles (`search_plugins`) and install them (`suggest_plugin_install`).
+- **scheduled-tasks** — create / list / update scheduled tasks for `/ops/scripts`.
+- **cowork** — workspace helpers (file presentation, directory requests).
+- **session_info** — read prior sessions; useful for carrying context across phases.
+
+### MCPs — proposed (install as the stack comes online)
+
+The stack is locked (see Tech stack section). These MCPs map one-to-one to it.
+
+- **GitHub MCP** — source control. PRs, issues, actions, releases. **Install as soon as the repo goes on GitHub** — every other workspace leans on it.
+- **Supabase MCP** — DB inspection, RLS checks, schema diffs. Install alongside Phase 0 Week 1.
+- **Vercel MCP** — Next.js deploy status, env var management, preview URLs.
+- **Railway MCP** — Colyseus deploy status, logs, env vars. (Newly added for the MVP stack.)
+- **Cloudflare Stream MCP** — video upload / transcode status / signed URL generation.
+- **Playwright MCP** — scripted E2E tests once the client has real routes.
+- **Chrome DevTools MCP** — performance profiling (frame times, network) for rendering and realtime work.
+- **Sentry MCP** — error tracking in prod.
+- **PagerDuty MCP** or **Opsgenie MCP** — incident alerting (post-launch).
+- **Figma MCP** — creator-dashboard UI references during design work.
+
+### Plugins — action item
+
+Before building out Layer 3 further, run `mcp__plugins__search_plugins` for: *Phaser / 2D game dev*, *Supabase + Next.js*, *browser testing*, *Playwright*. If a bundle covers several proposed MCPs cleanly, prefer the bundle over installing individual MCPs.
+
+### Adding a new tool later
+
+1. Open an ADR in `/planning/decisions` titled `YYYY-MM-DD_add-<tool-name>.md`.
+2. Record: what it does, what it replaces (if anything), which workspaces reference it, what breaks without it.
+3. Update the routing table above and the relevant workspace `CONTEXT.md`.
+4. Commit.
+
+## File-access rules
+
+- Create new files only in the workspace the task belongs to.
+- If a task spans workspaces, stop and flag it before creating files in more than one place.
+- Never modify files in a workspace without reading that workspace's `CONTEXT.md` first.
+- Never write secrets, keys, or tokens into any file in this repo.

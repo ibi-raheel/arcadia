@@ -1,0 +1,61 @@
+# Node / npm
+node_modules/
+.npm/
+.pnpm-store/
+.yarn/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+
+# TypeScript
+*.tsbuildinfo
+dist/
+build/
+
+# Vitest / test output
+coverage/
+.vitest-cache/
+
+# Environments & secrets — NEVER commit real values
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+*.pem
+*.key
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Supabase local dev
+supabase/.branches/
+supabase/.temp/
+
+# Railway / Vercel
+.vercel/
+.railway/
+
+# Logs
+*.log
+logs/
+
+# Phaser / asset build intermediates
+*.asset-bundle.tmp
+
+# Misc
+.cache/
+tmp/
+
+# Claude Code — local preferences (keep shared settings.json + hooks etc.)
+.claude/settings.local.json
