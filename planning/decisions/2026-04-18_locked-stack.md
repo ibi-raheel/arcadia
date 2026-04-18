@@ -117,4 +117,25 @@ This ADR stands unless one of the following triggers it:
 - Colyseus 20 CCU load test (Phase 2 Week 7) shows latency above 100 ms — either optimise or re-evaluate the realtime layer.
 - Supabase RLS cannot express a required isolation rule — unlikely but a new ADR would document the exception.
 
+---
+
+## Addendum — 2026-04-18: Node 22+ runtime constraint (discovered during Phase 0 Step 12)
+
+Colyseus 0.17 pulls `@colyseus/better-call` transitively, which itself `require()`s `rou3`. `rou3` ships as ESM only (`.mjs`). Older Node can't `require()` an ES module from CommonJS — throws `ERR_REQUIRE_ESM`.
+
+The runtime rule this forces on the stack:
+
+- **Node 22.12+ or Node 24+** — `require(ESM)` unflagged, works out of the box.
+- **Node 22.0 – 22.11** — works only with `--experimental-require-module` passed to `node`.
+- **Node 20.x or below** — broken. Do not use.
+
+Concretely:
+- Root `package.json` engines: `22.x`.
+- `.nvmrc` = `22`.
+- `nixpacks.toml` selects `nodejs_22`.
+- `apps/game-server/package.json` start script: `node --experimental-require-module dist/index.js` (safe on all 22+ and 24+ — flag is accepted even when default).
+- Local dev on Node 24 LTS via `nvm` is the tested path.
+
+This addendum is logged because the tech stack decision surfaced a concrete runtime floor that anyone bumping Node, bumping Colyseus, or bringing up a new deploy target will immediately hit. If a future commit moves off the `--experimental-require-module` flag (e.g. when Nixpacks' nixpkgs pin ships Node 22.12+ as its default `nodejs_22`), the flag can be dropped — but the Node 22.12+ minimum stands.
+
 Any change to the stack opens a new ADR in this folder; this file stays as the historical record.

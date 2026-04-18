@@ -8,7 +8,16 @@ Each community (**Realm**) gives members an avatar, a space to gather (**Tavern*
 
 ## Status
 
-🛠️ MVP build — Phase 0 (Foundation). See [`phases/phase-00_status.md`](phases/phase-00_status.md) for live status.
+🛠️ MVP build — Phase 0 (Foundation), Steps 1–14 complete. See [`phases/phase-00_status.md`](phases/phase-00_status.md) for live detail.
+
+### Live services
+
+| Service | URL |
+|---|---|
+| Web (Next.js, Vercel) | https://arcadia-web-swart.vercel.app |
+| Game server (Colyseus, Railway) | wss://arcadia-production-c635.up.railway.app |
+| Supabase (production) | https://eqbzltiasmuckgsapkye.supabase.co |
+| Supabase (test — cross-member leakage harness) | https://idxgcrwikmcuqrrxbogj.supabase.co |
 
 ## Docs
 
@@ -37,13 +46,14 @@ Full rationale: [`planning/decisions/2026-04-18_locked-stack.md`](planning/decis
 
 ## Development
 
-Requires Node 20+ (monorepo tested on Node 24 LTS).
+Requires **Node 22.12+ or Node 24+** (the game server hits `require(ESM)` via Colyseus's `rou3` transitive dep, which only works on those versions — or on Node 22.x with `--experimental-require-module`, which the game-server's `start` script already passes). Local dev on Node 24 LTS via `nvm use` is the tested path; Railway production runs Node 22.11 with the flag.
 
 ```bash
 npm install        # installs all workspaces
 npm run lint       # ESLint across all workspaces
 npm run typecheck  # tsc --noEmit across all workspaces
 npm run test       # Vitest across all workspaces
+npm run format     # Prettier write across code files
 ```
 
-Per-app commands live in each workspace's `package.json`.
+Per-workspace dev commands (e.g. `next dev`, `tsx watch`) live in each `apps/*` and `packages/*` `package.json`.
