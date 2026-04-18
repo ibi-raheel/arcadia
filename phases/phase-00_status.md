@@ -12,14 +12,36 @@ Source plan: `phase-00_plan.md`. Status entries are chronological, newest at the
 - Step 2 ✅ Git initialised (main), initial commit `007329a` (17 files, 2189 insertions), GitHub repo created at **https://github.com/ibi-raheel/arcadia** (private), origin pushed. Auth: `gh` as `ibi-raheel`, token scopes repo + workflow.
   - Noted: git auto-configured committer identity from hostname (`Aria <aria@Arias-Mac-mini.local>`). User can run `git config --global user.email <email>` at their leisure; not modified without permission.
 
-- Step 3 ✅ Root monorepo chassis in place. Files: `package.json` (npm workspaces `apps/*` + `packages/*`, engine ≥ Node 20), `tsconfig.base.json` (strict TS 5, ES2022, bundler resolution, decorators enabled for Colyseus schemas), `.prettierrc.json` + `.prettierignore` (markdown excluded — hand-authored), `eslint.config.mjs` (flat config, TS rules), `vitest.workspace.ts` (per-workspace config discovery), `README.md`.
-  - Gates pass locally: `npm run format:check` ✓, `npx eslint` ✓, `npx tsc --noEmit` ✓, `npm test` ✓ (passes with no tests yet via `--passWithNoTests`).
-  - 158 dev dependencies installed.
-  - Uncommitted on `main` — awaiting commit-cadence instruction from user.
+- Step 3 ✅ Root monorepo chassis. Commit `e379aa8`. Files: `package.json` (npm workspaces, Node ≥ 20), `tsconfig.base.json` (strict TS 5, ES2022, bundler resolution, decorators enabled), `eslint.config.mjs` (flat config, single source of truth for all workspaces), `.prettierrc.json` + `.prettierignore`, `vitest.workspace.ts`, `README.md`.
+- Step 4 ✅ `/apps/web` scaffolded with Next.js 14.2.35 (App Router) + Tailwind 3.4 + TypeScript 5 + Supabase JS client. Commit `993e925`.
+  - `app/api/health/route.ts` returns `{status:'ok', service:'@arcadia/web', time}` — liveness probe for Vercel.
+  - `lib/supabase/client.ts` + `lib/supabase/admin.ts` — browser vs. service-role separation; admin client throws if imported outside server runtime.
+  - `.env.local.example` lists every TAD §9.1 var; CF Stream vars commented until Phase 3.
+  - `next/lint` dropped in favour of the root flat config (resolved eslint 8/9 version conflict between `eslint-config-next` and our root toolchain).
+  - Verified: format ✓, lint ✓, typecheck ✓, vitest ✓, `next build` ✓.
+- Step 5 ✅ `/apps/game-server` scaffolded with Colyseus 0.17.5 + `@colyseus/ws-transport` + Redis presence/driver. Commit `2e5ef5e`.
+  - `src/index.ts` wraps an Express HTTP server with `WebSocketTransport`; Redis is wired when `REDIS_URL` is set (in-memory fallback otherwise).
+  - `src/rooms/RealmRoom.ts` — empty room class registered for both `world-realm1` and `tavern-realm1` (TAD §5.1). State schema + message handlers land in Phase 2.
+  - `/health` endpoint reports Redis configured/not-configured.
+  - Verified: typecheck ✓, build ✓, lint ✓, production binary starts and returns 200 on `/health`.
+- Step 6 ✅ `/packages/shared` scaffolded with Colyseus v4 schemas + protocol + level helpers. Commit `15bed4a`.
+  - `AvatarState` / `RealmRoomState` match TAD §5.2 verbatim.
+  - `MSG` constants + per-message payload interfaces lock the TAD §5.3 protocol.
+  - `calculateLevel` + `isValidLevel` mirror the SQL in TAD §8.1 so the client can render levels without a DB round-trip.
+  - First real test suite: 22 Vitest assertions covering XP thresholds and invalid inputs. All passing.
 
-**In flight:**
+**Local commits on `main` (ahead of origin by 4):**
+```
+15bed4a Scaffold /packages/shared with Colyseus schemas and protocol types
+2e5ef5e Scaffold /apps/game-server with Colyseus 0.17 and Redis-backed transport
+993e925 Scaffold /apps/web with Next.js 14, Tailwind 3, Supabase client
+e379aa8 Scaffold monorepo chassis with npm workspaces and quality gates
+007329a Seed Arcadia monorepo with Phase 0 foundation docs (pushed)
+```
 
-- Step 4 next — scaffold `/apps/web` (Next.js 14 App Router + Tailwind 3 + TypeScript 5 + Supabase client + health route).
+**In flight — Step 7 next:**
+
+Supabase migrations (7 tables per TAD §6.1) into the `arcadia` project. Requires: user to confirm the exact project ref for `arcadia` and that `arcadia-test` also exists. Then `supabase login`, `supabase link`, write migrations, push.
 
 **Environment status:**
 
