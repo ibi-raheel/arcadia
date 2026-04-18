@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint app lib --max-warnings=0",
+    "lint": "eslint app lib tests middleware.ts --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"
   },
@@ -21,6 +21,7 @@
     "@types/node": "^22.10.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "dotenv": "^16.4.5",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
