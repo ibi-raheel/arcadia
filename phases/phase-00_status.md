@@ -30,18 +30,17 @@ Source plan: `phase-00_plan.md`. Status entries are chronological, newest at the
   - `calculateLevel` + `isValidLevel` mirror the SQL in TAD §8.1 so the client can render levels without a DB round-trip.
   - First real test suite: 22 Vitest assertions covering XP thresholds and invalid inputs. All passing.
 
-**Local commits on `main` (ahead of origin by 4):**
-```
-15bed4a Scaffold /packages/shared with Colyseus schemas and protocol types
-2e5ef5e Scaffold /apps/game-server with Colyseus 0.17 and Redis-backed transport
-993e925 Scaffold /apps/web with Next.js 14, Tailwind 3, Supabase client
-e379aa8 Scaffold monorepo chassis with npm workspaces and quality gates
-007329a Seed Arcadia monorepo with Phase 0 foundation docs (pushed)
-```
+- Step 7 ✅ Supabase schema applied to both projects. Commits `6f8dacc`, `c819c65`.
+  - `arcadia` (ref `eqbzltiasmuckgsapkye`, West US Oregon): 7 tables + RLS + signup trigger + `mvp-realm` seed applied via `supabase db push`.
+  - `arcadia-test` (ref `idxgcrwikmcuqrrxbogj`, East US Ohio): identical schema applied for the cross-member leakage test harness (Step 17).
+  - CLI currently linked to `arcadia` for ongoing work.
 
-**In flight — Step 7 next:**
+**Pushed to `origin/main` as of 2026-04-18:** all 8 commits live on GitHub.
 
-Supabase migrations (7 tables per TAD §6.1) into the `arcadia` project. Requires: user to confirm the exact project ref for `arcadia` and that `arcadia-test` also exists. Then `supabase login`, `supabase link`, write migrations, push.
+**In flight — Steps 12 (Railway) and 4-deploy (Vercel) running in parallel:**
+
+- Railway: `railway.json` committed (`c819c65`). User-driven setup via web UI: import repo → add Redis plugin → set `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `COLYSEUS_MONITOR=false` → generate domain → verify `/health`. Output: Railway service URL, to be saved as `NEXT_PUBLIC_COLYSEUS_URL` (wss://) in Vercel env + local `.env.local`.
+- Vercel: `apps/web/vercel.json` committed locally (pending commit below). User-driven setup via web UI: import repo → Root Directory `apps/web` → env vars (Supabase anon key, URL, Colyseus URL once Railway returns one) → deploy. Auto-detects Next.js.
 
 **Environment status:**
 
