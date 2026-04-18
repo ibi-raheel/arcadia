@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint app lib tests middleware.ts --max-warnings=0",
+    "lint": "eslint app components lib tests middleware.ts --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"
   },
@@ -14,6 +14,7 @@
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.47.0",
     "next": "14.2.35",
+    "phaser": "^3.88.0",
     "react": "^18",
     "react-dom": "^18"
   },
