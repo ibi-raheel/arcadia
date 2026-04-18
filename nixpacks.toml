@@ -1,0 +1,9 @@
+# Nixpacks build configuration — overrides any cached Node version picked
+# by Nixpacks' engines.node parser. Needed because Colyseus 0.17's
+# @colyseus/better-call transitively requires rou3 (ESM-only), which in
+# turn requires Node >= 22.12 for stable require(ESM). Prior builds kept
+# resolving to Node 20.18.1 via cached Docker layers even after
+# package.json's engines was bumped.
+
+[phases.setup]
+nixPkgs = ["nodejs_22"]
