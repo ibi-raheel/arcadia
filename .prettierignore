@@ -11,3 +11,7 @@ yarn.lock
 # Markdown is hand-authored — not Prettier's concern.
 # CI checks format only for code files (see root package.json scripts).
 *.md
+
+# Supabase CLI local state
+**/supabase/.temp/
+**/supabase/.branches/

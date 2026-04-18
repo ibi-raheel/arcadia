@@ -16,7 +16,9 @@ const REDIS_URL = process.env.REDIS_URL;
 // presence.onReady() / driver.onReady() when the Redis plugin isn't fully up.
 const USE_REDIS = process.env.USE_REDIS === 'true' && Boolean(REDIS_URL);
 
-console.log(`[game-server] boot — port=${PORT} host=${HOST} redis=${USE_REDIS ? 'on' : 'off (in-memory)'}`);
+console.log(
+  `[game-server] boot — port=${PORT} host=${HOST} redis=${USE_REDIS ? 'on' : 'off (in-memory)'}`,
+);
 
 const app = express();
 
