@@ -35,12 +35,23 @@ Source plan: `phase-00_plan.md`. Status entries are chronological, newest at the
   - `arcadia-test` (ref `idxgcrwikmcuqrrxbogj`, East US Ohio): identical schema applied for the cross-member leakage test harness (Step 17).
   - CLI currently linked to `arcadia` for ongoing work.
 
-**Pushed to `origin/main` as of 2026-04-18:** all 8 commits live on GitHub.
+**Pushed to `origin/main` as of 2026-04-18:** all commits live on GitHub.
 
-**In flight — Steps 12 (Railway) and 4-deploy (Vercel) running in parallel:**
+- Step 12 ✅ Railway `arcadia` service live at **https://arcadia-production-c635.up.railway.app** (health verified). Redis plugin linked (`REDIS_URL` reference), but code runs in-memory via `USE_REDIS=false` default — Redis ready to flip on when we scale to multiple replicas.
+  - **This was the hard step.** Five commits and two hours of blind guessing before the runtime logs revealed `ERR_REQUIRE_ESM` from `@colyseus/better-call → rou3`. Nixpacks' nixpkgs pin resolves `nodejs_22` to Node 22.11, which has `require(ESM)` behind `--experimental-require-module`. Final fix chain: commits `fa965ab` → `f17a8af` → `1fd8366` → `9db7aa1` → `8ded6f3` → `86d84e6`.
+  - Lesson noted in memory: on 503 from a deploy target, grab runtime logs BEFORE theorising fixes.
+- Vercel `arcadia-web` project live at **https://arcadia-web-swart.vercel.app** (health verified). Env vars wired: Supabase URL, anon key, service key, JWT secret, `NEXT_PUBLIC_COLYSEUS_URL=wss://arcadia-production-c635.up.railway.app`.
+- Step 14 ✅ Env vars documented and mirrored across Vercel, Railway, and `.env.example` files.
 
-- Railway: `railway.json` committed (`c819c65`). User-driven setup via web UI: import repo → add Redis plugin → set `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `COLYSEUS_MONITOR=false` → generate domain → verify `/health`. Output: Railway service URL, to be saved as `NEXT_PUBLIC_COLYSEUS_URL` (wss://) in Vercel env + local `.env.local`.
-- Vercel: `apps/web/vercel.json` committed locally (pending commit below). User-driven setup via web UI: import repo → Root Directory `apps/web` → env vars (Supabase anon key, URL, Colyseus URL once Railway returns one) → deploy. Auto-detects Next.js.
+### Infrastructure snapshot
+
+| Service | Host | Status |
+|---|---|---|
+| Next.js (web) | https://arcadia-web-swart.vercel.app | ✅ 200 on `/api/health` |
+| Colyseus (game-server) | wss://arcadia-production-c635.up.railway.app | ✅ 200 on `/health`, WS upgrade OK |
+| Supabase (prod) | https://eqbzltiasmuckgsapkye.supabase.co | ✅ schema + RLS + signup trigger |
+| Supabase (test) | https://idxgcrwikmcuqrrxbogj.supabase.co | ✅ identical schema for leakage test |
+| Railway Redis plugin | (linked via `REDIS_URL` env ref) | ✅ present, not actively used until scale-up |
 
 **Environment status:**
 
@@ -49,19 +60,22 @@ Source plan: `phase-00_plan.md`. Status entries are chronological, newest at the
 - Mac Mini M4, macOS 26.2, Xcode CLT present
 - Homebrew not installed — not required (all CLIs direct-downloaded)
 
-**Blockers:**
+**Remaining Phase 0 steps:**
 
-- `gh auth login` — user must run via `! gh auth login` in next turn.
-- Supabase project slugs — user to confirm `arcadia` and `arcadia-test` project refs when Step 7 begins.
-- Google Cloud OAuth credentials — deferred until Step 15.
+- Step 15 — Supabase Auth config (email/password + Google OAuth). Dashboard work; user-driven. I'll provide step-by-step instructions for the OAuth consent screen when we start.
+- Step 16 — Next.js auth-gate middleware. Pure code.
+- Step 17 — Cross-member leakage test (Vitest against `arcadia-test`). Pure code.
+- Step 18 — GitHub Actions CI (typecheck + lint + vitest on PRs). Pure code.
+- Step 19 — Isometric spike (Phaser scene, 60 FPS under Chrome 6× CPU throttle). Pure code + user verification on Mac Mini M4.
 
-**Open risks (from plan §Risks):** item #4 (real mid-range laptop for final NFR validation) unresolved — not blocking for Phase 0 exit, needs resolution before Phase 5 Loom.
+**Open risks:** reference mid-range laptop for final NFR validation still unresolved. Not blocking Phase 0 exit (CPU-throttle proxy accepted). Needed before Phase 5 Loom recording.
 
-**Scope decisions today:**
+**Scope decisions standing:**
 
-- CF Stream deferred Phase 0 → Phase 3 (user instruction).
-- Mac Mini M4 as dev device; 60 FPS NFR validated via Chrome DevTools CPU 6× throttling as proxy.
+- CF Stream deferred Phase 0 → Phase 3.
+- Mac Mini M4 as dev device; 60 FPS NFR validated via Chrome DevTools 6× CPU throttle as proxy.
 - MVP UI desktop-only; sprites still @1x/@2x/@3x per `/docs/art/sprite-requirements.md`.
-- Art produced in-house by user (not commissioned, not CC0 pack).
+- Art produced in-house by user.
+- Node 22 across all three workspaces (bumped from original Node 20 plan — 20 broke on Colyseus's ESM-only `rou3` transitive dep).
 
-**Next:** git init locally, stage initial commit, wait on `gh auth login` before pushing.
+**Next:** Step 16 (Next.js auth-gate middleware) — pure code, doesn't depend on anything external being reconfigured.
