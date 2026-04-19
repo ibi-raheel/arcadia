@@ -17,13 +17,20 @@ export const worldLayersConfig = {
   tilemapLayers: WORLD_TILEMAP_LAYERS,
 
   // Depth bands. Dynamic objects (avatar, building placeholders) sit in the
-  // `dynamic` band and are y-sorted within it each frame. Static layers sit
-  // at fixed depths below / above.
+  // `dynamic` band and are y-sorted within it each frame. Static tilemap
+  // layers sit at fixed depths.
+  //
+  // overlay < dynamic on purpose: overlay holds SHORT decorations (flowers,
+  // small bushes) that should render under the avatar — if you walk "over"
+  // a flower, the avatar's feet cover it, which reads as natural. Tall
+  // decorations (trees, cliffs) that must y-sort against the avatar need
+  // to be individual Sprites, not tilemap-layer tiles, because tilemap
+  // layers render as a single batch at a fixed depth.
   depth: {
     ground: 0,
     collisionVisuals: 10,
-    dynamic: 1000, // base depth for y-sorted entities
-    overlay: 2000,
+    overlay: 500,
+    dynamic: 1000, // base depth for y-sorted entities (avatar, buildings)
   },
 
   ySort: {

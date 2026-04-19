@@ -113,11 +113,13 @@ describe('layers.config', () => {
     });
   });
 
-  it('depth bands are strictly ordered (ground < collision < dynamic < overlay)', () => {
+  it('depth bands are strictly ordered (ground < collision < overlay < dynamic)', () => {
+    // Overlay below dynamic so short decorations (flowers/bushes) render
+    // under the avatar's feet — see layers.config for the rationale.
     const { depth } = worldLayersConfig;
     expect(depth.ground).toBeLessThan(depth.collisionVisuals);
-    expect(depth.collisionVisuals).toBeLessThan(depth.dynamic);
-    expect(depth.dynamic).toBeLessThan(depth.overlay);
+    expect(depth.collisionVisuals).toBeLessThan(depth.overlay);
+    expect(depth.overlay).toBeLessThan(depth.dynamic);
   });
 
   it('y-sort anchor ratio is within [0, 1]', () => {

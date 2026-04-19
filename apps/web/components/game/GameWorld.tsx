@@ -109,6 +109,7 @@ export default function GameWorld(): React.JSX.Element {
       type: Phaser.AUTO,
       parent: containerRef.current,
       backgroundColor: '#1f2937', // slate-800 — visible before preload completes
+      pixelArt: true, // nearest-neighbor filtering — keeps pixel-art tiles + sprites crisp at any zoom
       physics: {
         default: 'arcade',
         arcade: {
