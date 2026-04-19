@@ -1,5 +1,8 @@
-// Generates apps/web/public/tilesets/placeholder.png — a 192×32 RGBA PNG with
-// three 64×32 tiles (grass, path, wall) used by Phase 1 placeholder rendering.
+// Generates apps/web/public/tilesets/placeholder.png — a 96×32 RGBA PNG with
+// three 32×32 diamond-shaped iso tiles (grass, path, wall) used by Phase 1
+// placeholder rendering. Each tile is a rotated-square diamond filling its
+// 32×32 bounding box — the four triangular corners are transparent so tiles
+// tessellate cleanly when placed in iso orientation.
 //
 // Pure-Node; no third-party deps. PNG encoded manually using zlib.deflateSync
 // and zlib.crc32 (available on Node 22.2+ / 20.15+).
@@ -16,7 +19,7 @@ import { Buffer } from 'node:buffer';
 
 const OUT = 'apps/web/public/tilesets/placeholder.png';
 
-const TILE_W = 64;
+const TILE_W = 32;
 const TILE_H = 32;
 const TILES = [
   { name: 'grass', rgb: [92, 168, 98] },
@@ -27,6 +30,17 @@ const TILES = [
 const W = TILE_W * TILES.length;
 const H = TILE_H;
 
+// Diamond membership test: inside the rhombus whose four vertices are the
+// midpoints of the tile's bounding-box edges (top, right, bottom, left).
+// For a 32×32 box: top (16,0), right (31,16), bottom (16,31), left (0,16).
+const HALF_W = TILE_W / 2;
+const HALF_H = TILE_H / 2;
+function isInsideDiamond(localX, localY) {
+  const cx = Math.abs(localX - HALF_W + 0.5);
+  const cy = Math.abs(localY - HALF_H + 0.5);
+  return cx / HALF_W + cy / HALF_H <= 1;
+}
+
 // Raw pixel data: one row = [filter-byte=0, then W pixels of RGBA].
 const raw = Buffer.alloc(H * (1 + W * 4));
 let pos = 0;
@@ -34,11 +48,19 @@ for (let y = 0; y < H; y++) {
   raw[pos++] = 0; // filter: None
   for (let x = 0; x < W; x++) {
     const tileIdx = Math.floor(x / TILE_W);
+    const localX = x - tileIdx * TILE_W;
     const [r, g, b] = TILES[tileIdx].rgb;
-    raw[pos++] = r;
-    raw[pos++] = g;
-    raw[pos++] = b;
-    raw[pos++] = 255;
+    if (isInsideDiamond(localX, y)) {
+      raw[pos++] = r;
+      raw[pos++] = g;
+      raw[pos++] = b;
+      raw[pos++] = 255;
+    } else {
+      raw[pos++] = 0;
+      raw[pos++] = 0;
+      raw[pos++] = 0;
+      raw[pos++] = 0;
+    }
   }
 }
 
@@ -74,5 +96,5 @@ const png = Buffer.concat([
 writeFileSync(OUT, png);
 
 console.log(
-  `Wrote ${OUT} — ${W}×${H} PNG with ${TILES.length} tiles: ${TILES.map((t) => t.name).join(', ')}`,
+  `Wrote ${OUT} — ${W}×${H} PNG with ${TILES.length} diamond tiles (${TILE_W}×${TILE_H} each): ${TILES.map((t) => t.name).join(', ')}`,
 );

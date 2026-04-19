@@ -104,8 +104,11 @@ export async function middleware(request: NextRequest) {
 
 // Match everything except static assets, favicons, and Next internals.
 // Keep this in sync with Next.js's static-file conventions.
+// `tmj|json` added Phase 1 Step 3 — world.tmj is a public game asset that
+// should bypass auth + the avatar gate (Phaser fetches it before the player
+// is "in" the world conceptually).
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|tmj|json)$).*)',
   ],
 };

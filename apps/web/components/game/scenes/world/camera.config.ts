@@ -2,23 +2,47 @@
 // here — WorldScene.ts imports this module and never hardcodes these numbers.
 // ADR 0004 convention.
 //
-// World bounds derive from world.tmj: 30 tiles wide × 30 tiles tall × 64×32 px
-// per tile = 1920 × 960 logical pixels. Keep this in sync with world.tmj — if
-// the tilemap is resized, update `bounds` here and the test in __tests__ will
-// cross-validate.
+// Phase 1 uses isometric tilemap orientation with 32×32 source tiles drawn
+// as diamonds. `WORLD_TILE_SIZE` is the tile grid size (matches world.tmj
+// `tilewidth` / `tileheight`). Iso projection is driven by these dimensions
+// in scenes/shared/iso-math.ts.
+//
+// Bounds math for a WxH iso map:
+//   Top vertex of tile (0, 0)     → (0, 0)
+//   Top vertex of tile (W-1, 0)   → ( (W-1) * TW/2, (W-1) * TH/2 )
+//   Top vertex of tile (0, H-1)   → ( -(H-1) * TW/2, (H-1) * TH/2 )
+//   Top vertex of tile (W-1, H-1) → (0, (W+H-2) * TH/2)
+// Plus each tile's diamond extends one tile below its top vertex, so the
+// overall pixel-space bounding box is:
+//   x ∈ [-(H-1)*TW/2 - TW/2,  (W-1)*TW/2 + TW/2]
+//   y ∈ [0,                    (W+H-2)*TH/2 + TH]
 
-export const WORLD_TILE_SIZE = { width: 64, height: 32 } as const;
+export const WORLD_TILE_SIZE = { width: 32, height: 32 } as const;
 export const WORLD_TILE_DIMENSIONS = { cols: 30, rows: 30 } as const;
 
+const { cols, rows } = WORLD_TILE_DIMENSIONS;
+const { width: tw, height: th } = WORLD_TILE_SIZE;
+
+const halfTw = tw / 2;
+const halfTh = th / 2;
+
+const worldMinX = -(rows - 1) * halfTw - halfTw;
+const worldMaxX = (cols - 1) * halfTw + halfTw;
+const worldMinY = 0;
+const worldMaxY = (cols + rows - 2) * halfTh + th;
+
 export const worldCameraConfig = {
-  zoom: 1.0,
+  // 32×32 tiles look tiny at 1:1 on desktop (the whole 30×30 map fits in
+  // ~960×960 px). Default to 2x zoom so a tile reads as ~64 px on screen;
+  // tweak this knob to taste.
+  zoom: 2.0,
   followLerp: 0.1,
-  deadzone: { width: 200, height: 150 },
+  deadzone: { width: 160, height: 120 },
   bounds: {
-    x: 0,
-    y: 0,
-    width: WORLD_TILE_DIMENSIONS.cols * WORLD_TILE_SIZE.width,
-    height: WORLD_TILE_DIMENSIONS.rows * WORLD_TILE_SIZE.height,
+    x: worldMinX,
+    y: worldMinY,
+    width: worldMaxX - worldMinX,
+    height: worldMaxY - worldMinY,
   },
   fadeInMs: 300,
   fadeOutMs: 300,

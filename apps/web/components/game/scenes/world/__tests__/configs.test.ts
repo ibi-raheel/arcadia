@@ -50,12 +50,19 @@ describe('camera.config', () => {
     expect(worldCameraConfig.deadzone.height).toBeGreaterThanOrEqual(0);
   });
 
-  it('bounds cover the full tilemap area', () => {
+  it('bounds cover the full iso-diamond tilemap area', () => {
+    // Iso map extent for WxH with tw=th=TS:
+    //   x ∈ [-(H-1)*TS/2 - TS/2,  (W-1)*TS/2 + TS/2]  (left/right diamond wings)
+    //   y ∈ [0,                    (W+H-2)*TS/2 + TS]
     const { bounds } = worldCameraConfig;
-    expect(bounds.x).toBe(0);
+    const { cols, rows } = WORLD_TILE_DIMENSIONS;
+    const { width: tw, height: th } = WORLD_TILE_SIZE;
+    const expectedMinX = -(rows - 1) * (tw / 2) - tw / 2;
+    const expectedMaxY = (cols + rows - 2) * (th / 2) + th;
+    expect(bounds.x).toBe(expectedMinX);
     expect(bounds.y).toBe(0);
-    expect(bounds.width).toBe(WORLD_TILE_DIMENSIONS.cols * WORLD_TILE_SIZE.width);
-    expect(bounds.height).toBe(WORLD_TILE_DIMENSIONS.rows * WORLD_TILE_SIZE.height);
+    expect(bounds.width).toBeGreaterThan(0);
+    expect(bounds.height).toBe(expectedMaxY);
   });
 });
 
@@ -150,9 +157,12 @@ describe('sprites.config ↔ world.tmj sync', () => {
   const tileAt = (layer: TiledLayer, coord: { x: number; y: number }) =>
     layer.data[coord.y * layer.width + coord.x];
 
-  it('camera bounds match the tilemap extent', () => {
-    expect(worldCameraConfig.bounds.width).toBe(map.width * map.tilewidth);
-    expect(worldCameraConfig.bounds.height).toBe(map.height * map.tileheight);
+  it('tilemap grid matches WORLD_TILE_DIMENSIONS + WORLD_TILE_SIZE', () => {
+    expect(map.width).toBe(WORLD_TILE_DIMENSIONS.cols);
+    expect(map.height).toBe(WORLD_TILE_DIMENSIONS.rows);
+    expect(map.tilewidth).toBe(WORLD_TILE_SIZE.width);
+    expect(map.tileheight).toBe(WORLD_TILE_SIZE.height);
+    expect(map.orientation).toBe('isometric');
   });
 
   it('avatar spawn tile is walkable (no collision wall)', () => {

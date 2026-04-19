@@ -29,19 +29,26 @@ export const worldSpritesConfig = {
     // (plan Step 16, user decision 2026-04-18).
   },
 
+  // Building footprint rects are axis-aligned bounding boxes of the iso
+  // diamond footprint — not literal tile pixel regions. For each 5×5 iso
+  // building at tile (sx..sx+4, sy..sy+4), the bounding box in iso space is
+  //   xMin = ( sx    - (sy+4) ) * 16,  xMax = ( (sx+4) - sy ) * 16
+  //   yMin = ( sx    +  sy    ) * 16,  yMax = ( (sx+4) + (sy+4) ) * 16
+  // → width = height = 128 for a 5×5 block; centre offsets depend on (sx, sy).
+  // When real building-facade sprites land these Rectangles are replaced.
   buildings: {
     tavern: {
       entranceTile: { x: 7, y: 10 },
       exitTile: { x: 7, y: 11 },
-      // Footprint: tile (5..9, 5..9) → pixel (320, 160) + size (320, 160)
-      footprintRect: { x: 320, y: 160, width: 320, height: 160 },
+      // Footprint: tile (5..9, 5..9). Iso bbox: x [-64, 64], y [160, 288].
+      footprintRect: { x: -64, y: 160, width: 128, height: 128 },
       fillColor: 0xd97706, // amber-600 — warm, tavern-ish
     },
     academy: {
       entranceTile: { x: 22, y: 10 },
       exitTile: { x: 22, y: 11 },
-      // Footprint: tile (20..24, 5..9)
-      footprintRect: { x: 1280, y: 160, width: 320, height: 160 },
+      // Footprint: tile (20..24, 5..9). Iso bbox: x [176, 304], y [400, 528].
+      footprintRect: { x: 176, y: 400, width: 128, height: 128 },
       fillColor: 0x2563eb, // blue-600 — institutional/academic
     },
     market: {
@@ -50,8 +57,8 @@ export const worldSpritesConfig = {
       // one tile *north* — not south like the other two. This is the
       // general rule: exit is on the walkable side of the entrance.
       exitTile: { x: 15, y: 18 },
-      // Footprint: tile (13..17, 20..24)
-      footprintRect: { x: 832, y: 640, width: 320, height: 160 },
+      // Footprint: tile (13..17, 20..24). Iso bbox: x [-176, -48], y [528, 656].
+      footprintRect: { x: -176, y: 528, width: 128, height: 128 },
       fillColor: 0x9333ea, // purple-600 — commercial/bazaar
     },
   } satisfies Record<
