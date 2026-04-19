@@ -147,4 +147,4 @@ Explicitly deferred to later phases: Phaser scenes beyond the spike, Colyseus ro
 
 ---
 
-**Current position (as of 2026-04-18):** Steps 1–14 complete; infrastructure stack is fully live. Next step is **Step 16** (Next.js auth-gate middleware) since it's pure code and doesn't depend on any further external provisioning. Step 15 (Supabase Auth + Google OAuth) runs in parallel as user-driven dashboard work.
+**Current position (as of 2026-04-18):** All code steps (1–19) shipped; Phase 0 status file (`phase-00_status.md`) tracks the five remaining user-action items (first CI run verification, GitHub secrets, end-to-end auth smoke test, FPS spike measurement, optional Google OAuth) before Phase 0 exits and Phase 1 begins.

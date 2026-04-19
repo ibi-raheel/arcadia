@@ -18,8 +18,14 @@ Architecture, feature specs, and decision records. This is where the **how** and
 
 ## ADRs on file
 
-- **ADR 0001** (`2026-04-18_locked-stack.md`) — locks the full MVP stack: Next.js 14+, Phaser 3.88+, Colyseus 0.17+, Supabase, Cloudflare Stream, Tailwind 3+, TypeScript 5+, Tiled. Covers the original "early ADR" questions (rendering engine, realtime transport, backend platform, video delivery, language, monorepo layout) in one document.
+- **ADR 0001** (`2026-04-18_locked-stack.md`) — locks the full MVP stack: Next.js 14+, Phaser 3.88+, Colyseus 0.17+, Supabase, Cloudflare Stream, Tailwind 3+, TypeScript 5+, Tiled. Covers the original "early ADR" questions (rendering engine, realtime transport, backend platform, video delivery, language, monorepo layout) in one document. Includes a **2026-04-18 addendum** documenting the Node 22+ runtime floor discovered during the Phase 0 Railway deploy (Colyseus's `rou3` transitive dep is ESM-only, requires `require(esm)` support).
 - **ADR 0002** (`2026-04-18_add-vercel-github-supabase-mcps.md`) — promotes Vercel / GitHub / Supabase MCPs to installed. Railway MCP deferred.
+
+## Architecture docs on file
+
+- `architecture/rendering.md` — Phaser-on-Next.js rendering model (orthographic tilemap + iso-style sprites + y-sort). Captures the Phase 0 Step 19 spike design and the 60 FPS measurement protocol.
+
+Future architecture docs land here as their phases start: `realtime.md` in Phase 2, `data-model.md` (optional companion to TAD §6) if the schema grows, `gamification.md` in Phase 5.
 
 ## Expected future ADRs
 
