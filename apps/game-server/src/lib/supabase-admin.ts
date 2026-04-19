@@ -11,8 +11,16 @@
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+// Strip whitespace + a stray leading `=` that Railway's value field can
+// capture when a KEY=VALUE line is pasted into the value box. Pure normalisation.
+function sanitiseEnv(raw: string | undefined): string | undefined {
+  if (raw === undefined) return undefined;
+  const trimmed = raw.trim().replace(/^=+\s*/, '');
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+const SUPABASE_URL = sanitiseEnv(process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL);
+const SUPABASE_SERVICE_KEY = sanitiseEnv(process.env.SUPABASE_SERVICE_KEY);
 
 // Boot-time diagnostic. Both names are logged so Railway's crash message
 // shows which env var actually reached the process.
