@@ -4,7 +4,7 @@ import {
   resolveClickTargetVelocity,
   resolveInputDirection,
   resolveInputVelocity,
-  velocityToIsoDirection,
+  velocityToFacingDirection,
   type InputState,
 } from '../input';
 
@@ -126,30 +126,33 @@ describe('resolveClickTargetVelocity', () => {
   });
 });
 
-describe('velocityToIsoDirection', () => {
+describe('velocityToFacingDirection', () => {
   it('idle velocity keeps previous facing', () => {
-    expect(velocityToIsoDirection(0, 0, 'ne')).toBe('ne');
-    expect(velocityToIsoDirection(0, 0, 'sw')).toBe('sw');
+    expect(velocityToFacingDirection(0, 0, 'n')).toBe('n');
+    expect(velocityToFacingDirection(0, 0, 'w')).toBe('w');
   });
 
-  it('each velocity quadrant maps to one iso corner', () => {
-    // vx≥0, vy<0 → ne (screen up-right)
-    expect(velocityToIsoDirection(50, -50, 'se')).toBe('ne');
-    expect(velocityToIsoDirection(50, -0.1, 'se')).toBe('ne');
-    // vx≥0, vy≥0 → se
-    expect(velocityToIsoDirection(50, 50, 'ne')).toBe('se');
-    expect(velocityToIsoDirection(0, 50, 'ne')).toBe('se');
-    // vx<0, vy≥0 → sw
-    expect(velocityToIsoDirection(-50, 50, 'ne')).toBe('sw');
-    expect(velocityToIsoDirection(-50, 0, 'ne')).toBe('sw');
-    // vx<0, vy<0 → nw
-    expect(velocityToIsoDirection(-50, -50, 'ne')).toBe('nw');
+  it('pure cardinal velocity maps to matching cardinal', () => {
+    expect(velocityToFacingDirection(0, -50, 's')).toBe('n'); // screen up → n
+    expect(velocityToFacingDirection(0, 50, 'n')).toBe('s'); // screen down → s
+    expect(velocityToFacingDirection(50, 0, 'w')).toBe('e'); // screen right → e
+    expect(velocityToFacingDirection(-50, 0, 'e')).toBe('w'); // screen left → w
   });
 
-  it('pure cardinal velocity picks a canonical iso direction', () => {
-    // Screen up (vy<0 only) → ne (upper-right iso corner by convention)
-    expect(velocityToIsoDirection(0, -50, 'se')).toBe('ne');
-    // Screen right (vx>0 only) → se
-    expect(velocityToIsoDirection(50, 0, 'nw')).toBe('se');
+  it('diagonal input picks dominant-axis cardinal', () => {
+    // |vx|=60 > |vy|=30 → horizontal wins
+    expect(velocityToFacingDirection(60, -30, 'n')).toBe('e');
+    expect(velocityToFacingDirection(-60, 30, 's')).toBe('w');
+    // |vy|=60 > |vx|=30 → vertical wins
+    expect(velocityToFacingDirection(30, -60, 'e')).toBe('n');
+    expect(velocityToFacingDirection(-30, 60, 'w')).toBe('s');
+  });
+
+  it('perfect diagonals tie — horizontal wins', () => {
+    // |vx| === |vy| → horizontal per rule `>=`
+    expect(velocityToFacingDirection(50, -50, 'n')).toBe('e');
+    expect(velocityToFacingDirection(50, 50, 's')).toBe('e');
+    expect(velocityToFacingDirection(-50, -50, 'n')).toBe('w');
+    expect(velocityToFacingDirection(-50, 50, 's')).toBe('w');
   });
 });

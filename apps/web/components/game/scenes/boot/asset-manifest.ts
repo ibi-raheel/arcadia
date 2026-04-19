@@ -41,7 +41,7 @@ export type BootAssetKey = keyof typeof BOOT_ASSETS;
 // add an entry here; no scene-code changes needed.
 
 import type { AvatarId } from '../shared/avatar-palette';
-import type { AvatarAction, IsoDirection } from '../shared/types';
+import type { AvatarAction, FacingDirection } from '../shared/types';
 
 export type AvatarSheet = {
   readonly key: string;
@@ -51,14 +51,29 @@ export type AvatarSheet = {
   readonly cols: number;
   readonly rows: number;
   /**
-   * Iso direction sitting on each row, top to bottom. Length must equal `rows`.
-   * Each direction's animation uses frames `[row*cols .. row*cols + cols - 1]`.
+   * Facing direction sitting on each row, top to bottom. Length must equal
+   * `rows`. Each direction's animation uses frames
+   * `[row*cols .. row*cols + cols - 1]`.
    */
-  readonly directionRowOrder: readonly IsoDirection[];
+  readonly directionRowOrder: readonly FacingDirection[];
   readonly frameRate: number;
+  /**
+   * Phaser repeat count. -1 = loop forever (idle, walk). 0 = play once
+   * (jump, one-shot actions).
+   */
+  readonly repeat: number;
 };
 
 export type AvatarSheetMap = Partial<Record<AvatarAction, AvatarSheet>>;
+
+// Row order across all three supplied sheets (user-specified 2026-04-19):
+//   row 0 = north (back view)
+//   row 1 = west  (profile facing left)
+//   row 2 = south (front view)
+//   row 3 = east  (profile facing right)
+// Assumed consistent across idle / walk / jump — adjust per-entry if the
+// author used a different convention on a specific sheet.
+const AVATAR_01_ROW_ORDER: readonly FacingDirection[] = ['n', 'w', 's', 'e'];
 
 export const AVATAR_SHEETS: Readonly<Partial<Record<AvatarId, AvatarSheetMap>>> = {
   'avatar-01': {
@@ -69,14 +84,31 @@ export const AVATAR_SHEETS: Readonly<Partial<Record<AvatarId, AvatarSheetMap>>> 
       frameHeight: 64,
       cols: 2,
       rows: 4,
-      // Row order in the user's supplied sheet:
-      // row 0 = ne (back, right-angled)
-      // row 1 = se (front, right-angled)
-      // row 2 = nw (back, left-angled)
-      // row 3 = sw (front, left-angled)
-      directionRowOrder: ['ne', 'se', 'nw', 'sw'],
+      directionRowOrder: AVATAR_01_ROW_ORDER,
       frameRate: 4,
+      repeat: -1,
     },
-    // Add `run: { ... }` when apps/web/public/avatars/avatar-01/run.png lands.
+    walk: {
+      key: 'avatar-01-walk',
+      path: '/avatars/avatar-01/walk.png',
+      frameWidth: 64,
+      frameHeight: 64,
+      cols: 9,
+      rows: 4,
+      directionRowOrder: AVATAR_01_ROW_ORDER,
+      frameRate: 12,
+      repeat: -1,
+    },
+    jump: {
+      key: 'avatar-01-jump',
+      path: '/avatars/avatar-01/jump.png',
+      frameWidth: 64,
+      frameHeight: 64,
+      cols: 5,
+      rows: 4,
+      directionRowOrder: AVATAR_01_ROW_ORDER,
+      frameRate: 12,
+      repeat: 0, // one-shot — jump plays once, doesn't loop
+    },
   },
 };

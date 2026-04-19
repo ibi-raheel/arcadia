@@ -15,7 +15,7 @@ import type Phaser from 'phaser';
 import { AVATAR_SHEETS } from '../boot/asset-manifest';
 import { AVATAR_COLORS, type AvatarId } from '../shared/avatar-palette';
 import { tileCenterToPixel } from '../shared/iso-math';
-import type { AvatarAction, IsoDirection, TileCoord } from '../shared/types';
+import type { AvatarAction, FacingDirection, TileCoord } from '../shared/types';
 import {
   animationKey,
   avatarHasSprite,
@@ -45,7 +45,7 @@ export class LocalAvatar {
   private readonly nameText: Phaser.GameObjects.Text;
   private readonly levelBadge: Phaser.GameObjects.Text;
 
-  private _direction: IsoDirection = 'se';
+  private _direction: FacingDirection = 's';
   private _isMoving = false;
 
   constructor(scene: Phaser.Scene, options: LocalAvatarOptions) {
@@ -120,11 +120,11 @@ export class LocalAvatar {
     return this.gameObject.height;
   }
 
-  get direction(): IsoDirection {
+  get direction(): FacingDirection {
     return this._direction;
   }
 
-  set direction(value: IsoDirection) {
+  set direction(value: FacingDirection) {
     this._direction = value;
   }
 
@@ -142,7 +142,7 @@ export class LocalAvatar {
    * yet), falls back to the idle clip in the same direction. No-op when
    * running in Rectangle-placeholder mode.
    */
-  playAnim(action: AvatarAction, direction: IsoDirection): void {
+  playAnim(action: AvatarAction, direction: FacingDirection): void {
     if (!this.sprite) return;
 
     const scene = this.sprite.scene;

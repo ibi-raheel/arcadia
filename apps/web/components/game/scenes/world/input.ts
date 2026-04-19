@@ -3,7 +3,7 @@
 // InputState struct, then calls these functions to compute velocity +
 // facing direction. Phaser is not imported here so the math is unit-testable.
 
-import type { Direction, IsoDirection } from '../shared/types';
+import type { Direction, FacingDirection } from '../shared/types';
 
 export type InputState = {
   readonly up: boolean;
@@ -101,19 +101,17 @@ function inferDirectionFromDelta(dx: number, dy: number, prev: Direction): Direc
 }
 
 /**
- * Maps a screen-space velocity vector to the iso facing direction the avatar
- * sprite should show. 2:1 iso has 4 facing directions (ne/se/sw/nw), one per
- * velocity-sign quadrant. Idle velocity (0, 0) preserves `prev` so the avatar
- * keeps facing where it last walked.
+ * Maps a screen-space velocity vector to the cardinal facing direction the
+ * avatar sprite should show (the sheet has 4 rows — N / W / S / E poses).
+ * Dominant-axis rule: horizontal wins on ties; diagonal input picks the
+ * larger-magnitude axis. Idle velocity (0, 0) preserves `prev`.
  */
-export function velocityToIsoDirection(
+export function velocityToFacingDirection(
   vx: number,
   vy: number,
-  prev: IsoDirection,
-): IsoDirection {
+  prev: FacingDirection,
+): FacingDirection {
   if (vx === 0 && vy === 0) return prev;
-  if (vx >= 0 && vy < 0) return 'ne';
-  if (vx >= 0 && vy >= 0) return 'se';
-  if (vx < 0 && vy >= 0) return 'sw';
-  return 'nw';
+  if (Math.abs(vx) >= Math.abs(vy)) return vx >= 0 ? 'e' : 'w';
+  return vy >= 0 ? 's' : 'n';
 }

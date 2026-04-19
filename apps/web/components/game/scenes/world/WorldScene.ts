@@ -16,7 +16,7 @@ import { WORLD_TILE_SIZE, worldCameraConfig } from './camera.config';
 import {
   resolveClickTargetVelocity,
   resolveInputVelocity,
-  velocityToIsoDirection,
+  velocityToFacingDirection,
   type InputState,
 } from './input';
 import { worldLayersConfig } from './layers.config';
@@ -334,16 +334,16 @@ export class WorldScene extends Phaser.Scene {
 
       this.localAvatar.body.setVelocity(vx, vy);
       this.localAvatar.isMoving = moving;
-      this.localAvatar.direction = velocityToIsoDirection(
+      this.localAvatar.direction = velocityToFacingDirection(
         vx,
         vy,
         this.localAvatar.direction,
       );
 
-      // Play the right sprite animation. With only idle.png loaded for now,
-      // run requests fall back to idle inside LocalAvatar.playAnim().
+      // Moving → walk, standing → idle. Jump is registered but not yet
+      // triggered by any input (future polish: spacebar → one-shot jump).
       this.localAvatar.playAnim(
-        moving ? 'run' : 'idle',
+        moving ? 'walk' : 'idle',
         this.localAvatar.direction,
       );
 

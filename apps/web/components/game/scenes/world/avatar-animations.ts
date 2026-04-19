@@ -12,12 +12,12 @@ import {
   type AvatarSheet,
 } from '../boot/asset-manifest';
 import type { AvatarId } from '../shared/avatar-palette';
-import type { AvatarAction, IsoDirection } from '../shared/types';
+import type { AvatarAction, FacingDirection } from '../shared/types';
 
 export function animationKey(
   avatarId: AvatarId,
   action: AvatarAction,
-  direction: IsoDirection,
+  direction: FacingDirection,
 ): string {
   return `${avatarId}-${action}-${direction}`;
 }
@@ -52,7 +52,7 @@ export function registerAvatarAnimations(scene: Phaser.Scene): void {
           key,
           frames: scene.anims.generateFrameNumbers(sheet.key, { start, end }),
           frameRate: sheet.frameRate,
-          repeat: -1,
+          repeat: sheet.repeat,
         });
       }
     }
