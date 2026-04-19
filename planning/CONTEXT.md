@@ -28,6 +28,8 @@ Architecture, feature specs, and decision records. This is where the **how** and
 
 - **ADR 0001** (`0001_2026-04-18_locked-stack.md`) — locks the full MVP stack: Next.js 14+, Phaser 3.88+, Colyseus 0.17+, Supabase, Cloudflare Stream, Tailwind 3+, TypeScript 5+, Tiled. Covers the original "early ADR" questions (rendering engine, realtime transport, backend platform, video delivery, language, monorepo layout) in one document. Includes a **2026-04-18 addendum** documenting the Node 22+ runtime floor discovered during the Phase 0 Railway deploy (Colyseus's `rou3` transitive dep is ESM-only, requires `require(esm)` support).
 - **ADR 0002** (`0002_2026-04-18_add-vercel-github-supabase-mcps.md`) — promotes Vercel / GitHub / Supabase MCPs to installed. Railway MCP deferred.
+- **ADR 0003** (`0003_2026-04-18_decline-phaser4-and-editor-mcp.md`) — decline the Phaser 4 upgrade (4.0.0 went GA 2026-04-10, 8 days before this decision) and the $12/mo Phaser Editor + its MCP for the MVP. Phaser 3.88+ lock from ADR 0001 stands. The Phaser Editor MCP is a desktop-app driver for the editor's proprietary scene format — wrong shape for our hand-coded TS workflow. Revisit both post-MVP.
+- **ADR 0004** (`0004_2026-04-18_per-scene-folder-config-convention.md`) — every Phaser scene owns a folder under `apps/web/components/game/scenes/<scene>/` with scene class + typed `*.config.ts` files + `__tests__/` + per-scene `CLAUDE.md`. Scene classes never hardcode tweakable values (camera zoom, spawn tile, body offsets, fade durations — all in configs). Binding on Phase 1+ Phaser work. Academy and Market stay React-only (no Phaser scene).
 
 ## Architecture docs on file
 

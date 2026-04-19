@@ -8,7 +8,7 @@ Each community (**Realm**) gives members an avatar, a space to gather (**Tavern*
 
 ## Status
 
-🛠️ MVP build — Phase 0 (Foundation). **Code for Steps 1–19 is complete; CI + RLS cross-member leakage suite green end-to-end.** Two user-action items remain before Phase 0 exits: FPS spike measurement on a Mac Mini M4 and (optional) Google OAuth. See [`phases/phase-00_status.md`](phases/phase-00_status.md) for the full checklist.
+🛠️ MVP build — Phase 0 (Foundation) code complete; **Phase 1 plan drafted**. Phase 0 Steps 1–19 shipped; CI + RLS cross-member leakage suite green end-to-end. Two user-action items remain before Phase 0 exits: FPS spike measurement on a Mac Mini M4 and (optional) Google OAuth. Phase 1 execution is blocked on Phase 0 exit + in-house art delivery. See [`phases/phase-00_status.md`](phases/phase-00_status.md) for the Phase 0 checklist and [`phases/phase-01_plan.md`](phases/phase-01_plan.md) for the Phase 1 plan.
 
 ### Live services
 
