@@ -160,7 +160,7 @@ class AvatarState extends Schema {
   @type('string') avatarId: string;
   @type('number') x: number;
   @type('number') y: number;
-  @type('string') direction: string; // 'up' | 'down' | 'left' | 'right'
+  @type('string') direction: AvatarDirection; // 'n' | 'e' | 's' | 'w' (cardinal; amended 2026-04-19)
   @type('boolean') isMoving: boolean;
   @type('number') level: number; // 1–5, sourced from Supabase on join, updated via UPDATE_LEVEL
 }

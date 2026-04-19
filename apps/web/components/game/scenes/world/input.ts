@@ -2,8 +2,13 @@
 // WorldScene's update() reads the WASD + arrow-key state into an
 // InputState struct, then calls these functions to compute velocity +
 // facing direction. Phaser is not imported here so the math is unit-testable.
+//
+// Direction literals are cardinal (n/e/s/w) — the same AvatarDirection type
+// used by @arcadia/shared AvatarState + MSG.MOVE payload, so client code
+// writes the exact literals that hit the network. Phase 2 Step 1 renamed
+// from the old orthogonal `up/down/left/right` alias.
 
-import type { Direction, FacingDirection } from '../shared/types';
+import type { AvatarDirection } from '../shared/types';
 
 export type InputState = {
   readonly up: boolean;
@@ -48,11 +53,11 @@ export function resolveInputVelocity(input: InputState, speed: number): Velocity
  * on simultaneous diagonal input. Returns `prev` when no input is active
  * so the avatar keeps facing where it last walked.
  */
-export function resolveInputDirection(input: InputState, prev: Direction): Direction {
-  if (input.left) return 'left';
-  if (input.right) return 'right';
-  if (input.up) return 'up';
-  if (input.down) return 'down';
+export function resolveInputDirection(input: InputState, prev: AvatarDirection): AvatarDirection {
+  if (input.left) return 'w';
+  if (input.right) return 'e';
+  if (input.up) return 'n';
+  if (input.down) return 's';
   return prev;
 }
 
@@ -60,7 +65,7 @@ export type ClickTargetResult = {
   readonly vx: number;
   readonly vy: number;
   readonly arrived: boolean;
-  readonly direction: Direction;
+  readonly direction: AvatarDirection;
 };
 
 /**
@@ -77,7 +82,7 @@ export function resolveClickTargetVelocity(
   target: { readonly x: number; readonly y: number },
   speed: number,
   threshold: number,
-  prevDirection: Direction,
+  prevDirection: AvatarDirection,
 ): ClickTargetResult {
   const dx = target.x - from.x;
   const dy = target.y - from.y;
@@ -94,10 +99,10 @@ export function resolveClickTargetVelocity(
   };
 }
 
-function inferDirectionFromDelta(dx: number, dy: number, prev: Direction): Direction {
+function inferDirectionFromDelta(dx: number, dy: number, prev: AvatarDirection): AvatarDirection {
   if (dx === 0 && dy === 0) return prev;
-  if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? 'right' : 'left';
-  return dy > 0 ? 'down' : 'up';
+  if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? 'e' : 'w';
+  return dy > 0 ? 's' : 'n';
 }
 
 /**
@@ -109,8 +114,8 @@ function inferDirectionFromDelta(dx: number, dy: number, prev: Direction): Direc
 export function velocityToFacingDirection(
   vx: number,
   vy: number,
-  prev: FacingDirection,
-): FacingDirection {
+  prev: AvatarDirection,
+): AvatarDirection {
   if (vx === 0 && vy === 0) return prev;
   if (Math.abs(vx) >= Math.abs(vy)) return vx >= 0 ? 'e' : 'w';
   return vy >= 0 ? 's' : 'n';

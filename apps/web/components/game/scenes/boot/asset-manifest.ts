@@ -10,6 +10,14 @@ export const BOOT_SCENE_KEY = 'BootScene' as const;
 export const NEXT_SCENE_KEY_AFTER_BOOT = 'WorldScene' as const;
 
 /**
+ * Registry override — if set by the React mount before Phaser boots,
+ * BootScene starts this scene key instead of NEXT_SCENE_KEY_AFTER_BOOT.
+ * Phase 2 Week 7: GameTavern writes 'TavernScene' so the same BootScene
+ * can serve both /world and /tavern without duplication.
+ */
+export const NEXT_SCENE_KEY_REGISTRY_KEY = 'nextSceneKeyAfterBoot' as const;
+
+/**
  * Step 20 handshake — React writes a `(progress: number) => void` into
  * Phaser's registry under this key. BootScene subscribes to `LoaderPlugin`
  * progress + complete events and forwards to the callback. Progress is
@@ -27,6 +35,12 @@ export const BOOT_ASSETS = {
     key: 'world',
     path: '/maps/world.tmj',
   },
+  // Phase 2 Week 7: interior tavern map. Loaded alongside the world map so
+  // one BootScene serves both /world and /tavern scenes without duplication.
+  tavernTilemap: {
+    key: 'tavern',
+    path: '/maps/tavern.tmj',
+  },
 } as const;
 
 export type BootAssetKey = keyof typeof BOOT_ASSETS;
@@ -41,7 +55,7 @@ export type BootAssetKey = keyof typeof BOOT_ASSETS;
 // add an entry here; no scene-code changes needed.
 
 import type { AvatarId } from '../shared/avatar-palette';
-import type { AvatarAction, FacingDirection } from '../shared/types';
+import type { AvatarAction, AvatarDirection } from '../shared/types';
 
 export type AvatarSheet = {
   readonly key: string;
@@ -55,7 +69,7 @@ export type AvatarSheet = {
    * `rows`. Each direction's animation uses frames
    * `[row*cols .. row*cols + cols - 1]`.
    */
-  readonly directionRowOrder: readonly FacingDirection[];
+  readonly directionRowOrder: readonly AvatarDirection[];
   readonly frameRate: number;
   /**
    * Phaser repeat count. -1 = loop forever (idle, walk). 0 = play once
@@ -73,7 +87,7 @@ export type AvatarSheetMap = Partial<Record<AvatarAction, AvatarSheet>>;
 //   row 3 = east  (profile facing right)
 // Assumed consistent across idle / walk / jump — adjust per-entry if the
 // author used a different convention on a specific sheet.
-const AVATAR_01_ROW_ORDER: readonly FacingDirection[] = ['n', 'w', 's', 'e'];
+const AVATAR_01_ROW_ORDER: readonly AvatarDirection[] = ['n', 'w', 's', 'e'];
 
 export const AVATAR_SHEETS: Readonly<Partial<Record<AvatarId, AvatarSheetMap>>> = {
   'avatar-01': {

@@ -1,7 +1,7 @@
 // Public exports for @arcadia/shared.
 // Import from '@arcadia/shared' — never from individual file paths.
 
-export { AvatarState, type AvatarDirection } from './schemas/AvatarState';
+export { AvatarState, AVATAR_DIRECTIONS, type AvatarDirection } from './schemas/AvatarState';
 export { RealmRoomState } from './schemas/RealmRoomState';
 
 export {
