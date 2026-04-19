@@ -16,7 +16,7 @@ import {
 // Phase 2 Step 2 — state + handlers wired. onAuth (JWT validation) lands in
 // Step 3; until then this class relies on onAuth returning AuthInfo-shaped
 // data (tests construct the AuthInfo directly).
-export class RealmRoom extends Room<{ state: RealmRoomState }> {
+export class RealmRoom extends Room<RealmRoomState> {
   override maxClients = 50;
 
   override onCreate(_options: unknown): void {
@@ -72,7 +72,7 @@ export class RealmRoom extends Room<{ state: RealmRoomState }> {
     this.state.avatars.set(client.sessionId, createAvatarState(auth, spawn));
   }
 
-  override onLeave(client: Client, _code?: number): void {
+  override onLeave(client: Client, _consented?: boolean): void {
     console.log(`[${this.roomName}] leave ${client.sessionId}`);
     this.state.avatars.delete(client.sessionId);
   }
