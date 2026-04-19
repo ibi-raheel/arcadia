@@ -7,6 +7,8 @@ Deployment, infrastructure, monitoring, and operational scripts.
 ## Layout
 
 - `/deploy` — deploy configs, CI/CD pipeline definitions, environment setup per target (dev, staging, prod).
+  - `github-actions-secrets.md` — the three `TEST_SUPABASE_*` secrets GitHub Actions needs for the RLS leakage suite, plus the (recommended) branch-protection rule for `main`.
+  - Upstream CI workflow lives at `.github/workflows/ci.yml` (repo root); the doc here explains what the workflow needs but isn't part of `/ops` itself.
 - `/monitoring` — uptime, error tracking, performance monitoring configs, and incident runbooks.
 - `/scripts` — one-off and recurring operational scripts (migrations, seed data, maintenance tasks).
 

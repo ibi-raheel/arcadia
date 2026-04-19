@@ -6,8 +6,17 @@ Deployable applications. Each immediate subfolder is a standalone service with i
 
 ## Layout
 
-- `/web` — Next.js 14+ on Vercel. Owns React UI, all pages and API routes, Phaser canvas mount. Auth-gated via Supabase.
-- `/game-server` — Colyseus 0.17+ on Railway. Owns avatar position sync, room presence, `UPDATE_LEVEL` broadcast. Redis-backed.
+- `/web` — Next.js 14.2 on Vercel. Owns React UI, all pages and API routes, Phaser canvas mount. Auth-gated via Supabase through `apps/web/middleware.ts`.
+  - `app/` — App Router pages (`/`, `/login`, `/signup`, `/spike`, `/api/health`). All auth-gated routes pass through `middleware.ts` first.
+  - `components/` — React components including `components/game/` for Phaser scenes (loaded via `dynamic(..., { ssr: false })` per TAD §3.2).
+  - `lib/supabase/` — `client.ts` (browser via `@supabase/ssr`), `server.ts` (server component cookies), `admin.ts` (service-role, server-only).
+  - `middleware.ts` — session refresh + auth-gate; public allowlist at the top of the file.
+  - `supabase/migrations/` — SQL migrations (Phase 0 Step 7, applied to both arcadia + arcadia-test).
+  - `tests/` — Vitest integration suites that hit the arcadia-test Supabase project. Env vars in `.env.test.local` (gitignored).
+- `/game-server` — Colyseus 0.17 on Railway. Owns avatar position sync, room presence, `UPDATE_LEVEL` broadcast. Redis-backed when `USE_REDIS=true`; in-memory otherwise (default for single-replica MVP).
+  - `src/index.ts` — Express + Colyseus `WebSocketTransport` bootstrap; reads `PORT`, `HOST`, `USE_REDIS`, `REDIS_URL` env vars.
+  - `src/rooms/` — room classes; `RealmRoom` is registered on `world-realm1` and `tavern-realm1` per TAD §5.1.
+  - Start script carries `--experimental-require-module` to handle Colyseus's ESM-only `rou3` transitive dep on Node 22.11 (see ADR 0001 addendum).
 
 See `/docs/mvp/tad.md` §1.1 for the exact service-responsibility split and §2 for the locked stack.
 
@@ -16,7 +25,7 @@ See `/docs/mvp/tad.md` §1.1 for the exact service-responsibility split and §2 
 - **Language:** TypeScript 5+ across every app.
 - **Component / class files:** PascalCase (`AvatarController.ts`, `TavernChat.tsx`).
 - **Module files:** kebab-case (`course-loader.ts`, `iso-math.ts`).
-- **Tests:** colocated, `feature-name.test.ts` next to the file under test. Unit tests run in Vitest as part of CI (Phase 0 Week 2).
+- **Tests:** pure-unit tests are colocated (`feature-name.test.ts` next to the file under test — see `packages/shared/src/gamification/levels.test.ts`). Integration suites that hit real Supabase or external services live in `apps/*/tests/` instead so their env-var plumbing and setup/teardown stay out of the app tree.
 - **No direct Supabase queries from the game server.** The game server is presence-only; course / chat data lives on the web client via Supabase directly.
 - **No direct Colyseus imports in `/apps/web` server-side code.** Client-side only, inside dynamically loaded Phaser scenes.
 

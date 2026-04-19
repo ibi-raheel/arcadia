@@ -8,14 +8,16 @@ Each community (**Realm**) gives members an avatar, a space to gather (**Tavern*
 
 ## Status
 
-🛠️ MVP build — Phase 0 (Foundation), Steps 1–14 complete. See [`phases/phase-00_status.md`](phases/phase-00_status.md) for live detail.
+🛠️ MVP build — Phase 0 (Foundation). **Code for Steps 1–19 is complete**; five user-action items remain (CI verification, GitHub secrets, end-to-end auth smoke test, FPS spike measurement, optional Google OAuth). See [`phases/phase-00_status.md`](phases/phase-00_status.md) for the full checklist.
 
 ### Live services
 
 | Service | URL |
 |---|---|
 | Web (Next.js, Vercel) | https://arcadia-web-swart.vercel.app |
+| Isometric spike (Phaser 3.88) | https://arcadia-web-swart.vercel.app/spike |
 | Game server (Colyseus, Railway) | wss://arcadia-production-c635.up.railway.app |
+| Game-server health | https://arcadia-production-c635.up.railway.app/health |
 | Supabase (production) | https://eqbzltiasmuckgsapkye.supabase.co |
 | Supabase (test — cross-member leakage harness) | https://idxgcrwikmcuqrrxbogj.supabase.co |
 
