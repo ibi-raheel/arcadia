@@ -9,6 +9,7 @@
 import Phaser from 'phaser';
 
 import {
+  AVATAR_SHEETS,
   BOOT_ASSETS,
   BOOT_SCENE_KEY,
   NEXT_SCENE_KEY_AFTER_BOOT,
@@ -34,6 +35,20 @@ export class BootScene extends Phaser.Scene {
 
     this.load.image(BOOT_ASSETS.tileset.key, BOOT_ASSETS.tileset.path);
     this.load.tilemapTiledJSON(BOOT_ASSETS.tilemap.key, BOOT_ASSETS.tilemap.path);
+
+    // Avatar spritesheets — one registered spritesheet per (avatarId, action)
+    // declared in AVATAR_SHEETS. Avatars without entries fall back to
+    // the Rectangle placeholder in LocalAvatar.
+    for (const actions of Object.values(AVATAR_SHEETS)) {
+      if (!actions) continue;
+      for (const sheet of Object.values(actions)) {
+        if (!sheet) continue;
+        this.load.spritesheet(sheet.key, sheet.path, {
+          frameWidth: sheet.frameWidth,
+          frameHeight: sheet.frameHeight,
+        });
+      }
+    }
   }
 
   create(): void {

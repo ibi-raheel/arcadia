@@ -3,7 +3,7 @@
 // InputState struct, then calls these functions to compute velocity +
 // facing direction. Phaser is not imported here so the math is unit-testable.
 
-import type { Direction } from '../shared/types';
+import type { Direction, IsoDirection } from '../shared/types';
 
 export type InputState = {
   readonly up: boolean;
@@ -98,4 +98,22 @@ function inferDirectionFromDelta(dx: number, dy: number, prev: Direction): Direc
   if (dx === 0 && dy === 0) return prev;
   if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? 'right' : 'left';
   return dy > 0 ? 'down' : 'up';
+}
+
+/**
+ * Maps a screen-space velocity vector to the iso facing direction the avatar
+ * sprite should show. 2:1 iso has 4 facing directions (ne/se/sw/nw), one per
+ * velocity-sign quadrant. Idle velocity (0, 0) preserves `prev` so the avatar
+ * keeps facing where it last walked.
+ */
+export function velocityToIsoDirection(
+  vx: number,
+  vy: number,
+  prev: IsoDirection,
+): IsoDirection {
+  if (vx === 0 && vy === 0) return prev;
+  if (vx >= 0 && vy < 0) return 'ne';
+  if (vx >= 0 && vy >= 0) return 'se';
+  if (vx < 0 && vy >= 0) return 'sw';
+  return 'nw';
 }

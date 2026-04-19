@@ -4,6 +4,7 @@ import {
   resolveClickTargetVelocity,
   resolveInputDirection,
   resolveInputVelocity,
+  velocityToIsoDirection,
   type InputState,
 } from '../input';
 
@@ -122,5 +123,33 @@ describe('resolveClickTargetVelocity', () => {
 
     const north = resolveClickTargetVelocity({ x: 0, y: 100 }, { x: 10, y: 0 }, 160, 2, 'right');
     expect(north.direction).toBe('up');
+  });
+});
+
+describe('velocityToIsoDirection', () => {
+  it('idle velocity keeps previous facing', () => {
+    expect(velocityToIsoDirection(0, 0, 'ne')).toBe('ne');
+    expect(velocityToIsoDirection(0, 0, 'sw')).toBe('sw');
+  });
+
+  it('each velocity quadrant maps to one iso corner', () => {
+    // vx≥0, vy<0 → ne (screen up-right)
+    expect(velocityToIsoDirection(50, -50, 'se')).toBe('ne');
+    expect(velocityToIsoDirection(50, -0.1, 'se')).toBe('ne');
+    // vx≥0, vy≥0 → se
+    expect(velocityToIsoDirection(50, 50, 'ne')).toBe('se');
+    expect(velocityToIsoDirection(0, 50, 'ne')).toBe('se');
+    // vx<0, vy≥0 → sw
+    expect(velocityToIsoDirection(-50, 50, 'ne')).toBe('sw');
+    expect(velocityToIsoDirection(-50, 0, 'ne')).toBe('sw');
+    // vx<0, vy<0 → nw
+    expect(velocityToIsoDirection(-50, -50, 'ne')).toBe('nw');
+  });
+
+  it('pure cardinal velocity picks a canonical iso direction', () => {
+    // Screen up (vy<0 only) → ne (upper-right iso corner by convention)
+    expect(velocityToIsoDirection(0, -50, 'se')).toBe('ne');
+    // Screen right (vx>0 only) → se
+    expect(velocityToIsoDirection(50, 0, 'nw')).toBe('se');
   });
 });

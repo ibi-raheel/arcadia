@@ -11,11 +11,12 @@ import { isAvatarId, type AvatarId } from '../shared/avatar-palette';
 import { tileCenterToPixel } from '../shared/iso-math';
 import { BUILDING_NAMES, type BuildingName } from '../shared/types';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
+import { registerAvatarAnimations } from './avatar-animations';
 import { WORLD_TILE_SIZE, worldCameraConfig } from './camera.config';
 import {
   resolveClickTargetVelocity,
-  resolveInputDirection,
   resolveInputVelocity,
+  velocityToIsoDirection,
   type InputState,
 } from './input';
 import { worldLayersConfig } from './layers.config';
@@ -119,6 +120,10 @@ export class WorldScene extends Phaser.Scene {
     this.cameras.main.setZoom(zoom);
     this.physics.world.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
     this.cameras.main.fadeIn(fadeInMs, 0, 0, 0);
+
+    // Register all avatar (direction, action) animations up-front so
+    // LocalAvatar can .play() them without further setup.
+    registerAvatarAnimations(this);
 
     this.createBuildingPlaceholders();
     this.createLocalAvatar();
@@ -297,33 +302,50 @@ export class WorldScene extends Phaser.Scene {
       const input = this.readInputState();
       const kbd = resolveInputVelocity(input, worldSpritesConfig.avatar.walkSpeed);
 
+      let vx = 0;
+      let vy = 0;
+      let moving = false;
+
       if (kbd.isMoving) {
         // Keyboard wins and cancels any pending click-target.
         this.clickTarget = null;
-        this.localAvatar.body.setVelocity(kbd.vx, kbd.vy);
-        this.localAvatar.direction = resolveInputDirection(input, this.localAvatar.direction);
-        this.localAvatar.isMoving = true;
+        vx = kbd.vx;
+        vy = kbd.vy;
+        moving = true;
       } else if (this.clickTarget) {
+        // Click-to-move — velocity toward target until within threshold.
+        // Direction inference here is ignored; velocity sign drives the
+        // iso bucket below.
         const res = resolveClickTargetVelocity(
           { x: this.localAvatar.x, y: this.localAvatar.y },
           this.clickTarget,
           worldSpritesConfig.avatar.walkSpeed,
           worldSpritesConfig.avatar.clickArrivalThreshold,
-          this.localAvatar.direction,
+          'right',
         );
         if (res.arrived) {
           this.clickTarget = null;
-          this.localAvatar.body.setVelocity(0, 0);
-          this.localAvatar.isMoving = false;
         } else {
-          this.localAvatar.body.setVelocity(res.vx, res.vy);
-          this.localAvatar.direction = res.direction;
-          this.localAvatar.isMoving = true;
+          vx = res.vx;
+          vy = res.vy;
+          moving = true;
         }
-      } else {
-        this.localAvatar.body.setVelocity(0, 0);
-        this.localAvatar.isMoving = false;
       }
+
+      this.localAvatar.body.setVelocity(vx, vy);
+      this.localAvatar.isMoving = moving;
+      this.localAvatar.direction = velocityToIsoDirection(
+        vx,
+        vy,
+        this.localAvatar.direction,
+      );
+
+      // Play the right sprite animation. With only idle.png loaded for now,
+      // run requests fall back to idle inside LocalAvatar.playAnim().
+      this.localAvatar.playAnim(
+        moving ? 'run' : 'idle',
+        this.localAvatar.direction,
+      );
 
       this.localAvatar.syncAttachments();
     }

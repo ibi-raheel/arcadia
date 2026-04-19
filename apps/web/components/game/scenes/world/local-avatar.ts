@@ -1,59 +1,85 @@
-// The local member's avatar — Phase 1 Rectangle placeholder with a display
-// name text above and a level badge below. Visual is a single Rectangle
-// primitive (colour = AVATAR_COLORS[avatarId]) with an Arcade Physics body
-// sized from sprites.config.bodyOffset.
+// The local member's avatar. Two render paths:
 //
-// Owns its `direction` + `isMoving` state (set by Steps 13–16); exposes `y`
-// / `height` so WorldScene's y-sort registry can depth-sort it against
-// buildings each frame.
+//   1. Spritesheet (preferred) — if an avatar sheet is registered in
+//      AVATAR_SHEETS and BootScene loaded it, instantiates a Phaser Sprite
+//      and plays the matching iso-direction animation each frame via
+//      `playAnim(action, direction)`.
+//   2. Rectangle placeholder (fallback) — for avatars with no sheet yet.
+//      Visible as a coloured box; state (direction/isMoving) still tracked.
 //
-// When real atlases arrive this module becomes `Rectangle` → `Sprite(atlas)`
-// and binds walk/idle frame sets to `isMoving`; everything else stays.
+// Either path participates in y-sort via `y` + `height`, and carries a
+// display-name text + Lv 1 badge that follow the body each frame.
 
 import type Phaser from 'phaser';
 
-import { tileCenterToPixel } from '../shared/iso-math';
+import { AVATAR_SHEETS } from '../boot/asset-manifest';
 import { AVATAR_COLORS, type AvatarId } from '../shared/avatar-palette';
-import type { Direction, TileCoord } from '../shared/types';
+import { tileCenterToPixel } from '../shared/iso-math';
+import type { AvatarAction, IsoDirection, TileCoord } from '../shared/types';
+import {
+  animationKey,
+  avatarHasSprite,
+  primaryAvatarTextureKey,
+} from './avatar-animations';
 import { WORLD_TILE_SIZE } from './camera.config';
 import { worldSpritesConfig } from './sprites.config';
 
 export type LocalAvatarOptions = {
   readonly avatarId: AvatarId;
   readonly displayName: string;
-  /** Override spawn tile — used by Step 19 return-to-world to spawn at a
-   *  building's exit tile instead of the default centre. */
   readonly spawnTile?: TileCoord;
 };
 
 const DISPLAY_NAME_MAX = 16;
 
-export class LocalAvatar {
-  readonly rect: Phaser.GameObjects.Rectangle;
-  readonly body: Phaser.Physics.Arcade.Body;
+// Phaser's Rectangle and Sprite share the surface we need: x, y, height,
+// setDepth, body (via add.existing). This internal alias keeps the physics
+// + positioning code path-agnostic.
+type AvatarBody = Phaser.GameObjects.Rectangle | Phaser.GameObjects.Sprite;
 
+export class LocalAvatar {
+  readonly body: Phaser.Physics.Arcade.Body;
+  readonly avatarId: AvatarId;
+  private readonly gameObject: AvatarBody;
+  private readonly sprite: Phaser.GameObjects.Sprite | null;
   private readonly nameText: Phaser.GameObjects.Text;
   private readonly levelBadge: Phaser.GameObjects.Text;
 
-  private _direction: Direction = 'down';
+  private _direction: IsoDirection = 'se';
   private _isMoving = false;
 
   constructor(scene: Phaser.Scene, options: LocalAvatarOptions) {
+    this.avatarId = options.avatarId;
     const cfg = worldSpritesConfig.avatar;
     const spawnTile = options.spawnTile ?? cfg.spawnTile;
     const spawnPx = tileCenterToPixel(spawnTile, WORLD_TILE_SIZE);
-    const color = AVATAR_COLORS[options.avatarId];
 
-    this.rect = scene.add.rectangle(spawnPx.x, spawnPx.y, cfg.size.width, cfg.size.height, color);
-    this.rect.setStrokeStyle(2, 0x000000, 0.5);
+    const textureKey = avatarHasSprite(scene, options.avatarId)
+      ? primaryAvatarTextureKey(scene, options.avatarId)
+      : null;
 
-    scene.physics.add.existing(this.rect);
-    this.body = this.rect.body as Phaser.Physics.Arcade.Body;
+    if (textureKey) {
+      const s = scene.add.sprite(spawnPx.x, spawnPx.y, textureKey, 0);
+      s.setDisplaySize(cfg.size.width, cfg.size.height);
+      this.gameObject = s;
+      this.sprite = s;
+    } else {
+      const r = scene.add.rectangle(
+        spawnPx.x,
+        spawnPx.y,
+        cfg.size.width,
+        cfg.size.height,
+        AVATAR_COLORS[options.avatarId],
+      );
+      r.setStrokeStyle(2, 0x000000, 0.5);
+      this.gameObject = r;
+      this.sprite = null;
+    }
+
+    scene.physics.add.existing(this.gameObject);
+    this.body = this.gameObject.body as Phaser.Physics.Arcade.Body;
     this.body.setCollideWorldBounds(true);
     this.body.setSize(cfg.bodyOffset.width, cfg.bodyOffset.height);
-    // Phaser's setOffset is relative to the sprite's top-left — for a
-    // centred Rectangle the origin is (0.5, 0.5), so top-left is
-    // (x - width/2, y - height/2). Offsets are taken from that.
     this.body.setOffset(cfg.bodyOffset.x, cfg.bodyOffset.y);
 
     const displayName = options.displayName.slice(0, DISPLAY_NAME_MAX);
@@ -78,23 +104,27 @@ export class LocalAvatar {
       .setOrigin(0.5, 0);
   }
 
+  get rect(): AvatarBody {
+    return this.gameObject;
+  }
+
   get x(): number {
-    return this.rect.x;
+    return this.gameObject.x;
   }
 
   get y(): number {
-    return this.rect.y;
+    return this.gameObject.y;
   }
 
   get height(): number {
-    return this.rect.height;
+    return this.gameObject.height;
   }
 
-  get direction(): Direction {
+  get direction(): IsoDirection {
     return this._direction;
   }
 
-  set direction(value: Direction) {
+  set direction(value: IsoDirection) {
     this._direction = value;
   }
 
@@ -106,17 +136,44 @@ export class LocalAvatar {
     this._isMoving = value;
   }
 
-  /** Called each frame from WorldScene.update() — keeps name + badge glued to the rect. */
-  syncAttachments(): void {
-    const dy = this.rect.height / 2;
-    this.nameText.setPosition(this.rect.x, this.rect.y - dy - 4);
-    this.levelBadge.setPosition(this.rect.x, this.rect.y + dy + 4);
+  /**
+   * Plays the animation matching the current (action, direction) pair. If
+   * the requested clip isn't registered (e.g. `run.png` hasn't been authored
+   * yet), falls back to the idle clip in the same direction. No-op when
+   * running in Rectangle-placeholder mode.
+   */
+  playAnim(action: AvatarAction, direction: IsoDirection): void {
+    if (!this.sprite) return;
+
+    const scene = this.sprite.scene;
+    const requested = animationKey(this.avatarId, action, direction);
+
+    if (scene.anims.exists(requested)) {
+      this.sprite.anims.play(requested, true);
+      return;
+    }
+
+    const idleFallback = animationKey(this.avatarId, 'idle', direction);
+    if (scene.anims.exists(idleFallback)) {
+      this.sprite.anims.play(idleFallback, true);
+    }
   }
 
-  /** Depth assignment — WorldScene y-sort calls this each frame. Also depths the attachments. */
+  /** Called each frame from WorldScene.update() — keeps name + badge glued to the body. */
+  syncAttachments(): void {
+    const cfgSize = worldSpritesConfig.avatar.size;
+    const dy = cfgSize.height / 2;
+    this.nameText.setPosition(this.gameObject.x, this.gameObject.y - dy - 4);
+    this.levelBadge.setPosition(this.gameObject.x, this.gameObject.y + dy + 4);
+  }
+
+  /** Depth assignment — WorldScene y-sort calls this each frame. */
   setDepth(depth: number): void {
-    this.rect.setDepth(depth);
+    this.gameObject.setDepth(depth);
     this.nameText.setDepth(depth + 0.1);
     this.levelBadge.setDepth(depth + 0.1);
   }
 }
+
+// Re-export so WorldScene's y-sort type doesn't break.
+export { AVATAR_SHEETS };
