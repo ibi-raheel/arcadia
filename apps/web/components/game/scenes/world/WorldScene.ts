@@ -4,7 +4,7 @@
 // tweakable values — everything that a human might want to adjust lives in
 // `camera.config.ts`, `sprites.config.ts`, or `layers.config.ts`.
 
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 
 import { BOOT_ASSETS, NEXT_SCENE_KEY_AFTER_BOOT } from '../boot/asset-manifest';
 import { isAvatarId, type AvatarId } from '../shared/avatar-palette';

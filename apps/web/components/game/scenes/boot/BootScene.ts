@@ -6,7 +6,7 @@
 // No camera, no sprite logic, no configs. See scenes/boot/CLAUDE.md and
 // ADR 0004 for the convention.
 
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 
 import {
   AVATAR_SHEETS,

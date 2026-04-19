@@ -8,7 +8,7 @@
 
 'use client';
 
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
