@@ -21,9 +21,7 @@ console.log(
 );
 
 if (!SUPABASE_URL) {
-  throw new Error(
-    'supabase-admin: neither SUPABASE_URL nor NEXT_PUBLIC_SUPABASE_URL is set',
-  );
+  throw new Error('supabase-admin: neither SUPABASE_URL nor NEXT_PUBLIC_SUPABASE_URL is set');
 }
 if (!/^https?:\/\//i.test(SUPABASE_URL)) {
   throw new Error(
