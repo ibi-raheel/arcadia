@@ -357,7 +357,7 @@ Post-"Phase 1 code complete" work done the same night. Branch `phase-01-code-com
 **Still pending before formal Phase 1 exit:**
 
 - Deploy this branch to Vercel preview + run the end-to-end walk-through on the deployed URL.
-- 60 FPS measurement on Chrome 6× CPU throttle.
+- ~~60 FPS measurement on Chrome 6× CPU throttle.~~ **Deferred (user decision 2026-04-19)** — re-measure after real art fully lands; placeholder Rectangles + minimal tileset make this measurement not load-bearing for Phase 1 exit. Target phase for the real measurement: Phase 5 polish (pre-Loom) or when the world redesign + real assets land, whichever is first.
 - Phase 0 carryovers (still open): FPS spike run + optional Google OAuth.
 
 ---

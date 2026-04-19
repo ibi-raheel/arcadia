@@ -122,6 +122,17 @@ Arcadia/
 | Understand MVP scope | `docs/mvp` | root |
 | Touch the canonical PRD / TAD / phase-plan (rare — they're the contract) | `docs/mvp` | root |
 
+### Art ingestion (world design — avatars, tilesets, maps)
+
+| You want to… | cd to | Auto-loads |
+|---|---|---|
+| Drop + crop + register a new avatar spritesheet | `apps/web/public` | root + public (art workstation) |
+| Swap placeholder tileset for real tile art | `apps/web/public` | root + public |
+| Redesign / edit `world.tmj` | `apps/web/public` | root + public |
+| Tweak avatar placeholder color or display name | `apps/web/components/game/scenes/shared` | root + game + shared |
+
+The `apps/web/public/CLAUDE.md` workstation has the full ingestion workflows + commands cheat sheet.
+
 ### Ops
 
 | You want to… | cd to | Auto-loads |
