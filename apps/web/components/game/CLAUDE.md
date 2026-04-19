@@ -17,7 +17,7 @@ Art (PNGs, atlases, tilemaps) stays central in `apps/web/public/{avatars,tileset
 
 ## World rendering model
 
-- **Tilemap** — 30×30 isometric map (Tiled `orientation: "isometric"`), 64×32 (2:1) AoE-flat diamond tiles. `world.tmj` layers: `ground`, `collision`, `overlay`. Rendered in `WorldScene` via Phaser's built-in iso tilemap loader.
+- **Tilemap** — 30×30 isometric map (Tiled `orientation: "isometric"`), 64×32 (2:1) AoE-flat diamond map grid; source tiles are 64×64 with the extra 32px of height rendering above each cell for the cliff/elevation look of the current pixel-art tileset (`public/tilesets/world.png`, 11×11 grid of 64×64 tiles). `world.tmj` layers: `ground` (grass + dirt paths), `collision` (rock walls + building footprints), `overlay` (short decor — flowers, small bushes). Rendered in `WorldScene` via Phaser's built-in iso tilemap loader.
 - **Camera** — screen-space follow with lerp + deadzone. Movement is screen-space (WASD/arrows/click go straight up/down/left/right regardless of iso projection).
 - **Avatar** — 64×64 frame. Rendered as a Phaser `Sprite` if a spritesheet for the member's `avatar_id` is registered in `AVATAR_SHEETS`, otherwise as a colored `Rectangle` placeholder.
 
@@ -33,7 +33,7 @@ Drop a new sheet file, add an entry to `AVATAR_SHEETS`, and the animations regis
 
 ## Phase 1 scenes (shipping now)
 
-- `scenes/boot/` — BootScene. Preloads tilemap + placeholder tileset + every declared avatar spritesheet. Progress events forward to the React loading screen.
+- `scenes/boot/` — BootScene. Preloads tilemap + `world.png` tileset + every declared avatar spritesheet. Progress events forward to the React loading screen.
 - `scenes/world/` — WorldScene. Outdoor isometric world; owns tilemap rendering, camera follow, collision, y-sort registry, avatar lifecycle, input (WASD + arrows + click + space), building entrance zones, fade transitions to building shells.
 - `scenes/shared/` — cross-scene helpers. `iso-math.ts` (tile↔pixel projection), `y-sort.ts` (depth from y-anchor), `avatar-palette.ts` (8 stable avatar IDs + colors + names), `types.ts` (cross-scene unions).
 
@@ -67,5 +67,5 @@ Drop a new sheet file, add an entry to `AVATAR_SHEETS`, and the animations regis
   ```
   Not a code bug — a known Next 14 dev-mode fragility. Production builds don't hit it. If it keeps recurring, consider `next dev --turbo` (Turbopack is more resilient to this class of issue).
 - **`Attempted import error: 'phaser' does not contain a default export`** — you replaced a namespace import with a default one somewhere. Phaser's ESM build exposes named exports only. Grep for `import Phaser from` and change to `import * as Phaser from`.
-- **`world.tmj` or `placeholder.png` returning 307** — middleware is intercepting. Confirm the static-asset extension is in the matcher regex at `apps/web/middleware.ts` (current list: `svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|tmj|json`).
+- **`world.tmj` or `world.png` returning 307** — middleware is intercepting. Confirm the static-asset extension is in the matcher regex at `apps/web/middleware.ts` (current list: `svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|tmj|json`).
 - **Avatar renders as a colored Rectangle even though `<id>/idle.png` exists** — the sheet isn't registered. Check `scenes/boot/asset-manifest.ts` → `AVATAR_SHEETS[<id>]` has an entry matching the files on disk.

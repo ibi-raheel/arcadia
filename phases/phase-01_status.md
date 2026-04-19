@@ -1,5 +1,8 @@
 # Phase 1 — Status
 
+**✅ Phase 1 shipped 2026-04-19.** Branch `phase-01-code-complete` squash-merged to `main` as commit `43b4297`; prod deployed to https://arcadia-web-swart.vercel.app. World design + art polish continues post-exit (see "Post-merge art work" section at the bottom).
+
+
 Source plan: `phase-01_plan.md`. Status entries are chronological, newest at the top.
 
 ---
@@ -356,9 +359,27 @@ Post-"Phase 1 code complete" work done the same night. Branch `phase-01-code-com
 
 **Still pending before formal Phase 1 exit:**
 
-- Deploy this branch to Vercel preview + run the end-to-end walk-through on the deployed URL.
+- ~~Deploy this branch to Vercel preview + run the end-to-end walk-through on the deployed URL.~~ ✅ **Done 2026-04-19** — PR #1 merged to main; prod deploy live.
 - ~~60 FPS measurement on Chrome 6× CPU throttle.~~ **Deferred (user decision 2026-04-19)** — re-measure after real art fully lands; placeholder Rectangles + minimal tileset make this measurement not load-bearing for Phase 1 exit. Target phase for the real measurement: Phase 5 polish (pre-Loom) or when the world redesign + real assets land, whichever is first.
 - Phase 0 carryovers (still open): FPS spike run + optional Google OAuth.
+
+---
+
+## Post-merge art work (2026-04-19)
+
+Phase 1 exited on a branch that used Rectangle + 3-tile-placeholder visuals. Same-day polish work landed on `main` ingesting real art:
+
+- **Real iso tileset** — user provided a 115-tile iso pack (32×32 source with 2:1 flat diamond content per tile — AoE convention). Upscaled 2× via new `scripts/upscale-png.mjs` → `apps/web/public/tilesets/world.png` (704×704, 11×11 grid of 64×64 tiles). Placeholder tileset removed.
+- **Programmatic world regeneration** — `scripts/generate-world-tmj.mjs` paints the real tileset over the existing tilemap layout: seeded-random grass variants across the 30×30 ground, dirt path corridors, rock-ring collision + rock-filled building footprints, sparse flowers + bushes on the overlay (8% density). Reproducible via mulberry32; bump the seed for a fresh layout.
+- **Tileset config wire-up** — `BOOT_ASSETS.tileset` now points at `world.png`; `WorldScene.addTilesetImage` registers the tileset at source dims 64×64 on the 64×32 map grid (extra 32px of source height renders above each cell for the grass-on-dirt "cake slice" elevation look).
+- **Depth reorder** — `layers.config.ts` overlay depth moved from 2000 → 500 so short decorations (flowers, bushes) render UNDER the avatar. Tall decorations (trees, tall rocks in rows 5–6 of the tileset) skipped for now — they require individually y-sorted Sprites, not tilemap tiles. Follow-up polish item.
+- **Phaser pixel-art mode** — `GameWorld.tsx` Phaser config gains `pixelArt: true` so the upscaled art stays crisp at any zoom (disables bilinear filter globally).
+- **Tiled GUI quickstart** — new `docs/tiled-gui-quickstart.md` walks the user through opening `world.tmj` in the Tiled app, painting all three layers, and hot-reloading. Tiled-install + save workflow + common edits + anti-patterns.
+- **Routing refresh** — root `CLAUDE.md` gains a "Design the world map by hand in Tiled GUI" row. `apps/web/public/CLAUDE.md` (art workstation) + scoping guide + per-scene CLAUDE.md files updated to reference `world.png` instead of `placeholder.png`.
+- **Avatar jump wiring + cardinal direction refactor** (also same-session) — `LocalAvatar.triggerJump()` + spacebar input + one-shot animation + `isJumping` state guard. `IsoDirection` renamed to `FacingDirection` (cardinal n/e/s/w matching the user's sprite authoring). `velocityToFacingDirection` with dominant-axis bucketer.
+- **Dev-mode gotchas documented** — game-level CLAUDE.md's "Known dev-mode gotchas" section covers Next 14 webpack manifest desync (the `.next/` wipe recipe), Phaser namespace-import rule, middleware matcher, and silent-fallback rendering for missing avatar sheets.
+
+All on main. Next focus: user hand-designs the world map in Tiled; real building facade sprites; fill in avatars 02–08 as art lands.
 
 ---
 
