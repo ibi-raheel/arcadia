@@ -2754,17 +2754,17 @@
       "firstgid": 1,
       "image": "../tilesets/placeholder.png",
       "imageheight": 32,
-      "imagewidth": 96,
+      "imagewidth": 192,
       "margin": 0,
       "name": "placeholder",
       "spacing": 0,
       "tilecount": 3,
       "tileheight": 32,
-      "tilewidth": 32,
+      "tilewidth": 64,
       "columns": 3
     }
   ],
-  "tilewidth": 32,
+  "tilewidth": 64,
   "type": "map",
   "version": "1.10",
   "width": 30

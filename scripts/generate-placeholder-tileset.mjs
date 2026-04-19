@@ -1,8 +1,8 @@
-// Generates apps/web/public/tilesets/placeholder.png — a 96×32 RGBA PNG with
-// three 32×32 diamond-shaped iso tiles (grass, path, wall) used by Phase 1
-// placeholder rendering. Each tile is a rotated-square diamond filling its
-// 32×32 bounding box — the four triangular corners are transparent so tiles
-// tessellate cleanly when placed in iso orientation.
+// Generates apps/web/public/tilesets/placeholder.png — a 192×32 RGBA PNG with
+// three 64×32 diamond-shaped iso tiles (grass, path, wall) used by Phase 1
+// placeholder rendering. Each tile is a 2:1 flat diamond (AoE-authentic
+// isometric angle) filling its 64×32 bounding box — the four triangular
+// corners are transparent so tiles tessellate cleanly.
 //
 // Pure-Node; no third-party deps. PNG encoded manually using zlib.deflateSync
 // and zlib.crc32 (available on Node 22.2+ / 20.15+).
@@ -19,7 +19,7 @@ import { Buffer } from 'node:buffer';
 
 const OUT = 'apps/web/public/tilesets/placeholder.png';
 
-const TILE_W = 32;
+const TILE_W = 64;
 const TILE_H = 32;
 const TILES = [
   { name: 'grass', rgb: [92, 168, 98] },
