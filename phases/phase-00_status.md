@@ -87,18 +87,21 @@ Source plan: `phase-00_plan.md`. Status entries are chronological, newest at the
 | Next.js auth-gate middleware in place | ✅ Step 16 |
 | Cross-member leakage Vitest suite green against `arcadia-test` | ⏳ pending user: add `.env.test.local` + GitHub secrets, confirm green |
 | CI on `main` green (format + lint + typecheck + test + both builds) | ⏳ pending user: verify first workflow run at https://github.com/ibi-raheel/arcadia/actions |
-| Supabase Auth: user can register → signup trigger → login → session persists | ⏳ pending user: end-to-end test on https://arcadia-web-swart.vercel.app/signup (email/password is default-on; verify) |
+| Supabase Auth: user can register → signup trigger → login → session persists | ✅ passed 2026-04-18 end-to-end on https://arcadia-web-swart.vercel.app (after fixing a mis-pasted anon key — Vercel had the arcadia-test anon key against the arcadia production URL; commit `9ca4b4f` triggered the rebuild that picked up the corrected key) |
 | Google OAuth provider enabled | ⏳ pending user: Supabase dashboard → Auth → Providers → Google; add Google Cloud OAuth app credentials |
 | Isometric spike sustains 60 FPS for 60 seconds under 6× CPU throttle | ⏳ pending user: run protocol in `planning/architecture/rendering.md` §4, fill §5 measurement log |
 | Art: colour palette + 1-character style sample | ⏳ pending user: in-house art delivery (end of Phase 0 Week 2 per plan) |
 
-### Phase 0 code is done. Five things pending user action before Phase 0 exits:
+### Phase 0 code is done. Four items pending user action before Phase 0 exits:
 
 1. **Verify first CI run is green** (`/actions` on the repo). Expect RLS suite to skip until secrets are added. Format, lint, typecheck, and builds should all pass immediately.
 2. **Add `TEST_SUPABASE_{URL,ANON_KEY,SERVICE_KEY}` GitHub secrets** per `ops/deploy/github-actions-secrets.md`, then re-run CI. RLS suite should go from 13 skipped → 13 passed.
-3. **End-to-end auth test** on the live Vercel URL: `/signup` → confirmation email → `/login` → verify session persists across a refresh. Supabase MCP can confirm a `memberships` row was created for the new user.
-4. **Run the 60-FPS spike protocol** on the Mac Mini M4 — `rendering.md` §4 has the exact steps, §5 has the measurement log table to fill.
-5. **Enable Google OAuth in Supabase** (if desired for the PRD §4.1 OAuth option — not strictly required if email/password is acceptable for the Loom demo). I can walk through the Google Cloud Console + Supabase dashboard steps when you want.
+3. **Run the 60-FPS spike protocol** on the Mac Mini M4 — `rendering.md` §4 has the exact steps, §5 has the measurement log table to fill.
+4. **Enable Google OAuth in Supabase** (if desired for the PRD §4.1 OAuth option — not strictly required if email/password is acceptable for the Loom demo). I can walk through the Google Cloud Console + Supabase dashboard steps when you want.
+
+### ✅ Completed since the previous status
+
+- E2E auth smoke test passed 2026-04-18. Required fixing the Vercel anon-key env var (arcadia-test key → arcadia production key) + an empty-commit rebuild (`9ca4b4f`) to bake the corrected key into the browser bundle.
 
 ### Open risk carrying into Phase 1
 
