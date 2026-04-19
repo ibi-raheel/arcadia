@@ -16,6 +16,11 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 if (!SUPABASE_URL) {
   throw new Error('supabase-admin: NEXT_PUBLIC_SUPABASE_URL is not set');
 }
+if (!/^https?:\/\//i.test(SUPABASE_URL)) {
+  throw new Error(
+    `supabase-admin: NEXT_PUBLIC_SUPABASE_URL must start with http(s):// — got "${SUPABASE_URL}"`,
+  );
+}
 if (!SUPABASE_SERVICE_KEY) {
   throw new Error('supabase-admin: SUPABASE_SERVICE_KEY is not set');
 }
