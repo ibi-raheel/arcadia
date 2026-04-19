@@ -24,7 +24,7 @@ describe('BootScene asset manifest', () => {
   });
 
   it('declares both Phase 1 assets (tileset + tilemap)', () => {
-    expect(BOOT_ASSETS.tileset.path).toBe('/tilesets/placeholder.png');
+    expect(BOOT_ASSETS.tileset.path).toBe('/tilesets/world.png');
     expect(BOOT_ASSETS.tilemap.path).toBe('/maps/world.tmj');
   });
 

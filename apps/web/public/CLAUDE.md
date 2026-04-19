@@ -13,7 +13,8 @@ public/
 │   │   └── jump.png    (320×256 — 5×4 grid)
 │   ├── avatar-02/ … avatar-08/      ← empty; members render as colored Rectangles until filled
 ├── tilesets/
-│   └── placeholder.png (192×32 — 3 diamond tiles: grass / path / wall)
+│   └── world.png       (704×704 — 11×11 grid of 64×64 iso tiles, 115 filled:
+│                        dirt/grass/bushes/flowers/stumps/rocks/water)
 └── maps/
     └── world.tmj       (30×30 iso tilemap, 64×32 tiles, 3 layers)
 ```
@@ -49,14 +50,24 @@ You have a PNG exported from Aseprite (or similar) on your Desktop. It's probabl
 - Loop behaviour: `idle` and `walk` loop (`repeat: -1`); `jump` is one-shot (`repeat: 0`).
 - If the sheet has extra transparent columns (common Aseprite export), strip them with crop-spritesheet.mjs so the grid is tight.
 
-### Swap the placeholder tileset for real tile art
+### Swap or extend the world tileset
 
-The `.tmj` references `placeholder.png` with 3 tiles (grass / path / wall). When you have real art:
+Current: `tilesets/world.png` is a 2×-upscaled free iso tileset (115 tiles across dirt, grass, bushes, flowers, stumps, rocks, water). Tile semantics live in `../../../scripts/generate-world-tmj.mjs` — GRASS / PATH / BUSH / FLOWER / ROCK arrays index by row.
 
-1. **Match the grid contract.** Real tileset PNG needs to have the same number of tiles in the same order (tile 1 = grass, tile 2 = path, tile 3 = wall). Dimensions can grow (more tiles for decoration) — add them as tiles 4+ and reference via the `overlay` layer in Tiled.
-2. **Drop the real PNG** into `tilesets/` — either replace `placeholder.png` or use a new name and update the `.tmj` tileset entry.
-3. **If adding more tiles**: edit `maps/world.tmj` → `tilesets[0]` — bump `tilecount`, `imagewidth`, `columns` to match.
-4. **Regenerate the placeholder only if needed** with `../../../scripts/generate-placeholder-tileset.mjs` (edits the 3 colors).
+To **swap** with a new pack (different art entirely):
+
+1. Upscale the new pack's spritesheet with `../../../scripts/upscale-png.mjs <input> tilesets/world.png <factor>` (factor chosen so output tiles are 64×64).
+2. Update the tile-semantic arrays in `../../../scripts/generate-world-tmj.mjs` to match the new pack's layout (which indices are grass / path / rock, etc.).
+3. Regenerate `world.tmj` — `node ../../../scripts/generate-world-tmj.mjs`.
+4. If the grid dims differ (not 11×11), update the `tilesets[0]` block: `imagewidth`, `imageheight`, `columns`, `tilecount`.
+
+To **extend** the current pack with more tiles (e.g. new prop variants):
+
+1. Decide which rows you need more of. Add them to the PNG (edit in your tool, re-upscale if necessary).
+2. Update the tile-semantic arrays in the generator.
+3. Regenerate `world.tmj`.
+
+The legacy placeholder generator (`../../../scripts/generate-placeholder-tileset.mjs`) is preserved for reference — not used by the live map any more.
 
 ### Redesign the world map in Tiled
 

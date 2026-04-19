@@ -4,7 +4,7 @@
 // requires DOM globals unavailable under Vitest's default environment).
 //
 // Paths are relative to `apps/web/public/` and served by Next.js at the root
-// URL (e.g. `/tilesets/placeholder.png` → `apps/web/public/tilesets/placeholder.png`).
+// URL (e.g. `/tilesets/world.png` → `apps/web/public/tilesets/world.png`).
 
 export const BOOT_SCENE_KEY = 'BootScene' as const;
 export const NEXT_SCENE_KEY_AFTER_BOOT = 'WorldScene' as const;
@@ -20,8 +20,8 @@ export const PROGRESS_CALLBACK_REGISTRY_KEY = 'onPreloadProgress' as const;
 
 export const BOOT_ASSETS = {
   tileset: {
-    key: 'placeholder-tileset',
-    path: '/tilesets/placeholder.png',
+    key: 'world-tileset',
+    path: '/tilesets/world.png',
   },
   tilemap: {
     key: 'world',

@@ -91,12 +91,11 @@ export class WorldScene extends Phaser.Scene {
 
   create(): void {
     const map = this.make.tilemap({ key: BOOT_ASSETS.tilemap.key });
-    const tileset = map.addTilesetImage(
-      'placeholder',
-      BOOT_ASSETS.tileset.key,
-      WORLD_TILE_SIZE.width,
-      WORLD_TILE_SIZE.height,
-    );
+    // Internal tileset name must match the .tmj's `tilesets[0].name` ("world").
+    // Tile source dimensions are 64×64 (upscaled pixel art); the map itself
+    // walks on a 64×32 iso grid — the extra 32px of source height renders
+    // above each cell, giving the cliff/elevation look the tileset is drawn for.
+    const tileset = map.addTilesetImage('world', BOOT_ASSETS.tileset.key, 64, 64);
 
     if (!tileset) {
       throw new Error(`WorldScene: failed to register tileset for ${BOOT_ASSETS.tilemap.key}`);
