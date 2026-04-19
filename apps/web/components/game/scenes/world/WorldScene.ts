@@ -4,8 +4,10 @@
 // tweakable values — everything that a human might want to adjust lives in
 // `camera.config.ts`, `sprites.config.ts`, or `layers.config.ts`.
 
+import { MSG, type AvatarState } from '@arcadia/shared';
 import * as Phaser from 'phaser';
 
+import type { ColyseusConnection, ColyseusRoom } from '../../net/colyseus-client';
 import { BOOT_ASSETS, NEXT_SCENE_KEY_AFTER_BOOT } from '../boot/asset-manifest';
 import { isAvatarId, type AvatarId } from '../shared/avatar-palette';
 import { tileCenterToPixel } from '../shared/iso-math';
@@ -21,6 +23,9 @@ import {
 } from './input';
 import { worldLayersConfig } from './layers.config';
 import { LocalAvatar } from './local-avatar';
+import { createBadges, httpEndpointFor, type BadgeGroup } from './member-count-badge';
+import { shouldSendMove, type MoveState } from './move-throttle';
+import { RemoteAvatar, snapshotFromState } from './remote-avatar';
 import { worldSpritesConfig } from './sprites.config';
 
 /** Shape of the `member` registry entry written by GameWorld before Phaser boots. */
@@ -45,6 +50,17 @@ export const NAVIGATE_REGISTRY_KEY = 'navigate';
  * GameWorld writes this from the `?from=` query param when present.
  */
 export const SPAWN_FROM_REGISTRY_KEY = 'spawnFrom';
+
+/**
+ * Phase 2 Step 6 — the ColyseusConnection controller GameWorld creates
+ * before mounting Phaser. WorldScene reads this to send MOVE at 20 Hz and
+ * ENTER_BUILDING on transition. The connection is stable across reconnects
+ * (`send` dispatches via the current room internally).
+ */
+export const COLYSEUS_CONNECTION_REGISTRY_KEY = 'colyseus';
+
+// Phase 2 Step 6 — MOVE is throttled to 20 updates/second per TAD §4.3.
+const MOVE_INTERVAL_MS = 50;
 
 // Union of Phaser types that have `y`, `height`, and `setDepth` — building
 // placeholder Rectangles (Step 9) and the local avatar (Step 12) satisfy this.
@@ -84,6 +100,24 @@ export class WorldScene extends Phaser.Scene {
   // Guards re-entry: once a building transition is in flight, further
   // overlap events are ignored so the avatar can't re-trigger fadeOut.
   private isTransitioning = false;
+
+  // Step 6 multiplayer wiring. Connection handed off from GameWorld via the
+  // registry. Dedupe-state prevents 20Hz MOVE spam when the avatar is idle;
+  // only send when (x, y, direction, isMoving) has changed AND >= 50ms since
+  // the last outbound message. See move-throttle.ts for the pure predicate.
+  private colyseus?: ColyseusConnection;
+  private lastMoveSentAt = 0;
+  private lastMoveState: MoveState | null = null;
+
+  // Step 8 remote avatars. Keyed by Colyseus sessionId; the local member's
+  // own sessionId is skipped so we don't render ourselves twice. Subscribes
+  // re-fire on every reconnect — old entries are torn down first.
+  private readonly remoteAvatars = new Map<string, RemoteAvatar>();
+  private unsubscribeConnected: (() => void) | null = null;
+
+  // Step 13 member-count badges — one floating label above each building
+  // entrance, polled from the game-server's /rooms/:name/count endpoint.
+  private badges?: BadgeGroup;
 
   constructor() {
     super({ key: NEXT_SCENE_KEY_AFTER_BOOT });
@@ -129,6 +163,125 @@ export class WorldScene extends Phaser.Scene {
     this.createLocalAvatar();
     this.wireKeyboardInput();
     this.wirePointerInput();
+
+    this.colyseus = this.registry.get(COLYSEUS_CONNECTION_REGISTRY_KEY) as
+      | ColyseusConnection
+      | undefined;
+
+    if (this.colyseus) {
+      this.unsubscribeConnected = this.colyseus.subscribeConnected((room) => {
+        void this.wireRemoteAvatars(room);
+      });
+    }
+
+    // Clean up on scene teardown (page navigation or unmount).
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.teardownRemoteAvatars());
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => this.teardownRemoteAvatars());
+
+    this.createBadges();
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.badges?.stop());
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => this.badges?.stop());
+  }
+
+  /** Step 13 — build the three member-count badges over building entrances. */
+  private createBadges(): void {
+    const wss = process.env.NEXT_PUBLIC_COLYSEUS_URL;
+    if (!wss) return; // offline dev mode or unconfigured preview
+    const anchors: Record<BuildingName, { x: number; y: number }> = {
+      tavern: tileCenterToPixel(worldSpritesConfig.buildings.tavern.entranceTile, WORLD_TILE_SIZE),
+      academy: tileCenterToPixel(
+        worldSpritesConfig.buildings.academy.entranceTile,
+        WORLD_TILE_SIZE,
+      ),
+      market: tileCenterToPixel(worldSpritesConfig.buildings.market.entranceTile, WORLD_TILE_SIZE),
+    };
+    this.badges = createBadges({
+      scene: this,
+      anchors,
+      httpEndpoint: httpEndpointFor(wss),
+    });
+  }
+
+  /**
+   * Subscribe to `state.avatars` add/remove/change events. Called once on
+   * initial connect and again after every auto-reconnect (the room is a
+   * fresh instance each time). Any existing RemoteAvatars from the prior
+   * room are destroyed first so we don't leak game objects.
+   */
+  private async wireRemoteAvatars(room: ColyseusRoom): Promise<void> {
+    this.teardownRemoteAvatars();
+
+    // Colyseus 4 state-callback proxy — schemas don't carry onAdd / onRemove
+    // in their TS types (runtime-attached by the decoder); the proxy is how
+    // you get typed callbacks. Lazy-imported to stay colocated with the
+    // other colyseus.js imports on the client-only bundle.
+    const { getStateCallbacks } = await import('colyseus.js');
+    const $ = getStateCallbacks(room as unknown as Parameters<typeof getStateCallbacks>[0]);
+
+    const avatarsProxy = $(room.state).avatars;
+
+    // `immediate: true` fires onAdd for every currently-present avatar so we
+    // don't need a separate seed pass.
+    avatarsProxy.onAdd((state: AvatarState, sessionId: string) => {
+      this.addRemoteAvatar(sessionId, state, room.sessionId, $);
+    }, true);
+
+    avatarsProxy.onRemove((_state: AvatarState, sessionId: string) => {
+      this.removeRemoteAvatar(sessionId);
+    });
+  }
+
+  private addRemoteAvatar(
+    sessionId: string,
+    state: AvatarState,
+    selfSessionId: string,
+    $: (instance: unknown) => { onChange(cb: () => void): () => void },
+  ): void {
+    if (sessionId === selfSessionId) return;
+    if (this.remoteAvatars.has(sessionId)) return;
+
+    const snapshot = snapshotFromState(state);
+    if (!snapshot) {
+      console.warn(`WorldScene: remote peer ${sessionId} has invalid avatarId "${state.avatarId}"`);
+      return;
+    }
+
+    const remote = new RemoteAvatar(this, snapshot);
+    this.remoteAvatars.set(sessionId, remote);
+    this.registerYSortable(remote);
+
+    // Patch-level subscription via the callback proxy — fires on every
+    // field change of this AvatarState. We re-project the full snapshot
+    // onto the RemoteAvatar rather than branch per field.
+    $(state).onChange(() => {
+      remote.applyPatch(state);
+    });
+  }
+
+  private removeRemoteAvatar(sessionId: string): void {
+    const remote = this.remoteAvatars.get(sessionId);
+    if (!remote) return;
+    this.unregisterYSortable(remote);
+    remote.destroy();
+    this.remoteAvatars.delete(sessionId);
+  }
+
+  private teardownRemoteAvatars(): void {
+    for (const [, remote] of this.remoteAvatars) {
+      this.unregisterYSortable(remote);
+      remote.destroy();
+    }
+    this.remoteAvatars.clear();
+
+    if (this.unsubscribeConnected) {
+      this.unsubscribeConnected();
+      this.unsubscribeConnected = null;
+    }
+  }
+
+  private unregisterYSortable(obj: YSortableGameObject): void {
+    const idx = this.ySortables.indexOf(obj);
+    if (idx >= 0) this.ySortables.splice(idx, 1);
   }
 
   /**
@@ -294,6 +447,10 @@ export class WorldScene extends Phaser.Scene {
     }
     this.clickTarget = null;
 
+    // Notify the server before the WS drops on navigation — gives Phase 4
+    // analytics a clean ENTER_BUILDING signal. Server logs only in Phase 2.
+    this.colyseus?.send(MSG.ENTER_BUILDING, { building: name });
+
     this.cameras.main.fadeOut(worldCameraConfig.fadeOutMs, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       const navigate = this.registry.get(NAVIGATE_REGISTRY_KEY) as NavigateFn | undefined;
@@ -301,7 +458,37 @@ export class WorldScene extends Phaser.Scene {
     });
   }
 
-  public override update(): void {
+  /**
+   * Phase 2 Step 6 — send MOVE at most every MOVE_INTERVAL_MS (20 Hz) and
+   * only when any of (x, y, direction, isMoving) has changed since the
+   * last outbound message. Skips cleanly when no connection is available
+   * (test harness, disconnected state, etc.).
+   */
+  private sendMoveIfChanged(now: number): void {
+    if (!this.colyseus || !this.localAvatar) return;
+
+    const current: MoveState = {
+      x: this.localAvatar.x,
+      y: this.localAvatar.y,
+      direction: this.localAvatar.direction,
+      isMoving: this.localAvatar.isMoving,
+    };
+
+    if (!shouldSendMove(current, this.lastMoveState, this.lastMoveSentAt, now, MOVE_INTERVAL_MS)) {
+      return;
+    }
+
+    this.colyseus.send(MSG.MOVE, current);
+    this.lastMoveSentAt = now;
+    this.lastMoveState = current;
+  }
+
+  public override update(_time: number, deltaMs: number): void {
+    const dtSec = deltaMs / 1000;
+    for (const remote of this.remoteAvatars.values()) {
+      remote.tick(dtSec);
+    }
+
     if (this.localAvatar) {
       const input = this.readInputState();
       const kbd = resolveInputVelocity(input, worldSpritesConfig.avatar.walkSpeed);
@@ -325,7 +512,7 @@ export class WorldScene extends Phaser.Scene {
           this.clickTarget,
           worldSpritesConfig.avatar.walkSpeed,
           worldSpritesConfig.avatar.clickArrivalThreshold,
-          'right',
+          'e',
         );
         if (res.arrived) {
           this.clickTarget = null;
@@ -358,6 +545,8 @@ export class WorldScene extends Phaser.Scene {
       }
 
       this.localAvatar.syncAttachments();
+
+      this.sendMoveIfChanged(this.time.now);
     }
 
     const depthBase = worldLayersConfig.depth.dynamic;

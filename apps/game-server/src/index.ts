@@ -1,6 +1,6 @@
 import { createServer } from 'http';
-import express from 'express';
-import { Server } from 'colyseus';
+import express, { type Request, type Response } from 'express';
+import { matchMaker, Server } from 'colyseus';
 import { WebSocketTransport } from '@colyseus/ws-transport';
 import { RedisPresence } from '@colyseus/redis-presence';
 import { RedisDriver } from '@colyseus/redis-driver';
@@ -31,6 +31,35 @@ app.get('/health', (_req, res) => {
     time: new Date().toISOString(),
     redis: REDIS_URL ? 'configured' : 'not-configured',
   });
+});
+
+// Phase 2 Step 13 — occupancy poll endpoint for the world's member-count
+// badge. Unauthenticated; returns only a scalar client count per room name.
+// Known rooms allow-listed so random names don't trigger matchMaker work.
+const ROOM_NAMES = new Set(['world-realm1', 'tavern-realm1']);
+app.get('/rooms/:name/count', async (req: Request, res: Response) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  const name = req.params.name;
+  if (!name || !ROOM_NAMES.has(name)) {
+    res.status(404).json({ error: 'unknown room' });
+    return;
+  }
+  try {
+    const rooms = await matchMaker.query({ name });
+    const count = rooms.reduce((sum, r) => sum + (r.clients ?? 0), 0);
+    res.json({ name, count });
+  } catch (err) {
+    console.error(`[rooms/${name}/count] query failed:`, err);
+    res.status(500).json({ error: 'query failed' });
+  }
+});
+
+// CORS preflight for the count endpoint — browsers hit this from the Vercel
+// origin when the Phaser client polls across origins.
+app.options('/rooms/:name/count', (_req: Request, res: Response) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.status(204).end();
 });
 
 // Colyseus monitor (dev-only helper; gate behind an env flag in prod).
