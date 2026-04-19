@@ -32,6 +32,21 @@ export const AVATAR_COLORS: Readonly<Record<AvatarId, number>> = {
   'avatar-08': 0xec4899, // pink-500
 };
 
+// Human-readable character names surfaced in the avatar picker UI. Stable
+// `avatar-0N` IDs stay as the DB key in `memberships.avatar_id`; these are
+// purely the display labels. Avatar-01 = the knight sprite the user supplied;
+// the rest are placeholder fantasy names until their art lands.
+export const AVATAR_NAMES: Readonly<Record<AvatarId, string>> = {
+  'avatar-01': 'Knight',
+  'avatar-02': 'Rogue',
+  'avatar-03': 'Mage',
+  'avatar-04': 'Ranger',
+  'avatar-05': 'Healer',
+  'avatar-06': 'Bard',
+  'avatar-07': 'Paladin',
+  'avatar-08': 'Scout',
+};
+
 export function isAvatarId(value: string): value is AvatarId {
   return (AVATAR_IDS as readonly string[]).includes(value);
 }

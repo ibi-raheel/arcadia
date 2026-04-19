@@ -71,6 +71,7 @@ export class WorldScene extends Phaser.Scene {
     S: Phaser.Input.Keyboard.Key;
     D: Phaser.Input.Keyboard.Key;
   };
+  private spaceKey?: Phaser.Input.Keyboard.Key;
 
   // Click-to-move target in world space. Cleared on arrival, on keyboard
   // input, or when the avatar is re-spawned.
@@ -159,6 +160,12 @@ export class WorldScene extends Phaser.Scene {
       S: Phaser.Input.Keyboard.Key;
       D: Phaser.Input.Keyboard.Key;
     };
+    // Spacebar → one-shot jump. addCapture prevents the browser from
+    // page-scrolling when the canvas has focus.
+    this.input.keyboard.addCapture('SPACE');
+    this.spaceKey = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.SPACE,
+    );
   }
 
   private readInputState(): InputState {
@@ -340,12 +347,25 @@ export class WorldScene extends Phaser.Scene {
         this.localAvatar.direction,
       );
 
-      // Moving → walk, standing → idle. Jump is registered but not yet
-      // triggered by any input (future polish: spacebar → one-shot jump).
-      this.localAvatar.playAnim(
-        moving ? 'walk' : 'idle',
-        this.localAvatar.direction,
-      );
+      // Spacebar → one-shot jump. JustDown fires only on the key-press
+      // transition, so holding space doesn't restart the jump mid-frame.
+      if (
+        this.spaceKey &&
+        Phaser.Input.Keyboard.JustDown(this.spaceKey) &&
+        !this.localAvatar.isJumping
+      ) {
+        this.localAvatar.triggerJump(this.localAvatar.direction);
+      }
+
+      // Walk when moving, idle when still — but don't stomp on the jump
+      // one-shot; it clears `isJumping` on animationcomplete, after which
+      // walk/idle resumes next frame.
+      if (!this.localAvatar.isJumping) {
+        this.localAvatar.playAnim(
+          moving ? 'walk' : 'idle',
+          this.localAvatar.direction,
+        );
+      }
 
       this.localAvatar.syncAttachments();
     }

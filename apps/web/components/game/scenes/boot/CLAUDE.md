@@ -14,10 +14,9 @@ No camera/sprites/layers configs (ADR 0004 canonical three) — BootScene has no
 
 ## Assets loaded (Phase 1)
 
-- `public/tilesets/placeholder.png` — 2-tile placeholder (grass + path)
-- `public/maps/world.tmj` — Tiled tilemap JSON
-
-No avatar atlases in Phase 1 (placeholders are runtime Rectangles). Real atlases land as a post-Phase-1 polish swap.
+- `public/tilesets/placeholder.png` — 3-tile (grass / path / wall) diamond-clipped tileset for the iso tilemap.
+- `public/maps/world.tmj` — Tiled isometric tilemap JSON (30×30, 64×32 tiles).
+- Every avatar spritesheet declared in `AVATAR_SHEETS` (see `asset-manifest.ts`). Today: `avatar-01` idle / walk / jump. Missing sheets are skipped — the corresponding avatar renders as a `Rectangle` placeholder in LocalAvatar.
 
 ## Synced with
 

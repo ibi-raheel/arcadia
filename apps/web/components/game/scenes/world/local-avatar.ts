@@ -47,6 +47,7 @@ export class LocalAvatar {
 
   private _direction: FacingDirection = 's';
   private _isMoving = false;
+  private _isJumping = false;
 
   constructor(scene: Phaser.Scene, options: LocalAvatarOptions) {
     this.avatarId = options.avatarId;
@@ -136,11 +137,16 @@ export class LocalAvatar {
     this._isMoving = value;
   }
 
+  /** True between triggerJump() and the jump animation's ANIMATION_COMPLETE. */
+  get isJumping(): boolean {
+    return this._isJumping;
+  }
+
   /**
    * Plays the animation matching the current (action, direction) pair. If
-   * the requested clip isn't registered (e.g. `run.png` hasn't been authored
-   * yet), falls back to the idle clip in the same direction. No-op when
-   * running in Rectangle-placeholder mode.
+   * the requested clip isn't registered (e.g. the spritesheet hasn't been
+   * authored yet), falls back to the idle clip in the same direction.
+   * No-op when running in Rectangle-placeholder mode.
    */
   playAnim(action: AvatarAction, direction: FacingDirection): void {
     if (!this.sprite) return;
@@ -157,6 +163,28 @@ export class LocalAvatar {
     if (scene.anims.exists(idleFallback)) {
       this.sprite.anims.play(idleFallback, true);
     }
+  }
+
+  /**
+   * Plays the one-shot jump animation for the given direction. Guards
+   * against re-entry while already jumping. Registers a one-time
+   * 'animationcomplete' listener that clears `_isJumping` so WorldScene's
+   * update() resumes walk/idle on the next frame.
+   *
+   * No-op for Rectangle-placeholder avatars or when the jump sheet is
+   * missing for this avatar.
+   */
+  triggerJump(direction: FacingDirection): void {
+    if (!this.sprite || this._isJumping) return;
+    const scene = this.sprite.scene;
+    const key = animationKey(this.avatarId, 'jump', direction);
+    if (!scene.anims.exists(key)) return;
+
+    this._isJumping = true;
+    this.sprite.once('animationcomplete', () => {
+      this._isJumping = false;
+    });
+    this.sprite.anims.play(key);
   }
 
   /** Called each frame from WorldScene.update() — keeps name + badge glued to the body. */

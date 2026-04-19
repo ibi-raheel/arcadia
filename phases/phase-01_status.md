@@ -332,6 +332,36 @@ Phase 1 code is ready for your review + deploy.
 
 ---
 
+## 2026-04-19 — Iso conversion + sprite pipeline + jump
+
+Post-"Phase 1 code complete" work done the same night. Branch `phase-01-code-complete` now has 7 commits on top of main. The scene renders from an actual-isometric tilemap with user-authored character sprites rather than the placeholder Rectangle + orthogonal grid the plan originally scoped.
+
+**Landed:**
+
+- **True iso tilemap (commit `bc736df`).** `world.tmj` `orientation: "isometric"`; `iso-math.ts` rewritten for `screenX = (tX - tY) * TW/2`, `screenY = (tX + tY) * TH/2`; `camera.config` bounds derived from the iso diamond extent. Placeholder tileset regenerated as diamond-clipped tiles.
+- **2:1 AoE flat-diamond tiles (commit `c626310`).** Initial iso pass used 32×32 (square rotated 45° — looked top-down). Switched to 64×32 (AoE-authentic ~30° pitch). Zoom reset to 1.0; camera bounds + building footprints recomputed.
+- **Avatar spritesheet pipeline (commit `3353e62`).** `AVATAR_SHEETS` registry in `asset-manifest.ts`; BootScene loops and registers every declared sheet; new `avatar-animations.ts` creates one Phaser animation per `(avatar, action, direction)`. LocalAvatar picks Sprite or Rectangle at construction based on whether a sheet is registered — Rectangle-placeholder fallback stays for avatars without art. `scripts/crop-spritesheet.mjs` reusable helper (pngjs devDep) trims padded-column exports from Aseprite.
+- **Phaser namespace import (commit `366b2db`).** `phaser@3.88` ESM build has no default export; dev-mode SWC failed on `import Phaser from 'phaser'`. Switched the 3 value-import files to `import * as Phaser from 'phaser'` — production build was lenient, dev mode is strict.
+- **Cardinal facing + walk + jump sheets (commit `56f1dc8`).** User-supplied sprites use 4 cardinal poses per row (N/W/S/E), not iso diagonals as initially assumed. `IsoDirection` renamed to `FacingDirection`; `velocityToIsoDirection` (quadrant bucketer) → `velocityToFacingDirection` (dominant-axis cardinal bucketer). `AvatarAction` extended from `'idle'|'run'` to `'idle'|'walk'|'jump'`. `AvatarSheet` gains `repeat` so jump plays once (`0`) while idle/walk loop (`-1`). Ingested walk (576×256, 9×4) + jump (320×256, 5×4) sheets for avatar-01.
+- **Spacebar jump (commit pending).** `LocalAvatar.triggerJump(direction)` plays the one-shot jump animation, listens for `animationcomplete`, clears `_isJumping`. WorldScene captures SPACE key (with `addCapture('SPACE')` to stop browser page-scroll), fires on `Phaser.Input.Keyboard.JustDown` so holding space doesn't restart mid-jump, and gates walk/idle playback while jumping.
+- **Character naming (commit pending).** `AVATAR_NAMES` map in `avatar-palette.ts` — avatar-01 → "Knight", others → fantasy placeholder names (Rogue / Mage / Ranger / …). Onboarding picker swatch labels now show the name rather than the raw `avatar-0N` ID.
+- **Middleware matcher (folded into `bc736df`).** Added `tmj|json` to the static-asset exclusion regex so Phaser's tilemap fetch doesn't 307 through `/login`.
+- **All CLAUDE.md files updated** to describe the iso rendering model, the avatar pipeline, cardinal directions, the spacebar jump, and the Phaser namespace-import invariant.
+
+**Verification:** lint + typecheck + Prettier + Vitest (85 passed, 13 RLS skipped = 98 total) + `next build` all green. Dev server runs clean with all three avatar sheets served (idle 128×256, walk 576×256, jump 320×256).
+
+**Live in-browser** on `/world` for avatar-01 users: diamond-tile iso world, knight sprite walks cardinal directions with 12 fps walk cycle, spacebar triggers one-shot jump animation matching the current facing.
+
+**Deps added:** `pngjs` + `@types/pngjs` as devDeps (used only by `scripts/crop-spritesheet.mjs`; no runtime bundle footprint).
+
+**Still pending before formal Phase 1 exit:**
+
+- Deploy this branch to Vercel preview + run the end-to-end walk-through on the deployed URL.
+- 60 FPS measurement on Chrome 6× CPU throttle.
+- Phase 0 carryovers (still open): FPS spike run + optional Google OAuth.
+
+---
+
 ### Phase 1 exit criteria — status
 
 See `phase-01_plan.md` for the full criteria list. Current status (Step 1 only):

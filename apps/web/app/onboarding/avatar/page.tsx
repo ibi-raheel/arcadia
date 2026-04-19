@@ -15,6 +15,7 @@ import { useState } from 'react';
 import {
   AVATAR_COLORS,
   AVATAR_IDS,
+  AVATAR_NAMES,
   type AvatarId,
 } from '@/components/game/scenes/shared/avatar-palette';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -76,7 +77,7 @@ function AvatarPickerForm() {
               style={{ backgroundColor: toCssHex(AVATAR_COLORS[id]) }}
             >
               <span className="rounded bg-black/50 px-1.5 py-0.5 text-[10px] font-medium text-white">
-                {id}
+                {AVATAR_NAMES[id]}
               </span>
             </button>
           );
