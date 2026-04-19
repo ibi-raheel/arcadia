@@ -34,7 +34,7 @@ See `/docs/mvp/tad.md` §2 for full rationale and versions.
 
 - **Web framework:** Next.js 14+ on Vercel
 - **Game engine:** Phaser 3 (3.88+) — orthographic tilemap with 2:1 iso-style sprites; no custom iso renderer
-- **Multiplayer:** Colyseus 0.17+ on Railway (Redis-backed)
+- **Multiplayer:** Colyseus 0.16.x on Railway (Redis-backed) — server + client matched per ADR 0005
 - **Backend / auth / DB / realtime:** Supabase (Postgres + RLS + Auth + Realtime + Storage)
 - **Video delivery:** Cloudflare Stream (signed playback URLs)
 - **UI:** Tailwind CSS 3+

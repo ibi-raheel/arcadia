@@ -2,6 +2,28 @@
 
 Source plan: `phase-02_plan.md`. Status entries are chronological, newest at the top.
 
+**Weeks 6 + 7 shipped to prod 2026-04-19** (PR #2 squash-merged as `ad6cb41`; follow-on deploy-compatibility fixes through `cd77f58`). Prod: two tabs at `https://arcadia-web-swart.vercel.app/world` render each other's avatars in real time; Tavern join/leave works; member-count badge reflects occupancy within 3 s. Small interpolation lag noted ("slight lag though no worries there" — user) — tune in Week 8 polish if it remains visible against real art. Week 8 (chat + reactions + leaderboard + `/security-review`) not yet started.
+
+---
+
+## 2026-04-19 — Weeks 6 + 7 prod — deploy-compatibility saga (lessons captured)
+
+Between PR #2 merge and green prod, hit five incidental failures in sequence. All caught via the "runtime logs first, speculate after" memory rule. Captured here so the next phase doesn't repeat them.
+
+| # | Symptom | Root cause | Fix |
+|---|---|---|---|
+| 1 | Railway boot crash: `Invalid supabaseUrl` | `NEXT_PUBLIC_SUPABASE_URL` had leading ` =` (someone pasted a `KEY=VALUE` line into Railway's value field). supabase-js's URL validator rejected it. | `supabase-admin.ts` now `.trim()`s + strips a leading `=` from both env-var names, and falls back from `NEXT_PUBLIC_SUPABASE_URL` → `SUPABASE_URL` (the `NEXT_PUBLIC_` prefix is a Next.js convention; game-server is not Next). Boot-time env-presence log added so future env misconfigurations surface on the first crash instead of the second. |
+| 2 | Client: `undefined is not an object (evaluating 'e.room.name')` on every `joinOrCreate`; server healthy | `colyseus@0.17.9` server returns a flat seat-reservation `{ name, sessionId, roomId, processId }`; `colyseus.js@0.16.22` client (latest on npm) reads `response.room.name` — nested. Shape changed between majors; no matching 0.17 client published yet. | **ADR 0005** — downgrade entire Colyseus ecosystem to `^0.16.0`. API deltas: `Room<State>` generic unwraps (`Room<RealmRoomState>`, not `Room<{ state: State }>`); `onLeave(client, consented?: boolean)` instead of `(client, code?: number)`. |
+| 3 | Server crash: `Cannot read properties of undefined (reading 'Symbol(Symbol.metadata)')` at `encodeValue` on first state broadcast | Two copies of `@colyseus/schema` resolved — `3.0.76` hoisted (server + client) + `4.0.20` nested under `packages/shared/node_modules/` because `@arcadia/shared` pinned `^4.0.0`. `AvatarState` was decorated by schema 4 (`Symbol.metadata` slot); encoder is schema 3 (legacy metadata map). | Pin `@arcadia/shared` to `@colyseus/schema@^3.0.0`. One hoisted copy. |
+| 4 | Railway `npm ci` failed: `uWebSockets.js@20.49.0 is not in this registry` | `@colyseus/uwebsockets-transport` (peer-installed with `colyseus` 0.16) depends on `uWebSockets.js` from GitHub — the package name has capital letters, disallowed by the npm registry for new registrations. npm normalises `github:user/repo` to `git+ssh://`, which Railway's build container can't resolve (no SSH key). | Root `overrides` pin + hand-edit `package-lock.json` `resolved` URL to `git+https://`. `npm ci` preserves the lockfile verbatim; Railway gets HTTPS. Local `npm install` rewrites it back to SSH — known and documented. |
+| 5 | Server crash (second attempt, same symptom as #3 but with one schema copy) | `tsconfig.base.json` had `useDefineForClassFields: true`. Combined with legacy TS decorators + `@colyseus/schema@3`, field initialisers like `avatars = new MapSchema()` compile to `Object.defineProperty` per-instance, shadowing the prototype-level decorator at runtime → `$childType` never lands on the MapSchema → encoder dereferences undefined on first broadcast. | Override `useDefineForClassFields: false` in `packages/shared/tsconfig.json`. Field init emits as plain constructor assignment; prototype decorator sees the instance. |
+
+**Meta-learning — three changes worth keeping in mind for Phase 3+:**
+
+1. **Compatibility drift between server and published client.** Colyseus-style ecosystems can ship the server ahead of the client; assume the *client* is the ceiling, not the server. Check both sides' npm registry state before pinning upstream packages.
+2. **Decorator-heavy libraries are sensitive to `useDefineForClassFields`.** Any future package we add that uses legacy TS decorators (e.g. `class-validator`, some ORM flavours) needs the same per-package override — not a global one, since Next / Phaser / React code wants modern field semantics.
+3. **Railway-side env input is fragile.** The leading ` =` on a pasted variable isn't user-visible in the dashboard; our sanitisation hedge caught it after one cycle. Apply the same `sanitiseEnv` pattern to any future server-side env lookup that feeds into a validator.
+
 ---
 
 ## 2026-04-19 — Phase 2 kickoff

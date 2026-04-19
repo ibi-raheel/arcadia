@@ -50,7 +50,7 @@ BROWSER CLIENT
 |---|---|---|---|
 | Web framework | Next.js | 14+ | SSR for Market / Academy; API routes for CF Stream + auth; React ecosystem |
 | Game engine | Phaser 3 | 3.88+ | Best browser-native 2D engine; WebGL + Canvas fallback; tilemap + sprite system |
-| Multiplayer | Colyseus | 0.17+ | Room-based WS state sync; TypeScript schema; scales with Redis |
+| Multiplayer | Colyseus | 0.16.x (server + client matched — see ADR 0005) | Room-based WS state sync; TypeScript schema; scales with Redis |
 | Database & auth | Supabase | Latest | Postgres + Auth + Realtime + Storage; RLS for data isolation |
 | UI | Tailwind CSS | 3+ | Utility-first; clean with Next.js / React |
 | Video | Cloudflare Stream | Latest | Adaptive-bitrate HLS; global CDN; signed playback URLs |
