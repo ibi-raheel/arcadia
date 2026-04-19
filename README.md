@@ -34,7 +34,7 @@ Each community (**Realm**) gives members an avatar, a space to gather (**Tavern*
 
 Next.js 14 on Vercel · Phaser 3.88 · Colyseus 0.17 on Railway (Redis) · Supabase (Postgres + RLS + Auth + Realtime + Storage) · Cloudflare Stream · Tailwind 3 · TypeScript 5 · Tiled
 
-Full rationale: [`planning/decisions/2026-04-18_locked-stack.md`](planning/decisions/2026-04-18_locked-stack.md).
+Full rationale: [`planning/decisions/0001_2026-04-18_locked-stack.md`](planning/decisions/0001_2026-04-18_locked-stack.md).
 
 ## Repo layout
 
