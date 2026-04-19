@@ -8,7 +8,14 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "lib": ["ES2022"]
+    "lib": ["ES2022"],
+    // @colyseus/schema@3 uses legacy TS decorators applied to the class
+    // prototype. `useDefineForClassFields: true` would make field
+    // initialisers call Object.defineProperty on each instance, masking
+    // the prototype decorator at runtime and leaving $childType
+    // undefined — encoder crashes on first broadcast with
+    // "Cannot read properties of undefined (reading 'Symbol(Symbol.metadata)')".
+    "useDefineForClassFields": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
