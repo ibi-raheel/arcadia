@@ -7,10 +7,13 @@ Deployable applications. Each immediate subfolder is a standalone service with i
 ## Layout
 
 - `/web` — Next.js 14.2 on Vercel. Owns React UI, all pages and API routes, Phaser canvas mount. Auth-gated via Supabase through `apps/web/middleware.ts`.
-  - `app/` — App Router pages (`/`, `/login`, `/signup`, `/spike`, `/api/health`). All auth-gated routes pass through `middleware.ts` first.
-  - `components/` — React components including `components/game/` for Phaser scenes (loaded via `dynamic(..., { ssr: false })` per TAD §3.2).
+  - `app/` — App Router pages (`/`, `/login`, `/signup`, `/spike`, `/api/health`). Phase 1 adds `/onboarding/avatar`, `/world`, `/tavern`, `/academy`, `/market` and removes `/spike`. All auth-gated routes pass through `middleware.ts` first.
+  - `components/` — React components. `components/game/` owns all Phaser code, loaded via `dynamic(..., { ssr: false })` per TAD §3.2.
+    - **Per-scene folder + TS-config convention** (ADR 0004): each Phaser scene lives in its own folder under `components/game/scenes/<scene>/` with the scene class, typed `camera.config.ts` / `sprites.config.ts` / `layers.config.ts`, colocated `__tests__/`, and a scene-scoped `CLAUDE.md` (≤20 lines). Scene classes import configs and never hardcode tweakable values. Art stays central in `public/{avatars,tilesets,maps}/`.
+    - **Phase 1 scope:** `scenes/boot/`, `scenes/world/`, `scenes/shared/`. Phase 2 Week 7 adds `scenes/tavern/`. Academy and Market are React-only (no Phaser scene ever) per TAD §4.2.
+    - Scoping `claude` into a scene folder (e.g. `cd components/game/scenes/world && claude`) picks up the per-scene `CLAUDE.md` for local-context-only work.
   - `lib/supabase/` — `client.ts` (browser via `@supabase/ssr`), `server.ts` (server component cookies), `admin.ts` (service-role, server-only).
-  - `middleware.ts` — session refresh + auth-gate; public allowlist at the top of the file.
+  - `middleware.ts` — session refresh + auth-gate; public allowlist at the top of the file. Phase 1 extends it with an avatar-picker gate: authed users with `memberships.avatar_id IS NULL` are redirected to `/onboarding/avatar` on any `/world` or `/tavern` request.
   - `supabase/migrations/` — SQL migrations (Phase 0 Step 7, applied to both arcadia + arcadia-test).
   - `tests/` — Vitest integration suites that hit the arcadia-test Supabase project. Env vars in `.env.test.local` (gitignored).
 - `/game-server` — Colyseus 0.17 on Railway. Owns avatar position sync, room presence, `UPDATE_LEVEL` broadcast. Redis-backed when `USE_REDIS=true`; in-memory otherwise (default for single-replica MVP).

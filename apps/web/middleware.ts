@@ -1,6 +1,8 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
+import { decideAvatarGate, pathRequiresAvatarGate } from '@/lib/avatar-gate';
+
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
 // Auth-gate middleware (Phase 0 Step 16, TAD §3.3).
@@ -11,12 +13,11 @@ type CookieToSet = { name: string; value: string; options: CookieOptions };
 // Public paths (no session required):
 //   /                 — landing
 //   /login, /signup   — auth forms
-//   /spike            — Phase 0 Step 19 isometric spike; remove when Phase 1 ships
 //   /api/health       — liveness probe
 //   /api/stream/webhook — Cloudflare Stream webhook (verified by signature, Phase 3)
 //   /_next/*, static assets — handled by the matcher config below
 
-const EXACT_PUBLIC_PATHS = new Set(['/', '/login', '/signup', '/spike']);
+const EXACT_PUBLIC_PATHS = new Set(['/', '/login', '/signup']);
 const PUBLIC_PREFIXES = ['/api/health', '/api/stream/webhook'];
 
 function isPublicPath(pathname: string): boolean {
@@ -73,6 +74,29 @@ export async function middleware(request: NextRequest) {
     dest.pathname = '/login';
     dest.searchParams.set('next', pathname);
     return NextResponse.redirect(dest);
+  }
+
+  // Avatar-picker gate (Phase 1 Step 11). Only the three paths that care
+  // about avatar_id trigger the DB lookup — everything else skips it.
+  if (user && pathRequiresAvatarGate(pathname)) {
+    const { data: membership } = await supabase
+      .from('memberships')
+      .select('avatar_id')
+      .eq('member_id', user.id)
+      .maybeSingle();
+
+    const decision = decideAvatarGate({
+      pathname,
+      hasUser: true,
+      avatarId: membership?.avatar_id ?? null,
+    });
+
+    if (decision.kind === 'redirect') {
+      const dest = request.nextUrl.clone();
+      dest.pathname = decision.to;
+      dest.search = '';
+      return NextResponse.redirect(dest);
+    }
   }
 
   return response;

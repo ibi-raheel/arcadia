@@ -97,6 +97,10 @@ Source plan: `phase-00_plan.md`. Status entries are chronological, newest at the
 1. **Run the 60-FPS spike protocol** on the Mac Mini M4 — `rendering.md` §4 has the exact steps, §5 has the measurement log table to fill.
 2. **Enable Google OAuth in Supabase** (optional for PRD §4.1 — email/password is acceptable for the Loom demo). I can walk through Google Cloud Console + Supabase dashboard steps when you want.
 
+### Phase 1 plan drafted (2026-04-18)
+
+`phases/phase-01_plan.md` is written and pending approval. No Phase 1 execution has started — blocked on Phase 0 exit (items 1–2 above) plus in-house art delivery for Groups 1 + 2 of `docs/art/sprite-requirements.md`. Two new ADRs landed alongside the plan: **ADR 0003** (Phaser 4 + Phaser Editor MCP evaluated and declined) and **ADR 0004** (per-scene folder + TS-config convention for all Phaser code).
+
 ### ✅ Completed since the previous status
 
 - **E2E auth smoke test** (2026-04-18). Required fixing the Vercel anon-key env var (arcadia-test key had been pasted against the arcadia production URL) + an empty-commit rebuild (`9ca4b4f`) to bake the corrected key into the browser bundle.
