@@ -24,6 +24,9 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,yml,yaml}\""
   },
+  "overrides": {
+    "uWebSockets.js": "git+https://github.com/uNetworking/uWebSockets.js.git#v20.49.0"
+  },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
     "@types/node": "^22.10.0",
