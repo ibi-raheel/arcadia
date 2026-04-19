@@ -85,23 +85,22 @@ Source plan: `phase-00_plan.md`. Status entries are chronological, newest at the
 | All three services reachable (`/api/health`, Railway `/health`, Supabase) | ✅ verified 2026-04-18 |
 | Supabase schema + RLS + signup trigger + seed live on both projects | ✅ both `arcadia` and `arcadia-test` |
 | Next.js auth-gate middleware in place | ✅ Step 16 |
-| Cross-member leakage Vitest suite green against `arcadia-test` | ⏳ pending user: add `.env.test.local` + GitHub secrets, confirm green |
-| CI on `main` green (format + lint + typecheck + test + both builds) | ⏳ pending user: verify first workflow run at https://github.com/ibi-raheel/arcadia/actions |
+| Cross-member leakage Vitest suite green against `arcadia-test` | ✅ 13/13 passed in CI run 24617928459 after fixing an RLS infinite-recursion bug the suite surfaced (migration `20260419000001_fix_rls_recursion.sql`, commit `b8cbbd1`) |
+| CI on `main` green (format + lint + typecheck + test + both builds) | ✅ all steps green on the latest rerun — total 35/35 tests |
 | Supabase Auth: user can register → signup trigger → login → session persists | ✅ passed 2026-04-18 end-to-end on https://arcadia-web-swart.vercel.app (after fixing a mis-pasted anon key — Vercel had the arcadia-test anon key against the arcadia production URL; commit `9ca4b4f` triggered the rebuild that picked up the corrected key) |
 | Google OAuth provider enabled | ⏳ pending user: Supabase dashboard → Auth → Providers → Google; add Google Cloud OAuth app credentials |
 | Isometric spike sustains 60 FPS for 60 seconds under 6× CPU throttle | ⏳ pending user: run protocol in `planning/architecture/rendering.md` §4, fill §5 measurement log |
 | Art: colour palette + 1-character style sample | ⏳ pending user: in-house art delivery (end of Phase 0 Week 2 per plan) |
 
-### Phase 0 code is done. Four items pending user action before Phase 0 exits:
+### Phase 0 code is done. Two items pending user action before Phase 0 exits:
 
-1. **Verify first CI run is green** (`/actions` on the repo). Expect RLS suite to skip until secrets are added. Format, lint, typecheck, and builds should all pass immediately.
-2. **Add `TEST_SUPABASE_{URL,ANON_KEY,SERVICE_KEY}` GitHub secrets** per `ops/deploy/github-actions-secrets.md`, then re-run CI. RLS suite should go from 13 skipped → 13 passed.
-3. **Run the 60-FPS spike protocol** on the Mac Mini M4 — `rendering.md` §4 has the exact steps, §5 has the measurement log table to fill.
-4. **Enable Google OAuth in Supabase** (if desired for the PRD §4.1 OAuth option — not strictly required if email/password is acceptable for the Loom demo). I can walk through the Google Cloud Console + Supabase dashboard steps when you want.
+1. **Run the 60-FPS spike protocol** on the Mac Mini M4 — `rendering.md` §4 has the exact steps, §5 has the measurement log table to fill.
+2. **Enable Google OAuth in Supabase** (optional for PRD §4.1 — email/password is acceptable for the Loom demo). I can walk through Google Cloud Console + Supabase dashboard steps when you want.
 
 ### ✅ Completed since the previous status
 
-- E2E auth smoke test passed 2026-04-18. Required fixing the Vercel anon-key env var (arcadia-test key → arcadia production key) + an empty-commit rebuild (`9ca4b4f`) to bake the corrected key into the browser bundle.
+- **E2E auth smoke test** (2026-04-18). Required fixing the Vercel anon-key env var (arcadia-test key had been pasted against the arcadia production URL) + an empty-commit rebuild (`9ca4b4f`) to bake the corrected key into the browser bundle.
+- **CI + RLS leakage suite green end-to-end** (2026-04-19). Added the 3 `TEST_SUPABASE_*` GitHub secrets; first rerun surfaced Postgres `42P17 "infinite recursion detected in policy for relation memberships"` in 6 cross-realm assertions. **The test caught a real schema bug, not a test bug.** The memberships RLS policy from migration `20260418000003` subqueried its own table (`SELECT realm_id FROM memberships WHERE member_id = auth.uid()`), and every policy that referenced that pattern cascaded from the same root (realms, courses, tavern_messages). Fix: new migration `20260419000001_fix_rls_recursion.sql` (commit `b8cbbd1`) adds a SECURITY DEFINER helper `public.user_realm_ids()` that does the lookup with the creator's privileges, so RLS is not re-applied inside the function body. Applied to both `arcadia-test` and `arcadia`. Subsequent CI rerun: **35/35 tests green**.
 
 ### Open risk carrying into Phase 1
 
