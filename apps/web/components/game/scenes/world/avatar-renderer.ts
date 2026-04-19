@@ -31,7 +31,9 @@ export function createAvatarVisuals(
   level: number = 1,
 ): AvatarVisuals {
   const cfg = worldSpritesConfig.avatar;
-  const textureKey = avatarHasSprite(scene, avatarId) ? primaryAvatarTextureKey(scene, avatarId) : null;
+  const textureKey = avatarHasSprite(scene, avatarId)
+    ? primaryAvatarTextureKey(scene, avatarId)
+    : null;
 
   let gameObject: AvatarBody;
   let sprite: Phaser.GameObjects.Sprite | null;
@@ -51,7 +53,8 @@ export function createAvatarVisuals(
   // Empty display name falls back to the avatar's canonical name (the
   // friendly label shown in the onboarding picker) — keeps remote avatars
   // labelled even if the owning member never set a display name.
-  const cleanName = displayNameRaw.trim().length > 0 ? displayNameRaw.trim() : AVATAR_NAMES[avatarId];
+  const cleanName =
+    displayNameRaw.trim().length > 0 ? displayNameRaw.trim() : AVATAR_NAMES[avatarId];
   const displayName = cleanName.slice(0, DISPLAY_NAME_MAX);
 
   const nameText = scene.add

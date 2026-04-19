@@ -23,11 +23,7 @@ import {
 } from './input';
 import { worldLayersConfig } from './layers.config';
 import { LocalAvatar } from './local-avatar';
-import {
-  createBadges,
-  httpEndpointFor,
-  type BadgeGroup,
-} from './member-count-badge';
+import { createBadges, httpEndpointFor, type BadgeGroup } from './member-count-badge';
 import { shouldSendMove, type MoveState } from './move-throttle';
 import { RemoteAvatar, snapshotFromState } from './remote-avatar';
 import { worldSpritesConfig } from './sprites.config';
@@ -193,7 +189,10 @@ export class WorldScene extends Phaser.Scene {
     if (!wss) return; // offline dev mode or unconfigured preview
     const anchors: Record<BuildingName, { x: number; y: number }> = {
       tavern: tileCenterToPixel(worldSpritesConfig.buildings.tavern.entranceTile, WORLD_TILE_SIZE),
-      academy: tileCenterToPixel(worldSpritesConfig.buildings.academy.entranceTile, WORLD_TILE_SIZE),
+      academy: tileCenterToPixel(
+        worldSpritesConfig.buildings.academy.entranceTile,
+        WORLD_TILE_SIZE,
+      ),
       market: tileCenterToPixel(worldSpritesConfig.buildings.market.entranceTile, WORLD_TILE_SIZE),
     };
     this.badges = createBadges({

@@ -53,10 +53,7 @@ export function resolveInputVelocity(input: InputState, speed: number): Velocity
  * on simultaneous diagonal input. Returns `prev` when no input is active
  * so the avatar keeps facing where it last walked.
  */
-export function resolveInputDirection(
-  input: InputState,
-  prev: AvatarDirection,
-): AvatarDirection {
+export function resolveInputDirection(input: InputState, prev: AvatarDirection): AvatarDirection {
   if (input.left) return 'w';
   if (input.right) return 'e';
   if (input.up) return 'n';
@@ -102,11 +99,7 @@ export function resolveClickTargetVelocity(
   };
 }
 
-function inferDirectionFromDelta(
-  dx: number,
-  dy: number,
-  prev: AvatarDirection,
-): AvatarDirection {
+function inferDirectionFromDelta(dx: number, dy: number, prev: AvatarDirection): AvatarDirection {
   if (dx === 0 && dy === 0) return prev;
   if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? 'e' : 'w';
   return dy > 0 ? 's' : 'n';

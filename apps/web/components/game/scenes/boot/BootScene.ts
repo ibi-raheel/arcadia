@@ -36,10 +36,7 @@ export class BootScene extends Phaser.Scene {
 
     this.load.image(BOOT_ASSETS.tileset.key, BOOT_ASSETS.tileset.path);
     this.load.tilemapTiledJSON(BOOT_ASSETS.tilemap.key, BOOT_ASSETS.tilemap.path);
-    this.load.tilemapTiledJSON(
-      BOOT_ASSETS.tavernTilemap.key,
-      BOOT_ASSETS.tavernTilemap.path,
-    );
+    this.load.tilemapTiledJSON(BOOT_ASSETS.tavernTilemap.key, BOOT_ASSETS.tavernTilemap.path);
 
     // Avatar spritesheets — one registered spritesheet per (avatarId, action)
     // declared in AVATAR_SHEETS. Avatars without entries fall back to
@@ -57,9 +54,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
-    const override = this.game.registry.get(NEXT_SCENE_KEY_REGISTRY_KEY) as
-      | string
-      | undefined;
+    const override = this.game.registry.get(NEXT_SCENE_KEY_REGISTRY_KEY) as string | undefined;
     this.scene.start(override ?? NEXT_SCENE_KEY_AFTER_BOOT);
   }
 }

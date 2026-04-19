@@ -12,9 +12,7 @@ import { BuildingTransition } from './game/BuildingTransition';
 
 const TRANSITION_MIN_DURATION_MS = 500;
 
-export function BuildingShellWithTransition(
-  props: BuildingShellProps,
-): React.JSX.Element {
+export function BuildingShellWithTransition(props: BuildingShellProps): React.JSX.Element {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {

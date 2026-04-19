@@ -70,11 +70,7 @@ export function createAvatarState(
  *   - bounds: x/y clamped to `bounds` (coarse guard against teleport-far
  *     DoS; tile-perfect collision is a client-side concern).
  */
-export function applyMove(
-  avatar: AvatarState,
-  payload: unknown,
-  bounds: RoomBounds,
-): boolean {
+export function applyMove(avatar: AvatarState, payload: unknown, bounds: RoomBounds): boolean {
   if (!isMovePayload(payload)) return false;
   avatar.x = clampNumber(payload.x, bounds.minX, bounds.maxX);
   avatar.y = clampNumber(payload.y, bounds.minY, bounds.maxY);
@@ -99,9 +95,7 @@ export function applyUpdateLevel(avatar: AvatarState, payload: unknown): boolean
  * valid payload, `null` otherwise so the caller can skip the log line
  * cleanly.
  */
-export function parseBuildingPayload(
-  payload: unknown,
-): EnterBuildingPayload['building'] | null {
+export function parseBuildingPayload(payload: unknown): EnterBuildingPayload['building'] | null {
   if (!isBuildingPayload(payload)) return null;
   return payload.building;
 }
@@ -114,22 +108,19 @@ function isMovePayload(value: unknown): value is MovePayload {
   if (!isRecord(value)) return false;
   const { x, y, direction, isMoving } = value;
   return (
-    isFinite_(x) &&
-    isFinite_(y) &&
-    isAvatarDirection(direction) &&
-    typeof isMoving === 'boolean'
+    isFinite_(x) && isFinite_(y) && isAvatarDirection(direction) && typeof isMoving === 'boolean'
   );
 }
 
 function isUpdateLevelPayload(value: unknown): value is UpdateLevelPayload {
   if (!isRecord(value)) return false;
   const { level } = value;
-  return typeof level === 'number' && Number.isInteger(level) && level >= MIN_LEVEL && level <= MAX_LEVEL;
+  return (
+    typeof level === 'number' && Number.isInteger(level) && level >= MIN_LEVEL && level <= MAX_LEVEL
+  );
 }
 
-function isBuildingPayload(
-  value: unknown,
-): value is EnterBuildingPayload | LeaveBuildingPayload {
+function isBuildingPayload(value: unknown): value is EnterBuildingPayload | LeaveBuildingPayload {
   if (!isRecord(value)) return false;
   const { building } = value;
   return typeof building === 'string' && (BUILDINGS as readonly string[]).includes(building);

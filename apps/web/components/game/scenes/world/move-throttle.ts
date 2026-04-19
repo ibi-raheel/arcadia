@@ -21,12 +21,7 @@ export type MoveState = {
 };
 
 export function moveStateEqual(a: MoveState, b: MoveState): boolean {
-  return (
-    a.x === b.x &&
-    a.y === b.y &&
-    a.direction === b.direction &&
-    a.isMoving === b.isMoving
-  );
+  return a.x === b.x && a.y === b.y && a.direction === b.direction && a.isMoving === b.isMoving;
 }
 
 export function shouldSendMove(

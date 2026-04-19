@@ -23,7 +23,10 @@ export type BuildingTransitionProps = {
   readonly ready: boolean;
 };
 
-export function BuildingTransition({ building, ready }: BuildingTransitionProps): React.JSX.Element | null {
+export function BuildingTransition({
+  building,
+  ready,
+}: BuildingTransitionProps): React.JSX.Element | null {
   const [mounted, setMounted] = useState(true);
 
   useEffect(() => {

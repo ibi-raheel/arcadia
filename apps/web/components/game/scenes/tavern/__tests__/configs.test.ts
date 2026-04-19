@@ -6,11 +6,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import {
-  TAVERN_ENTRANCE_TILE,
-  TAVERN_SPAWN_TILE,
-  tavernSpritesConfig,
-} from '../sprites.config';
+import { TAVERN_ENTRANCE_TILE, TAVERN_SPAWN_TILE, tavernSpritesConfig } from '../sprites.config';
 import { TAVERN_TILE_DIMENSIONS, TAVERN_TILE_SIZE, tavernCameraConfig } from '../camera.config';
 import { tavernLayersConfig } from '../layers.config';
 

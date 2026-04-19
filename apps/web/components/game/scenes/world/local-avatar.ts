@@ -45,7 +45,13 @@ export class LocalAvatar {
     const spawnTile = options.spawnTile ?? cfg.spawnTile;
     const spawnPx = tileCenterToPixel(spawnTile, WORLD_TILE_SIZE);
 
-    this.visuals = createAvatarVisuals(scene, options.avatarId, spawnPx.x, spawnPx.y, options.displayName);
+    this.visuals = createAvatarVisuals(
+      scene,
+      options.avatarId,
+      spawnPx.x,
+      spawnPx.y,
+      options.displayName,
+    );
 
     scene.physics.add.existing(this.visuals.gameObject);
     this.body = this.visuals.gameObject.body as Phaser.Physics.Arcade.Body;

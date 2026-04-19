@@ -127,7 +127,12 @@ type ClientHandle = {
   latencies: number[];
 };
 
-async function connectClient(cfg: EnvConfig, accessToken: string, index: number, observer: boolean): Promise<ClientHandle> {
+async function connectClient(
+  cfg: EnvConfig,
+  accessToken: string,
+  index: number,
+  observer: boolean,
+): Promise<ClientHandle> {
   const client = new Colyseus.Client(cfg.colyseusUrl);
   const room = await client.joinOrCreate('world-realm1', { accessToken });
   return { index, room, observer, pending: new Map(), latencies: [] };
@@ -135,17 +140,20 @@ async function connectClient(cfg: EnvConfig, accessToken: string, index: number,
 
 const DIRECTIONS: AvatarDirection[] = ['n', 'e', 's', 'w'];
 
-function circularPathPoint(tSec: number, index: number): { x: number; y: number; direction: AvatarDirection } {
+function circularPathPoint(
+  tSec: number,
+  index: number,
+): { x: number; y: number; direction: AvatarDirection } {
   // Each client walks a small circle offset by its index so clients don't
   // overlap and trigger spurious dedupe.
   const radius = 80 + (index % 4) * 20;
-  const angularSpeed = 2 * Math.PI / 4; // 4s per revolution
+  const angularSpeed = (2 * Math.PI) / 4; // 4s per revolution
   const phase = (index / 20) * 2 * Math.PI;
   const angle = tSec * angularSpeed + phase;
   const x = Math.cos(angle) * radius + 480;
   const y = Math.sin(angle) * radius + 320;
-  const dirIndex = Math.floor((angle / (Math.PI / 2)) % 4 + 4) % 4;
-  return { x, y, direction: DIRECTIONS[dirIndex]!, };
+  const dirIndex = Math.floor(((angle / (Math.PI / 2)) % 4) + 4) % 4;
+  return { x, y, direction: DIRECTIONS[dirIndex]! };
 }
 
 function percentile(values: number[], p: number): number {
@@ -157,7 +165,9 @@ function percentile(values: number[], p: number): number {
 
 async function main(): Promise<void> {
   const cfg = parseEnv();
-  console.log(`[loadtest] url=${cfg.colyseusUrl} users=${cfg.userCount} duration=${cfg.durationMs / 1000}s`);
+  console.log(
+    `[loadtest] url=${cfg.colyseusUrl} users=${cfg.userCount} duration=${cfg.durationMs / 1000}s`,
+  );
 
   const admin = createClient(cfg.supabaseUrl, cfg.serviceKey, {
     auth: { persistSession: false },

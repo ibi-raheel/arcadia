@@ -18,7 +18,9 @@ async function main(): Promise<void> {
     process.exit(2);
   }
   if (supabaseUrl.includes(PROD_SUPABASE_REF)) {
-    console.error(`refusing to run — TEST_SUPABASE_URL points at production ref ${PROD_SUPABASE_REF}`);
+    console.error(
+      `refusing to run — TEST_SUPABASE_URL points at production ref ${PROD_SUPABASE_REF}`,
+    );
     process.exit(2);
   }
 

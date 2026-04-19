@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { INTERPOLATION_ARRIVED_EPSILON, interpolationStep } from '../interpolation';
 
 const SPEED = 160; // px/s matching sprites.config.avatar.walkSpeed
-const SNAP = 128;  // matches remote-avatar REMOTE_SNAP_DISTANCE_PX
+const SNAP = 128; // matches remote-avatar REMOTE_SNAP_DISTANCE_PX
 
 describe('interpolationStep', () => {
   it('arrives when within epsilon — no movement, no snap flag', () => {

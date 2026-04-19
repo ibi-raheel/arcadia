@@ -38,7 +38,10 @@ type SessionFetch =
 
 async function fetchSession(): Promise<SessionFetch> {
   const supabase = getSupabaseBrowserClient();
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
   if (sessionError || !session) {
     return { status: 'error', message: sessionError?.message ?? 'Not signed in.' };
   }
@@ -77,7 +80,12 @@ export default function GameTavern(): React.JSX.Element {
   }, []);
 
   useEffect(() => {
-    if (fetchState.status !== 'ready' || !containerRef.current || gameRef.current || !COLYSEUS_ENDPOINT) {
+    if (
+      fetchState.status !== 'ready' ||
+      !containerRef.current ||
+      gameRef.current ||
+      !COLYSEUS_ENDPOINT
+    ) {
       if (fetchState.status === 'ready' && !COLYSEUS_ENDPOINT) {
         setConnectError('NEXT_PUBLIC_COLYSEUS_URL is not configured');
       }

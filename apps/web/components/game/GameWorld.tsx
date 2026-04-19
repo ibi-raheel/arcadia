@@ -15,10 +15,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
-import {
-  connectToRoom,
-  type ColyseusConnection,
-} from './net/colyseus-client';
+import { connectToRoom, type ColyseusConnection } from './net/colyseus-client';
 import { BootScene } from './scenes/boot/BootScene';
 import { PROGRESS_CALLBACK_REGISTRY_KEY } from './scenes/boot/asset-manifest';
 import { isAvatarId, type AvatarId } from './scenes/shared/avatar-palette';
@@ -198,9 +195,7 @@ export default function GameWorld(): React.JSX.Element {
 
   if (fetchState.status === 'error' || connectError) {
     const message =
-      fetchState.status === 'error'
-        ? fetchState.message
-        : (connectError ?? 'Connection error.');
+      fetchState.status === 'error' ? fetchState.message : (connectError ?? 'Connection error.');
     return (
       <div className="flex h-screen w-screen flex-col items-center justify-center gap-2 bg-slate-900 text-slate-300">
         <p className="text-lg">Couldn&rsquo;t load the world.</p>

@@ -52,11 +52,7 @@ describe('applyMove', () => {
 
   it('accepts a well-formed payload and mutates the avatar', () => {
     const avatar = make();
-    const ok = applyMove(
-      avatar,
-      { x: 50, y: 200, direction: 'e', isMoving: true },
-      BOUNDS,
-    );
+    const ok = applyMove(avatar, { x: 50, y: 200, direction: 'e', isMoving: true }, BOUNDS);
     expect(ok).toBe(true);
     expect(avatar.x).toBe(50);
     expect(avatar.y).toBe(200);
@@ -66,11 +62,7 @@ describe('applyMove', () => {
 
   it('clamps coordinates outside bounds without rejecting the payload', () => {
     const avatar = make();
-    const ok = applyMove(
-      avatar,
-      { x: 9999, y: -9999, direction: 'n', isMoving: true },
-      BOUNDS,
-    );
+    const ok = applyMove(avatar, { x: 9999, y: -9999, direction: 'n', isMoving: true }, BOUNDS);
     expect(ok).toBe(true);
     expect(avatar.x).toBe(BOUNDS.maxX);
     expect(avatar.y).toBe(BOUNDS.minY);
@@ -93,38 +85,28 @@ describe('applyMove', () => {
 
   it('rejects payloads with non-cardinal direction', () => {
     const avatar = make();
-    expect(
-      applyMove(avatar, { x: 0, y: 0, direction: 'up', isMoving: false }, BOUNDS),
-    ).toBe(false);
-    expect(
-      applyMove(avatar, { x: 0, y: 0, direction: 'ne', isMoving: false }, BOUNDS),
-    ).toBe(false);
-    expect(
-      applyMove(avatar, { x: 0, y: 0, direction: '', isMoving: false }, BOUNDS),
-    ).toBe(false);
+    expect(applyMove(avatar, { x: 0, y: 0, direction: 'up', isMoving: false }, BOUNDS)).toBe(false);
+    expect(applyMove(avatar, { x: 0, y: 0, direction: 'ne', isMoving: false }, BOUNDS)).toBe(false);
+    expect(applyMove(avatar, { x: 0, y: 0, direction: '', isMoving: false }, BOUNDS)).toBe(false);
   });
 
   it('rejects payloads with non-finite coordinates', () => {
     const avatar = make();
-    expect(
-      applyMove(avatar, { x: NaN, y: 0, direction: 'n', isMoving: false }, BOUNDS),
-    ).toBe(false);
-    expect(
-      applyMove(avatar, { x: 0, y: Infinity, direction: 'n', isMoving: false }, BOUNDS),
-    ).toBe(false);
-    expect(
-      applyMove(avatar, { x: '0', y: 0, direction: 'n', isMoving: false }, BOUNDS),
-    ).toBe(false);
+    expect(applyMove(avatar, { x: NaN, y: 0, direction: 'n', isMoving: false }, BOUNDS)).toBe(
+      false,
+    );
+    expect(applyMove(avatar, { x: 0, y: Infinity, direction: 'n', isMoving: false }, BOUNDS)).toBe(
+      false,
+    );
+    expect(applyMove(avatar, { x: '0', y: 0, direction: 'n', isMoving: false }, BOUNDS)).toBe(
+      false,
+    );
   });
 
   it('rejects payloads with non-boolean isMoving', () => {
     const avatar = make();
-    expect(
-      applyMove(avatar, { x: 0, y: 0, direction: 'n', isMoving: 'true' }, BOUNDS),
-    ).toBe(false);
-    expect(
-      applyMove(avatar, { x: 0, y: 0, direction: 'n', isMoving: 1 }, BOUNDS),
-    ).toBe(false);
+    expect(applyMove(avatar, { x: 0, y: 0, direction: 'n', isMoving: 'true' }, BOUNDS)).toBe(false);
+    expect(applyMove(avatar, { x: 0, y: 0, direction: 'n', isMoving: 1 }, BOUNDS)).toBe(false);
   });
 
   it('leaves avatar state untouched on reject', () => {
