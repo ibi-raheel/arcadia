@@ -22,7 +22,7 @@ Locked via `/docs/mvp/tad.md` v1.1. Promote to an ADR in `/planning/decisions/` 
 
 - **Web framework:** Next.js 14+ (Vercel)
 - **Game engine:** Phaser 3 (3.88+), orthographic tilemaps with 2:1 iso-style sprites
-- **Multiplayer:** Colyseus 0.17+ on Railway (Redis-backed)
+- **Multiplayer:** Colyseus 0.16.x on Railway (Redis-backed) — pinned per ADR 0005 (0.17 server incompatible with 0.16 client on seat-reservation shape)
 - **Backend / auth / DB / realtime:** Supabase (Postgres + RLS + Auth + Realtime + Storage)
 - **Video delivery:** Cloudflare Stream (signed playback URLs)
 - **UI:** Tailwind CSS 3+
