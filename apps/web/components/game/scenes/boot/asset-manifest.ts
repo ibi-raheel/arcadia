@@ -41,7 +41,7 @@ export type BootAssetKey = keyof typeof BOOT_ASSETS;
 // add an entry here; no scene-code changes needed.
 
 import type { AvatarId } from '../shared/avatar-palette';
-import type { AvatarAction, FacingDirection } from '../shared/types';
+import type { AvatarAction, AvatarDirection } from '../shared/types';
 
 export type AvatarSheet = {
   readonly key: string;
@@ -55,7 +55,7 @@ export type AvatarSheet = {
    * `rows`. Each direction's animation uses frames
    * `[row*cols .. row*cols + cols - 1]`.
    */
-  readonly directionRowOrder: readonly FacingDirection[];
+  readonly directionRowOrder: readonly AvatarDirection[];
   readonly frameRate: number;
   /**
    * Phaser repeat count. -1 = loop forever (idle, walk). 0 = play once
@@ -73,7 +73,7 @@ export type AvatarSheetMap = Partial<Record<AvatarAction, AvatarSheet>>;
 //   row 3 = east  (profile facing right)
 // Assumed consistent across idle / walk / jump — adjust per-entry if the
 // author used a different convention on a specific sheet.
-const AVATAR_01_ROW_ORDER: readonly FacingDirection[] = ['n', 'w', 's', 'e'];
+const AVATAR_01_ROW_ORDER: readonly AvatarDirection[] = ['n', 'w', 's', 'e'];
 
 export const AVATAR_SHEETS: Readonly<Partial<Record<AvatarId, AvatarSheetMap>>> = {
   'avatar-01': {

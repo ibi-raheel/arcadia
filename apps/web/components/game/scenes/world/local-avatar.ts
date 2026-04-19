@@ -15,7 +15,7 @@ import type Phaser from 'phaser';
 import { AVATAR_SHEETS } from '../boot/asset-manifest';
 import { AVATAR_COLORS, type AvatarId } from '../shared/avatar-palette';
 import { tileCenterToPixel } from '../shared/iso-math';
-import type { AvatarAction, FacingDirection, TileCoord } from '../shared/types';
+import type { AvatarAction, AvatarDirection, TileCoord } from '../shared/types';
 import { animationKey, avatarHasSprite, primaryAvatarTextureKey } from './avatar-animations';
 import { WORLD_TILE_SIZE } from './camera.config';
 import { worldSpritesConfig } from './sprites.config';
@@ -41,7 +41,7 @@ export class LocalAvatar {
   private readonly nameText: Phaser.GameObjects.Text;
   private readonly levelBadge: Phaser.GameObjects.Text;
 
-  private _direction: FacingDirection = 's';
+  private _direction: AvatarDirection = 's';
   private _isMoving = false;
   private _isJumping = false;
 
@@ -117,11 +117,11 @@ export class LocalAvatar {
     return this.gameObject.height;
   }
 
-  get direction(): FacingDirection {
+  get direction(): AvatarDirection {
     return this._direction;
   }
 
-  set direction(value: FacingDirection) {
+  set direction(value: AvatarDirection) {
     this._direction = value;
   }
 
@@ -144,7 +144,7 @@ export class LocalAvatar {
    * authored yet), falls back to the idle clip in the same direction.
    * No-op when running in Rectangle-placeholder mode.
    */
-  playAnim(action: AvatarAction, direction: FacingDirection): void {
+  playAnim(action: AvatarAction, direction: AvatarDirection): void {
     if (!this.sprite) return;
 
     const scene = this.sprite.scene;
@@ -170,7 +170,7 @@ export class LocalAvatar {
    * No-op for Rectangle-placeholder avatars or when the jump sheet is
    * missing for this avatar.
    */
-  triggerJump(direction: FacingDirection): void {
+  triggerJump(direction: AvatarDirection): void {
     if (!this.sprite || this._isJumping) return;
     const scene = this.sprite.scene;
     const key = animationKey(this.avatarId, 'jump', direction);

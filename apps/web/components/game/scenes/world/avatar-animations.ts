@@ -9,12 +9,12 @@ import type Phaser from 'phaser';
 
 import { AVATAR_SHEETS, type AvatarSheet } from '../boot/asset-manifest';
 import type { AvatarId } from '../shared/avatar-palette';
-import type { AvatarAction, FacingDirection } from '../shared/types';
+import type { AvatarAction, AvatarDirection } from '../shared/types';
 
 export function animationKey(
   avatarId: AvatarId,
   action: AvatarAction,
-  direction: FacingDirection,
+  direction: AvatarDirection,
 ): string {
   return `${avatarId}-${action}-${direction}`;
 }

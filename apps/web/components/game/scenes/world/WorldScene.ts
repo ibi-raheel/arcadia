@@ -4,8 +4,10 @@
 // tweakable values — everything that a human might want to adjust lives in
 // `camera.config.ts`, `sprites.config.ts`, or `layers.config.ts`.
 
+import { MSG } from '@arcadia/shared';
 import * as Phaser from 'phaser';
 
+import type { ColyseusConnection } from '../../net/colyseus-client';
 import { BOOT_ASSETS, NEXT_SCENE_KEY_AFTER_BOOT } from '../boot/asset-manifest';
 import { isAvatarId, type AvatarId } from '../shared/avatar-palette';
 import { tileCenterToPixel } from '../shared/iso-math';
@@ -21,6 +23,7 @@ import {
 } from './input';
 import { worldLayersConfig } from './layers.config';
 import { LocalAvatar } from './local-avatar';
+import { shouldSendMove, type MoveState } from './move-throttle';
 import { worldSpritesConfig } from './sprites.config';
 
 /** Shape of the `member` registry entry written by GameWorld before Phaser boots. */
@@ -45,6 +48,17 @@ export const NAVIGATE_REGISTRY_KEY = 'navigate';
  * GameWorld writes this from the `?from=` query param when present.
  */
 export const SPAWN_FROM_REGISTRY_KEY = 'spawnFrom';
+
+/**
+ * Phase 2 Step 6 — the ColyseusConnection controller GameWorld creates
+ * before mounting Phaser. WorldScene reads this to send MOVE at 20 Hz and
+ * ENTER_BUILDING on transition. The connection is stable across reconnects
+ * (`send` dispatches via the current room internally).
+ */
+export const COLYSEUS_CONNECTION_REGISTRY_KEY = 'colyseus';
+
+// Phase 2 Step 6 — MOVE is throttled to 20 updates/second per TAD §4.3.
+const MOVE_INTERVAL_MS = 50;
 
 // Union of Phaser types that have `y`, `height`, and `setDepth` — building
 // placeholder Rectangles (Step 9) and the local avatar (Step 12) satisfy this.
@@ -84,6 +98,14 @@ export class WorldScene extends Phaser.Scene {
   // Guards re-entry: once a building transition is in flight, further
   // overlap events are ignored so the avatar can't re-trigger fadeOut.
   private isTransitioning = false;
+
+  // Step 6 multiplayer wiring. Connection handed off from GameWorld via the
+  // registry. Dedupe-state prevents 20Hz MOVE spam when the avatar is idle;
+  // only send when (x, y, direction, isMoving) has changed AND >= 50ms since
+  // the last outbound message. See move-throttle.ts for the pure predicate.
+  private colyseus?: ColyseusConnection;
+  private lastMoveSentAt = 0;
+  private lastMoveState: MoveState | null = null;
 
   constructor() {
     super({ key: NEXT_SCENE_KEY_AFTER_BOOT });
@@ -129,6 +151,10 @@ export class WorldScene extends Phaser.Scene {
     this.createLocalAvatar();
     this.wireKeyboardInput();
     this.wirePointerInput();
+
+    this.colyseus = this.registry.get(COLYSEUS_CONNECTION_REGISTRY_KEY) as
+      | ColyseusConnection
+      | undefined;
   }
 
   /**
@@ -294,11 +320,40 @@ export class WorldScene extends Phaser.Scene {
     }
     this.clickTarget = null;
 
+    // Notify the server before the WS drops on navigation — gives Phase 4
+    // analytics a clean ENTER_BUILDING signal. Server logs only in Phase 2.
+    this.colyseus?.send(MSG.ENTER_BUILDING, { building: name });
+
     this.cameras.main.fadeOut(worldCameraConfig.fadeOutMs, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       const navigate = this.registry.get(NAVIGATE_REGISTRY_KEY) as NavigateFn | undefined;
       navigate?.(`/${name}`);
     });
+  }
+
+  /**
+   * Phase 2 Step 6 — send MOVE at most every MOVE_INTERVAL_MS (20 Hz) and
+   * only when any of (x, y, direction, isMoving) has changed since the
+   * last outbound message. Skips cleanly when no connection is available
+   * (test harness, disconnected state, etc.).
+   */
+  private sendMoveIfChanged(now: number): void {
+    if (!this.colyseus || !this.localAvatar) return;
+
+    const current: MoveState = {
+      x: this.localAvatar.x,
+      y: this.localAvatar.y,
+      direction: this.localAvatar.direction,
+      isMoving: this.localAvatar.isMoving,
+    };
+
+    if (!shouldSendMove(current, this.lastMoveState, this.lastMoveSentAt, now, MOVE_INTERVAL_MS)) {
+      return;
+    }
+
+    this.colyseus.send(MSG.MOVE, current);
+    this.lastMoveSentAt = now;
+    this.lastMoveState = current;
   }
 
   public override update(): void {
@@ -325,7 +380,7 @@ export class WorldScene extends Phaser.Scene {
           this.clickTarget,
           worldSpritesConfig.avatar.walkSpeed,
           worldSpritesConfig.avatar.clickArrivalThreshold,
-          'right',
+          'e',
         );
         if (res.arrived) {
           this.clickTarget = null;
@@ -358,6 +413,8 @@ export class WorldScene extends Phaser.Scene {
       }
 
       this.localAvatar.syncAttachments();
+
+      this.sendMoveIfChanged(this.time.now);
     }
 
     const depthBase = worldLayersConfig.depth.dynamic;

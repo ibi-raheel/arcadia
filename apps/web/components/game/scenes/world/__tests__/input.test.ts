@@ -81,48 +81,48 @@ describe('resolveInputVelocity', () => {
 
 describe('resolveInputDirection', () => {
   it('no input keeps previous direction', () => {
-    expect(resolveInputDirection(NONE, 'up')).toBe('up');
-    expect(resolveInputDirection(NONE, 'down')).toBe('down');
+    expect(resolveInputDirection(NONE, 'n')).toBe('n');
+    expect(resolveInputDirection(NONE, 's')).toBe('s');
   });
 
   it('horizontal wins over vertical on diagonal input', () => {
-    expect(resolveInputDirection({ ...NONE, up: true, left: true }, 'down')).toBe('left');
-    expect(resolveInputDirection({ ...NONE, down: true, right: true }, 'up')).toBe('right');
+    expect(resolveInputDirection({ ...NONE, up: true, left: true }, 's')).toBe('w');
+    expect(resolveInputDirection({ ...NONE, down: true, right: true }, 'n')).toBe('e');
   });
 
   it('single key picks its own direction regardless of prev', () => {
-    expect(resolveInputDirection({ ...NONE, up: true }, 'down')).toBe('up');
-    expect(resolveInputDirection({ ...NONE, left: true }, 'right')).toBe('left');
+    expect(resolveInputDirection({ ...NONE, up: true }, 's')).toBe('n');
+    expect(resolveInputDirection({ ...NONE, left: true }, 'e')).toBe('w');
   });
 });
 
 describe('resolveClickTargetVelocity', () => {
   it('within threshold → arrived, zero velocity, direction preserved', () => {
-    const res = resolveClickTargetVelocity({ x: 100, y: 100 }, { x: 101, y: 100 }, 160, 2, 'down');
-    expect(res).toEqual({ vx: 0, vy: 0, arrived: true, direction: 'down' });
+    const res = resolveClickTargetVelocity({ x: 100, y: 100 }, { x: 101, y: 100 }, 160, 2, 's');
+    expect(res).toEqual({ vx: 0, vy: 0, arrived: true, direction: 's' });
   });
 
-  it('cardinal east target produces pure-x velocity + right direction', () => {
-    const res = resolveClickTargetVelocity({ x: 0, y: 0 }, { x: 100, y: 0 }, 160, 2, 'up');
+  it('cardinal east target produces pure-x velocity + east direction', () => {
+    const res = resolveClickTargetVelocity({ x: 0, y: 0 }, { x: 100, y: 0 }, 160, 2, 'n');
     expect(res.vx).toBeCloseTo(160);
     expect(res.vy).toBeCloseTo(0);
     expect(res.arrived).toBe(false);
-    expect(res.direction).toBe('right');
+    expect(res.direction).toBe('e');
   });
 
   it('diagonal target — speed magnitude stays at speed', () => {
-    const res = resolveClickTargetVelocity({ x: 0, y: 0 }, { x: 100, y: 100 }, 160, 2, 'up');
+    const res = resolveClickTargetVelocity({ x: 0, y: 0 }, { x: 100, y: 100 }, 160, 2, 'n');
     expect(Math.hypot(res.vx, res.vy)).toBeCloseTo(160, 4);
     // |dx| === |dy| so horizontal ties win via >=
-    expect(res.direction).toBe('right');
+    expect(res.direction).toBe('e');
   });
 
-  it('dominant-vertical delta picks up/down', () => {
-    const south = resolveClickTargetVelocity({ x: 0, y: 0 }, { x: 10, y: 100 }, 160, 2, 'left');
-    expect(south.direction).toBe('down');
+  it('dominant-vertical delta picks n/s', () => {
+    const south = resolveClickTargetVelocity({ x: 0, y: 0 }, { x: 10, y: 100 }, 160, 2, 'w');
+    expect(south.direction).toBe('s');
 
-    const north = resolveClickTargetVelocity({ x: 0, y: 100 }, { x: 10, y: 0 }, 160, 2, 'right');
-    expect(north.direction).toBe('up');
+    const north = resolveClickTargetVelocity({ x: 0, y: 100 }, { x: 10, y: 0 }, 160, 2, 'e');
+    expect(north.direction).toBe('n');
   });
 });
 

@@ -1,5 +1,7 @@
 // Colyseus message types — single source of truth for client + server.
-// Contracts locked by TAD §5.3.
+// Contracts locked by TAD §5.3 (v1.1 + cardinal direction amendment 2026-04-19).
+
+import type { AvatarDirection } from '../schemas/AvatarState';
 
 export const MSG = {
   MOVE: 'MOVE',
@@ -15,7 +17,7 @@ export type BuildingId = 'tavern' | 'academy' | 'market';
 export interface MovePayload {
   x: number;
   y: number;
-  direction: 'up' | 'down' | 'left' | 'right';
+  direction: AvatarDirection;
   isMoving: boolean;
 }
 

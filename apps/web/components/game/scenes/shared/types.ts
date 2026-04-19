@@ -1,18 +1,11 @@
 // Cross-scene TS types. Narrowly-scoped unions that multiple scenes (or
 // a scene + a React page) need to agree on.
-
-export type Direction = 'up' | 'down' | 'left' | 'right';
-
-// Avatar facing directions — cardinal N/E/S/W to match the supplied
-// spritesheets (one row per cardinal direction). The iso camera is
-// independent: even though the world is rendered at 2:1 iso tilt, the
-// character sprite was drawn with 4 cardinal-facing poses, so the
-// velocity bucketer picks the nearest cardinal.
 //
-// Mapping rule (see velocityToFacingDirection in scenes/world/input.ts):
-//   dominant axis wins; horizontal ties go east/west.
-export const FACING_DIRECTIONS = ['n', 'e', 's', 'w'] as const;
-export type FacingDirection = (typeof FACING_DIRECTIONS)[number];
+// Avatar facing direction lives in `@arcadia/shared` (cardinal n/e/s/w) —
+// same type the Colyseus AvatarState + MSG.MOVE payload use, so client code
+// writes the exact literals that hit the network.
+
+export { AVATAR_DIRECTIONS, type AvatarDirection } from '@arcadia/shared';
 
 export const AVATAR_ACTIONS = ['idle', 'walk', 'jump'] as const;
 export type AvatarAction = (typeof AVATAR_ACTIONS)[number];
