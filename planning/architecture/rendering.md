@@ -1,15 +1,36 @@
 # Rendering — Arcadia 2.5D isometric
 
-**Status:** Phase 0 spike shipped. FPS validation on the user's dev machine pending.
+**Status:** Phase 1 shipped to main 2026-04-19. The approach below was revised during Phase 1 — see §0 "2026-04-19 update" first. The original Phase 0 spike content (§1 onward) is preserved as historical reference.
 
-Source of truth for the rendering approach is TAD §4 and ADR 0001. This doc captures *how* we implemented the spike (Phase 0 Step 19) and the measurement protocol for the 60 FPS PRD §5 criterion.
+---
 
-## 1. Approach
+## 0. 2026-04-19 update — Phase 1 revisions
 
-TAD §4.1 locks the rendering model:
+The Phase 0 spike used **orthogonal** Tiled orientation with iso-style art. Phase 1 switched to **true isometric** tilemap orientation (user decision during iso conversion — square diamond tiles felt too top-down; AoE-flat 2:1 diamonds needed real iso projection math).
+
+Current rendering model (on `main`):
+
+- `apps/web/public/maps/world.tmj` → `orientation: "isometric"`, 30×30 cells, `tilewidth: 64`, `tileheight: 32` (map grid spacing).
+- Tileset: `apps/web/public/tilesets/world.png`, 704×704, 11×11 grid of 64×64 source tiles (upscaled 2× from a 32×32 pixel-art pack). Source tile height 64 vs. map grid height 32 means each tile's top 32px draws above its cell — gives the grass-on-dirt "cake slice" elevation look.
+- Scene classes in `apps/web/components/game/scenes/world/` (see ADR 0004 per-scene folder convention).
+- Iso projection math in `scenes/shared/iso-math.ts`: `screenX = (tileX - tileY) * 32; screenY = (tileX + tileY) * 16`. Tested round-trip in `__tests__/iso-math.test.ts`.
+- Y-sort via `scenes/shared/y-sort.ts` — dynamic objects (avatar, building placeholder Rectangles) get `depth = dynamicBase + y + height * yAnchorRatio` each frame. Tilemap layers render at fixed depths (ground = 0 < collisionVisuals = 10 < overlay = 500 < dynamic = 1000) so short decorations render under the avatar.
+- Camera: `pixelArt: true` in the Phaser game config — nearest-neighbor filtering keeps pixel-art crisp at any zoom. Follow-lerp 0.1, deadzone 160×120.
+- Phaser imports use namespace form (`import * as Phaser from 'phaser'`) — the ESM build has no default export, dev-mode SWC rejects `import Phaser from 'phaser'`.
+- Character facing is cardinal (n/e/s/w) — sprites were drawn with 4 cardinal poses, not iso diagonals. `velocityToFacingDirection` in `scenes/world/input.ts` does dominant-axis bucketing.
+
+60 FPS validation (PRD §5) is **deferred** (user decision 2026-04-19) — placeholder + minimal-tileset measurement wouldn't be load-bearing; re-measure after real art fully lands. The §4 measurement protocol below is the template; `/spike` was removed in Phase 1, so the measurement is now done against `/world` directly.
+
+The rest of this doc (§1 onward) describes the Phase 0 spike. Kept for historical reference — individual paragraphs no longer describe current code state.
+
+---
+
+## 1. Approach (Phase 0 — superseded; see §0)
+
+TAD §4.1 originally suggested:
 
 - Phaser 3.88+ on `/apps/web`, loaded via `dynamic(..., { ssr: false })` to keep the browser-only globals out of Next.js's server render pass.
-- Orthographic tilemaps at 64×32 (2:1 iso ratio). We do **not** use Phaser's `Tilemaps.Orientation.ISOMETRIC` — the iso "feel" is baked into the tileset art, applied to an ordinary orthogonal grid.
+- Orthographic tilemaps at 64×32 (2:1 iso ratio). We do **not** use Phaser's `Tilemaps.Orientation.ISOMETRIC` — the iso "feel" is baked into the tileset art, applied to an ordinary orthogonal grid. *[Superseded in Phase 1 — true iso orientation now used.]*
 - Depth sorted by `sprite.y` every frame (with origin pinned at `(0.5, 1)` so the sort key matches the sprite's feet).
 - No true 3D — no z-axis, no depth buffer. Everything is 2D painter's algorithm with a per-sprite depth set from `y`.
 

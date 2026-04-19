@@ -63,7 +63,7 @@ Arcadia/
 │   │   ├── public/
 │   │   │   ├── avatars/<avatar-id>/     ← spritesheets (idle/walk/jump .png)
 │   │   │   ├── maps/world.tmj           ← Tiled iso tilemap
-│   │   │   └── tilesets/placeholder.png
+│   │   │   └── tilesets/world.png       ← 704×704 iso tileset (11×11 @ 64×64)
 │   │   └── supabase/migrations/         ← SQL (Postgres schema + RLS + triggers)
 │   └── game-server/                     ← Colyseus server (Phase 2 wiring lives here)
 ├── packages/shared/                     ← AvatarState, message protocol, level helpers
@@ -80,7 +80,8 @@ Arcadia/
 │   ├── phase-NN_plan.md / phase-NN_status.md
 │   └── CONTEXT.md
 ├── ops/{deploy,monitoring,scripts}/
-└── scripts/                             ← crop-spritesheet.mjs, generate-placeholder-tileset.mjs
+└── scripts/                             ← crop-spritesheet.mjs, upscale-png.mjs,
+                                           generate-world-tmj.mjs, generate-placeholder-tileset.mjs (legacy)
 ```
 
 ---
@@ -127,7 +128,8 @@ Arcadia/
 | You want to… | cd to | Auto-loads |
 |---|---|---|
 | Drop + crop + register a new avatar spritesheet | `apps/web/public` | root + public (art workstation) |
-| Swap placeholder tileset for real tile art | `apps/web/public` | root + public |
+| Swap / extend the world tileset | `apps/web/public` | root + public |
+| Hand-design the map in Tiled GUI | Tiled app (open `world.tmj`) | `docs/tiled-gui-quickstart.md` |
 | Redesign / edit `world.tmj` | `apps/web/public` | root + public |
 | Tweak avatar placeholder color or display name | `apps/web/components/game/scenes/shared` | root + game + shared |
 
@@ -139,7 +141,7 @@ The `apps/web/public/CLAUDE.md` workstation has the full ingestion workflows + c
 |---|---|---|
 | CI/CD workflows, deploy config | `ops/deploy` | root |
 | One-off scripts, schedules | `ops/scripts` | root |
-| Sprite crop / placeholder regeneration | `scripts` | root |
+| Sprite crop / PNG upscale / world regeneration | `scripts` | root |
 
 ### "I have no idea" / broad exploration
 
