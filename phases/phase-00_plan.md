@@ -147,4 +147,4 @@ Explicitly deferred to later phases: Phaser scenes beyond the spike, Colyseus ro
 
 ---
 
-**Current position (as of 2026-04-18):** All code steps (1–19) shipped; Phase 0 status file (`phase-00_status.md`) tracks the five remaining user-action items (first CI run verification, GitHub secrets, end-to-end auth smoke test, FPS spike measurement, optional Google OAuth) before Phase 0 exits and Phase 1 begins.
+**Current position (as of 2026-04-19):** All code steps (1–19) shipped; CI green on `main` (35/35 tests — includes 13 RLS leakage assertions, all passing); auth E2E verified on the live Vercel URL; migration `20260419000001_fix_rls_recursion.sql` applied to both Supabase projects. Phase 0 exit list is down to two user-action items — FPS spike measurement on the Mac Mini M4 (fill `planning/architecture/rendering.md` §5) and (optional) Google OAuth. Both are held; Phase 0 will exit when the FPS measurement lands. See `phase-00_status.md` for live detail.
