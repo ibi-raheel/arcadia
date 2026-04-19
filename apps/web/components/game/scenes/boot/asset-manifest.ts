@@ -10,6 +10,14 @@ export const BOOT_SCENE_KEY = 'BootScene' as const;
 export const NEXT_SCENE_KEY_AFTER_BOOT = 'WorldScene' as const;
 
 /**
+ * Registry override — if set by the React mount before Phaser boots,
+ * BootScene starts this scene key instead of NEXT_SCENE_KEY_AFTER_BOOT.
+ * Phase 2 Week 7: GameTavern writes 'TavernScene' so the same BootScene
+ * can serve both /world and /tavern without duplication.
+ */
+export const NEXT_SCENE_KEY_REGISTRY_KEY = 'nextSceneKeyAfterBoot' as const;
+
+/**
  * Step 20 handshake — React writes a `(progress: number) => void` into
  * Phaser's registry under this key. BootScene subscribes to `LoaderPlugin`
  * progress + complete events and forwards to the callback. Progress is
@@ -26,6 +34,12 @@ export const BOOT_ASSETS = {
   tilemap: {
     key: 'world',
     path: '/maps/world.tmj',
+  },
+  // Phase 2 Week 7: interior tavern map. Loaded alongside the world map so
+  // one BootScene serves both /world and /tavern scenes without duplication.
+  tavernTilemap: {
+    key: 'tavern',
+    path: '/maps/tavern.tmj',
   },
 } as const;
 

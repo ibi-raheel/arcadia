@@ -184,3 +184,75 @@ Step 3 wires the JWT validation in `onAuth` so `onJoin`'s `auth: AuthInfo` argum
 - I will not push without explicit go-ahead per the project's general "don't push without asking" rule, even under autonomous step execution. When ready to deploy, say "push" and I'll commit + push the cumulative Week-6 diff as a single PR.
 
 ### Ready for Step 8 (Remote-avatar rendering).
+
+**Done — Step 7 (two-tab smoke on Vercel + Railway prod) — verified 2026-04-19.** Vercel preview build initially failed with `Module not found: Can't resolve '@arcadia/shared'` because `packages/shared/dist/` is gitignored and the Phase-2 web dep on `@arcadia/shared` is the first consumer — Vercel's `npm ci` doesn't rebuild workspace `dist/`s. Fix committed on `phase-02-week-6` as `80f0956`: extend `apps/web/vercel.json` `installCommand` to `cd ../.. && npm ci && npm run build --workspace @arcadia/shared`. Re-reproduced the failure locally (delete dist → `next build` fails identically) and confirmed the fix both locally and on the Vercel preview. After merge + Railway redeploy, user verified the two-tab MOVE loop on prod.
+
+---
+
+## Week 7 — Remote avatars + presence (Steps 8–15)
+
+**Done — Step 8 + Step 9 (remote-avatar rendering + client-side interpolation):**
+
+- **`colyseus-client.ts` extended** — dropped `opts.onConnected` in favour of `connection.subscribeConnected(cb)`. Subscribers get called immediately if a room is already connected (so `WorldScene.create()` can register after `connectToRoom` resolves and still receive the initial connect), and again after every successful auto-reconnect. `leave()` clears the listener set + pending reconnect timer.
+- **`avatar-renderer.ts`** — shared rendering helpers extracted from `LocalAvatar`. `createAvatarVisuals(scene, avatarId, x, y, displayName, level)` returns `{ gameObject, sprite, nameText, levelBadge }`. `syncVisualAttachments`, `setVisualsDepth`, `setVisualsLevel`, `destroyVisuals` are the thin utilities both Local + Remote avatars call. Empty display-name falls back to `AVATAR_NAMES[avatarId]`.
+- **`LocalAvatar` trimmed** — sheds render code, keeps physics + input state + jump lifecycle. Public `.rect`, `.x`, `.y`, `.height` getters unchanged.
+- **`remote-avatar.ts`** — `RemoteAvatar` class driven by `AvatarState` patches. No physics; every frame `tick(dtSec)` calls the pure `interpolationStep` to advance toward the last-known server position. On patch, `applyPatch(state)` updates target + direction + isMoving + level. `snapshotFromState` guards against unknown `avatarId`s (returns `null` → caller skips rendering).
+- **`interpolation.ts`** — pure `interpolationStep(current, target, speedPxPerSec, dtSec, snapThresholdPx)`. Three branches: within epsilon (arrive), over snap threshold (teleport), otherwise advance by `speed * dt`. `REMOTE_SNAP_DISTANCE_PX = 128`. 6 unit tests cover all three plus diagonal proportions.
+- **`WorldScene` wiring** — `subscribeConnected` handler runs `wireRemoteAvatars(room)` on initial connect + every reconnect. Uses Colyseus 4's `getStateCallbacks(room)` proxy (schemas don't carry `onAdd/onRemove/onChange` in their static TS types — runtime-attached by the decoder). `onAdd` is called with `immediate: true` so there's no separate seed pass. `state.onChange(...)` re-projects a fresh snapshot onto each `RemoteAvatar`. Scene SHUTDOWN + DESTROY events fire `teardownRemoteAvatars()` (destroys all remotes + clears subscription).
+- **`update(time, deltaMs)`** — `deltaMs / 1000` piped to every `RemoteAvatar.tick(dtSec)` so the lerp speed matches the wall clock regardless of frame rate.
+
+**Typecheck gotcha caught + fixed:** initial draft used `room.state.avatars.onAdd(...)` which failed with `TS2339: Property 'onAdd' does not exist on type 'MapSchema'` — Colyseus 4 moved callbacks off the static schema types into a runtime proxy. Fix: lazy-import `getStateCallbacks` from `colyseus.js` and call `$(room.state).avatars.onAdd(...)` / `$(state).onChange(...)`.
+
+**Done — Step 10 + Step 11 (TavernScene + `/tavern` page swap):**
+
+- **`scripts/generate-tavern-tmj.mjs`** — mirrors `generate-world-tmj.mjs`. Emits `apps/web/public/maps/tavern.tmj` (15×15 iso, 64×32 tiles, `orientation: "isometric"`). Entrance at column 7 on the north wall; south + east + west walls fully closed. Floor is path tiles, walls + bar counter + two scattered "tables" are rock tiles. Reuses the existing `world.png` tileset — no new art.
+- **`scenes/tavern/` folder** — `camera.config.ts` (zoom 1.5, iso-diamond bounds for 15×15), `sprites.config.ts` (spawn tile (7, 1) just inside the entrance + same body offsets as WorldScene), `layers.config.ts` (ground/collision/overlay depth bands), `CLAUDE.md`, `__tests__/configs.test.ts` (9 assertions: config shape + negative `idleTimeoutMs` guard + tmj-sync assertions for walkable spawn/entrance + north-wall seal).
+- **`TavernScene.ts`** — structural cousin of `WorldScene.ts`. Reuses `LocalAvatar`, `RemoteAvatar`, `avatar-animations`, input resolvers, `move-throttle`, `RemoteAvatar` lifecycle from `scenes/world/`. Differences: no building-entrance zones, no jump (keyboard still wired for symmetry); subscribes to `tavern-realm1` instead. "Return to World" is a React overlay button, not a scene object.
+- **`BootScene` made scene-agnostic** — `NEXT_SCENE_KEY_REGISTRY_KEY` override. Default stays `'WorldScene'`; `GameTavern` writes `'TavernScene'` before Phaser boots. `BOOT_ASSETS.tavernTilemap` added; preload covers both tilemaps.
+- **`GameTavern.tsx`** — mirrors `GameWorld.tsx`. Fetches session + member, awaits `connectToRoom('tavern-realm1', ...)` before Phaser mount, sets the scene-key override, and renders a "Return to World" floating button. Click emits `MSG.LEAVE_BUILDING { building: 'tavern' }` then `router.push('/world?from=tavern')`.
+- **`/tavern` route** — now `dynamic(() => import('GameTavern'), { ssr: false })`; `BuildingShell` remains used for `/academy` + `/market` only.
+
+**Done — Step 12 (building-entry transition overlay scaffold):**
+
+- **`BuildingTransition.tsx`** — client component, props `{ building, ready }`. Fullscreen dark overlay with a 256×256 image slot (background from `/transitions/<building>.png`), "Entering the <Building>…" title, Tailwind-spinning ring. Fades to opacity 0 when `ready` flips true, unmounts 220 ms later.
+- **Placeholder PNGs** — `scripts/generate-transition-placeholders.mjs` emits three 1×1 transparent PNGs under `apps/web/public/transitions/`. Real art drops in later as file-level replacements; no code change.
+- **Tavern wiring** — `GameTavern` renders `<BuildingTransition building="tavern" ready={...}>` where `ready = preloadProgress >= 1`. Covers the 300–700 ms gap between Phaser mount + Colyseus join + BootScene preload complete.
+- **Academy + Market wiring** — new `BuildingShellWithTransition.tsx` wraps the existing `BuildingShell`; fires `ready=true` after a 500 ms min-duration timer. Keeps the transition visible as a deliberate beat rather than a flash.
+
+**Done — Step 13 (member-count endpoint + world badge):**
+
+- **Game-server** — `GET /rooms/:name/count` endpoint on the Express app. Allowlisted to `world-realm1` + `tavern-realm1` (404 otherwise); uses `matchMaker.query({ name })` to sum `clients` across matching room caches. `Access-Control-Allow-Origin: *` + OPTIONS preflight so the Vercel-origin browser client can poll cross-origin.
+- **Client** — `scenes/world/member-count-badge.ts`. `createBadges({ scene, anchors, httpEndpoint })` builds three Phaser Text objects (one per building entrance), polls every `POLL_INTERVAL_MS = 3000`, and renders the count above each entrance. `httpEndpointFor(wssEndpoint)` converts the `NEXT_PUBLIC_COLYSEUS_URL` to an HTTP URL. `BADGE_ROOM_BY_BUILDING` maps `tavern → 'tavern-realm1'`, academy + market → null (render "0" statically). Soft-fail on fetch error — previous value kept.
+- **`WorldScene.createBadges()`** — reads the WSS env, anchors badges at each building's `entranceTile` (pixel coords from `tileCenterToPixel`), and hooks scene shutdown to stop the poll.
+- **Tests — `member-count-badge.test.ts`** — 8 assertions: `formatBadgeText` renders null/zero/positive correctly; `httpEndpointFor` converts ws(s) → http(s); `BADGE_ROOM_BY_BUILDING` pins the three expected values; `POLL_INTERVAL_MS === 3000`.
+
+**Typecheck gotcha caught + fixed:** game-server `req.params.name` typed `string | undefined` under strict TS; Set.has rejects `undefined`. Added a null-guard to the route handler.
+
+**Done — Step 14 (load-test harness):**
+
+- **`apps/game-server/scripts/loadtest.ts`** — seeds N test users via Supabase service-role `admin.createUser` (idempotent — "already exists" tolerated), populates `memberships.avatar_id` cycling through avatar-01..08, signs each in, connects N Colyseus clients to `world-realm1`, sends MOVE at 20 Hz on a circular path for the configured duration. One observer client (index 0) subscribes to state patches; the "peer 1" client encodes a monotonically-increasing seq into the fractional part of its `x` coordinate so the observer can match send ↔ echo and collect latency samples. Prints p50/p95/p99/max; exits 1 if p95 > `LOADTEST_P95_TARGET_MS` (default 100 ms).
+- **Prod-Supabase guard** — refuses to run if `TEST_SUPABASE_URL` contains the prod project ref, mirroring `apps/web/tests/rls-cross-member-leakage.test.ts`.
+- **`scripts/loadtest-teardown.ts`** — removes the `load-NN@arcadia.test` users after the run. Same prod-ref guard.
+- **Env knobs:** `TEST_SUPABASE_URL`, `TEST_SUPABASE_SERVICE_KEY`, `LOADTEST_COLYSEUS_URL` (defaults `ws://localhost:2567`), `LOADTEST_USER_COUNT` (20), `LOADTEST_DURATION_SEC` (60), `LOADTEST_P95_TARGET_MS` (100).
+- **Dev dep** — `colyseus.js@^0.16.0` added to game-server's `devDependencies` so the script can spawn real clients. Not in the runtime bundle.
+- **Script scripts lifted to npm** — `npm run loadtest` + `npm run loadtest:teardown`.
+- **Not run yet** — execution is deferred to the Week 7 two-tab + load-test verification pass (requires the live game-server + a populated arcadia-test Supabase).
+
+**Verification (Steps 8–14 exit):**
+
+- `npm run typecheck` — ✅ clean across all three workspaces
+- `npm run lint` — ✅ clean
+- `npm run test` — ✅ **146 passed, 13 RLS skipped (159 total)**. New suites:
+  - `scenes/world/__tests__/interpolation.test.ts` (6)
+  - `scenes/tavern/__tests__/configs.test.ts` (9)
+  - `scenes/world/__tests__/member-count-badge.test.ts` (8)
+- `npm run build --workspace @arcadia/web` — ✅ clean. Route sizes (Phaser shared-chunked across /world + /tavern now):
+  - `/world` 1.9 kB / 497 kB first-load
+  - `/tavern` 4.03 kB / 499 kB
+  - `/academy` / `/market` 1.05 kB / 97.2 kB (+ BuildingShellWithTransition wrapper)
+  - `/onboarding/avatar` 1.8 kB / 154 kB
+- `npm run build --workspace @arcadia/game-server` — ✅ clean.
+
+**Step 15 pending — two-tab + load-test verification on Vercel prod + Railway prod.** Handled by the "push for deploy" flow; observer client exercises MOVE latency once Railway runs the new code. Remote-avatar visual smoke (seeing each other's avatars in `/world` and `/tavern`) is the primary user-verifiable exit.
+
+### Ready to deploy Week 7 — push for Vercel + Railway preview / prod.

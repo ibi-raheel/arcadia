@@ -4,10 +4,10 @@
 // tweakable values — everything that a human might want to adjust lives in
 // `camera.config.ts`, `sprites.config.ts`, or `layers.config.ts`.
 
-import { MSG } from '@arcadia/shared';
+import { MSG, type AvatarState } from '@arcadia/shared';
 import * as Phaser from 'phaser';
 
-import type { ColyseusConnection } from '../../net/colyseus-client';
+import type { ColyseusConnection, ColyseusRoom } from '../../net/colyseus-client';
 import { BOOT_ASSETS, NEXT_SCENE_KEY_AFTER_BOOT } from '../boot/asset-manifest';
 import { isAvatarId, type AvatarId } from '../shared/avatar-palette';
 import { tileCenterToPixel } from '../shared/iso-math';
@@ -23,7 +23,13 @@ import {
 } from './input';
 import { worldLayersConfig } from './layers.config';
 import { LocalAvatar } from './local-avatar';
+import {
+  createBadges,
+  httpEndpointFor,
+  type BadgeGroup,
+} from './member-count-badge';
 import { shouldSendMove, type MoveState } from './move-throttle';
+import { RemoteAvatar, snapshotFromState } from './remote-avatar';
 import { worldSpritesConfig } from './sprites.config';
 
 /** Shape of the `member` registry entry written by GameWorld before Phaser boots. */
@@ -107,6 +113,16 @@ export class WorldScene extends Phaser.Scene {
   private lastMoveSentAt = 0;
   private lastMoveState: MoveState | null = null;
 
+  // Step 8 remote avatars. Keyed by Colyseus sessionId; the local member's
+  // own sessionId is skipped so we don't render ourselves twice. Subscribes
+  // re-fire on every reconnect — old entries are torn down first.
+  private readonly remoteAvatars = new Map<string, RemoteAvatar>();
+  private unsubscribeConnected: (() => void) | null = null;
+
+  // Step 13 member-count badges — one floating label above each building
+  // entrance, polled from the game-server's /rooms/:name/count endpoint.
+  private badges?: BadgeGroup;
+
   constructor() {
     super({ key: NEXT_SCENE_KEY_AFTER_BOOT });
   }
@@ -155,6 +171,118 @@ export class WorldScene extends Phaser.Scene {
     this.colyseus = this.registry.get(COLYSEUS_CONNECTION_REGISTRY_KEY) as
       | ColyseusConnection
       | undefined;
+
+    if (this.colyseus) {
+      this.unsubscribeConnected = this.colyseus.subscribeConnected((room) => {
+        void this.wireRemoteAvatars(room);
+      });
+    }
+
+    // Clean up on scene teardown (page navigation or unmount).
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.teardownRemoteAvatars());
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => this.teardownRemoteAvatars());
+
+    this.createBadges();
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.badges?.stop());
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => this.badges?.stop());
+  }
+
+  /** Step 13 — build the three member-count badges over building entrances. */
+  private createBadges(): void {
+    const wss = process.env.NEXT_PUBLIC_COLYSEUS_URL;
+    if (!wss) return; // offline dev mode or unconfigured preview
+    const anchors: Record<BuildingName, { x: number; y: number }> = {
+      tavern: tileCenterToPixel(worldSpritesConfig.buildings.tavern.entranceTile, WORLD_TILE_SIZE),
+      academy: tileCenterToPixel(worldSpritesConfig.buildings.academy.entranceTile, WORLD_TILE_SIZE),
+      market: tileCenterToPixel(worldSpritesConfig.buildings.market.entranceTile, WORLD_TILE_SIZE),
+    };
+    this.badges = createBadges({
+      scene: this,
+      anchors,
+      httpEndpoint: httpEndpointFor(wss),
+    });
+  }
+
+  /**
+   * Subscribe to `state.avatars` add/remove/change events. Called once on
+   * initial connect and again after every auto-reconnect (the room is a
+   * fresh instance each time). Any existing RemoteAvatars from the prior
+   * room are destroyed first so we don't leak game objects.
+   */
+  private async wireRemoteAvatars(room: ColyseusRoom): Promise<void> {
+    this.teardownRemoteAvatars();
+
+    // Colyseus 4 state-callback proxy — schemas don't carry onAdd / onRemove
+    // in their TS types (runtime-attached by the decoder); the proxy is how
+    // you get typed callbacks. Lazy-imported to stay colocated with the
+    // other colyseus.js imports on the client-only bundle.
+    const { getStateCallbacks } = await import('colyseus.js');
+    const $ = getStateCallbacks(room as unknown as Parameters<typeof getStateCallbacks>[0]);
+
+    const avatarsProxy = $(room.state).avatars;
+
+    // `immediate: true` fires onAdd for every currently-present avatar so we
+    // don't need a separate seed pass.
+    avatarsProxy.onAdd((state: AvatarState, sessionId: string) => {
+      this.addRemoteAvatar(sessionId, state, room.sessionId, $);
+    }, true);
+
+    avatarsProxy.onRemove((_state: AvatarState, sessionId: string) => {
+      this.removeRemoteAvatar(sessionId);
+    });
+  }
+
+  private addRemoteAvatar(
+    sessionId: string,
+    state: AvatarState,
+    selfSessionId: string,
+    $: (instance: unknown) => { onChange(cb: () => void): () => void },
+  ): void {
+    if (sessionId === selfSessionId) return;
+    if (this.remoteAvatars.has(sessionId)) return;
+
+    const snapshot = snapshotFromState(state);
+    if (!snapshot) {
+      console.warn(`WorldScene: remote peer ${sessionId} has invalid avatarId "${state.avatarId}"`);
+      return;
+    }
+
+    const remote = new RemoteAvatar(this, snapshot);
+    this.remoteAvatars.set(sessionId, remote);
+    this.registerYSortable(remote);
+
+    // Patch-level subscription via the callback proxy — fires on every
+    // field change of this AvatarState. We re-project the full snapshot
+    // onto the RemoteAvatar rather than branch per field.
+    $(state).onChange(() => {
+      remote.applyPatch(state);
+    });
+  }
+
+  private removeRemoteAvatar(sessionId: string): void {
+    const remote = this.remoteAvatars.get(sessionId);
+    if (!remote) return;
+    this.unregisterYSortable(remote);
+    remote.destroy();
+    this.remoteAvatars.delete(sessionId);
+  }
+
+  private teardownRemoteAvatars(): void {
+    for (const [, remote] of this.remoteAvatars) {
+      this.unregisterYSortable(remote);
+      remote.destroy();
+    }
+    this.remoteAvatars.clear();
+
+    if (this.unsubscribeConnected) {
+      this.unsubscribeConnected();
+      this.unsubscribeConnected = null;
+    }
+  }
+
+  private unregisterYSortable(obj: YSortableGameObject): void {
+    const idx = this.ySortables.indexOf(obj);
+    if (idx >= 0) this.ySortables.splice(idx, 1);
   }
 
   /**
@@ -356,7 +484,12 @@ export class WorldScene extends Phaser.Scene {
     this.lastMoveState = current;
   }
 
-  public override update(): void {
+  public override update(_time: number, deltaMs: number): void {
+    const dtSec = deltaMs / 1000;
+    for (const remote of this.remoteAvatars.values()) {
+      remote.tick(dtSec);
+    }
+
     if (this.localAvatar) {
       const input = this.readInputState();
       const kbd = resolveInputVelocity(input, worldSpritesConfig.avatar.walkSpeed);

@@ -137,10 +137,6 @@ export default function GameWorld(): React.JSX.Element {
           endpoint: COLYSEUS_ENDPOINT,
           roomName: 'world-realm1',
           accessToken: fetchState.accessToken,
-          onConnected: () => {
-            // Step 8 (remote avatars) subscribes state events here. Step 6
-            // only needs the outbound MOVE path.
-          },
           onReconnectFailed: (err) => {
             if (!cancelled) setConnectError(err.message);
           },

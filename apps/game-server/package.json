@@ -9,7 +9,9 @@
     "start": "node --experimental-require-module dist/index.js",
     "lint": "eslint src --max-warnings=0",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "loadtest": "tsx scripts/loadtest.ts",
+    "loadtest:teardown": "tsx scripts/loadtest-teardown.ts"
   },
   "dependencies": {
     "@arcadia/shared": "*",
@@ -24,6 +26,7 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
+    "colyseus.js": "^0.16.0",
     "tsx": "^4.19.0"
   }
 }
