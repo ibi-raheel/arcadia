@@ -7,10 +7,7 @@
 
 import type Phaser from 'phaser';
 
-import {
-  AVATAR_SHEETS,
-  type AvatarSheet,
-} from '../boot/asset-manifest';
+import { AVATAR_SHEETS, type AvatarSheet } from '../boot/asset-manifest';
 import type { AvatarId } from '../shared/avatar-palette';
 import type { AvatarAction, FacingDirection } from '../shared/types';
 
@@ -64,10 +61,7 @@ export function registerAvatarAnimations(scene: Phaser.Scene): void {
  * manager (i.e. BootScene successfully loaded its PNG). LocalAvatar uses
  * this to choose Sprite mode vs Rectangle placeholder.
  */
-export function avatarHasSprite(
-  scene: Phaser.Scene,
-  avatarId: AvatarId,
-): boolean {
+export function avatarHasSprite(scene: Phaser.Scene, avatarId: AvatarId): boolean {
   const actions = AVATAR_SHEETS[avatarId];
   if (!actions) return false;
   for (const sheet of Object.values(actions)) {
@@ -82,10 +76,7 @@ export function avatarHasSprite(
  * Phaser animations reference frames by texture key, so it doesn't matter
  * which action sheet the Sprite "starts on"; playAnim() swaps frame sets.
  */
-export function primaryAvatarTextureKey(
-  scene: Phaser.Scene,
-  avatarId: AvatarId,
-): string | null {
+export function primaryAvatarTextureKey(scene: Phaser.Scene, avatarId: AvatarId): string | null {
   const actions = AVATAR_SHEETS[avatarId];
   if (!actions) return null;
   for (const sheet of Object.values(actions)) {

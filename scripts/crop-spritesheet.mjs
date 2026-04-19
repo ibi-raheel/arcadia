@@ -13,9 +13,7 @@ import { PNG } from 'pngjs';
 const [, , inputPath, outputPath, xStr, yStr, wStr, hStr] = process.argv;
 
 if (!inputPath || !outputPath || !xStr) {
-  console.error(
-    'usage: node scripts/crop-spritesheet.mjs <input> <output> <x> <y> <w> <h>',
-  );
+  console.error('usage: node scripts/crop-spritesheet.mjs <input> <output> <x> <y> <w> <h>');
   process.exit(1);
 }
 
@@ -27,9 +25,7 @@ const h = Number(hStr);
 const src = PNG.sync.read(readFileSync(inputPath));
 
 if (x + w > src.width || y + h > src.height) {
-  console.error(
-    `crop region (${x}, ${y}) ${w}×${h} exceeds source ${src.width}×${src.height}`,
-  );
+  console.error(`crop region (${x}, ${y}) ${w}×${h} exceeds source ${src.width}×${src.height}`);
   process.exit(1);
 }
 

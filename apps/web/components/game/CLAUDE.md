@@ -56,3 +56,16 @@ Drop a new sheet file, add an entry to `AVATAR_SHEETS`, and the animations regis
 - Idle ↔ walk state is a zero-delay toggle on `isMoving`. No 2s timer (user decision 2026-04-18 overrides phase-plan Week 4).
 - Character facing is cardinal (n/e/s/w), not iso diagonal — sprites were drawn with 4 cardinal poses. `velocityToFacingDirection` buckets velocity into the nearest cardinal (dominant axis, horizontal ties).
 - Scene tests must include a config-shape assertion so future edits that drop a config key fail CI.
+
+## Known dev-mode gotchas
+
+- **`Cannot find module './522.js'` (or any `./NNN.js`) at `/world`** — Next 14.2's dev-mode webpack manifest desyncs after rapid file changes (add/delete + dep install + HMR cycles). Kill the dev server and wipe the cache:
+  ```bash
+  lsof -ti:3000 | xargs kill -9
+  rm -rf apps/web/.next
+  npm run dev --workspace @arcadia/web
+  ```
+  Not a code bug — a known Next 14 dev-mode fragility. Production builds don't hit it. If it keeps recurring, consider `next dev --turbo` (Turbopack is more resilient to this class of issue).
+- **`Attempted import error: 'phaser' does not contain a default export`** — you replaced a namespace import with a default one somewhere. Phaser's ESM build exposes named exports only. Grep for `import Phaser from` and change to `import * as Phaser from`.
+- **`world.tmj` or `placeholder.png` returning 307** — middleware is intercepting. Confirm the static-asset extension is in the matcher regex at `apps/web/middleware.ts` (current list: `svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|tmj|json`).
+- **Avatar renders as a colored Rectangle even though `<id>/idle.png` exists** — the sheet isn't registered. Check `scenes/boot/asset-manifest.ts` → `AVATAR_SHEETS[<id>]` has an entry matching the files on disk.

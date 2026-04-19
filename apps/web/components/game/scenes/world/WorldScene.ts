@@ -163,9 +163,7 @@ export class WorldScene extends Phaser.Scene {
     // Spacebar → one-shot jump. addCapture prevents the browser from
     // page-scrolling when the canvas has focus.
     this.input.keyboard.addCapture('SPACE');
-    this.spaceKey = this.input.keyboard.addKey(
-      Phaser.Input.Keyboard.KeyCodes.SPACE,
-    );
+    this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
   }
 
   private readInputState(): InputState {
@@ -341,11 +339,7 @@ export class WorldScene extends Phaser.Scene {
 
       this.localAvatar.body.setVelocity(vx, vy);
       this.localAvatar.isMoving = moving;
-      this.localAvatar.direction = velocityToFacingDirection(
-        vx,
-        vy,
-        this.localAvatar.direction,
-      );
+      this.localAvatar.direction = velocityToFacingDirection(vx, vy, this.localAvatar.direction);
 
       // Spacebar → one-shot jump. JustDown fires only on the key-press
       // transition, so holding space doesn't restart the jump mid-frame.
@@ -361,10 +355,7 @@ export class WorldScene extends Phaser.Scene {
       // one-shot; it clears `isJumping` on animationcomplete, after which
       // walk/idle resumes next frame.
       if (!this.localAvatar.isJumping) {
-        this.localAvatar.playAnim(
-          moving ? 'walk' : 'idle',
-          this.localAvatar.direction,
-        );
+        this.localAvatar.playAnim(moving ? 'walk' : 'idle', this.localAvatar.direction);
       }
 
       this.localAvatar.syncAttachments();

@@ -17,10 +17,7 @@ import type { TileCoord } from './types';
 export type TileSize = { readonly width: number; readonly height: number };
 
 /** Top vertex of an iso tile's diamond. */
-export function tileToPixel(
-  tile: TileCoord,
-  tileSize: TileSize,
-): { x: number; y: number } {
+export function tileToPixel(tile: TileCoord, tileSize: TileSize): { x: number; y: number } {
   return {
     x: (tile.x - tile.y) * (tileSize.width / 2),
     y: (tile.x + tile.y) * (tileSize.height / 2),
@@ -28,10 +25,7 @@ export function tileToPixel(
 }
 
 /** Centre of an iso tile's diamond — vertical midpoint of the rhombus. */
-export function tileCenterToPixel(
-  tile: TileCoord,
-  tileSize: TileSize,
-): { x: number; y: number } {
+export function tileCenterToPixel(tile: TileCoord, tileSize: TileSize): { x: number; y: number } {
   return {
     x: (tile.x - tile.y) * (tileSize.width / 2),
     y: (tile.x + tile.y) * (tileSize.height / 2) + tileSize.height / 2,
@@ -49,10 +43,7 @@ export function tileCenterToPixel(
  *   tX = sX / TW + y' / TH
  *   tY = y' / TH - sX / TW
  */
-export function pixelToTile(
-  pixel: { x: number; y: number },
-  tileSize: TileSize,
-): TileCoord {
+export function pixelToTile(pixel: { x: number; y: number }, tileSize: TileSize): TileCoord {
   const adjY = pixel.y - tileSize.height / 2;
   const tileX = pixel.x / tileSize.width + adjY / tileSize.height;
   const tileY = adjY / tileSize.height - pixel.x / tileSize.width;

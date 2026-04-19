@@ -52,23 +52,27 @@ The MVP documents are the source of truth for scope, architecture, and sequencin
 
 | Task | Workspace | Read first | Tools |
 |------|-----------|-----------|-------|
-| Orient on the repo (status, live URLs, layout summary) | root | `README.md` | — |
+| Orient on the repo (status, live URLs, layout summary) | root | `README.md` + latest `phases/phase-NN_status.md` (current position) | — |
 | Understand MVP scope / architecture / sequence | `/docs/mvp` | the three `prd.md` / `tad.md` / `phase-plan.md` files | — |
-| Plan a new phase or sub-phase | `/phases` | `phases/CONTEXT.md`, `/docs/mvp/phase-plan.md`, latest `phase-NN_plan.md` | — |
+| Plan a new phase or sub-phase | `/phases` | `phases/CONTEXT.md`, `/docs/mvp/phase-plan.md`, latest `phase-NN_plan.md`, recent ADRs in `/planning/decisions/` | — |
 | Log phase progress | `/phases` | `phases/CONTEXT.md`, active `phase-NN_status.md` | — |
-| Write a feature spec | `/planning/specs` | `planning/CONTEXT.md`, related architecture docs | GitHub MCP (proposed) |
-| Write / update architecture doc | `/planning/architecture` | `planning/CONTEXT.md` | GitHub MCP (proposed); `pptx` if preparing a stakeholder deck |
-| Record a technical decision (ADR) | `/planning/decisions` | `planning/CONTEXT.md`, related ADRs | GitHub MCP (proposed) |
-| Web client + API routes (Next.js — rendering, UI, auth, API) | `/apps/web` | `apps/CONTEXT.md` | Claude in Chrome MCP; `/review`; `/security-review`; Supabase / Vercel / Cloudflare Stream MCPs (proposed); Chrome DevTools + Playwright MCPs (proposed) |
-| Game server (Colyseus — presence, avatar sync, room state) | `/apps/game-server` | `apps/CONTEXT.md` | Claude in Chrome MCP (two-tab manual tests); Railway MCP (proposed); `/review` |
-| Shared types / constants / protocol | `/packages/shared` | `packages/CONTEXT.md` | `/review`; GitHub MCP (proposed) |
-| API reference | `/docs/api` | `docs/CONTEXT.md` | Custom `api-reference` skill via `skill-creator` (proposed) |
-| Art assets / sprite requirements | `/docs/art` | `docs/art/sprite-requirements.md` | — (hand-authored by the user) |
-| Creator / member guides | `/docs/guides` | `docs/CONTEXT.md` | `docx`; `pdf` |
-| Changelog entry | `/docs/changelog` | `docs/CONTEXT.md` | GitHub MCP (proposed) |
-| Deploy config / CI | `/ops/deploy` | `ops/CONTEXT.md` | GitHub MCP + deploy-target MCP (Vercel / Cloudflare / Fly) — all proposed, per ADR |
-| Monitoring / runbook | `/ops/monitoring` | `ops/CONTEXT.md` | Sentry MCP; PagerDuty or Opsgenie MCP (all proposed) |
-| Operational scripts | `/ops/scripts` | `ops/CONTEXT.md` | `schedule`; GitHub MCP (proposed) |
+| Write a feature spec | `/planning/specs` *(empty — Phase 2+)* | `planning/CONTEXT.md`, related architecture docs | GitHub MCP |
+| Write / update architecture doc | `/planning/architecture` | `planning/CONTEXT.md` | GitHub MCP; `pptx` if preparing a stakeholder deck |
+| Record a technical decision (ADR) | `/planning/decisions` | `planning/CONTEXT.md`, related ADRs | GitHub MCP |
+| Web client + API routes (Next.js — rendering, UI, auth, API) | `/apps/web` | `apps/CONTEXT.md`, `apps/web/.env.local.example` (for env-var setup) | Claude in Chrome MCP; Vercel MCP; Supabase MCP; GitHub MCP; `/review`; `/security-review`; Chrome DevTools + Playwright MCPs (proposed); Cloudflare Stream MCP (proposed — Phase 3) |
+| **Phaser scene tweaks** (camera / sprites / layers / animations / input) | `/apps/web/components/game/scenes/<scene>` | that scene's `CLAUDE.md` + its `*.config.ts` files | Claude in Chrome MCP (visual verify) |
+| **Add an avatar sprite set** | `/apps/web/public/avatars/<avatar-id>/` + `scenes/boot/asset-manifest.ts` | `apps/web/components/game/CLAUDE.md` §Avatar pipeline, `scripts/crop-spritesheet.mjs` | — |
+| **Debug a broken dev server / bundler error** | `/apps/web` | `apps/web/components/game/CLAUDE.md` §Invariants (known gotchas: Phaser namespace import, `.next/` cache staleness) | — |
+| **Deploy branch to Vercel preview** | `/apps/web` | `ops/deploy/` + `planning/decisions/0002_...md` | Vercel MCP; GitHub MCP |
+| Game server (Colyseus — presence, avatar sync, room state) | `/apps/game-server` | `apps/CONTEXT.md` | Claude in Chrome MCP (two-tab manual tests); GitHub MCP; Railway MCP (proposed — deferred per ADR 0002); `/review` |
+| Shared types / constants / protocol | `/packages/shared` | `packages/CONTEXT.md` | `/review`; GitHub MCP |
+| API reference | `/docs/api` *(empty — Phase 3+)* | `docs/CONTEXT.md` | Custom `api-reference` skill via `skill-creator` (proposed) |
+| Art assets / sprite requirements | `/docs/art` | `docs/art/sprite-requirements.md` | Art authored in-house by user; ingest via `scripts/crop-spritesheet.mjs` + `AVATAR_SHEETS` entry |
+| Creator / member guides | `/docs/guides` *(empty — Phase 4+)* | `docs/CONTEXT.md` | `docx`; `pdf` |
+| Changelog entry | `/docs/changelog` | `docs/CONTEXT.md` | GitHub MCP |
+| Deploy config / CI | `/ops/deploy` | `ops/CONTEXT.md` | GitHub MCP; Vercel MCP (ADR 0002) |
+| Monitoring / runbook | `/ops/monitoring` *(empty — Phase 5+)* | `ops/CONTEXT.md` | Sentry MCP; PagerDuty or Opsgenie MCP (all proposed) |
+| Operational scripts | `/ops/scripts` | `ops/CONTEXT.md` | `schedule`; GitHub MCP |
 
 ## Naming conventions
 

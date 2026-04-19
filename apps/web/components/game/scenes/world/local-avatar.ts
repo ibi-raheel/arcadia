@@ -16,11 +16,7 @@ import { AVATAR_SHEETS } from '../boot/asset-manifest';
 import { AVATAR_COLORS, type AvatarId } from '../shared/avatar-palette';
 import { tileCenterToPixel } from '../shared/iso-math';
 import type { AvatarAction, FacingDirection, TileCoord } from '../shared/types';
-import {
-  animationKey,
-  avatarHasSprite,
-  primaryAvatarTextureKey,
-} from './avatar-animations';
+import { animationKey, avatarHasSprite, primaryAvatarTextureKey } from './avatar-animations';
 import { WORLD_TILE_SIZE } from './camera.config';
 import { worldSpritesConfig } from './sprites.config';
 
