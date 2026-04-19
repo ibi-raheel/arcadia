@@ -52,6 +52,7 @@ The MVP documents are the source of truth for scope, architecture, and sequencin
 
 | Task | Workspace | Read first | Tools |
 |------|-----------|-----------|-------|
+| Orient on the repo (status, live URLs, layout summary) | root | `README.md` | — |
 | Understand MVP scope / architecture / sequence | `/docs/mvp` | the three `prd.md` / `tad.md` / `phase-plan.md` files | — |
 | Plan a new phase or sub-phase | `/phases` | `phases/CONTEXT.md`, `/docs/mvp/phase-plan.md`, latest `phase-NN_plan.md` | — |
 | Log phase progress | `/phases` | `phases/CONTEXT.md`, active `phase-NN_status.md` | — |
@@ -75,7 +76,7 @@ The MVP documents are the source of truth for scope, architecture, and sequencin
 - **Phase status logs:** `phase-NN_status.md`
 - **Feature specs:** `feature-name_spec.md` (kebab-case)
 - **Architecture docs:** `topic.md` in `/planning/architecture/` (e.g. `rendering.md`, `realtime.md`, `data-model.md`, `auth.md`)
-- **Decision records (ADR):** `YYYY-MM-DD_decision-title.md` in `/planning/decisions/`
+- **Decision records (ADR):** `NNNN_YYYY-MM-DD_decision-title.md` in `/planning/decisions/`. `NNNN` is a four-digit zero-padded sequence across ALL ADRs (0001, 0002, 0003, …); the date is the one the decision was made. Sequence number keeps chronological scan easy once there are 10+ ADRs; date keeps same-day ADRs distinguishable. Reference them in prose as "ADR 0001", "ADR 0002", etc.
 - **Client components:** PascalCase files (`AvatarController.ts`, `TavernChat.tsx`)
 - **Non-component modules:** kebab-case (`course-loader.ts`, `iso-math.ts`)
 - **Tests:** colocated, `feature-name.test.ts` next to the file under test
@@ -143,7 +144,7 @@ Before building out Layer 3 further, run `mcp__plugins__search_plugins` for: *Ph
 1. Open an ADR in `/planning/decisions` titled `YYYY-MM-DD_add-<tool-name>.md`.
 2. Record: what it does, what it replaces (if anything), which workspaces reference it, what breaks without it.
 3. Update the routing table above and the relevant workspace `CONTEXT.md`.
-4. Commit.
+4. Commit.ÍÍ
 
 ## File-access rules
 

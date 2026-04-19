@@ -1,14 +1,22 @@
 # Workspace: Planning
 
+## Boundary with `/docs/mvp`
+
+**`/docs/mvp/` is the authoritative source of truth for the MVP.** `prd.md`, `tad.md`, and `phase-plan.md` (v1.1) define what's being built, how, and in what order.
+
+`/planning/` is this workspace — a working space for architecture docs (cross-cutting technical detail that doesn't belong in the MVP trio), feature specs (pre-code and post-ship), and ADRs (durable technical decisions).
+
+**If anything here conflicts with `/docs/mvp/`, the MVP docs win.** Update the MVP doc, or open an ADR arguing why the MVP doc should change.
+
 ## Purpose
 
-Architecture, feature specs, and decision records. This is where the **how** and **why** are written before code is written in `/src`.
+Architecture, feature specs, and decision records. This is where the **how** and **why** are written before code is written in `/apps` + `/packages`.
 
 ## What lives here
 
 - `/specs` — feature specifications (`feature-name_spec.md`)
 - `/architecture` — architecture docs by topic (`rendering.md`, `realtime.md`, `data-model.md`, `auth.md`, `course-delivery.md`, `gamification.md`, etc.)
-- `/decisions` — Architecture Decision Records (ADRs), dated and titled: `YYYY-MM-DD_decision-title.md`
+- `/decisions` — Architecture Decision Records (ADRs). Filename: `NNNN_YYYY-MM-DD_decision-title.md`. `NNNN` is a four-digit zero-padded sequence across all ADRs; the date is when the decision was made. Reference in prose as "ADR 0001" etc.
 
 ## Process
 
@@ -18,8 +26,8 @@ Architecture, feature specs, and decision records. This is where the **how** and
 
 ## ADRs on file
 
-- **ADR 0001** (`2026-04-18_locked-stack.md`) — locks the full MVP stack: Next.js 14+, Phaser 3.88+, Colyseus 0.17+, Supabase, Cloudflare Stream, Tailwind 3+, TypeScript 5+, Tiled. Covers the original "early ADR" questions (rendering engine, realtime transport, backend platform, video delivery, language, monorepo layout) in one document. Includes a **2026-04-18 addendum** documenting the Node 22+ runtime floor discovered during the Phase 0 Railway deploy (Colyseus's `rou3` transitive dep is ESM-only, requires `require(esm)` support).
-- **ADR 0002** (`2026-04-18_add-vercel-github-supabase-mcps.md`) — promotes Vercel / GitHub / Supabase MCPs to installed. Railway MCP deferred.
+- **ADR 0001** (`0001_2026-04-18_locked-stack.md`) — locks the full MVP stack: Next.js 14+, Phaser 3.88+, Colyseus 0.17+, Supabase, Cloudflare Stream, Tailwind 3+, TypeScript 5+, Tiled. Covers the original "early ADR" questions (rendering engine, realtime transport, backend platform, video delivery, language, monorepo layout) in one document. Includes a **2026-04-18 addendum** documenting the Node 22+ runtime floor discovered during the Phase 0 Railway deploy (Colyseus's `rou3` transitive dep is ESM-only, requires `require(esm)` support).
+- **ADR 0002** (`0002_2026-04-18_add-vercel-github-supabase-mcps.md`) — promotes Vercel / GitHub / Supabase MCPs to installed. Railway MCP deferred.
 
 ## Architecture docs on file
 

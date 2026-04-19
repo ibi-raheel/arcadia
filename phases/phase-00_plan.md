@@ -56,7 +56,7 @@ User-run accounts (free tier covers Phase 0; create before the step that depends
 
 **Stack ADR (do first)**
 
-1. Write `planning/decisions/2026-04-18_locked-stack.md` promoting TAD §2 versions to an ADR: Next.js 14+, Phaser 3.88+, Colyseus 0.17+, Supabase, Cloudflare Stream, Tailwind 3+, TypeScript 5+, Tiled (`.tmj`). Record what each replaces and which workspaces depend on it.
+1. Write `planning/decisions/0001_2026-04-18_locked-stack.md` promoting TAD §2 versions to an ADR: Next.js 14+, Phaser 3.88+, Colyseus 0.17+, Supabase, Cloudflare Stream, Tailwind 3+, TypeScript 5+, Tiled (`.tmj`). Record what each replaces and which workspaces depend on it.
 
 **Week 1 — Repo, services, schema**
 
