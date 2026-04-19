@@ -21,6 +21,6 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@colyseus/schema": "^4.0.0"
+    "@colyseus/schema": "^3.0.0"
   }
 }
