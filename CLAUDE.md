@@ -53,6 +53,7 @@ The MVP documents are the source of truth for scope, architecture, and sequencin
 | Task | Workspace | Read first | Tools |
 |------|-----------|-----------|-------|
 | Orient on the repo (status, live URLs, layout summary) | root | `README.md` + latest `phases/phase-NN_status.md` (current position) | — |
+| **Pick the right `cd` for a task** (token efficiency) | `/docs/claude-scoping.md` | this file (routing table) + `docs/claude-scoping.md` cheat sheet | — |
 | Understand MVP scope / architecture / sequence | `/docs/mvp` | the three `prd.md` / `tad.md` / `phase-plan.md` files | — |
 | Plan a new phase or sub-phase | `/phases` | `phases/CONTEXT.md`, `/docs/mvp/phase-plan.md`, latest `phase-NN_plan.md`, recent ADRs in `/planning/decisions/` | — |
 | Log phase progress | `/phases` | `phases/CONTEXT.md`, active `phase-NN_status.md` | — |
