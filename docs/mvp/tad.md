@@ -387,6 +387,9 @@ CREATE TRIGGER on_auth_user_created
 
 ## 7. Video delivery — Cloudflare Stream
 
+> **MVP amendment (2026-04-20 — ADR 0006):** Phase 3 uses **Cloudinary** instead of Cloudflare Stream. CF Stream has no free tier; Cloudinary's free tier (25 credits/month, no card) covers the Phase 3 demo with equivalent features (HLS adaptive streaming, signed URLs, auto-transcoding). The upload / playback flow shape below is preserved; only the vendor-specific bits change: `/api/stream/upload` → `/api/cloudinary/sign-upload`, `cf_stream_id` → `cloudinary_public_id` (both columns coexist in the `lessons` table for swap-back safety), and no webhook is used since Cloudinary's upload response carries `duration` synchronously. Swap-back path back to CF Stream is documented in ADR 0006. The original CF-Stream-shaped content below stays as the post-MVP target.
+
+
 ### 7.1 Upload flow
 
 | Step | Who | What |
