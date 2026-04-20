@@ -207,6 +207,11 @@ export class TavernScene extends Phaser.Scene {
     if (this.input.keyboard) {
       this.input.keyboard.enabled = true;
       this.input.keyboard.addCapture('W,A,S,D,SPACE');
+      // While the plugin was disabled, any keyup events were ignored — a key
+      // released during chat would still report `isDown = true` on the first
+      // frame after close. Reset every tracked key's state so the avatar
+      // only moves on a fresh press.
+      this.input.keyboard.resetKeys();
     }
   }
 
@@ -405,7 +410,14 @@ export class TavernScene extends Phaser.Scene {
     }
 
     if (this.localAvatar) {
-      const input = this.readInputState();
+      // When the chat input is focused we disable the keyboard plugin. Phaser
+      // stops updating Key.isDown from that point, so any key held at the
+      // moment of focus (e.g. W while pressing Tab) stays "down" forever and
+      // would otherwise keep the avatar walking. Force-zero input here.
+      const chatFocused = !(this.input.keyboard?.enabled ?? true);
+      const input = chatFocused
+        ? { up: false, down: false, left: false, right: false }
+        : this.readInputState();
       const kbd = resolveInputVelocity(input, tavernSpritesConfig.avatar.walkSpeed);
 
       let vx = 0;
