@@ -8,7 +8,7 @@ Each community (**Realm**) gives members an avatar, a space to gather (**Tavern*
 
 ## Status
 
-🚀 MVP build — **Phase 1 shipped 2026-04-19**. `/world` live on prod: isometric 30×30 map, real pixel-art tileset, animated knight avatar (idle / walk / jump via spacebar), click-to-move + WASD, building entrance transitions (Tavern / Academy / Market shells). Phase 2 (Colyseus multiplayer + Tavern chat) is next. See [`phases/phase-01_status.md`](phases/phase-01_status.md) for the full Phase 1 log and post-merge art work; [`docs/tiled-gui-quickstart.md`](docs/tiled-gui-quickstart.md) for designing the world map in Tiled; [`docs/claude-scoping.md`](docs/claude-scoping.md) for where to `cd` when opening Claude.
+🚀 MVP build — **Phase 2 shipped 2026-04-19**. Two-tab multiplayer live in `/world` (cyberpunk iso map, 4-tileset Tiled scene, remote avatars with linear interpolation) and `/tavern` (image-backed cyberpunk bar, Tab-to-chat with speech bubbles above speakers, XP-leaderboard sidebar). Knight + LPC-female avatars have real art; 03–08 render as colour placeholders. Colyseus 0.16 on Railway + Supabase Realtime + RPC-gated reactions (UI currently off per user). Phase 3 (Academy — course content + Cloudflare Stream) is next. See [`phases/phase-02_status.md`](phases/phase-02_status.md) for the full Phase 2 log incl. the chat-UX polish saga; [`docs/tiled-gui-quickstart.md`](docs/tiled-gui-quickstart.md) for editing the world map in Tiled; [`docs/claude-scoping.md`](docs/claude-scoping.md) for where to `cd` when opening Claude.
 
 ### Live services
 

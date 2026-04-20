@@ -2,7 +2,59 @@
 
 Source plan: `phase-02_plan.md`. Status entries are chronological, newest at the top.
 
-**Weeks 6 + 7 shipped to prod 2026-04-19** (PR #2 squash-merged as `ad6cb41`; follow-on deploy-compatibility fixes through `cd77f58`; commit `7dfc566` adds `avatar-02` LPC-female art). Prod: two tabs at `https://arcadia-web-swart.vercel.app/world` render each other's avatars in real time; Tavern join/leave works; member-count badge reflects occupancy within 3 s. Small interpolation lag noted ("slight lag though no worries there" — user) — tune in Week 8 polish if it remains visible against real art. Week 8 (chat + reactions + leaderboard + `/security-review`) not yet started.
+**Phase 2 effectively code-complete 2026-04-19.** Weeks 6 + 7 + 8 all shipped to prod with art + UX polish on top. Remote multiplayer is live in `/world` and `/tavern`; Tavern chat + speech bubbles work; spacebar jump works in both scenes. Leaderboard plumbing is in place (shows Level 1 / 0 XP for all members until Phase 5 awards land). Next phase: Phase 3 (Academy — course content + video delivery).
+
+## Resume checklist — where we left off
+
+**What's live on `https://arcadia-web-swart.vercel.app`:**
+
+- `/world` — 30×30 cyberpunk-themed iso map, four-tileset Tiled scene. W/A/S/D moves, Space jumps, click-to-move, WASD-normalised diagonals. Two browser tabs see each other as remote avatars with 160 px/s linear-interp lerp.
+- `/tavern` — image-backed interior (1376×768 cyberpunk bar, `public/tavern-interior.png`). No tile collision yet; avatar walks freely within image bounds. Colliders are a TODO.
+- **Chat**: bar hidden by default; Tab opens + focuses; Escape or Send closes. Speech bubbles pop above the speaker's avatar for 5 s, follow the avatar each frame. Messages persist to `tavern_messages`; Supabase Realtime INSERT subscription delivers peer messages within ~500 ms.
+- **Leaderboard**: top-10 by XP, live re-sort on `memberships` UPDATE. All entries at 0 XP / Level 1 until Phase 5.
+- **Avatar art**: avatar-01 (Knight, Aseprite) + avatar-02 (LPC female) shipped. Avatars 03–08 render as coloured Rectangle placeholders.
+- **Building transitions**: overlay + placeholder PNGs wired on all three building pages; real art drops in file-level per building.
+
+**What's merged to `main` but not yet visible on the "Current Production" Vercel panel at time of writing:** PR #8 (commit `4dce75a`) — image-backed tavern + reaction-picker removal. Production build was triggered via empty-commit `5a680d6` at ~23:03 UTC 2026-04-19 after the GitHub webhook missed the initial merge. Should be live by the time anyone resumes tomorrow. Verify with `curl -s https://arcadia-web-swart.vercel.app/tavern-interior.png -o /dev/null -w "%{http_code}\n"` — 200 means the image-backed tavern is live.
+
+**PR state:** #2–#6 + #8 merged. #7 closed as superseded (its changes landed in #8's squash).
+
+**Open items deliberately punted:**
+
+- **Tavern colliders** — user will mark collider rectangles on the tavern interior later. Avatar currently walks over furniture.
+- **Building-entry art for Tavern + Market** — Academy sprite is placed at tile (12, 6) via decor-layer gid 364; Tavern + Market still show the Phase-1 invisible entrance zones. Real art needs to land as decor-layer tiles or standalone y-sorted sprites.
+- **Reactions UI** — removed per user 2026-04-19. `toggle_reaction` RPC + RLS suite tests remain in place. Re-add UI any time (previous `ReactionPicker.tsx` is in git history on branch `phase-02-chat-polish-v2` commit `44c577a`).
+- **Real-art 60 FPS measurement** — Phase 5 polish item.
+- **Supabase migration `20260419000002_phase2_realtime_and_reactions.sql`** applied to both `arcadia` (prod) and `arcadia-test` projects. CI RLS suite reflects the new schema.
+- **Load-test harness** exists at `apps/game-server/scripts/loadtest.ts` + `:teardown`; never executed against prod (would seed 20 test users — use `arcadia-test` project only).
+
+**Known Phase-2 warts worth noting in a future cleanup pass:**
+
+- `apps/web/public/maps/tavern.tmj` + `scripts/generate-tavern-tmj.mjs` still exist but are unused. Safe to delete if we commit to image-backed tavern.
+- Legacy `scenes/tavern/layers.config.ts` exposes `tilemapLayers` names that aren't read anywhere. Shim for future revival.
+- `packages/shared/tsconfig.json` overrides `useDefineForClassFields: false` per ADR 0005; don't remove.
+- `package-lock.json` has `uWebSockets.js` pinned to an HTTPS git URL; `npm install` rewrites to SSH and breaks Railway — re-apply the sed if it drifts.
+
+**First things to do tomorrow:**
+
+1. Verify prod is on the image-backed tavern (curl check above; or just open `/tavern`).
+2. If user wants to extend Phase 2 further (colliders, Tavern+Market building art, reactions UI, leaderboard display names, etc.) — pick one and open a focused PR.
+3. Otherwise: **start Phase 3 Week 9** — `phases/phase-03_plan.md` not yet written; first step would be drafting the plan per `phases/CONTEXT.md` (course builder UI + CF Stream upload integration + `lesson_progress` schema exercise).
+
+---
+
+**Shipped changes since the original Weeks 6 + 7 prod cut:**
+
+| PR | Commit on main | What landed |
+|---|---|---|
+| #3 | `60b79ce` | Phase 2 Week 8 — Tavern chat + reactions + leaderboard + `toggle_reaction` RPC + RLS lockdown. 5 new RLS-suite tests. |
+| #4 | `0a2e2b7` | Chat polish v1 — bottom-bar composer; speech bubbles above speakers (replaces scrollable panel). |
+| #5 | `5112661` | Chat polish v2 — WASD-during-typing keyboard handoff; Tab-to-chat shortcut; click bubble to open reaction picker. |
+| #6 | `0721910` | Chat polish v3 — chat bar hidden until Tab; spacebar jump wired in TavernScene; visibility-driven focus emit. |
+| #7 | *(closed)* | Superseded — content merged via PR #8's squash. |
+| #8 | `4dce75a` | Chat polish v4 + image-backed tavern — force-enable keyboard at scene create; drop reaction-picker UI (backend intact); swap tavern tilemap for 1376×768 PNG + `spawnPixel` option on LocalAvatar. |
+
+Phase 2 exit criteria from the plan: **all met** except the two that were always flagged as Phase 5: (a) real-art 60 FPS measurement, (b) XP award triggers (leaderboard is in place; values stay 0 until Phase 5 wires the DB triggers).
 
 ### Art tuning pass (2026-04-19 evening, post-ingestion)
 
