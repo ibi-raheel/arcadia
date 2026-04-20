@@ -39,6 +39,58 @@ export const TAVERN_SCENE_KEY = 'TavernScene' as const;
 
 const MOVE_INTERVAL_MS = 50;
 
+/**
+ * Event emitted on `game.events` by the React chat layer when a new message
+ * arrives (including the sender's own optimistic echo). Handler signature:
+ *   (memberId: string, text: string) => void
+ */
+export const TAVERN_SPEECH_EVENT = 'tavern:speech';
+
+const SPEECH_BUBBLE_DURATION_MS = 5000;
+const SPEECH_BUBBLE_DEPTH = 10_000;
+const SPEECH_BUBBLE_Y_OFFSET = 64; // pixels above the avatar's origin
+const SPEECH_BUBBLE_MAX_WIDTH = 200;
+const SPEECH_BUBBLE_PAD_X = 10;
+const SPEECH_BUBBLE_PAD_Y = 6;
+
+/**
+ * Build a speech-bubble Container (background rounded-rect + text). Origin
+ * sits at the bottom-centre so callers can attach it directly above an
+ * avatar's head by setting (x, y) to the avatar's top-of-head coord.
+ */
+function createSpeechBubble(scene: Phaser.Scene, text: string): Phaser.GameObjects.Container {
+  const textObj = scene.add
+    .text(0, 0, text, {
+      fontFamily: 'system-ui, sans-serif',
+      fontSize: '12px',
+      color: '#ffffff',
+      wordWrap: { width: SPEECH_BUBBLE_MAX_WIDTH, useAdvancedWrap: true },
+    })
+    .setOrigin(0.5, 0.5);
+
+  const w = textObj.width + SPEECH_BUBBLE_PAD_X * 2;
+  const h = textObj.height + SPEECH_BUBBLE_PAD_Y * 2;
+
+  // Graphics for rounded-rect background + tail. Drawn relative to the
+  // Container's origin, which we anchor at bottom-centre (so y is 0 at the
+  // tail tip, −(h+tail) at the top of the bubble).
+  const tailSize = 6;
+  const bg = scene.add.graphics();
+  bg.fillStyle(0x0a0a0a, 0.85);
+  bg.lineStyle(1, 0x4a4a4a, 1);
+  // Rounded rect anchored with bottom-centre = (0, -tailSize).
+  bg.fillRoundedRect(-w / 2, -h - tailSize, w, h, 6);
+  bg.strokeRoundedRect(-w / 2, -h - tailSize, w, h, 6);
+  // Triangle tail pointing down to the speaker.
+  bg.fillTriangle(-tailSize, -tailSize, tailSize, -tailSize, 0, 0);
+  bg.lineBetween(-tailSize, -tailSize, 0, 0);
+  bg.lineBetween(tailSize, -tailSize, 0, 0);
+
+  textObj.setPosition(0, -tailSize - h / 2);
+
+  return scene.add.container(0, 0, [bg, textObj]);
+}
+
 type YSortableGameObject = YSortable & { setDepth: (depth: number) => unknown };
 
 export class TavernScene extends Phaser.Scene {
@@ -62,6 +114,10 @@ export class TavernScene extends Phaser.Scene {
 
   private readonly remoteAvatars = new Map<string, RemoteAvatar>();
   private unsubscribeConnected: (() => void) | null = null;
+
+  // Speech bubbles above speakers — keyed by memberId so a new message from
+  // the same member replaces any active bubble.
+  private readonly speechBubbles = new Map<string, Phaser.GameObjects.Container>();
 
   constructor() {
     super({ key: TAVERN_SCENE_KEY });
@@ -109,6 +165,52 @@ export class TavernScene extends Phaser.Scene {
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.teardownRemoteAvatars());
     this.events.once(Phaser.Scenes.Events.DESTROY, () => this.teardownRemoteAvatars());
+
+    // React-side chat wires new messages to game.events via
+    // TAVERN_SPEECH_EVENT. Each emit shows (or replaces) a bubble above the
+    // speaking avatar for SPEECH_BUBBLE_DURATION_MS.
+    this.game.events.on(TAVERN_SPEECH_EVENT, this.showSpeechBubble, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.game.events.off(TAVERN_SPEECH_EVENT, this.showSpeechBubble, this);
+      this.teardownSpeechBubbles();
+    });
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => {
+      this.game.events.off(TAVERN_SPEECH_EVENT, this.showSpeechBubble, this);
+      this.teardownSpeechBubbles();
+    });
+  }
+
+  /**
+   * Find an avatar by its server-side `memberId` (LocalAvatar or RemoteAvatar).
+   * Used by the speech-bubble lookup; scales fine for 20 CCU.
+   */
+  private findAvatarByMemberId(memberId: string): LocalAvatar | RemoteAvatar | undefined {
+    if (this.localAvatar && this.localAvatar.memberId === memberId) return this.localAvatar;
+    for (const remote of this.remoteAvatars.values()) {
+      if (remote.memberId === memberId) return remote;
+    }
+    return undefined;
+  }
+
+  public showSpeechBubble(memberId: string, text: string): void {
+    const avatar = this.findAvatarByMemberId(memberId);
+    if (!avatar) return;
+
+    this.speechBubbles.get(memberId)?.destroy();
+
+    const bubble = createSpeechBubble(this, text);
+    bubble.setDepth(SPEECH_BUBBLE_DEPTH);
+    this.speechBubbles.set(memberId, bubble);
+
+    this.time.delayedCall(SPEECH_BUBBLE_DURATION_MS, () => {
+      this.speechBubbles.get(memberId)?.destroy();
+      this.speechBubbles.delete(memberId);
+    });
+  }
+
+  private teardownSpeechBubbles(): void {
+    for (const bubble of this.speechBubbles.values()) bubble.destroy();
+    this.speechBubbles.clear();
   }
 
   private wirePointerInput(): void {
@@ -148,6 +250,7 @@ export class TavernScene extends Phaser.Scene {
     }
 
     const avatar = new LocalAvatar(this, {
+      memberId: member.memberId,
       avatarId: member.avatarId,
       displayName: member.displayName,
       spawnTile: tavernSpritesConfig.avatar.spawnTile,
@@ -306,6 +409,15 @@ export class TavernScene extends Phaser.Scene {
     const { yAnchorRatio } = tavernLayersConfig.ySort;
     for (const obj of this.ySortables) {
       obj.setDepth(calculateYSortDepth(obj, { depthBase, yAnchorRatio }));
+    }
+
+    // Reposition each live speech bubble above its speaker. Bubbles follow
+    // the avatar one-for-one so they stay glued during movement.
+    for (const [memberId, bubble] of this.speechBubbles) {
+      const avatar = this.findAvatarByMemberId(memberId);
+      if (avatar) {
+        bubble.setPosition(avatar.x, avatar.y - SPEECH_BUBBLE_Y_OFFSET);
+      }
     }
   }
 }

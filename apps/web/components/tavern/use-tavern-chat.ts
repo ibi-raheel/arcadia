@@ -27,6 +27,13 @@ type ChatState =
 export type UseTavernChatArgs = {
   readonly realmId: string;
   readonly memberId: string;
+  /**
+   * Fired whenever a message newly enters the local cache — includes both
+   * peer messages (via Realtime INSERT) and the sender's own optimistic
+   * echo after a successful INSERT. Used by GameTavern to pop speech
+   * bubbles above the speaker's avatar in TavernScene.
+   */
+  readonly onMessageReceived?: (message: TavernMessage) => void;
 };
 
 export type UseTavernChatResult = {
@@ -35,11 +42,21 @@ export type UseTavernChatResult = {
   readonly toggleReaction: (messageId: string, emoji: string) => Promise<void>;
 };
 
-export function useTavernChat({ realmId, memberId }: UseTavernChatArgs): UseTavernChatResult {
+export function useTavernChat({
+  realmId,
+  memberId,
+  onMessageReceived,
+}: UseTavernChatArgs): UseTavernChatResult {
   const [state, setState] = useState<ChatState>({ status: 'loading' });
   // Ref-backed mirror of the message list — lets the Realtime handlers merge
   // without closing over stale state from their subscribe-time render.
   const messagesRef = useRef<TavernMessage[]>([]);
+  // Keep the callback ref fresh without re-subscribing the Realtime channel
+  // every render.
+  const onMessageReceivedRef = useRef(onMessageReceived);
+  useEffect(() => {
+    onMessageReceivedRef.current = onMessageReceived;
+  }, [onMessageReceived]);
 
   const setMessages = useCallback((next: TavernMessage[]) => {
     messagesRef.current = next;
@@ -80,9 +97,13 @@ export function useTavernChat({ realmId, memberId }: UseTavernChatArgs): UseTave
         },
         (payload) => {
           const row = payload.new as TavernMessage;
-          // Drop if already present (optimistic-append echo).
+          // Drop if already present (optimistic-append echo). In that case
+          // the sender's own optimistic path has already fired the
+          // onMessageReceived callback — don't double-fire for the speech
+          // bubble.
           if (messagesRef.current.some((m) => m.id === row.id)) return;
           setMessages([...messagesRef.current, row]);
+          onMessageReceivedRef.current?.(row);
         },
       )
       .on(
@@ -125,7 +146,11 @@ export function useTavernChat({ realmId, memberId }: UseTavernChatArgs): UseTave
       }
       // Append immediately — Realtime echo will no-op via id dedupe.
       if (data && !messagesRef.current.some((m) => m.id === data.id)) {
-        setMessages([...messagesRef.current, data as TavernMessage]);
+        const row = data as TavernMessage;
+        setMessages([...messagesRef.current, row]);
+        // Fire for the speaker's own bubble. Realtime INSERT echo will see
+        // the row in the cache and skip firing again.
+        onMessageReceivedRef.current?.(row);
       }
     },
     [realmId, memberId, setMessages],

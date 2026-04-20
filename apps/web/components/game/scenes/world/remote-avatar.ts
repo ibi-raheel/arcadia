@@ -29,6 +29,7 @@ import { worldSpritesConfig } from './sprites.config';
 export const REMOTE_SNAP_DISTANCE_PX = 128;
 
 export type RemoteAvatarSnapshot = {
+  readonly memberId: string;
   readonly avatarId: AvatarId;
   readonly displayName: string;
   readonly x: number;
@@ -39,6 +40,7 @@ export type RemoteAvatarSnapshot = {
 };
 
 export class RemoteAvatar {
+  readonly memberId: string;
   readonly avatarId: AvatarId;
   private readonly visuals: AvatarVisuals;
 
@@ -49,6 +51,7 @@ export class RemoteAvatar {
   private level: number;
 
   constructor(scene: Phaser.Scene, snap: RemoteAvatarSnapshot) {
+    this.memberId = snap.memberId;
     this.avatarId = snap.avatarId;
     this.visuals = createAvatarVisuals(
       scene,
@@ -148,6 +151,7 @@ export class RemoteAvatar {
 export function snapshotFromState(state: AvatarState): RemoteAvatarSnapshot | null {
   if (!isAvatarId(state.avatarId)) return null;
   return {
+    memberId: state.memberId,
     avatarId: state.avatarId,
     displayName: state.displayName,
     x: state.x,
