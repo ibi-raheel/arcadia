@@ -118,12 +118,8 @@ export function LeaderboardPanel({ realmId, memberId }: Props): React.JSX.Elemen
         </button>
       </div>
       <ol className="divide-y divide-neutral-800">
-        {state.status === 'loading' && (
-          <li className="px-3 py-2 text-neutral-500">Loading…</li>
-        )}
-        {state.status === 'error' && (
-          <li className="px-3 py-2 text-red-400">{state.message}</li>
-        )}
+        {state.status === 'loading' && <li className="px-3 py-2 text-neutral-500">Loading…</li>}
+        {state.status === 'error' && <li className="px-3 py-2 text-red-400">{state.message}</li>}
         {state.status === 'ready' && state.entries.length === 0 && (
           <li className="px-3 py-2 text-neutral-500">No members yet.</li>
         )}
