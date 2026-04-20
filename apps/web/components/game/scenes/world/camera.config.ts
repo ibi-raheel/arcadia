@@ -33,11 +33,11 @@ const worldMinY = 0;
 const worldMaxY = (cols + rows - 2) * halfTh + th;
 
 export const worldCameraConfig = {
-  // 64×32 tiles on a 30×30 map give ~1920×928 px world extent. Bumped to
-  // 1.3 (2026-04-19) after the avatar size halved — keeps the character
-  // reading at a similar on-screen size while tightening the framing
-  // against the new cyberpunk tileset.
-  zoom: 1.3,
+  // 64×32 tiles on a 30×30 map give ~1920×928 px world extent. Bumped
+  // twice 2026-04-19: 1.0 → 1.3 (avatar halved; keep character readable)
+  // and 1.3 → 1.69 (a second +30% compound — user requested tighter
+  // framing against the cyberpunk tileset).
+  zoom: 1.69,
   followLerp: 0.1,
   deadzone: { width: 160, height: 120 },
   bounds: {
