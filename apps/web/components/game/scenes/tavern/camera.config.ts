@@ -17,9 +17,9 @@ const TAVERN_CAM_BOUNDS: PixelRect = {
 };
 
 export const tavernCameraConfig = {
-  // 1.5× at 1376-wide yields ~917 visible width on a 1440-wide viewport —
-  // feels like a tavern, not a distant map. Tweakable.
-  zoom: 1.5,
+  // 1.05× — zoomed out 30% from the original 1.5× (2026-04-20) to pair with
+  // the +25% avatar bump; more of the interior stays on screen.
+  zoom: 1.05,
   followLerp: 0.12,
   deadzone: { width: 120, height: 80 },
   bounds: TAVERN_CAM_BOUNDS,

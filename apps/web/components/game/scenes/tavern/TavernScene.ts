@@ -188,7 +188,13 @@ export class TavernScene extends Phaser.Scene {
   }
 
   private disableKeyboardInput(): void {
-    if (this.input.keyboard) this.input.keyboard.enabled = false;
+    if (this.input.keyboard) {
+      this.input.keyboard.enabled = false;
+      // Captures live on the game-level KeyboardManager and preventDefault
+      // at the DOM, independent of the scene plugin's `enabled` flag. Clear
+      // them so W/A/S/D/Space reach the chat <input>.
+      this.input.keyboard.clearCaptures();
+    }
     // Also clear click-target + zero velocity so the avatar doesn't drift
     // while the user types. Keyboard-driven velocity is already guarded by
     // the enabled flag above.
@@ -198,7 +204,10 @@ export class TavernScene extends Phaser.Scene {
   }
 
   private enableKeyboardInput(): void {
-    if (this.input.keyboard) this.input.keyboard.enabled = true;
+    if (this.input.keyboard) {
+      this.input.keyboard.enabled = true;
+      this.input.keyboard.addCapture('W,A,S,D,SPACE');
+    }
   }
 
   /**
