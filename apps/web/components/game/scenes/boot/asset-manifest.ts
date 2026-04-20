@@ -80,14 +80,15 @@ export type AvatarSheet = {
 
 export type AvatarSheetMap = Partial<Record<AvatarAction, AvatarSheet>>;
 
-// Row order across all three supplied sheets (user-specified 2026-04-19):
+// Row order across all supplied sheets (user-specified 2026-04-19):
 //   row 0 = north (back view)
 //   row 1 = west  (profile facing left)
 //   row 2 = south (front view)
 //   row 3 = east  (profile facing right)
-// Assumed consistent across idle / walk / jump — adjust per-entry if the
-// author used a different convention on a specific sheet.
-const AVATAR_01_ROW_ORDER: readonly AvatarDirection[] = ['n', 'w', 's', 'e'];
+// Shared across avatar-01 (Knight, Aseprite export) + avatar-02 (LPC-standard
+// female, cropped from 832×256 to match the knight's column counts). Adjust
+// per-entry if a future sheet uses a different convention.
+const CARDINAL_ROW_ORDER: readonly AvatarDirection[] = ['n', 'w', 's', 'e'];
 
 export const AVATAR_SHEETS: Readonly<Partial<Record<AvatarId, AvatarSheetMap>>> = {
   'avatar-01': {
@@ -98,7 +99,7 @@ export const AVATAR_SHEETS: Readonly<Partial<Record<AvatarId, AvatarSheetMap>>> 
       frameHeight: 64,
       cols: 2,
       rows: 4,
-      directionRowOrder: AVATAR_01_ROW_ORDER,
+      directionRowOrder: CARDINAL_ROW_ORDER,
       frameRate: 4,
       repeat: -1,
     },
@@ -109,7 +110,7 @@ export const AVATAR_SHEETS: Readonly<Partial<Record<AvatarId, AvatarSheetMap>>> 
       frameHeight: 64,
       cols: 9,
       rows: 4,
-      directionRowOrder: AVATAR_01_ROW_ORDER,
+      directionRowOrder: CARDINAL_ROW_ORDER,
       frameRate: 12,
       repeat: -1,
     },
@@ -120,9 +121,44 @@ export const AVATAR_SHEETS: Readonly<Partial<Record<AvatarId, AvatarSheetMap>>> 
       frameHeight: 64,
       cols: 5,
       rows: 4,
-      directionRowOrder: AVATAR_01_ROW_ORDER,
+      directionRowOrder: CARDINAL_ROW_ORDER,
       frameRate: 12,
       repeat: 0, // one-shot — jump plays once, doesn't loop
+    },
+  },
+  'avatar-02': {
+    idle: {
+      key: 'avatar-02-idle',
+      path: '/avatars/avatar-02/idle.png',
+      frameWidth: 64,
+      frameHeight: 64,
+      cols: 2,
+      rows: 4,
+      directionRowOrder: CARDINAL_ROW_ORDER,
+      frameRate: 4,
+      repeat: -1,
+    },
+    walk: {
+      key: 'avatar-02-walk',
+      path: '/avatars/avatar-02/walk.png',
+      frameWidth: 64,
+      frameHeight: 64,
+      cols: 9,
+      rows: 4,
+      directionRowOrder: CARDINAL_ROW_ORDER,
+      frameRate: 12,
+      repeat: -1,
+    },
+    jump: {
+      key: 'avatar-02-jump',
+      path: '/avatars/avatar-02/jump.png',
+      frameWidth: 64,
+      frameHeight: 64,
+      cols: 5,
+      rows: 4,
+      directionRowOrder: CARDINAL_ROW_ORDER,
+      frameRate: 12,
+      repeat: 0,
     },
   },
 };
