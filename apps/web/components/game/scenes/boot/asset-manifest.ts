@@ -48,6 +48,13 @@ export const BOOT_ASSETS = {
     key: 'tavern',
     path: '/maps/tavern.tmj',
   },
+  // Phase 2 Week 8 polish: user-supplied cyberpunk tavern interior
+  // image-based background. Replaces tilemap rendering in TavernScene;
+  // 1376×768, top-down perspective. Colliders will be added later.
+  tavernInterior: {
+    key: 'tavern-interior',
+    path: '/tavern-interior.png',
+  },
 } as const;
 
 export type BootAssetKey = keyof typeof BOOT_ASSETS;
