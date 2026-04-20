@@ -18,6 +18,7 @@ import { LeaderboardPanel } from '@/components/tavern/LeaderboardPanel';
 
 import { BuildingTransition } from './BuildingTransition';
 import { connectToRoom, type ColyseusConnection } from './net/colyseus-client';
+import { TAVERN_SPEECH_EVENT } from './scenes/tavern/TavernScene';
 import { BootScene } from './scenes/boot/BootScene';
 import {
   NEXT_SCENE_KEY_REGISTRY_KEY,
@@ -173,6 +174,15 @@ export default function GameTavern(): React.JSX.Element {
     router.push('/world?from=tavern');
   };
 
+  // Chat → scene bridge. TavernScene listens on `game.events` for
+  // TAVERN_SPEECH_EVENT and pops a bubble above the avatar matching
+  // `memberId`. Safe when gameRef hasn't populated yet — emit is a no-op
+  // until Phaser mounts (the initial message fetch finishes after mount
+  // anyway, per GameTavern's sequencing).
+  const handleMessageReceived = (msg: { sender_id: string; content: string }): void => {
+    gameRef.current?.events.emit(TAVERN_SPEECH_EVENT, msg.sender_id, msg.content);
+  };
+
   if (fetchState.status === 'error' || connectError) {
     const message = fetchState.status === 'error' ? fetchState.message : connectError!;
     return (
@@ -205,6 +215,7 @@ export default function GameTavern(): React.JSX.Element {
             realmId={fetchState.member.realmId}
             memberId={fetchState.member.memberId}
             displayName={fetchState.member.displayName}
+            onMessageReceived={handleMessageReceived}
           />
           <LeaderboardPanel
             realmId={fetchState.member.realmId}
