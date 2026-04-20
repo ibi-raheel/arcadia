@@ -17,10 +17,17 @@ public/
 │   │   └── jump.png    (320×256 — 5×4 grid)
 │   ├── avatar-03/ … avatar-08/       ← empty; members render as colored Rectangles until filled
 ├── tilesets/
-│   └── world.png       (704×704 — 11×11 grid of 64×64 iso tiles, 115 filled:
-│                        dirt/grass/bushes/flowers/stumps/rocks/water)
+│   ├── world.png       (704×704 — 11×11 grid of 64×64 iso tiles; base terrain)
+│   ├── world-alt.png   (704×704 — Photoroom-variant referenced at firstgid 122 in world.tmj;
+│                        currently a byte-identical copy of world.png — **replace with the
+│                        user's real alt PNG when available**)
+│   ├── decor.png       (1408×1408 — 11×11 grid of 128×128 cyberpunk props: trees, lamps,
+│                        benches, signs, neon floor tiles; used in the decor layer)
+│   └── academy.png     (168×166 — single-tile Academy building sprite, placed at tile
+│                        (12, 6) via decor layer gid 364)
 └── maps/
-    └── world.tmj       (30×30 iso tilemap, 64×32 tiles, 3 layers)
+    └── world.tmj       (30×30 iso, 64×32 grid, 3 layers: ground / collision / decor.
+                         Uses 4 tilesets chained via firstgid — 1, 122, 243, 364.)
 ```
 
 ## Workflows
