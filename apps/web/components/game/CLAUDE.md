@@ -19,7 +19,7 @@ Art (PNGs, atlases, tilemaps) stays central in `apps/web/public/{avatars,tileset
 
 - **Tilemap** — 30×30 isometric map (Tiled `orientation: "isometric"`), 64×32 (2:1) AoE-flat diamond map grid; source tiles are 64×64 with the extra 32px of height rendering above each cell for the cliff/elevation look of the current pixel-art tileset (`public/tilesets/world.png`, 11×11 grid of 64×64 tiles). `world.tmj` layers: `ground` (grass + dirt paths), `collision` (rock walls + building footprints), `overlay` (short decor — flowers, small bushes). Rendered in `WorldScene` via Phaser's built-in iso tilemap loader.
 - **Camera** — screen-space follow with lerp + deadzone. Movement is screen-space (WASD/arrows/click go straight up/down/left/right regardless of iso projection).
-- **Avatar** — 64×64 frame. Rendered as a Phaser `Sprite` if a spritesheet for the member's `avatar_id` is registered in `AVATAR_SHEETS`, otherwise as a colored `Rectangle` placeholder.
+- **Avatar** — spritesheets authored at 64×64 per frame; rendered at **32×32** via `setDisplaySize` (halved 2026-04-19 to read better against the new cyberpunk tileset). Arcade Physics feet-body is 16×8, anchored near the bottom of the 32×32 frame. Rendered as a Phaser `Sprite` if a spritesheet for the member's `avatar_id` is registered in `AVATAR_SHEETS`, otherwise as a colored `Rectangle` placeholder.
 
 ## Avatar pipeline
 
