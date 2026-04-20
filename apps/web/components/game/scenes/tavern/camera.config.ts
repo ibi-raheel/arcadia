@@ -1,27 +1,28 @@
-// Tavern interior camera + tilemap dimensions. ADR 0004: tweakable values
-// live here, never in the scene class. Mirrors world/camera.config shape.
+// Tavern interior camera + world-size constants. 2026-04-19 polish: the
+// tavern is now a single image (1376×768, `public/tavern-interior.png`)
+// rather than an iso tilemap, so bounds are a flat rectangle matching the
+// image's pixel dimensions. Colliders will be added later; in the interim
+// the world physics bounds keep the avatar inside the image.
 
 import type { PixelRect } from '../shared/types';
 
-export const TAVERN_TILE_DIMENSIONS = { width: 15, height: 15 } as const;
-export const TAVERN_TILE_SIZE = { width: 64, height: 32 } as const;
+/** Pixel dimensions of `public/tavern-interior.png`. */
+export const TAVERN_INTERIOR_SIZE = { width: 1376, height: 768 } as const;
 
-// Iso diamond extent for a 15×15 map with 64×32 tiles:
-//   screenX = (tX - tY) * TW/2 → range -(14 * 32) .. (14 * 32) = ±448
-//   screenY = (tX + tY) * TH/2 → range 0 .. (28 * 16) + 64 = 512
-// Expand by half a tile on each side for camera headroom.
-const CAM_BOUNDS: PixelRect = {
-  x: -512,
-  y: -32,
-  width: 1024,
-  height: 576,
+const TAVERN_CAM_BOUNDS: PixelRect = {
+  x: 0,
+  y: 0,
+  width: TAVERN_INTERIOR_SIZE.width,
+  height: TAVERN_INTERIOR_SIZE.height,
 };
 
 export const tavernCameraConfig = {
-  zoom: 1.5, // interior is small; zoom in a bit so it fills the canvas
+  // 1.5× at 1376-wide yields ~917 visible width on a 1440-wide viewport —
+  // feels like a tavern, not a distant map. Tweakable.
+  zoom: 1.5,
   followLerp: 0.12,
   deadzone: { width: 120, height: 80 },
-  bounds: CAM_BOUNDS,
+  bounds: TAVERN_CAM_BOUNDS,
   fadeInMs: 300,
   fadeOutMs: 300,
 } as const;

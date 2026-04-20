@@ -102,8 +102,6 @@ function createSpeechBubble(scene: Phaser.Scene, text: string): Phaser.GameObjec
 type YSortableGameObject = YSortable & { setDepth: (depth: number) => unknown };
 
 export class TavernScene extends Phaser.Scene {
-  private collisionLayer?: Phaser.Tilemaps.TilemapLayer;
-
   private readonly ySortables: YSortableGameObject[] = [];
   private localAvatar?: LocalAvatar;
 
@@ -133,23 +131,12 @@ export class TavernScene extends Phaser.Scene {
   }
 
   create(): void {
-    const map = this.make.tilemap({ key: BOOT_ASSETS.tavernTilemap.key });
-    const tileset = map.addTilesetImage('world', BOOT_ASSETS.tileset.key, 64, 64);
-    if (!tileset) {
-      throw new Error('TavernScene: failed to register tileset for tavern map');
-    }
-
-    const { tilemapLayers, depth } = tavernLayersConfig;
-
-    const groundLayer = map.createLayer(tilemapLayers.ground, tileset, 0, 0)!;
-    groundLayer.setDepth(depth.ground);
-
-    this.collisionLayer = map.createLayer(tilemapLayers.collision, tileset, 0, 0)!;
-    this.collisionLayer.setDepth(depth.collisionVisuals);
-    this.collisionLayer.setCollisionByExclusion([0]);
-
-    const overlayLayer = map.createLayer(tilemapLayers.overlay, tileset, 0, 0)!;
-    overlayLayer.setDepth(depth.overlay);
+    // Image-backed tavern (2026-04-19). The map is a single static PNG;
+    // collisions will be added later via a separate data layer. For now
+    // the avatar walks freely within the image's world-bounds rectangle.
+    const bg = this.add.image(0, 0, BOOT_ASSETS.tavernInterior.key);
+    bg.setOrigin(0, 0);
+    bg.setDepth(tavernLayersConfig.depth.ground);
 
     const { bounds, zoom, fadeInMs } = tavernCameraConfig;
     this.cameras.main.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
@@ -301,15 +288,13 @@ export class TavernScene extends Phaser.Scene {
       memberId: member.memberId,
       avatarId: member.avatarId,
       displayName: member.displayName,
-      spawnTile: tavernSpritesConfig.avatar.spawnTile,
+      spawnPixel: tavernSpritesConfig.avatar.spawnPixel,
     });
 
     this.localAvatar = avatar;
     this.registerYSortable(avatar);
 
-    if (this.collisionLayer) {
-      this.physics.add.collider(avatar.rect, this.collisionLayer);
-    }
+    // No collision layer yet — image-backed tavern, colliders come later.
 
     this.cameras.main.startFollow(
       avatar.rect,

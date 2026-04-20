@@ -29,6 +29,9 @@ export type LocalAvatarOptions = {
   readonly avatarId: AvatarId;
   readonly displayName: string;
   readonly spawnTile?: TileCoord;
+  /** Exact pixel spawn — wins over `spawnTile` when provided (tavern
+   *  uses this because its background is an image, not an iso tilemap). */
+  readonly spawnPixel?: { readonly x: number; readonly y: number };
 };
 
 export class LocalAvatar {
@@ -45,8 +48,8 @@ export class LocalAvatar {
     this.memberId = options.memberId;
     this.avatarId = options.avatarId;
     const cfg = worldSpritesConfig.avatar;
-    const spawnTile = options.spawnTile ?? cfg.spawnTile;
-    const spawnPx = tileCenterToPixel(spawnTile, WORLD_TILE_SIZE);
+    const spawnPx =
+      options.spawnPixel ?? tileCenterToPixel(options.spawnTile ?? cfg.spawnTile, WORLD_TILE_SIZE);
 
     this.visuals = createAvatarVisuals(
       scene,
