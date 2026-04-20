@@ -30,6 +30,8 @@ import { worldSpritesConfig } from './sprites.config';
 
 /** Shape of the `member` registry entry written by GameWorld before Phaser boots. */
 export type SceneMember = {
+  readonly memberId: string;
+  readonly realmId: string;
   readonly avatarId: AvatarId;
   readonly displayName: string;
 };
