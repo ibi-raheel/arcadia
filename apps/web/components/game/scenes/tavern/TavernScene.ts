@@ -308,6 +308,8 @@ export class TavernScene extends Phaser.Scene {
       avatarId: member.avatarId,
       displayName: member.displayName,
       spawnPixel: tavernSpritesConfig.avatar.spawnPixel,
+      size: tavernSpritesConfig.avatar.size,
+      bodyOffset: tavernSpritesConfig.avatar.bodyOffset,
     });
 
     this.localAvatar = avatar;
@@ -363,7 +365,7 @@ export class TavernScene extends Phaser.Scene {
     if (this.remoteAvatars.has(sessionId)) return;
     const snapshot = snapshotFromState(state);
     if (!snapshot) return;
-    const remote = new RemoteAvatar(this, snapshot);
+    const remote = new RemoteAvatar(this, snapshot, tavernSpritesConfig.avatar.size);
     this.remoteAvatars.set(sessionId, remote);
     this.registerYSortable(remote);
     $(state).onChange(() => {
