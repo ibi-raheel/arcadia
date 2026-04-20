@@ -7,11 +7,12 @@ export const tavernSpritesConfig = {
     // Spawn bottom-centre of the image so the character doesn't land on
     // top of the bar counter; feels like entering the room from the floor.
     spawnPixel: { x: 688, y: 620 },
-    // 64×64 display — 2× WorldScene's 32×32 for tavern (2026-04-20). This
-    // is the native spritesheet frame size, so no upscaling artifacts.
-    size: { width: 64, height: 64 },
-    // Feet-only body offset matches the sprite's authored layout at 64×64.
-    bodyOffset: { x: 16, y: 44, width: 32, height: 16 },
+    // 96×96 display — 3× WorldScene's 32×32 for tavern (2026-04-20). Source
+    // sheets stay 64×64; Phaser's setDisplaySize upscales 1.5× (light blur
+    // on pixel art, but the tavern reads at a comfortable size).
+    size: { width: 96, height: 96 },
+    // Feet-only body offset scaled in lockstep with `size` (×1.5 vs 64×64).
+    bodyOffset: { x: 24, y: 66, width: 48, height: 24 },
     walkSpeed: 160,
     clickArrivalThreshold: 2,
   },
