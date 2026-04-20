@@ -2,7 +2,17 @@
 
 Source plan: `phase-02_plan.md`. Status entries are chronological, newest at the top.
 
-**Weeks 6 + 7 shipped to prod 2026-04-19** (PR #2 squash-merged as `ad6cb41`; follow-on deploy-compatibility fixes through `cd77f58`). Prod: two tabs at `https://arcadia-web-swart.vercel.app/world` render each other's avatars in real time; Tavern join/leave works; member-count badge reflects occupancy within 3 s. Small interpolation lag noted ("slight lag though no worries there" — user) — tune in Week 8 polish if it remains visible against real art. Week 8 (chat + reactions + leaderboard + `/security-review`) not yet started.
+**Weeks 6 + 7 shipped to prod 2026-04-19** (PR #2 squash-merged as `ad6cb41`; follow-on deploy-compatibility fixes through `cd77f58`; commit `7dfc566` adds `avatar-02` LPC-female art). Prod: two tabs at `https://arcadia-web-swart.vercel.app/world` render each other's avatars in real time; Tavern join/leave works; member-count badge reflects occupancy within 3 s. Small interpolation lag noted ("slight lag though no worries there" — user) — tune in Week 8 polish if it remains visible against real art. Week 8 (chat + reactions + leaderboard + `/security-review`) not yet started.
+
+### Avatar art shipped (end of Week 7)
+
+| Slot | Character | Source | Sheets |
+|---|---|---|---|
+| avatar-01 | Knight | Aseprite export, user-authored | idle 2×4, walk 9×4, jump 5×4 |
+| avatar-02 | Rogue (LPC standard female) | LPC generator, alpha-probed + cropped | idle 2×4, walk 9×4, jump 5×4 |
+| avatar-03..08 | coloured Rectangle placeholders | — | — |
+
+LPC ingestion gotcha worth remembering: generator outputs uniform 13-column × 4-row sheets with trailing transparent cells. The alpha-probe loop in `scripts/crop-spritesheet.mjs` land-zone (a short inline Node script, see git history of commit `7dfc566`) counts filled columns per sheet before running the crop so the Phaser spritesheet registration has the right column count. LPC and the knight use the same row order (n/w/s/e top-to-bottom), so the `CARDINAL_ROW_ORDER` const is reused across both avatars.
 
 ---
 

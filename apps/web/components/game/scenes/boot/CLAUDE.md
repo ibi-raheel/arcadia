@@ -16,7 +16,7 @@ No camera/sprites/layers configs (ADR 0004 canonical three) — BootScene has no
 
 - `public/tilesets/world.png` — 704×704 iso tileset (11×11 grid of 64×64 tiles, 115 filled). Full tile-index semantics in `scripts/generate-world-tmj.mjs`.
 - `public/maps/world.tmj` — Tiled isometric tilemap JSON (30×30, 64×32 tiles).
-- Every avatar spritesheet declared in `AVATAR_SHEETS` (see `asset-manifest.ts`). Today: `avatar-01` idle / walk / jump. Missing sheets are skipped — the corresponding avatar renders as a `Rectangle` placeholder in LocalAvatar.
+- Every avatar spritesheet declared in `AVATAR_SHEETS` (see `asset-manifest.ts`). Today: `avatar-01` (Knight — Aseprite export) + `avatar-02` (LPC-standard female — cropped from the 13-column generator output) idle / walk / jump. Missing sheets are skipped — the corresponding avatar renders as a `Rectangle` placeholder in LocalAvatar.
 
 ## Synced with
 

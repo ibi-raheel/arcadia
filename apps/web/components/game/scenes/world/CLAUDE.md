@@ -17,7 +17,7 @@ Outdoor isometric world. Owns the local avatar, keyboard + click-to-move + jump 
 
 - `public/maps/world.tmj` — 30×30 iso tilemap, 64×32 grid spacing, 64×64 source tiles (extra 32px of source height draws above each cell for the cliff/elevation look).
 - `public/tilesets/world.png` — 704×704 upscaled pixel-art tileset, 11×11 grid of 64×64 iso tiles (115 filled: dirt / grass / bushes / flowers / stumps / rocks / water).
-- `public/avatars/<avatar-id>/idle.png`, `walk.png`, `jump.png` per entry in `AVATAR_SHEETS` (boot/asset-manifest.ts). Shipping avatar-01 (Knight) today; other avatars fall back to the Rectangle.
+- `public/avatars/<avatar-id>/idle.png`, `walk.png`, `jump.png` per entry in `AVATAR_SHEETS` (boot/asset-manifest.ts). Shipping today: avatar-01 (Knight, Aseprite export) + avatar-02 (LPC-standard female, cropped from the 13-column LPC generator output to match the knight's 2/9/5 column counts). Avatars 03–08 still fall back to the coloured Rectangle.
 
 ## Synced with
 
