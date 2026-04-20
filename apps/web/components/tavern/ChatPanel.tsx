@@ -1,24 +1,20 @@
 // Bottom-centred chat composer. Full-width pill at the bottom of the
 // viewport matching the example UX — users type, press Enter (or the
 // SEND button) to post, the message pops as a speech bubble above the
-// speaker's avatar via TavernScene, and focus returns to the game canvas
-// so WASD immediately moves again.
+// speaker's avatar via TavernScene.
 //
-// Focus rules:
-//   - Click / tap the input to focus it. While focused, keystrokes type
-//     text (including WASD — users can say "wait up").
-//   - Enter submits and blurs.
-//   - Escape discards the draft and blurs.
-//   - On submit, the input is blurred — keyboard returns to the game.
-//
-// The scrollable message log + reaction pills from the earlier UI are
-// gone: chat is now ephemeral (speech-bubble-driven). Persistence of
-// `tavern_messages` rows is unchanged; a future polish pass can add a
-// toggle-able history viewer.
+// Focus handoff to the game canvas:
+//   - While the input is focused, Phaser's keyboard plugin is disabled
+//     (via the onFocusChange callback → scene event) so WASD types
+//     letters instead of also moving the avatar.
+//   - Tab (pressed while the input isn't focused) focuses the input —
+//     "enter chat mode" shortcut.
+//   - Enter submits, Escape blurs + discards draft.
+//   - Every blur path re-enables Phaser's keyboard.
 
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { TavernMessage } from './types';
 import { useTavernChat } from './use-tavern-chat';
@@ -30,6 +26,8 @@ type Props = {
   readonly memberId: string;
   readonly displayName: string;
   readonly onMessageReceived?: (message: TavernMessage) => void;
+  /** Called with `true` when the input gains focus, `false` on blur. */
+  readonly onFocusChange?: (focused: boolean) => void;
 };
 
 export function ChatPanel({
@@ -37,6 +35,7 @@ export function ChatPanel({
   memberId,
   displayName,
   onMessageReceived,
+  onFocusChange,
 }: Props): React.JSX.Element {
   const { send } = useTavernChat({ realmId, memberId, onMessageReceived });
   const [draft, setDraft] = useState('');
@@ -66,10 +65,39 @@ export function ChatPanel({
         setDraft('');
         blurInput();
       }
-      // Enter is handled by the form submit (native behavior).
+      // Enter is handled by the form's submit.
     },
     [blurInput],
   );
+
+  // Tab-to-focus — document-level listener so the key reaches us even when
+  // the canvas has focus. Only intercept when the user is outside any
+  // editable element; don't block Tab's normal accessibility traversal
+  // when they're already inside a form field.
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent): void => {
+      if (e.key !== 'Tab') return;
+      const target = e.target as HTMLElement | null;
+      const isEditable =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        (target?.isContentEditable ?? false);
+      if (isEditable) return;
+      e.preventDefault();
+      inputRef.current?.focus();
+    };
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, []);
+
+  // Surface focus state changes to the parent so GameTavern can toggle the
+  // scene's keyboard plugin. We call onFocusChange on every focused-state
+  // flip; the parent handler is expected to be idempotent.
+  useEffect(() => {
+    onFocusChange?.(focused);
+  }, [focused, onFocusChange]);
 
   return (
     <div className="pointer-events-none absolute bottom-6 left-1/2 z-30 w-[min(600px,92vw)] -translate-x-1/2">
@@ -87,7 +115,7 @@ export function ChatPanel({
           onKeyDown={handleKeyDown}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          placeholder={`${displayName} says…`}
+          placeholder={`${displayName} says…  (press Tab to chat)`}
           className="flex-1 bg-transparent px-2 py-1 text-neutral-100 placeholder:text-neutral-400 focus:outline-none"
           maxLength={MAX_MESSAGE_LENGTH}
           autoComplete="off"
