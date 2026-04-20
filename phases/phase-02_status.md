@@ -4,6 +4,28 @@ Source plan: `phase-02_plan.md`. Status entries are chronological, newest at the
 
 **Weeks 6 + 7 shipped to prod 2026-04-19** (PR #2 squash-merged as `ad6cb41`; follow-on deploy-compatibility fixes through `cd77f58`; commit `7dfc566` adds `avatar-02` LPC-female art). Prod: two tabs at `https://arcadia-web-swart.vercel.app/world` render each other's avatars in real time; Tavern join/leave works; member-count badge reflects occupancy within 3 s. Small interpolation lag noted ("slight lag though no worries there" — user) — tune in Week 8 polish if it remains visible against real art. Week 8 (chat + reactions + leaderboard + `/security-review`) not yet started.
 
+### Cyberpunk world.tmj ingestion (2026-04-19 evening)
+
+User provided a redesigned `world.tmj` with cyberpunk-themed art (zip at `~/Downloads/Arcadia/`). Ingested:
+
+- `apps/web/public/tilesets/world.png` — unchanged (base iso terrain — firstgid 1)
+- `apps/web/public/tilesets/world-alt.png` — **stand-in copy of world.png** (user's source zip didn't include the `output-onlinepngtools (2)-Photoroom.png` that the TMJ references at firstgid 122; drop the real PNG into this path to replace the stand-in — world.tmj ground + decor tiles in gid range 122-242 will render correctly once it lands)
+- `apps/web/public/tilesets/decor.png` — user-supplied 1408×1408 11×11 grid of 128×128 cyberpunk props (trees, lamps, benches, signs, neon floor tiles; firstgid 243)
+- `apps/web/public/tilesets/academy.png` — user-supplied 168×166 single-tile Academy building sprite (firstgid 364; placed at tile (12, 6) in the decor layer)
+- `apps/web/public/maps/world.tmj` — replaced. 30×30, three layers: `ground` / `collision` (hidden-in-Tiled, drives physics only) / `decor`. Tileset refs rewritten from external `.tsx` (Tiled's native format) to inline definitions pointing at our `/tilesets/` paths.
+
+Code deltas for multi-tileset support:
+
+- `scenes/boot/asset-manifest.ts` — `BOOT_ASSETS` gained `tilesetAlt`, `tilesetDecor`, `tilesetAcademy` keys. BootScene preloads all four.
+- `scenes/world/WorldScene.ts` — `create()` now calls `map.addTilesetImage(...)` four times with the correct `tilewidth/tileheight` per tileset (64×64 for world+alt, 128×128 for decor, 168×166 for academy). All three `createLayer` calls pass the full tileset array so any layer can reference any tileset's gids. Collision layer hidden (`setVisible(false)`) since the new TMJ marks it `visible:false`; still drives Arcade physics.
+- `scenes/world/layers.config.ts` — `overlay` → `decor` across the `tilemapLayers` name + `depth` band. Semantics unchanged (still renders under avatars; tall art goes through y-sort Sprites).
+- `__tests__/configs.test.ts` — layer-name assertion updated; depth-ordering expectation renamed.
+- Phase-1 coloured-Rectangle building placeholders set to `setVisible(false)` — real art lands progressively (Academy sprite in place; Tavern + Market still TBD). Entrance zones at Phase-1 tile positions kept live so navigation into building pages still works. Position refresh TBD once Tavern + Market sprites arrive.
+
+All map interior tiles (784 of 784) walkable in the new collision layer. Spawn (15,15) + all three Phase-1 entrance tiles still walkable — test suite passes unchanged.
+
+**Next action for user:** drop the real "Photoroom" PNG into `apps/web/public/tilesets/world-alt.png` when available. Until then ground + decor tiles using gids 122-242 display the base world.png art instead of the intended alt-themed variant.
+
 ### Avatar art shipped (end of Week 7)
 
 | Slot | Character | Source | Sheets |

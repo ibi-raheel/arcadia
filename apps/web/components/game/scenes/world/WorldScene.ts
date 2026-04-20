@@ -71,7 +71,7 @@ type YSortableGameObject = YSortable & {
 export class WorldScene extends Phaser.Scene {
   private groundLayer?: Phaser.Tilemaps.TilemapLayer;
   private collisionLayer?: Phaser.Tilemaps.TilemapLayer;
-  private overlayLayer?: Phaser.Tilemaps.TilemapLayer;
+  private decorLayer?: Phaser.Tilemaps.TilemapLayer;
 
   // Dynamic-band objects whose depth is recomputed every frame from y-position.
   // Populated as Steps 9 (buildings) and 12 (avatar) land.
@@ -125,29 +125,34 @@ export class WorldScene extends Phaser.Scene {
 
   create(): void {
     const map = this.make.tilemap({ key: BOOT_ASSETS.tilemap.key });
-    // Internal tileset name must match the .tmj's `tilesets[0].name` ("world").
-    // Tile source dimensions are 64×64 (upscaled pixel art); the map itself
-    // walks on a 64×32 iso grid — the extra 32px of source height renders
-    // above each cell, giving the cliff/elevation look the tileset is drawn for.
-    const tileset = map.addTilesetImage('world', BOOT_ASSETS.tileset.key, 64, 64);
-
-    if (!tileset) {
-      throw new Error(`WorldScene: failed to register tileset for ${BOOT_ASSETS.tilemap.key}`);
+    // Four tilesets per the cyberpunk redesign (see asset-manifest BOOT_ASSETS
+    // comment). Tile source dimensions vary per tileset — Phaser supports mixed
+    // sizes in one map as long as addTilesetImage is called with the right
+    // tilewidth/tileheight each time. Internal names must match world.tmj's
+    // `name` fields exactly.
+    const tilesetWorld = map.addTilesetImage('world', BOOT_ASSETS.tileset.key, 64, 64);
+    const tilesetAlt = map.addTilesetImage('world-alt', BOOT_ASSETS.tilesetAlt.key, 64, 64);
+    const tilesetDecor = map.addTilesetImage('decor', BOOT_ASSETS.tilesetDecor.key, 128, 128);
+    const tilesetAcademy = map.addTilesetImage('academy', BOOT_ASSETS.tilesetAcademy.key, 168, 166);
+    if (!tilesetWorld || !tilesetAlt || !tilesetDecor || !tilesetAcademy) {
+      throw new Error(`WorldScene: failed to register one of the four tilesets for world.tmj`);
     }
+    const allTilesets = [tilesetWorld, tilesetAlt, tilesetDecor, tilesetAcademy];
 
     const { tilemapLayers, depth } = worldLayersConfig;
 
-    this.groundLayer = map.createLayer(tilemapLayers.ground, tileset, 0, 0)!;
+    this.groundLayer = map.createLayer(tilemapLayers.ground, allTilesets, 0, 0)!;
     this.groundLayer.setDepth(depth.ground);
 
-    this.collisionLayer = map.createLayer(tilemapLayers.collision, tileset, 0, 0)!;
+    this.collisionLayer = map.createLayer(tilemapLayers.collision, allTilesets, 0, 0)!;
     this.collisionLayer.setDepth(depth.collisionVisuals);
+    this.collisionLayer.setVisible(false); // hidden-in-Tiled; drives physics only
     // Every non-zero tile in the collision layer is a solid. Physics colliders
     // wire this up against the avatar in Step 15.
     this.collisionLayer.setCollisionByExclusion([0]);
 
-    this.overlayLayer = map.createLayer(tilemapLayers.overlay, tileset, 0, 0)!;
-    this.overlayLayer.setDepth(depth.overlay);
+    this.decorLayer = map.createLayer(tilemapLayers.decor, allTilesets, 0, 0)!;
+    this.decorLayer.setDepth(depth.decor);
 
     const { bounds, zoom, fadeInMs } = worldCameraConfig;
     this.cameras.main.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
@@ -398,6 +403,13 @@ export class WorldScene extends Phaser.Scene {
     for (const name of BUILDING_NAMES) {
       const cfg = worldSpritesConfig.buildings[name];
 
+      // Phase-1 colored-Rectangle building placeholders were visual scaffolds
+      // for a map that had no actual building art. The 2026-04-19 cyberpunk
+      // redesign provides real art (Academy sprite in the decor layer;
+      // Tavern/Market still TBD). Keep the Rectangle constructed but
+      // invisible so the y-sort registry + building-name mapping stay intact
+      // for the entrance-zone overlap path; drop once all three buildings
+      // have art.
       const rect = this.add.rectangle(
         cfg.footprintRect.x + cfg.footprintRect.width / 2,
         cfg.footprintRect.y + cfg.footprintRect.height / 2,
@@ -406,6 +418,7 @@ export class WorldScene extends Phaser.Scene {
         cfg.fillColor,
       );
       rect.setName(`building-${name}`);
+      rect.setVisible(false);
       this.registerYSortable(rect);
 
       const entrancePx = tileCenterToPixel(cfg.entranceTile, WORLD_TILE_SIZE);

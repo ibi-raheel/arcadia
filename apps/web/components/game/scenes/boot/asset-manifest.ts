@@ -27,10 +27,17 @@ export const NEXT_SCENE_KEY_REGISTRY_KEY = 'nextSceneKeyAfterBoot' as const;
 export const PROGRESS_CALLBACK_REGISTRY_KEY = 'onPreloadProgress' as const;
 
 export const BOOT_ASSETS = {
-  tileset: {
-    key: 'world-tileset',
-    path: '/tilesets/world.png',
-  },
+  // Multi-tileset world map — the cyberpunk-themed redesign ingested
+  // 2026-04-19 references four tilesets via successive firstgid offsets:
+  //   1..121   → world      (base iso terrain: grass / path / rocks / water)
+  //   122..242 → world-alt  (alt-themed variant; missing PNG stands in with
+  //                          a copy of world.png — see phase-02_status log)
+  //   243..363 → decor      (128x128 cyberpunk props: trees, lamps, signs)
+  //   364      → academy    (single 168x166 building sprite)
+  tileset: { key: 'world-tileset', path: '/tilesets/world.png' },
+  tilesetAlt: { key: 'world-alt-tileset', path: '/tilesets/world-alt.png' },
+  tilesetDecor: { key: 'decor-tileset', path: '/tilesets/decor.png' },
+  tilesetAcademy: { key: 'academy-tileset', path: '/tilesets/academy.png' },
   tilemap: {
     key: 'world',
     path: '/maps/world.tmj',

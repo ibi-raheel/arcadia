@@ -109,17 +109,17 @@ describe('layers.config', () => {
     expect(worldLayersConfig.tilemapLayers).toEqual({
       ground: 'ground',
       collision: 'collision',
-      overlay: 'overlay',
+      decor: 'decor',
     });
   });
 
-  it('depth bands are strictly ordered (ground < collision < overlay < dynamic)', () => {
-    // Overlay below dynamic so short decorations (flowers/bushes) render
-    // under the avatar's feet — see layers.config for the rationale.
+  it('depth bands are strictly ordered (ground < collision < decor < dynamic)', () => {
+    // Decor below dynamic so short decorations (flowers/bushes/neon signs)
+    // render under the avatar's feet — see layers.config for the rationale.
     const { depth } = worldLayersConfig;
     expect(depth.ground).toBeLessThan(depth.collisionVisuals);
-    expect(depth.collisionVisuals).toBeLessThan(depth.overlay);
-    expect(depth.overlay).toBeLessThan(depth.dynamic);
+    expect(depth.collisionVisuals).toBeLessThan(depth.decor);
+    expect(depth.decor).toBeLessThan(depth.dynamic);
   });
 
   it('y-sort anchor ratio is within [0, 1]', () => {

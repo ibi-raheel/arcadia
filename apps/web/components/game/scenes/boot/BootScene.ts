@@ -35,6 +35,9 @@ export class BootScene extends Phaser.Scene {
     }
 
     this.load.image(BOOT_ASSETS.tileset.key, BOOT_ASSETS.tileset.path);
+    this.load.image(BOOT_ASSETS.tilesetAlt.key, BOOT_ASSETS.tilesetAlt.path);
+    this.load.image(BOOT_ASSETS.tilesetDecor.key, BOOT_ASSETS.tilesetDecor.path);
+    this.load.image(BOOT_ASSETS.tilesetAcademy.key, BOOT_ASSETS.tilesetAcademy.path);
     this.load.tilemapTiledJSON(BOOT_ASSETS.tilemap.key, BOOT_ASSETS.tilemap.path);
     this.load.tilemapTiledJSON(BOOT_ASSETS.tavernTilemap.key, BOOT_ASSETS.tavernTilemap.path);
 
