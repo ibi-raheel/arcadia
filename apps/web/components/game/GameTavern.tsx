@@ -7,7 +7,7 @@
 
 import * as Phaser from 'phaser';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
@@ -15,10 +15,16 @@ import { MSG } from '@arcadia/shared';
 
 import { ChatPanel } from '@/components/tavern/ChatPanel';
 import { LeaderboardPanel } from '@/components/tavern/LeaderboardPanel';
+import { ReactionPicker } from '@/components/tavern/ReactionPicker';
 
 import { BuildingTransition } from './BuildingTransition';
 import { connectToRoom, type ColyseusConnection } from './net/colyseus-client';
-import { TAVERN_SPEECH_EVENT } from './scenes/tavern/TavernScene';
+import {
+  TAVERN_BUBBLE_CLICK_EVENT,
+  TAVERN_CHAT_BLUR_EVENT,
+  TAVERN_CHAT_FOCUS_EVENT,
+  TAVERN_SPEECH_EVENT,
+} from './scenes/tavern/TavernScene';
 import { BootScene } from './scenes/boot/BootScene';
 import {
   NEXT_SCENE_KEY_REGISTRY_KEY,
@@ -177,11 +183,43 @@ export default function GameTavern(): React.JSX.Element {
   // Chat → scene bridge. TavernScene listens on `game.events` for
   // TAVERN_SPEECH_EVENT and pops a bubble above the avatar matching
   // `memberId`. Safe when gameRef hasn't populated yet — emit is a no-op
-  // until Phaser mounts (the initial message fetch finishes after mount
-  // anyway, per GameTavern's sequencing).
-  const handleMessageReceived = (msg: { sender_id: string; content: string }): void => {
-    gameRef.current?.events.emit(TAVERN_SPEECH_EVENT, msg.sender_id, msg.content);
-  };
+  // until Phaser mounts.
+  const handleMessageReceived = useCallback(
+    (msg: { id: string; sender_id: string; content: string }): void => {
+      gameRef.current?.events.emit(TAVERN_SPEECH_EVENT, msg.sender_id, msg.content, msg.id);
+    },
+    [],
+  );
+
+  // Focus handoff — tell TavernScene to disable/enable its keyboard plugin
+  // when the chat input gains/loses focus, so WASD types in the input
+  // without also moving the avatar.
+  const handleChatFocusChange = useCallback((focused: boolean): void => {
+    gameRef.current?.events.emit(focused ? TAVERN_CHAT_FOCUS_EVENT : TAVERN_CHAT_BLUR_EVENT);
+  }, []);
+
+  // Reaction picker — TavernScene emits TAVERN_BUBBLE_CLICK_EVENT with the
+  // clicked message id + canvas-relative coords; we render the picker at
+  // that spot and close on outside click / emoji select / escape.
+  const [picker, setPicker] = useState<null | {
+    readonly messageId: string;
+    readonly x: number;
+    readonly y: number;
+  }>(null);
+
+  useEffect(() => {
+    const game = gameRef.current;
+    if (!game) return;
+    const handler = (messageId: string, x: number, y: number): void => {
+      setPicker({ messageId, x, y });
+    };
+    game.events.on(TAVERN_BUBBLE_CLICK_EVENT, handler);
+    return () => {
+      game.events.off(TAVERN_BUBBLE_CLICK_EVENT, handler);
+    };
+    // Re-attach when preloadProgress flips (Phaser is ready) — gameRef's
+    // identity is stable but the effect should run after mount completes.
+  }, [preloadProgress]);
 
   if (fetchState.status === 'error' || connectError) {
     const message = fetchState.status === 'error' ? fetchState.message : connectError!;
@@ -216,12 +254,21 @@ export default function GameTavern(): React.JSX.Element {
             memberId={fetchState.member.memberId}
             displayName={fetchState.member.displayName}
             onMessageReceived={handleMessageReceived}
+            onFocusChange={handleChatFocusChange}
           />
           <LeaderboardPanel
             realmId={fetchState.member.realmId}
             memberId={fetchState.member.memberId}
           />
         </>
+      )}
+      {picker && (
+        <ReactionPicker
+          messageId={picker.messageId}
+          x={picker.x}
+          y={picker.y}
+          onClose={() => setPicker(null)}
+        />
       )}
       <BuildingTransition building="tavern" ready={sceneReady} />
     </div>
