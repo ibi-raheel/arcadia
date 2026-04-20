@@ -277,6 +277,100 @@ const env = loadTestEnvOrSkip();
     });
   });
 
+  describe('tavern_messages — Week 8 reaction RPC + direct-update revoke', () => {
+    let messageAId: string; // posted in mvp-realm
+    let messageBId: string; // posted in realm B
+
+    beforeAll(async () => {
+      // Seed one message per realm via the service-role admin.
+      const mvpMsg = await admin
+        .from('tavern_messages')
+        .insert({ realm_id: mvpRealmId, sender_id: userA.id, content: `msg A ${suffix}` })
+        .select('id')
+        .single();
+      if (mvpMsg.error || !mvpMsg.data)
+        throw new Error(`seed mvp message: ${mvpMsg.error?.message}`);
+      messageAId = mvpMsg.data.id;
+
+      const rbMsg = await admin
+        .from('tavern_messages')
+        .insert({ realm_id: realmBId, sender_id: userC.id, content: `msg B ${suffix}` })
+        .select('id')
+        .single();
+      if (rbMsg.error || !rbMsg.data)
+        throw new Error(`seed realmB message: ${rbMsg.error?.message}`);
+      messageBId = rbMsg.data.id;
+    });
+
+    it('direct UPDATE on tavern_messages is blocked for authenticated role', async () => {
+      const client = await userAnonClient(env!, userA);
+      const { data, error } = await client
+        .from('tavern_messages')
+        .update({ content: 'HACKED' })
+        .eq('id', messageAId)
+        .select();
+      // After the Phase 2 Week 8 revoke + policy drop, authenticated has no
+      // path to UPDATE. Postgres either errors (permission denied) or RLS
+      // filters to zero rows.
+      expect(error != null || (data ?? []).length === 0).toBe(true);
+    });
+
+    it('toggle_reaction adds the caller to the emoji list, then removes on second call', async () => {
+      const client = await userAnonClient(env!, userA);
+
+      const addResult = await client.rpc('toggle_reaction', {
+        p_message_id: messageAId,
+        p_emoji: '🔥',
+      });
+      expect(addResult.error).toBeNull();
+      expect((addResult.data as Record<string, string[]>)['🔥']).toContain(userA.id);
+
+      const removeResult = await client.rpc('toggle_reaction', {
+        p_message_id: messageAId,
+        p_emoji: '🔥',
+      });
+      expect(removeResult.error).toBeNull();
+      // Empty emoji key should be pruned so count rendering stays clean.
+      expect((removeResult.data as Record<string, string[]>)['🔥']).toBeUndefined();
+    });
+
+    it('toggle_reaction rejects callers from a different realm (userA → realm B message)', async () => {
+      const client = await userAnonClient(env!, userA);
+      const { data, error } = await client.rpc('toggle_reaction', {
+        p_message_id: messageBId,
+        p_emoji: '🔥',
+      });
+      expect(error).not.toBeNull();
+      expect(data).toBeNull();
+      expect(error!.message.toLowerCase()).toMatch(/not a member/);
+    });
+
+    it('toggle_reaction leaves content and sender_id untouched', async () => {
+      const client = await userAnonClient(env!, userA);
+      await client.rpc('toggle_reaction', { p_message_id: messageAId, p_emoji: '💯' });
+
+      // Verify via admin (bypasses RLS) that ONLY reactions changed.
+      const { data: row } = await admin
+        .from('tavern_messages')
+        .select('content, sender_id, reactions')
+        .eq('id', messageAId)
+        .single();
+      expect(row!.content).toBe(`msg A ${suffix}`);
+      expect(row!.sender_id).toBe(userA.id);
+      expect((row!.reactions as Record<string, string[]>)['💯']).toContain(userA.id);
+    });
+
+    it('toggle_reaction rejects empty or whitespace-only emoji', async () => {
+      const client = await userAnonClient(env!, userA);
+      const empty = await client.rpc('toggle_reaction', {
+        p_message_id: messageAId,
+        p_emoji: '   ',
+      });
+      expect(empty.error).not.toBeNull();
+      expect(empty.error!.message.toLowerCase()).toMatch(/empty emoji/);
+    });
+  });
+
   describe('same-realm legitimate access still works', () => {
     it('userA CAN SELECT userB membership (same-realm, leaderboard path)', async () => {
       const client = await userAnonClient(env!, userA);

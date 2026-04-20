@@ -57,7 +57,7 @@ async function fetchSession(): Promise<SessionFetch> {
 
   const { data, error } = await supabase
     .from('memberships')
-    .select('avatar_id, display_name')
+    .select('avatar_id, display_name, realm_id')
     .eq('member_id', user.id)
     .maybeSingle();
 
@@ -75,12 +75,20 @@ async function fetchSession(): Promise<SessionFetch> {
       message: `Invalid avatar_id "${data.avatar_id}".`,
     };
   }
+  if (!data.realm_id) {
+    return { status: 'error', message: 'No realm for member.' };
+  }
 
   const avatarId: AvatarId = data.avatar_id;
   const displayName = data.display_name ?? 'Player';
   return {
     status: 'ready',
-    member: { avatarId, displayName },
+    member: {
+      memberId: user.id,
+      realmId: data.realm_id,
+      avatarId,
+      displayName,
+    },
     accessToken: session.access_token,
   };
 }

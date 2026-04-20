@@ -13,6 +13,9 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 import { MSG } from '@arcadia/shared';
 
+import { ChatPanel } from '@/components/tavern/ChatPanel';
+import { LeaderboardPanel } from '@/components/tavern/LeaderboardPanel';
+
 import { BuildingTransition } from './BuildingTransition';
 import { connectToRoom, type ColyseusConnection } from './net/colyseus-client';
 import { BootScene } from './scenes/boot/BootScene';
@@ -47,7 +50,7 @@ async function fetchSession(): Promise<SessionFetch> {
   }
   const { data, error } = await supabase
     .from('memberships')
-    .select('avatar_id, display_name')
+    .select('avatar_id, display_name, realm_id')
     .eq('member_id', session.user.id)
     .maybeSingle();
   if (error) return { status: 'error', message: error.message };
@@ -55,9 +58,21 @@ async function fetchSession(): Promise<SessionFetch> {
   if (!isAvatarId(data.avatar_id)) {
     return { status: 'error', message: `Invalid avatar_id "${data.avatar_id}".` };
   }
+  if (!data.realm_id) {
+    return { status: 'error', message: 'No realm for member.' };
+  }
   const avatarId: AvatarId = data.avatar_id;
   const displayName = data.display_name ?? 'Player';
-  return { status: 'ready', member: { avatarId, displayName }, accessToken: session.access_token };
+  return {
+    status: 'ready',
+    member: {
+      memberId: session.user.id,
+      realmId: data.realm_id,
+      avatarId,
+      displayName,
+    },
+    accessToken: session.access_token,
+  };
 }
 
 export default function GameTavern(): React.JSX.Element {
@@ -181,8 +196,22 @@ export default function GameTavern(): React.JSX.Element {
       >
         ← Return to World
       </button>
-      {/* Chat + leaderboard overlays land Week 8 — container reserved. */}
-      <div id="tavern-overlay-slot" className="pointer-events-none absolute inset-0 z-30" />
+      {/* Week 8 overlays — chat bottom-right, leaderboard top-right. `fetchState`
+          carries member + realm once ready; rendered conditionally so the
+          panels don't start fetching while we're still authing. */}
+      {fetchState.status === 'ready' && (
+        <>
+          <ChatPanel
+            realmId={fetchState.member.realmId}
+            memberId={fetchState.member.memberId}
+            displayName={fetchState.member.displayName}
+          />
+          <LeaderboardPanel
+            realmId={fetchState.member.realmId}
+            memberId={fetchState.member.memberId}
+          />
+        </>
+      )}
       <BuildingTransition building="tavern" ready={sceneReady} />
     </div>
   );
