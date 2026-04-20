@@ -47,13 +47,6 @@ const MOVE_INTERVAL_MS = 50;
 export const TAVERN_SPEECH_EVENT = 'tavern:speech';
 
 /**
- * Emitted by the scene when a speech bubble is clicked. React opens a
- * reaction picker at the supplied canvas-relative coords.
- *   (messageId: string, x: number, y: number) => void
- */
-export const TAVERN_BUBBLE_CLICK_EVENT = 'tavern:bubble-click';
-
-/**
  * React → scene signals that drive keyboard handoff. When the chat input
  * gains focus we disable Phaser's keyboard plugin so WASD types letters
  * into the input instead of also moving the avatar. Re-enabled on blur.
@@ -109,8 +102,6 @@ function createSpeechBubble(scene: Phaser.Scene, text: string): Phaser.GameObjec
 type YSortableGameObject = YSortable & { setDepth: (depth: number) => unknown };
 
 export class TavernScene extends Phaser.Scene {
-  private collisionLayer?: Phaser.Tilemaps.TilemapLayer;
-
   private readonly ySortables: YSortableGameObject[] = [];
   private localAvatar?: LocalAvatar;
 
@@ -140,23 +131,12 @@ export class TavernScene extends Phaser.Scene {
   }
 
   create(): void {
-    const map = this.make.tilemap({ key: BOOT_ASSETS.tavernTilemap.key });
-    const tileset = map.addTilesetImage('world', BOOT_ASSETS.tileset.key, 64, 64);
-    if (!tileset) {
-      throw new Error('TavernScene: failed to register tileset for tavern map');
-    }
-
-    const { tilemapLayers, depth } = tavernLayersConfig;
-
-    const groundLayer = map.createLayer(tilemapLayers.ground, tileset, 0, 0)!;
-    groundLayer.setDepth(depth.ground);
-
-    this.collisionLayer = map.createLayer(tilemapLayers.collision, tileset, 0, 0)!;
-    this.collisionLayer.setDepth(depth.collisionVisuals);
-    this.collisionLayer.setCollisionByExclusion([0]);
-
-    const overlayLayer = map.createLayer(tilemapLayers.overlay, tileset, 0, 0)!;
-    overlayLayer.setDepth(depth.overlay);
+    // Image-backed tavern (2026-04-19). The map is a single static PNG;
+    // collisions will be added later via a separate data layer. For now
+    // the avatar walks freely within the image's world-bounds rectangle.
+    const bg = this.add.image(0, 0, BOOT_ASSETS.tavernInterior.key);
+    bg.setOrigin(0, 0);
+    bg.setDepth(tavernLayersConfig.depth.ground);
 
     const { bounds, zoom, fadeInMs } = tavernCameraConfig;
     this.cameras.main.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
@@ -169,6 +149,12 @@ export class TavernScene extends Phaser.Scene {
     this.createLocalAvatar();
     this.wireKeyboardInput();
     this.wirePointerInput();
+
+    // Defensive reset — the React side emits a blur event on mount that
+    // may arrive before this scene finishes `create()`. Guarantee the
+    // keyboard plugin is on by default so WASD works immediately even if
+    // that initial event was dropped.
+    if (this.input.keyboard) this.input.keyboard.enabled = true;
 
     this.colyseus = this.registry.get(COLYSEUS_CONNECTION_REGISTRY_KEY) as
       | ColyseusConnection
@@ -227,7 +213,7 @@ export class TavernScene extends Phaser.Scene {
     return undefined;
   }
 
-  public showSpeechBubble(memberId: string, text: string, messageId: string): void {
+  public showSpeechBubble(memberId: string, text: string, _messageId?: string): void {
     const avatar = this.findAvatarByMemberId(memberId);
     if (!avatar) return;
 
@@ -235,21 +221,6 @@ export class TavernScene extends Phaser.Scene {
 
     const bubble = createSpeechBubble(this, text);
     bubble.setDepth(SPEECH_BUBBLE_DEPTH);
-    bubble.setData('messageId', messageId);
-    // Make the bubble clickable for the reaction picker. Hit area is a
-    // rectangle matching the bubble's bounding box; sized from the text
-    // object which is the second child of the container.
-    const textObj = bubble.getAt(1) as Phaser.GameObjects.Text | undefined;
-    const hitW = (textObj?.width ?? 100) + 24;
-    const hitH = (textObj?.height ?? 20) + 16;
-    // Hit rect is centred on the bubble's body (above the tail anchor).
-    bubble.setInteractive(
-      new Phaser.Geom.Rectangle(-hitW / 2, -hitH - 6, hitW, hitH),
-      Phaser.Geom.Rectangle.Contains,
-    );
-    bubble.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      this.game.events.emit(TAVERN_BUBBLE_CLICK_EVENT, messageId, pointer.x, pointer.y);
-    });
 
     this.speechBubbles.set(memberId, bubble);
 
@@ -317,15 +288,13 @@ export class TavernScene extends Phaser.Scene {
       memberId: member.memberId,
       avatarId: member.avatarId,
       displayName: member.displayName,
-      spawnTile: tavernSpritesConfig.avatar.spawnTile,
+      spawnPixel: tavernSpritesConfig.avatar.spawnPixel,
     });
 
     this.localAvatar = avatar;
     this.registerYSortable(avatar);
 
-    if (this.collisionLayer) {
-      this.physics.add.collider(avatar.rect, this.collisionLayer);
-    }
+    // No collision layer yet — image-backed tavern, colliders come later.
 
     this.cameras.main.startFollow(
       avatar.rect,

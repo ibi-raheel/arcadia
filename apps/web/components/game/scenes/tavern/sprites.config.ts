@@ -1,19 +1,12 @@
-// Tavern sprites + spawn config. Mirrors world/sprites.config.avatar shape
-// so the LocalAvatar class doesn't need tavern-specific knowledge.
-
-import type { TileCoord } from '../shared/types';
-
-// Entrance tile on the north wall of tavern.tmj (see
-// scripts/generate-tavern-tmj.mjs). Avatars spawn one tile south of the
-// entrance (inside the room).
-export const TAVERN_ENTRANCE_TILE: TileCoord = { x: 7, y: 0 };
-export const TAVERN_SPAWN_TILE: TileCoord = { x: 7, y: 1 };
-// Exit tile on the world map when returning from the Tavern — matches
-// worldSpritesConfig.buildings.tavern.exitTile (south side of footprint).
+// Tavern sprites + spawn config. 2026-04-19 polish — spawn now uses a
+// pixel coordinate inside the tavern-interior image (1376×768) rather
+// than an iso tile coord, since the tavern is image-backed now.
 
 export const tavernSpritesConfig = {
   avatar: {
-    spawnTile: TAVERN_SPAWN_TILE,
+    // Spawn bottom-centre of the image so the character doesn't land on
+    // top of the bar counter; feels like entering the room from the floor.
+    spawnPixel: { x: 688, y: 620 },
     // 32×32 display to match WorldScene's halved avatar (2026-04-19).
     size: { width: 32, height: 32 },
     // Feet-only body offset halved alongside `size`; same feel as WorldScene.

@@ -15,12 +15,10 @@ import { MSG } from '@arcadia/shared';
 
 import { ChatPanel } from '@/components/tavern/ChatPanel';
 import { LeaderboardPanel } from '@/components/tavern/LeaderboardPanel';
-import { ReactionPicker } from '@/components/tavern/ReactionPicker';
 
 import { BuildingTransition } from './BuildingTransition';
 import { connectToRoom, type ColyseusConnection } from './net/colyseus-client';
 import {
-  TAVERN_BUBBLE_CLICK_EVENT,
   TAVERN_CHAT_BLUR_EVENT,
   TAVERN_CHAT_FOCUS_EVENT,
   TAVERN_SPEECH_EVENT,
@@ -198,29 +196,6 @@ export default function GameTavern(): React.JSX.Element {
     gameRef.current?.events.emit(focused ? TAVERN_CHAT_FOCUS_EVENT : TAVERN_CHAT_BLUR_EVENT);
   }, []);
 
-  // Reaction picker — TavernScene emits TAVERN_BUBBLE_CLICK_EVENT with the
-  // clicked message id + canvas-relative coords; we render the picker at
-  // that spot and close on outside click / emoji select / escape.
-  const [picker, setPicker] = useState<null | {
-    readonly messageId: string;
-    readonly x: number;
-    readonly y: number;
-  }>(null);
-
-  useEffect(() => {
-    const game = gameRef.current;
-    if (!game) return;
-    const handler = (messageId: string, x: number, y: number): void => {
-      setPicker({ messageId, x, y });
-    };
-    game.events.on(TAVERN_BUBBLE_CLICK_EVENT, handler);
-    return () => {
-      game.events.off(TAVERN_BUBBLE_CLICK_EVENT, handler);
-    };
-    // Re-attach when preloadProgress flips (Phaser is ready) — gameRef's
-    // identity is stable but the effect should run after mount completes.
-  }, [preloadProgress]);
-
   if (fetchState.status === 'error' || connectError) {
     const message = fetchState.status === 'error' ? fetchState.message : connectError!;
     return (
@@ -261,14 +236,6 @@ export default function GameTavern(): React.JSX.Element {
             memberId={fetchState.member.memberId}
           />
         </>
-      )}
-      {picker && (
-        <ReactionPicker
-          messageId={picker.messageId}
-          x={picker.x}
-          y={picker.y}
-          onClose={() => setPicker(null)}
-        />
       )}
       <BuildingTransition building="tavern" ready={sceneReady} />
     </div>
