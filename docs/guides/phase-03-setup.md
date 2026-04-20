@@ -1,11 +1,12 @@
 # Phase 3 — Setup guide
 
-Two things to set up before Step 2 of Week 9 can begin:
+One thing to set up before Step 2 of Week 9 can begin:
 
 1. Apply the Phase-3 Supabase migration.
-2. Create a free Cloudinary account and wire its three credentials into Vercel.
 
-This guide walks both in detail. Read it start-to-finish once; after that it's a reference.
+**That's it** — no new services, no new accounts, no new env vars. The video host is YouTube unlisted (ADR 0006, demo-only scope) which needs zero credentials. When we reach Week 9 Step 8 you'll upload a test video to your own YouTube channel and paste its URL into the lesson editor.
+
+This guide walks through the migration in detail (section by section) and then the YouTube workflow (at the bottom, for reference when you need it).
 
 ---
 
@@ -85,24 +86,25 @@ create index if not exists courses_creator_idx
 - `on delete set null` — if a user account is deleted, their courses don't disappear, they just become orphaned. Prod consideration for the far future.
 - Partial index on `creator_id WHERE NOT NULL` — makes `/dashboard` list queries (`WHERE creator_id = auth.uid()`) fast; doesn't index the orphaned rows.
 
-### §2 — Cloudinary columns on lessons
+### §2 — YouTube columns on lessons
 
 ```sql
 alter table public.lessons
-  add column if not exists cloudinary_public_id text;
+  add column if not exists youtube_video_id text
+    check (youtube_video_id is null or length(youtube_video_id) = 11);
 
 alter table public.lessons
   add column if not exists duration_sec integer
     check (duration_sec is null or duration_sec >= 0);
 ```
 
-**Why:** ADR 0006 picks Cloudinary over CF Stream. Cloudinary's upload response gives us a `public_id` (the asset identifier used in every subsequent URL) and a `duration` in seconds. We store both.
+**Why:** ADR 0006 picks YouTube unlisted for the demo (see the scope caveat in the ADR itself). We need two bits of info per video lesson: the 11-char YouTube video ID (the asset pointer) and the duration in seconds (for the 80%-watched completion threshold).
 
 **What it does:**
 
-- `cloudinary_public_id` — text, nullable. Nullable because `written`-type lessons don't have one.
-- `duration_sec` — integer, nullable. `check` guard rejects accidental negative values. Also nullable for written lessons and for video lessons between upload-start and upload-complete.
-- Phase 0's `cf_stream_id` column is left in place, unused. ADR 0006's swap-back path uses it if we ever migrate off Cloudinary.
+- `youtube_video_id` — text, nullable. Nullable because `written`-type lessons don't have one. Length-11 check rejects junk (pasted URLs, trimmed IDs, partial input). YouTube IDs are drawn from `[A-Za-z0-9_-]{11}`; the length check is a cheap sanity guard.
+- `duration_sec` — integer, nullable. Captured via `player.getDuration()` on first successful load (see Week 9 Step 13 in the plan). Nullable for written lessons and for video lessons pre-first-load.
+- Phase 0's `cf_stream_id` column stays in place, unused. Reserved for the eventual swap to a real video host (ADR 0006 exit criteria).
 
 ### §3 — Creator-scoped write policies on courses
 
@@ -160,173 +162,169 @@ create policy course_creator_insert
 
 ---
 
-## Part 3 — Cloudinary setup
+## Part 3 — YouTube unlisted workflow
 
-Cloudinary is our MVP video host (per ADR 0006). Three credentials; they wire into our code via three env vars.
+Per ADR 0006 the MVP uses YouTube unlisted videos. **Zero credentials, zero env vars, zero new accounts.** The flow is: creator uploads to their own YouTube channel, marks the video Unlisted, pastes the URL into the Arcadia lesson editor, done.
 
-### Step 1 — Create the account
+### Step 1 — What you need (whenever, not now)
 
-1. Go to `https://cloudinary.com/users/register_free`.
-2. Sign up with the arcadia email. No credit card required.
-3. Pick any cloud name at signup — this is yours forever (can't rename without contacting support). Something like `arcadia` or `ibi-raheel-arcadia`. Write it down.
-4. Confirm email. You'll land on the dashboard.
+A YouTube channel on a Google account of your choice. If you already have a Google account, you already have a channel — YouTube auto-creates one on first upload. Nothing to set up in advance.
 
-### Step 2 — Grab the three credentials
+### Step 2 — Upload a video and set it Unlisted
 
-From the dashboard home, look at the **Account Details** panel (upper right of the main screen):
+When you reach Week 9 Step 8 (building the video-lesson editor), you'll want one test video to exercise the flow. Workflow:
 
-| Dashboard label | Env var | What it is | Where it's safe to use |
-|---|---|---|---|
-| **Cloud name** | `CLOUDINARY_CLOUD_NAME` | Your account namespace. Appears in every delivery URL (`res.cloudinary.com/<cloud-name>/...`). | **Safe in browser** — prefix `NEXT_PUBLIC_` if you want it accessible client-side. |
-| **API Key** | `CLOUDINARY_API_KEY` | Identifies your account when making API calls. | **Server-only.** Don't ship to browsers. |
-| **API Secret** | `CLOUDINARY_API_SECRET` | The shared secret used to sign upload + delivery URLs. | **Server-only, never committed.** Treat like a database password. |
+1. Go to `https://studio.youtube.com` → sign in.
+2. Click **Create** (top right) → **Upload videos**.
+3. Pick any short clip (a 10-second screen recording works — we only care that it plays).
+4. While uploading, fill in the details:
+   - Title: `Arcadia test — <short description>`.
+   - Description: optional; note "Arcadia MVP test video" for your own tracking.
+   - Audience: **"No, it's not made for kids"**.
+5. Click **Next** through the "Video elements" and "Checks" screens.
+6. On the **Visibility** screen, select **Unlisted**. **Not Public. Not Private.**
+7. Click **Save**. Copy the share URL that appears — looks like `https://youtu.be/dQw4w9WgXcQ` or `https://www.youtube.com/watch?v=dQw4w9WgXcQ`.
 
-To reveal the API Secret, click the eye icon next to it. Copy all three.
+That 11-char suffix (`dQw4w9WgXcQ` in the example above) is the `youtube_video_id` column value. Our editor UI will parse any of the three URL shapes.
 
-### Step 3 — Wire them into Vercel
+### Step 3 — How the lesson editor uses the URL (Week 9 Step 8)
 
-Via the Vercel MCP or dashboard, add the three vars to the `arcadia-web` project (all three environments — Development, Preview, Production):
-
-```
-CLOUDINARY_CLOUD_NAME        = <your cloud name>
-CLOUDINARY_API_KEY           = <your key>
-CLOUDINARY_API_SECRET        = <your secret>
-```
-
-Via dashboard: `https://vercel.com/<team>/arcadia-web/settings/environment-variables` → Add → check all three environment boxes → Save.
-
-Via CLI:
-```bash
-cd apps/web
-vercel env add CLOUDINARY_CLOUD_NAME
-vercel env add CLOUDINARY_API_KEY
-vercel env add CLOUDINARY_API_SECRET
-```
-
-Also add them to your local `apps/web/.env.local` if you plan to run `npm run dev` against Cloudinary (same three lines, plain text, don't commit).
-
-### Step 4 — How they connect to our code (Week 9 Step 8 onwards)
-
-Three code paths will use these credentials:
-
-**Upload signing (server-side — `/api/cloudinary/sign-upload`):**
+Server-side parser (one file):
 
 ```ts
-// apps/web/app/api/cloudinary/sign-upload/route.ts  (Week 9 Step 8)
-import crypto from 'node:crypto';
+// apps/web/lib/youtube.ts  (Week 9 Step 8)
 
-export async function POST() {
-  const timestamp = Math.floor(Date.now() / 1000);
-  const publicId = `arcadia/${crypto.randomUUID()}`;
-  const folder = 'arcadia';
+// Matches the three YouTube URL shapes + bare 11-char IDs.
+// Returns the 11-char ID, or null on malformed input.
+const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
+const URL_PATTERNS: RegExp[] = [
+  /youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})/,
+  /youtu\.be\/([A-Za-z0-9_-]{11})/,
+  /youtube\.com\/embed\/([A-Za-z0-9_-]{11})/,
+];
 
-  // Cloudinary signs the alphabetised params joined with & then HMAC-SHA1
-  // with the API Secret appended. See Cloudinary docs: "Generating
-  // authentication signatures".
-  const paramsToSign = `folder=${folder}&public_id=${publicId}&timestamp=${timestamp}`;
-  const signature = crypto
-    .createHash('sha1')
-    .update(paramsToSign + process.env.CLOUDINARY_API_SECRET)
-    .digest('hex');
-
-  return Response.json({
-    timestamp,
-    signature,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    public_id: publicId,
-    folder,
-  });
+export function parseYouTubeId(input: string): string | null {
+  const trimmed = input.trim();
+  if (YOUTUBE_ID.test(trimmed)) return trimmed;
+  for (const pattern of URL_PATTERNS) {
+    const m = trimmed.match(pattern);
+    if (m) return m[1];
+  }
+  return null;
 }
 ```
 
-Browser flow:
-
-```ts
-// apps/web/components/academy/VideoUploader.tsx  (Week 9 Step 8)
-const signed = await fetch('/api/cloudinary/sign-upload', { method: 'POST' }).then(r => r.json());
-const form = new FormData();
-form.append('file', file);
-form.append('timestamp', signed.timestamp);
-form.append('signature', signed.signature);
-form.append('api_key', signed.api_key);
-form.append('public_id', signed.public_id);
-form.append('folder', signed.folder);
-const res = await fetch(
-  `https://api.cloudinary.com/v1_1/${signed.cloud_name}/video/upload`,
-  { method: 'POST', body: form },
-).then(r => r.json());
-// res.public_id, res.duration, res.secure_url now available
-```
-
-**Delivery signing (server-side — `/api/video/sign/[lessonId]`):**
-
-```ts
-// apps/web/app/api/video/sign/[lessonId]/route.ts  (Week 10 Step 13)
-import crypto from 'node:crypto';
-
-const ONE_HOUR = 3600;
-
-export async function GET(req, { params }) {
-  const lesson = await fetchLesson(params.lessonId);
-  const expiresAt = Math.floor(Date.now() / 1000) + ONE_HOUR;
-
-  // Cloudinary's signed-URL format embeds the signature in the path.
-  // Format: https://res.cloudinary.com/<cloud>/video/authenticated/s--<sig>--/<public_id>.m3u8
-  const toSign = `${lesson.cloudinary_public_id}.m3u8#${expiresAt}`;
-  const signature = crypto
-    .createHash('sha256')
-    .update(toSign + process.env.CLOUDINARY_API_SECRET)
-    .digest('base64url')
-    .slice(0, 16);
-
-  const url =
-    `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}` +
-    `/video/authenticated/s--${signature}--` +
-    `/${lesson.cloudinary_public_id}.m3u8`;
-
-  return Response.json({ url, expiresAt });
-}
-```
-
-**Player (browser — `cld-video-player`):**
+Editor UI (sketch):
 
 ```tsx
-// apps/web/components/academy/VideoLessonPlayer.tsx  (Week 10 Step 13)
+// apps/web/components/academy/VideoLessonEditor.tsx  (Week 9 Step 8)
 'use client';
-import { useEffect } from 'react';
+import { useState } from 'react';
+import { parseYouTubeId } from '@/lib/youtube';
 
-export function VideoLessonPlayer({ signedUrl, startSec }) {
-  useEffect(() => {
-    import('cloudinary-video-player'); // dynamic import, no SSR
-  }, []);
+export function VideoLessonEditor({ lessonId, initialVideoId }) {
+  const [raw, setRaw] = useState(initialVideoId ?? '');
+  const [videoId, setVideoId] = useState(initialVideoId ?? null);
+  const [error, setError] = useState<string | null>(null);
+
+  const parse = () => {
+    const id = parseYouTubeId(raw);
+    if (!id) return setError('Not a valid YouTube URL or ID.');
+    setError(null);
+    setVideoId(id);
+    // Upsert to lessons.youtube_video_id via server action (omitted).
+  };
+
   return (
-    // @ts-expect-error — web component, not typed by default
-    <cld-video-player
-      cloud-name={process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}
-      source-types="hls"
-      public-id={signedUrl}
-      current-time={startSec}
-    />
+    <div>
+      <input value={raw} onChange={e => setRaw(e.target.value)}
+             placeholder="https://youtu.be/..." />
+      <button onClick={parse}>Parse</button>
+      {error && <p className="text-red-500">{error}</p>}
+      {videoId && (
+        <iframe
+          width="560" height="315"
+          src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1`}
+          allow="accelerometer; clipboard-write; encrypted-media; picture-in-picture"
+          allowFullScreen />
+      )}
+    </div>
   );
 }
 ```
 
-### Step 5 — Free-tier hygiene
+### Step 4 — How the viewer uses the IFrame Player API (Week 10 Step 13)
 
-Once you're uploading, keep these in mind:
+Viewer component (sketch):
 
-- **Folder convention.** Upload test videos to `arcadia/test/` (by passing `folder: "arcadia/test"` in the sign-upload params). Delete them aggressively via the Cloudinary Media Library. Prod uploads go to `arcadia/prod/`.
-- **Budget monitor.** Dashboard → Usage. 25 credits = 25 GB storage OR 25 GB bandwidth OR 25,000 image transforms (shared pool). A few test uploads and playbacks shouldn't come close. Set a calendar reminder for the 28th of the month to verify you're under 20 credits.
-- **If we blow the ceiling.** Cloudinary rate-limits rather than bills — uploads + deliveries start returning 403. Swap-back path is documented in ADR 0006 (~1 day of work).
+```tsx
+// apps/web/components/academy/VideoLessonPlayer.tsx  (Week 10 Step 13)
+'use client';
+import { useEffect, useRef } from 'react';
+
+declare global { interface Window { YT: any; onYouTubeIframeAPIReady?: () => void } }
+
+export function VideoLessonPlayer({ lessonId, videoId, startSec, durationSec, onProgress }) {
+  const hostRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Load the IFrame API once.
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.body.appendChild(tag);
+    }
+
+    const createPlayer = () => {
+      const player = new window.YT.Player(hostRef.current, {
+        videoId,
+        playerVars: { start: Math.floor(startSec), rel: 0, modestbranding: 1, iv_load_policy: 3 },
+        events: {
+          onReady: () => {
+            // If we don't have a duration yet, capture it now.
+            if (!durationSec) onProgress({ kind: 'duration', value: player.getDuration() });
+          },
+          onStateChange: (e: any) => {
+            // state: -1 unstarted, 0 ended, 1 playing, 2 paused, 3 buffering, 5 cued
+            if (e.data === 1) {
+              // Start a 10s poll while playing.
+              const id = setInterval(() => {
+                onProgress({ kind: 'watched', value: player.getCurrentTime() });
+              }, 10_000);
+              (player as any)._pollId = id;
+            } else if ((player as any)._pollId) {
+              clearInterval((player as any)._pollId);
+              (player as any)._pollId = null;
+              onProgress({ kind: 'watched', value: player.getCurrentTime() });
+            }
+          },
+        },
+      });
+    };
+
+    if (window.YT?.Player) createPlayer();
+    else window.onYouTubeIframeAPIReady = createPlayer;
+  }, [videoId, lessonId]);
+
+  return <div ref={hostRef} />;
+}
+```
+
+Parent component owns the upsert logic — `onProgress` fires → debounced server action → Supabase upsert of `lesson_progress { watched_secs, completed }`.
+
+### Step 5 — Privacy + scope hygiene
+
+- **Always set Unlisted, never Public.** Public videos show up in search, Related, and on the channel homepage.
+- **Don't mention Arcadia in the video title / description** more than necessary. Titles surface in Google searches even for unlisted videos if someone links the URL publicly.
+- **Use a dedicated YouTube channel** if you want to keep demo content separate from personal videos. Creating a new channel under the same Google account takes 30 seconds: `studio.youtube.com` → profile menu → "Add channel".
+- **ADR 0006 exit criteria:** if we cross 30 min of total stored demo content, or a non-team creator uploads, or any payments land → swap to a real host before continuing.
 
 ---
 
 ## Summary — what you need to do next
 
 1. Open Supabase SQL editor, paste the migration, run it. **[you]**
-2. Verify new columns exist (`cloudinary_public_id`, `duration_sec`, `creator_id`). **[you]**
+2. Verify new columns exist (`youtube_video_id`, `duration_sec`, `creator_id`). **[you]**
 3. Optionally delete the 106 orphan rows in arcadia-test. **[you]**
-4. Create Cloudinary account, grab Cloud Name + API Key + API Secret. **[you]**
-5. Set all three env vars in Vercel for all three environments + in `apps/web/.env.local`. **[you]**
-6. Ping me when done. Then I start Week 9 Step 2 (Supabase Storage bucket `course-thumbnails`). **[me]**
+4. Ping me when done. Then I start Week 9 Step 2 (Supabase Storage bucket `course-thumbnails`). **[me]**
+5. (Whenever — no rush) upload an unlisted test video to your YouTube channel for Week 9 Step 8. **[you]**

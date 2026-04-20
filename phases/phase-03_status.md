@@ -2,17 +2,27 @@
 
 Source plan: `phase-03_plan.md`. Status entries chronological, newest on top.
 
-## 2026-04-20 — Phase 3 kickoff
+## 2026-04-20 — Phase 3 kickoff (with same-day video-host pivots)
 
-**Pre-plan decisions A–M approved**, with D + G + K + M amended to Cloudinary (free tier) — CF Stream deferred indefinitely. See ADR 0006.
+**Pre-plan decisions A–M approved.** D + G + K + M were amended twice the same day as the user weighed free-tier options:
+
+1. Original plan: Cloudflare Stream (TAD §7 default).
+2. First amendment: **Cloudinary** (free 25-credit tier, no card). Drafted ADR 0006 + Cloudinary setup guide.
+3. Second amendment: **YouTube unlisted** (demo-only scope). Rewrote ADR 0006 + setup guide. Accepted tradeoffs: no real access control, YouTube TOS risk for paid/gated content, branding leaks. Exit criteria in ADR 0006 hard-gate a swap before any paying creator uploads.
+
+**Net effect on Step 1 artifacts:**
+
+- `planning/decisions/0006_2026-04-20_video-host-youtube-unlisted-for-demo.md` is the canonical ADR. (The Cloudinary-version file was deleted before landing — single commit in history.)
+- Migration column renamed: `lessons.cloudinary_public_id` → `lessons.youtube_video_id text check (length = 11)`.
+- No env vars needed for video host.
+- TAD §7 inline amendment points at ADR 0006.
 
 **User actions still pending** before Step 2 of Week 9:
 
-1. Create a free Cloudinary account (no card required): https://cloudinary.com/users/register_free
-2. Set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` on Vercel (all three environments).
-3. Confirm free-tier plan is active.
+1. Apply the Phase-3 migration to `arcadia-test` — see `docs/guides/phase-03-setup.md` Part 1.
+2. (Optional) Delete the 106 orphan rows in arcadia-test.
 
-Step 1 was code-only and didn't need the credentials.
+Step 1 was code-only — no accounts, no secrets.
 
 ### Done — Step 1 (schema audit + ADR 0006 + migration draft)
 
@@ -31,12 +41,12 @@ Step 1 was code-only and didn't need the credentials.
 **Migration drafted** — `apps/web/supabase/migrations/20260421000001_phase3_courses_lessons_progress.sql`. Covers:
 
 - `courses.creator_id uuid references auth.users` (nullable, with partial index).
-- `lessons.cloudinary_public_id text` + `lessons.duration_sec integer (check >= 0)`.
+- `lessons.youtube_video_id text check (length = 11)` + `lessons.duration_sec integer check (>= 0)`.
 - Replaces `course_member_read` with "published-in-realm OR creator_id=me".
 - Tightens `section_member_read` to follow the parent course's read policy.
 - Adds creator-scoped INSERT / UPDATE / DELETE policies for `courses`, `sections`, `lessons`.
 - Adds `enrolment_creator_insert` (creator grants enrolment on own course) + `enrolment_self_insert` (Phase-4 "enrol" button seed: published + same-realm).
-- Keeps Phase-0 `lessons.cf_stream_id` column intact for the ADR 0006 swap-back path.
+- Keeps Phase-0 `lessons.cf_stream_id` column intact, reserved for the eventual real-host swap (ADR 0006 exit criteria).
 
 **Not yet done — still Step 1:**
 

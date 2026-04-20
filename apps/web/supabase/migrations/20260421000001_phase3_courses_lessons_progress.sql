@@ -5,9 +5,10 @@
 --   1. Ownership: add courses.creator_id so the /dashboard flow can scope
 --      draft listings to their creator and write policies can authorise
 --      creator-only INSERT / UPDATE / DELETE on course content.
---   2. Cloudinary columns: lessons.cloudinary_public_id + duration_sec.
---      Keeps Phase 0's cf_stream_id column in place (nullable, unused)
---      per ADR 0006 swap-back path.
+--   2. YouTube columns: lessons.youtube_video_id + duration_sec. Demo-only
+--      per ADR 0006 — swap to a real host before any paying creator uploads.
+--      Phase 0's cf_stream_id column stays in place (nullable, unused) and
+--      is reserved for the real-host swap.
 --   3. RLS tightening: creator writes, creator reads own drafts, sections
 --      read policy follows courses, lessons read adds creator bypass.
 --      Existing SELECT policies for enrolled / preview / realm-scoped
@@ -32,10 +33,14 @@ create index if not exists courses_creator_idx
   on public.courses(creator_id)
   where creator_id is not null;
 
--- 2. Cloudinary columns on lessons -----------------------------------------
+-- 2. YouTube columns on lessons --------------------------------------------
 
+-- youtube_video_id is the 11-character YouTube ID parsed from a URL the
+-- creator pastes in the editor (e.g. "dQw4w9WgXcQ"). The length check is
+-- a belt-and-braces guard — real YouTube IDs are always 11 chars today.
 alter table public.lessons
-  add column if not exists cloudinary_public_id text;
+  add column if not exists youtube_video_id text
+    check (youtube_video_id is null or length(youtube_video_id) = 11);
 
 alter table public.lessons
   add column if not exists duration_sec integer
@@ -216,7 +221,7 @@ create policy enrolment_self_insert
 
 comment on column public.courses.creator_id is
   'Owner of the course. NULL = orphan from pre-Phase-3 seed rows. RLS requires = auth.uid() for all writes.';
-comment on column public.lessons.cloudinary_public_id is
-  'Cloudinary public_id returned by the signed upload flow (ADR 0006). NULL on written-type lessons.';
+comment on column public.lessons.youtube_video_id is
+  '11-character YouTube video ID for unlisted demo videos (ADR 0006). NULL on written-type lessons. Must be swapped for a real video host before any paying creator uploads — see ADR 0006 exit criteria.';
 comment on column public.lessons.duration_sec is
-  'Video duration in whole seconds, captured from Cloudinary upload response. NULL on written-type lessons or pre-transcode states.';
+  'Video duration in whole seconds. Captured via YouTube IFrame API getDuration() on first successful player load. NULL on written lessons or before first load.';
