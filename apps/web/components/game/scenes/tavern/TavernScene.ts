@@ -47,13 +47,6 @@ const MOVE_INTERVAL_MS = 50;
 export const TAVERN_SPEECH_EVENT = 'tavern:speech';
 
 /**
- * Emitted by the scene when a speech bubble is clicked. React opens a
- * reaction picker at the supplied canvas-relative coords.
- *   (messageId: string, x: number, y: number) => void
- */
-export const TAVERN_BUBBLE_CLICK_EVENT = 'tavern:bubble-click';
-
-/**
  * React → scene signals that drive keyboard handoff. When the chat input
  * gains focus we disable Phaser's keyboard plugin so WASD types letters
  * into the input instead of also moving the avatar. Re-enabled on blur.
@@ -170,6 +163,12 @@ export class TavernScene extends Phaser.Scene {
     this.wireKeyboardInput();
     this.wirePointerInput();
 
+    // Defensive reset — the React side emits a blur event on mount that
+    // may arrive before this scene finishes `create()`. Guarantee the
+    // keyboard plugin is on by default so WASD works immediately even if
+    // that initial event was dropped.
+    if (this.input.keyboard) this.input.keyboard.enabled = true;
+
     this.colyseus = this.registry.get(COLYSEUS_CONNECTION_REGISTRY_KEY) as
       | ColyseusConnection
       | undefined;
@@ -227,7 +226,7 @@ export class TavernScene extends Phaser.Scene {
     return undefined;
   }
 
-  public showSpeechBubble(memberId: string, text: string, messageId: string): void {
+  public showSpeechBubble(memberId: string, text: string, _messageId?: string): void {
     const avatar = this.findAvatarByMemberId(memberId);
     if (!avatar) return;
 
@@ -235,21 +234,6 @@ export class TavernScene extends Phaser.Scene {
 
     const bubble = createSpeechBubble(this, text);
     bubble.setDepth(SPEECH_BUBBLE_DEPTH);
-    bubble.setData('messageId', messageId);
-    // Make the bubble clickable for the reaction picker. Hit area is a
-    // rectangle matching the bubble's bounding box; sized from the text
-    // object which is the second child of the container.
-    const textObj = bubble.getAt(1) as Phaser.GameObjects.Text | undefined;
-    const hitW = (textObj?.width ?? 100) + 24;
-    const hitH = (textObj?.height ?? 20) + 16;
-    // Hit rect is centred on the bubble's body (above the tail anchor).
-    bubble.setInteractive(
-      new Phaser.Geom.Rectangle(-hitW / 2, -hitH - 6, hitW, hitH),
-      Phaser.Geom.Rectangle.Contains,
-    );
-    bubble.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      this.game.events.emit(TAVERN_BUBBLE_CLICK_EVENT, messageId, pointer.x, pointer.y);
-    });
 
     this.speechBubbles.set(memberId, bubble);
 
