@@ -121,6 +121,7 @@ export class TavernScene extends Phaser.Scene {
     S: Phaser.Input.Keyboard.Key;
     D: Phaser.Input.Keyboard.Key;
   };
+  private spaceKey?: Phaser.Input.Keyboard.Key;
   private clickTarget: { x: number; y: number } | null = null;
 
   private colyseus?: ColyseusConnection;
@@ -288,6 +289,10 @@ export class TavernScene extends Phaser.Scene {
       S: Phaser.Input.Keyboard.Key;
       D: Phaser.Input.Keyboard.Key;
     };
+    // Spacebar → one-shot jump animation, mirrors WorldScene. `addCapture`
+    // stops the browser from page-scrolling when the canvas is active.
+    this.input.keyboard.addCapture('SPACE');
+    this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
   }
 
   private readInputState(): InputState {
@@ -454,6 +459,16 @@ export class TavernScene extends Phaser.Scene {
       this.localAvatar.body.setVelocity(vx, vy);
       this.localAvatar.isMoving = moving;
       this.localAvatar.direction = velocityToFacingDirection(vx, vy, this.localAvatar.direction);
+
+      // Spacebar → one-shot jump. JustDown fires only on the key-press
+      // transition, so holding space doesn't restart the jump each frame.
+      if (
+        this.spaceKey &&
+        Phaser.Input.Keyboard.JustDown(this.spaceKey) &&
+        !this.localAvatar.isJumping
+      ) {
+        this.localAvatar.triggerJump(this.localAvatar.direction);
+      }
 
       if (!this.localAvatar.isJumping) {
         this.localAvatar.playAnim(moving ? 'walk' : 'idle', this.localAvatar.direction);
