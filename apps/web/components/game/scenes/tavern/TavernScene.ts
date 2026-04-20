@@ -42,9 +42,24 @@ const MOVE_INTERVAL_MS = 50;
 /**
  * Event emitted on `game.events` by the React chat layer when a new message
  * arrives (including the sender's own optimistic echo). Handler signature:
- *   (memberId: string, text: string) => void
+ *   (memberId: string, text: string, messageId: string) => void
  */
 export const TAVERN_SPEECH_EVENT = 'tavern:speech';
+
+/**
+ * Emitted by the scene when a speech bubble is clicked. React opens a
+ * reaction picker at the supplied canvas-relative coords.
+ *   (messageId: string, x: number, y: number) => void
+ */
+export const TAVERN_BUBBLE_CLICK_EVENT = 'tavern:bubble-click';
+
+/**
+ * React → scene signals that drive keyboard handoff. When the chat input
+ * gains focus we disable Phaser's keyboard plugin so WASD types letters
+ * into the input instead of also moving the avatar. Re-enabled on blur.
+ */
+export const TAVERN_CHAT_FOCUS_EVENT = 'tavern:chat-focus';
+export const TAVERN_CHAT_BLUR_EVENT = 'tavern:chat-blur';
 
 const SPEECH_BUBBLE_DURATION_MS = 5000;
 const SPEECH_BUBBLE_DEPTH = 10_000;
@@ -170,14 +185,33 @@ export class TavernScene extends Phaser.Scene {
     // TAVERN_SPEECH_EVENT. Each emit shows (or replaces) a bubble above the
     // speaking avatar for SPEECH_BUBBLE_DURATION_MS.
     this.game.events.on(TAVERN_SPEECH_EVENT, this.showSpeechBubble, this);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+    // Focus handoff — disable Phaser's keyboard plugin while the React chat
+    // input is focused so WASD types letters instead of also moving the
+    // avatar. Re-enabled on blur.
+    this.game.events.on(TAVERN_CHAT_FOCUS_EVENT, this.disableKeyboardInput, this);
+    this.game.events.on(TAVERN_CHAT_BLUR_EVENT, this.enableKeyboardInput, this);
+    const teardown = () => {
       this.game.events.off(TAVERN_SPEECH_EVENT, this.showSpeechBubble, this);
+      this.game.events.off(TAVERN_CHAT_FOCUS_EVENT, this.disableKeyboardInput, this);
+      this.game.events.off(TAVERN_CHAT_BLUR_EVENT, this.enableKeyboardInput, this);
       this.teardownSpeechBubbles();
-    });
-    this.events.once(Phaser.Scenes.Events.DESTROY, () => {
-      this.game.events.off(TAVERN_SPEECH_EVENT, this.showSpeechBubble, this);
-      this.teardownSpeechBubbles();
-    });
+    };
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, teardown);
+    this.events.once(Phaser.Scenes.Events.DESTROY, teardown);
+  }
+
+  private disableKeyboardInput(): void {
+    if (this.input.keyboard) this.input.keyboard.enabled = false;
+    // Also clear click-target + zero velocity so the avatar doesn't drift
+    // while the user types. Keyboard-driven velocity is already guarded by
+    // the enabled flag above.
+    this.clickTarget = null;
+    this.localAvatar?.body.setVelocity(0, 0);
+    if (this.localAvatar) this.localAvatar.isMoving = false;
+  }
+
+  private enableKeyboardInput(): void {
+    if (this.input.keyboard) this.input.keyboard.enabled = true;
   }
 
   /**
@@ -192,7 +226,7 @@ export class TavernScene extends Phaser.Scene {
     return undefined;
   }
 
-  public showSpeechBubble(memberId: string, text: string): void {
+  public showSpeechBubble(memberId: string, text: string, messageId: string): void {
     const avatar = this.findAvatarByMemberId(memberId);
     if (!avatar) return;
 
@@ -200,6 +234,22 @@ export class TavernScene extends Phaser.Scene {
 
     const bubble = createSpeechBubble(this, text);
     bubble.setDepth(SPEECH_BUBBLE_DEPTH);
+    bubble.setData('messageId', messageId);
+    // Make the bubble clickable for the reaction picker. Hit area is a
+    // rectangle matching the bubble's bounding box; sized from the text
+    // object which is the second child of the container.
+    const textObj = bubble.getAt(1) as Phaser.GameObjects.Text | undefined;
+    const hitW = (textObj?.width ?? 100) + 24;
+    const hitH = (textObj?.height ?? 20) + 16;
+    // Hit rect is centred on the bubble's body (above the tail anchor).
+    bubble.setInteractive(
+      new Phaser.Geom.Rectangle(-hitW / 2, -hitH - 6, hitW, hitH),
+      Phaser.Geom.Rectangle.Contains,
+    );
+    bubble.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      this.game.events.emit(TAVERN_BUBBLE_CLICK_EVENT, messageId, pointer.x, pointer.y);
+    });
+
     this.speechBubbles.set(memberId, bubble);
 
     this.time.delayedCall(SPEECH_BUBBLE_DURATION_MS, () => {
@@ -214,10 +264,19 @@ export class TavernScene extends Phaser.Scene {
   }
 
   private wirePointerInput(): void {
-    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-      this.clickTarget = { x: world.x, y: world.y };
-    });
+    this.input.on(
+      'pointerdown',
+      (pointer: Phaser.Input.Pointer, currentlyOver: Phaser.GameObjects.GameObject[]) => {
+        // Don't click-to-move when the click landed on an interactive
+        // object (speech bubble → react picker).
+        if (currentlyOver.length > 0) return;
+        // Don't click-to-move while the React chat input is focused
+        // (mirrors the keyboard.enabled gate).
+        if (this.input.keyboard && !this.input.keyboard.enabled) return;
+        const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+        this.clickTarget = { x: world.x, y: world.y };
+      },
+    );
   }
 
   private wireKeyboardInput(): void {
