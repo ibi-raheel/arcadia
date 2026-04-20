@@ -25,9 +25,17 @@ public/
 │                        benches, signs, neon floor tiles; used in the decor layer)
 │   └── academy.png     (168×166 — single-tile Academy building sprite, placed at tile
 │                        (12, 6) via decor layer gid 364)
-└── maps/
-    └── world.tmj       (30×30 iso, 64×32 grid, 3 layers: ground / collision / decor.
-                         Uses 4 tilesets chained via firstgid — 1, 122, 243, 364.)
+├── maps/
+│   ├── world.tmj       (30×30 iso, 64×32 grid, 3 layers: ground / collision / decor.
+│   │                   Uses 4 tilesets chained via firstgid — 1, 122, 243, 364.)
+│   └── tavern.tmj      (retained but unused in-scene — see tavern-interior.png below;
+│                        still preloaded by BootScene for potential rollback)
+├── tavern-interior.png (1376×768 cyberpunk bar interior — rendered as TavernScene's
+│                        static background since 2026-04-19; replaces the tilemap path)
+└── transitions/        (1×1 transparent placeholder PNGs shown during building-entry
+    ├── tavern.png       fade-ins; swap each file for real art any time, no code change)
+    ├── academy.png
+    └── market.png
 ```
 
 ## Workflows

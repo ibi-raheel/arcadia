@@ -1,5 +1,11 @@
 ## Phase 2 Plan: Multiplayer + Tavern
 
+**Status: SHIPPED 2026-04-19.** All three weeks merged; end-to-end flow live in prod. See `phase-02_status.md` for the current runtime state + PR map. Divergences from this plan (all post-plan-confirmation):
+- **Reactions UI removed from the Tavern** per user request after PR #5 shipped. The `toggle_reaction` RPC + RLS tests remain so the backend is ready if we re-introduce UI.
+- **Tavern switched from procedural iso tilemap to an image-backed background** (`public/tavern-interior.png`, 1376×768, user-supplied). `tavern.tmj` is still on disk but unused in-scene. `LocalAvatar` gained a `spawnPixel` option (iso tiles → plain pixels).
+- **Chat bar hidden by default; Tab to open.** The original plan had the bar always visible; user requested modal-style entry so WASD doesn't accidentally type. Implemented via per-visibility Phaser keyboard enable/disable handoff.
+- **Reactions UX rewritten multiple times** (bottom bar → speech bubbles → bubble-click picker → picker removed). Final state: speech bubbles above speakers, no picker.
+
 **Source:** `/docs/mvp/phase-plan.md` §Phase 2 (Weeks 6–8) and `/docs/mvp/tad.md` §3.4, §4.2, §5.1–§5.4, §6.2, §8.3. This file is the executable plan; the MVP doc is the contract.
 
 **Goal:** Two or more members signed into distinct browser tabs on the deployed Vercel URL see each other's avatars moving in real time in `/world` and in `/tavern`, with <100 ms MOVE patch latency locally. In the Tavern, a message sent from one tab appears in all others within 500 ms, and emoji reactions propagate within 500 ms. Member-count badges above the three building entrances in `/world` reflect live occupancy within a 3 s poll window. An XP leaderboard sidebar is visible in the Tavern (rendering mostly zeroes until Phase 5's XP awards land).

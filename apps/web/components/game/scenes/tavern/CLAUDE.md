@@ -1,31 +1,46 @@
 # TavernScene
 
-Interior room. Local avatar, Colyseus-synced remote peers, no building-entrance zones. "Return to World" is a React overlay button, not a scene object. Chat + leaderboard overlays land Week 8.
+Interior room. Image-backed background (1376×768 cyberpunk pixel art) with a local avatar, Colyseus-synced remote peers, and a React chat overlay. No tile collision yet — the avatar walks freely within the image's physics-world rectangle. Colliders are a follow-up.
 
 ## Files
 
-- `TavernScene.ts` — scene class. Mirrors WorldScene structure; reuses `LocalAvatar`, `RemoteAvatar`, `avatar-animations`, input resolvers, move-throttle from `scenes/world/`.
-- `camera.config.ts` — zoom `1.5×`, iso-diamond bounds for a 15×15 map.
-- `sprites.config.ts` — avatar spawn tile (inside the north entrance), `size = 32×32` (halved 2026-04-19 to match WorldScene), feet-body `16×8`, walk speed.
-- `layers.config.ts` — tilemap layer names + depth bands.
+- `TavernScene.ts` — scene class. Renders `tavern-interior.png` as a depth-0 Image at origin (0, 0); reuses `LocalAvatar`, `RemoteAvatar`, `avatar-animations`, input resolvers, `move-throttle` from `scenes/world/`. Owns the speech-bubble machinery (see events below).
+- `camera.config.ts` — zoom `1.5×`; rect-shaped `bounds` matching `TAVERN_INTERIOR_SIZE` (1376×768).
+- `sprites.config.ts` — avatar `spawnPixel: { 688, 620 }` (bottom-centre of the image), `size = 32×32`, feet-body `16×8`, walk speed.
+- `layers.config.ts` — depth bands only (ground/dynamic/decor); tilemap layer names retained but unused since the image-backed swap.
 
 ## Assets loaded
 
-- `public/maps/tavern.tmj` — 15×15 iso interior (entrance at col 7, row 0). Generator: `scripts/generate-tavern-tmj.mjs`.
-- Reuses `public/tilesets/world.png` — no new art in Week 7.
+- `public/tavern-interior.png` — 1376×768 cyberpunk bar interior, user-supplied 2026-04-19. Declared via `BOOT_ASSETS.tavernInterior`.
 - Reuses every avatar spritesheet preloaded by BootScene.
+- `public/maps/tavern.tmj` is still preloaded but unused in-scene — harmless; enables a one-line rollback if we ever want the procedural iso tavern back. Delete when we're confident the image is permanent.
 
 ## Synced with
 
 - Colyseus room `tavern-realm1` (separate from `world-realm1`). Connection is a fresh `ColyseusConnection` owned by `GameTavern` (mirrors `GameWorld`).
-- Supabase: reads `memberships.avatar_id` + `display_name` via the shared registry handshake, same as WorldScene.
+- Supabase: reads `memberships.avatar_id` + `display_name` + `realm_id` via the shared registry handshake, same as WorldScene.
+
+## React ↔ scene events (on `game.events`)
+
+- `TAVERN_SPEECH_EVENT` — emitted by `useTavernChat` on every new message (own optimistic echo + peer Realtime INSERT). Scene shows (or replaces) a speech bubble above the speaker's avatar for 5 s. Bubble follows the avatar each frame via `update()`.
+- `TAVERN_CHAT_FOCUS_EVENT` / `TAVERN_CHAT_BLUR_EVENT` — emitted by `ChatPanel` when the chat bar opens/closes. Scene toggles `this.input.keyboard.enabled` so WASD types letters while the bar is open rather than also moving the avatar. Pointer click-to-move is also gated while the keyboard is disabled.
+- `create()` explicitly re-enables the keyboard at the end as defence-in-depth against race conditions where a stale blur/focus event arrives before the scene's listeners are set up.
+
+## Controls (tavern)
+
+- **W / A / S / D** or arrows — move.
+- **Space** — one-shot jump animation (same as WorldScene).
+- **Click** on floor — click-to-move.
+- **Tab** — open chat bar + focus it (the bar is otherwise hidden). While focused, WASD types; Escape or Send closes.
 
 ## Not owned here
 
-- Chat panel + leaderboard sidebar — React overlays in `app/tavern/page.tsx`, wired Week 8.
-- "Return to World" control — React overlay (not a scene object). Must fire `MSG.LEAVE_BUILDING { building: 'tavern' }` before routing.
+- `ChatPanel` + `LeaderboardPanel` — React overlays mounted by `app/tavern/page.tsx` / `GameTavern`.
+- "Return to World" floating button — React overlay. Must fire `MSG.LEAVE_BUILDING { building: 'tavern' }` before routing (handled in `GameTavern`).
+- Reactions UI — removed 2026-04-19 per user. Backend `toggle_reaction` RPC + RLS suite tests remain intact for a future re-introduction.
 
 ## Invariants
 
 - BootScene's `NEXT_SCENE_KEY_REGISTRY_KEY` override = `'TavernScene'`. GameTavern writes it before Phaser boots.
-- `tavern.tmj` uses `orientation: "isometric"` with 64×32 tile spacing — same as world.
+- Image origin is (0, 0) top-left; avatar and physics-world coords are plain cartesian pixels inside `TAVERN_INTERIOR_SIZE`.
+- `LocalAvatarOptions.spawnPixel` takes precedence over `spawnTile`. WorldScene still uses `spawnTile` for iso projection.
