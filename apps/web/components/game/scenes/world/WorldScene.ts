@@ -358,6 +358,7 @@ export class WorldScene extends Phaser.Scene {
     const spawnTile = spawnFrom ? worldSpritesConfig.buildings[spawnFrom].exitTile : undefined;
 
     const avatar = new LocalAvatar(this, {
+      memberId: member.memberId,
       avatarId: member.avatarId,
       displayName: member.displayName,
       spawnTile,

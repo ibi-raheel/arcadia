@@ -25,6 +25,7 @@ import { WORLD_TILE_SIZE } from './camera.config';
 import { worldSpritesConfig } from './sprites.config';
 
 export type LocalAvatarOptions = {
+  readonly memberId: string;
   readonly avatarId: AvatarId;
   readonly displayName: string;
   readonly spawnTile?: TileCoord;
@@ -32,6 +33,7 @@ export type LocalAvatarOptions = {
 
 export class LocalAvatar {
   readonly body: Phaser.Physics.Arcade.Body;
+  readonly memberId: string;
   readonly avatarId: AvatarId;
   private readonly visuals: AvatarVisuals;
 
@@ -40,6 +42,7 @@ export class LocalAvatar {
   private _isJumping = false;
 
   constructor(scene: Phaser.Scene, options: LocalAvatarOptions) {
+    this.memberId = options.memberId;
     this.avatarId = options.avatarId;
     const cfg = worldSpritesConfig.avatar;
     const spawnTile = options.spawnTile ?? cfg.spawnTile;
