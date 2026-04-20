@@ -14,10 +14,10 @@ export const TAVERN_SPAWN_TILE: TileCoord = { x: 7, y: 1 };
 export const tavernSpritesConfig = {
   avatar: {
     spawnTile: TAVERN_SPAWN_TILE,
-    size: { width: 64, height: 64 },
-    // Same feet-only body offset as WorldScene so collision vs walls feels
-    // identical across scenes.
-    bodyOffset: { x: 20, y: 44, width: 24, height: 16 },
+    // 32×32 display to match WorldScene's halved avatar (2026-04-19).
+    size: { width: 32, height: 32 },
+    // Feet-only body offset halved alongside `size`; same feel as WorldScene.
+    bodyOffset: { x: 8, y: 22, width: 16, height: 8 },
     walkSpeed: 160,
     clickArrivalThreshold: 2,
   },

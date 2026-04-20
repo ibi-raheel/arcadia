@@ -14,16 +14,15 @@ import type { BuildingName, PixelRect, TileCoord } from '../shared/types';
 export const worldSpritesConfig = {
   avatar: {
     spawnTile: { x: 15, y: 15 },
-    // 64×64 frame to match the sprite-sheet frame size the user is
-    // producing. The Rectangle placeholder fills the whole frame — when
-    // real atlases swap in, the character renders with its own padding
-    // inside the same 64×64 canvas, so layout / collision stay identical.
-    size: { width: 64, height: 64 },
-    // Feet-only Arcade Physics body. Offsets are relative to the sprite's
-    // top-left origin (centred Rectangle at x, y has top-left x-32, y-32).
-    // Body 32×16 centred horizontally, anchored near the bottom of the
-    // frame — roughly where feet land in an iso character sprite.
-    bodyOffset: { x: 16, y: 44, width: 32, height: 16 },
+    // 32×32 displayed frame (halved from the 64×64 source-sheet frame).
+    // Phaser's `setDisplaySize` handles the scale — avatars read smaller
+    // against the new cyberpunk tileset while the source sprites stay at
+    // their authored 64×64 pixel density.
+    size: { width: 32, height: 32 },
+    // Feet-only Arcade Physics body. Halved alongside `size` so collision
+    // geometry matches the rendered sprite. Body 16×8 centred horizontally,
+    // anchored near the bottom of the frame (feet).
+    bodyOffset: { x: 8, y: 22, width: 16, height: 8 },
     walkSpeed: 160, // px / second
     // Click-to-move: treat the avatar as "arrived" within this many px.
     clickArrivalThreshold: 2,
