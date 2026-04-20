@@ -7,11 +7,15 @@
 ```
 public/
 ├── avatars/                          ← per-avatar spritesheets
-│   ├── avatar-01/
-│   │   ├── idle.png    (128×256 — 2×4 grid, cropped)
+│   ├── avatar-01/                    ← Knight (Aseprite export, cropped)
+│   │   ├── idle.png    (128×256 — 2×4 grid)
 │   │   ├── walk.png    (576×256 — 9×4 grid)
 │   │   └── jump.png    (320×256 — 5×4 grid)
-│   ├── avatar-02/ … avatar-08/      ← empty; members render as colored Rectangles until filled
+│   ├── avatar-02/                    ← LPC-standard female (cropped from 832×256 generator output)
+│   │   ├── idle.png    (128×256 — 2×4 grid)
+│   │   ├── walk.png    (576×256 — 9×4 grid)
+│   │   └── jump.png    (320×256 — 5×4 grid)
+│   ├── avatar-03/ … avatar-08/       ← empty; members render as colored Rectangles until filled
 ├── tilesets/
 │   └── world.png       (704×704 — 11×11 grid of 64×64 iso tiles, 115 filled:
 │                        dirt/grass/bushes/flowers/stumps/rocks/water)
@@ -23,7 +27,9 @@ public/
 
 ### Ingest a new avatar spritesheet
 
-You have a PNG exported from Aseprite (or similar) on your Desktop. It's probably 832×256 or similar — the visible art is in the top-left region, rest is transparent padding.
+You have a PNG exported from Aseprite, an LPC-standard generator, or similar on your Desktop. The visible art is usually in the top-left region with transparent padding on the right (Aseprite) or on the right half (LPC's 13-column standard grid — cols 0..N-1 filled, rest blank).
+
+Tip: to detect how many columns are actually filled before cropping, alpha-probe the sheet with a short Node script (see the avatar-02 ingestion log 2026-04-19 in `phases/phase-02_status.md`).
 
 1. **Crop + place.** Use the reusable crop helper at `../../../scripts/crop-spritesheet.mjs`:
    ```bash
