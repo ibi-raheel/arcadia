@@ -119,6 +119,12 @@ export class TavernScene extends Phaser.Scene {
   private lastMoveSentAt = 0;
   private lastMoveState: MoveState | null = null;
 
+  // Set synchronously by the chat focus/blur events so `update()` can freeze
+  // the avatar the very next frame without depending on Phaser's internal
+  // `keyboard.enabled` flag (which doesn't reset `Key.isDown`, so keys that
+  // were held when Tab fired stay "down" forever).
+  private chatFocused = false;
+
   private readonly remoteAvatars = new Map<string, RemoteAvatar>();
   private unsubscribeConnected: (() => void) | null = null;
 
@@ -188,6 +194,7 @@ export class TavernScene extends Phaser.Scene {
   }
 
   private disableKeyboardInput(): void {
+    this.chatFocused = true;
     if (this.input.keyboard) {
       this.input.keyboard.enabled = false;
       // Captures live on the game-level KeyboardManager and preventDefault
@@ -195,15 +202,13 @@ export class TavernScene extends Phaser.Scene {
       // them so W/A/S/D/Space reach the chat <input>.
       this.input.keyboard.clearCaptures();
     }
-    // Also clear click-target + zero velocity so the avatar doesn't drift
-    // while the user types. Keyboard-driven velocity is already guarded by
-    // the enabled flag above.
     this.clickTarget = null;
     this.localAvatar?.body.setVelocity(0, 0);
     if (this.localAvatar) this.localAvatar.isMoving = false;
   }
 
   private enableKeyboardInput(): void {
+    this.chatFocused = false;
     if (this.input.keyboard) {
       this.input.keyboard.enabled = true;
       this.input.keyboard.addCapture('W,A,S,D,SPACE');
@@ -410,14 +415,31 @@ export class TavernScene extends Phaser.Scene {
     }
 
     if (this.localAvatar) {
-      // When the chat input is focused we disable the keyboard plugin. Phaser
-      // stops updating Key.isDown from that point, so any key held at the
-      // moment of focus (e.g. W while pressing Tab) stays "down" forever and
-      // would otherwise keep the avatar walking. Force-zero input here.
-      const chatFocused = !(this.input.keyboard?.enabled ?? true);
-      const input = chatFocused
-        ? { up: false, down: false, left: false, right: false }
-        : this.readInputState();
+      // Chat focused → hard-stop the avatar and skip all input processing.
+      // Phaser freezes Key.isDown updates when the plugin is disabled, so a
+      // key that was held when Tab fired (e.g. W) would stay "down" and keep
+      // the avatar walking; this branch makes it impossible.
+      if (this.chatFocused) {
+        this.localAvatar.body.setVelocity(0, 0);
+        this.localAvatar.isMoving = false;
+        if (!this.localAvatar.isJumping) {
+          this.localAvatar.playAnim('idle', this.localAvatar.direction);
+        }
+        this.localAvatar.syncAttachments();
+        this.sendMoveIfChanged(this.time.now);
+        const depthBase = tavernLayersConfig.depth.dynamic;
+        const { yAnchorRatio } = tavernLayersConfig.ySort;
+        for (const obj of this.ySortables) {
+          obj.setDepth(calculateYSortDepth(obj, { depthBase, yAnchorRatio }));
+        }
+        for (const [memberId, bubble] of this.speechBubbles) {
+          const avatar = this.findAvatarByMemberId(memberId);
+          if (avatar) bubble.setPosition(avatar.x, avatar.y - SPEECH_BUBBLE_Y_OFFSET);
+        }
+        return;
+      }
+
+      const input = this.readInputState();
       const kbd = resolveInputVelocity(input, tavernSpritesConfig.avatar.walkSpeed);
 
       let vx = 0;
