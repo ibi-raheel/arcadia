@@ -14,12 +14,16 @@ export type AvatarBody = Phaser.GameObjects.Rectangle | Phaser.GameObjects.Sprit
 
 export const DISPLAY_NAME_MAX = 16;
 
+export type AvatarSize = { readonly width: number; readonly height: number };
+
 export type AvatarVisuals = {
   readonly gameObject: AvatarBody;
   /** Non-null only when the avatar rendered as a Sprite (sheet registered). */
   readonly sprite: Phaser.GameObjects.Sprite | null;
   readonly nameText: Phaser.GameObjects.Text;
   readonly levelBadge: Phaser.GameObjects.Text;
+  /** Display size used at creation — drives `syncVisualAttachments` offsets. */
+  readonly size: AvatarSize;
 };
 
 export function createAvatarVisuals(
@@ -29,8 +33,10 @@ export function createAvatarVisuals(
   y: number,
   displayNameRaw: string,
   level: number = 1,
+  sizeOverride?: AvatarSize,
 ): AvatarVisuals {
   const cfg = worldSpritesConfig.avatar;
+  const size = sizeOverride ?? cfg.size;
   const textureKey = avatarHasSprite(scene, avatarId)
     ? primaryAvatarTextureKey(scene, avatarId)
     : null;
@@ -40,11 +46,11 @@ export function createAvatarVisuals(
 
   if (textureKey) {
     const s = scene.add.sprite(x, y, textureKey, 0);
-    s.setDisplaySize(cfg.size.width, cfg.size.height);
+    s.setDisplaySize(size.width, size.height);
     gameObject = s;
     sprite = s;
   } else {
-    const r = scene.add.rectangle(x, y, cfg.size.width, cfg.size.height, AVATAR_COLORS[avatarId]);
+    const r = scene.add.rectangle(x, y, size.width, size.height, AVATAR_COLORS[avatarId]);
     r.setStrokeStyle(2, 0x000000, 0.5);
     gameObject = r;
     sprite = null;
@@ -58,7 +64,7 @@ export function createAvatarVisuals(
   const displayName = cleanName.slice(0, DISPLAY_NAME_MAX);
 
   const nameText = scene.add
-    .text(x, y - cfg.size.height / 2 - 4, displayName, {
+    .text(x, y - size.height / 2 - 4, displayName, {
       fontFamily: 'system-ui, sans-serif',
       fontSize: '12px',
       color: '#ffffff',
@@ -68,7 +74,7 @@ export function createAvatarVisuals(
     .setOrigin(0.5, 1);
 
   const levelBadge = scene.add
-    .text(x, y + cfg.size.height / 2 + 4, `Lv ${level}`, {
+    .text(x, y + size.height / 2 + 4, `Lv ${level}`, {
       fontFamily: 'system-ui, sans-serif',
       fontSize: '10px',
       color: '#ffffff',
@@ -77,7 +83,7 @@ export function createAvatarVisuals(
     })
     .setOrigin(0.5, 0);
 
-  return { gameObject, sprite, nameText, levelBadge };
+  return { gameObject, sprite, nameText, levelBadge, size };
 }
 
 /**
@@ -85,8 +91,7 @@ export function createAvatarVisuals(
  * every frame from the scene's update() loop.
  */
 export function syncVisualAttachments(visuals: AvatarVisuals): void {
-  const cfgSize = worldSpritesConfig.avatar.size;
-  const dy = cfgSize.height / 2;
+  const dy = visuals.size.height / 2;
   visuals.nameText.setPosition(visuals.gameObject.x, visuals.gameObject.y - dy - 4);
   visuals.levelBadge.setPosition(visuals.gameObject.x, visuals.gameObject.y + dy + 4);
 }

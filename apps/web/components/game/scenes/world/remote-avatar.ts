@@ -20,6 +20,7 @@ import {
   setVisualsLevel,
   syncVisualAttachments,
   type AvatarBody,
+  type AvatarSize,
   type AvatarVisuals,
 } from './avatar-renderer';
 import { interpolationStep } from './interpolation';
@@ -50,7 +51,7 @@ export class RemoteAvatar {
   private isMoving: boolean;
   private level: number;
 
-  constructor(scene: Phaser.Scene, snap: RemoteAvatarSnapshot) {
+  constructor(scene: Phaser.Scene, snap: RemoteAvatarSnapshot, size?: AvatarSize) {
     this.memberId = snap.memberId;
     this.avatarId = snap.avatarId;
     this.visuals = createAvatarVisuals(
@@ -60,6 +61,7 @@ export class RemoteAvatar {
       snap.y,
       snap.displayName,
       snap.level,
+      size,
     );
     this.targetX = snap.x;
     this.targetY = snap.y;
