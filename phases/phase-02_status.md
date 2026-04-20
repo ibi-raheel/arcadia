@@ -4,6 +4,22 @@ Source plan: `phase-02_plan.md`. Status entries are chronological, newest at the
 
 **Phase 2 effectively code-complete 2026-04-19.** Weeks 6 + 7 + 8 all shipped to prod with art + UX polish on top. Remote multiplayer is live in `/world` and `/tavern`; Tavern chat + speech bubbles work; spacebar jump works in both scenes. Leaderboard plumbing is in place (shows Level 1 / 0 XP for all members until Phase 5 awards land). Next phase: Phase 3 (Academy — course content + video delivery).
 
+### 2026-04-20 — Tavern chat-capture fix + avatar scale bump (PR #9, squashed)
+
+**What shipped**
+
+- **Chat input now accepts W/A/S/D/Space.** Phaser's `addKeys(...)` defaults `enableCapture=true` which registers captures on the game-level `KeyboardManager`; that component calls `preventDefault()` at the DOM keydown listener *independent of* the scene plugin's `enabled` flag. Toggling `scene.input.keyboard.enabled = false` stopped the scene from *reading* keys but the browser still never delivered them to the `<input>`. Fix: `disableKeyboardInput` now also calls `clearCaptures()`; `enableKeyboardInput` re-registers via `addCapture('W,A,S,D,SPACE')`. Gotcha captured in `apps/web/components/game/CLAUDE.md`.
+- **Tab instantly freezes the avatar.** `keyboard.enabled = false` stops Phaser from updating `Key.isDown`, so any key held at the moment of focus stays "down" forever and would otherwise drive movement. Added a scene-owned `chatFocused` flag set synchronously in the focus handler; `TavernScene.update()` early-returns with `setVelocity(0,0)` + idle anim while it's true — no code path can move the avatar while chat is open. On blur, `resetKeys()` clears any stuck-down keys so the avatar doesn't spring back into motion when a key was released during chat.
+- **Avatar size threading bug.** `avatar-renderer.ts` hard-coded `worldSpritesConfig.avatar.size`, so the tavern's `sprites.config.ts` values were ignored — tavern avatar rendered at WorldScene's 32×32 regardless. Added optional `size` + `bodyOffset` params to `createAvatarVisuals`, `LocalAvatar`, and `RemoteAvatar`; TavernScene now passes its tavern-specific config through. `AvatarVisuals` carries the size it was built with so `syncVisualAttachments` uses it too.
+- **Tavern avatar 32×32 → 128×128 (4× WorldScene baseline).** Source sheets stay 64×64; `setDisplaySize` upscales 2× (pixelArt mode keeps it crisp). Feet-body `64×32` at offset `(32, 88)`.
+- **Tavern camera zoom 1.5 → 1.05** (zoomed out 30%) so more of the interior stays on screen alongside the bigger avatar.
+
+**Iteration history for the avatar size (for future reference):** user first asked for +25% (32→40), then "double it" (40→64, chosen as 2× WorldScene baseline + matches native 64×64 sheet so no upscaling), then "1.5x" (64→96), then "128". Each step in the preview; landed at 128×128.
+
+**Files changed:** `apps/web/components/game/scenes/tavern/{TavernScene,camera.config,sprites.config,CLAUDE.md}`, `apps/web/components/game/scenes/world/{avatar-renderer,local-avatar,remote-avatar}.ts`, `apps/web/components/game/CLAUDE.md`. Squash merged as commit on main 2026-04-20.
+
+**Verification:** typecheck + lint + 98 web tests green. User-verified on Vercel preview before merge.
+
 ## Resume checklist — where we left off
 
 **What's live on `https://arcadia-web-swart.vercel.app`:**
