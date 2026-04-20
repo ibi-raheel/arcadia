@@ -5,8 +5,8 @@ Interior room. Local avatar, Colyseus-synced remote peers, no building-entrance 
 ## Files
 
 - `TavernScene.ts` — scene class. Mirrors WorldScene structure; reuses `LocalAvatar`, `RemoteAvatar`, `avatar-animations`, input resolvers, move-throttle from `scenes/world/`.
-- `camera.config.ts` — zoom 1.5×, iso-diamond bounds for a 15×15 map.
-- `sprites.config.ts` — avatar spawn tile (inside the north entrance), body offsets, walk speed.
+- `camera.config.ts` — zoom `1.5×`, iso-diamond bounds for a 15×15 map.
+- `sprites.config.ts` — avatar spawn tile (inside the north entrance), `size = 32×32` (halved 2026-04-19 to match WorldScene), feet-body `16×8`, walk speed.
 - `layers.config.ts` — tilemap layer names + depth bands.
 
 ## Assets loaded

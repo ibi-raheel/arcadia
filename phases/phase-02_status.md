@@ -4,6 +4,19 @@ Source plan: `phase-02_plan.md`. Status entries are chronological, newest at the
 
 **Weeks 6 + 7 shipped to prod 2026-04-19** (PR #2 squash-merged as `ad6cb41`; follow-on deploy-compatibility fixes through `cd77f58`; commit `7dfc566` adds `avatar-02` LPC-female art). Prod: two tabs at `https://arcadia-web-swart.vercel.app/world` render each other's avatars in real time; Tavern join/leave works; member-count badge reflects occupancy within 3 s. Small interpolation lag noted ("slight lag though no worries there" — user) — tune in Week 8 polish if it remains visible against real art. Week 8 (chat + reactions + leaderboard + `/security-review`) not yet started.
 
+### Art tuning pass (2026-04-19 evening, post-ingestion)
+
+Back-and-forth visual calibration after the cyberpunk world landed:
+
+| Knob | Before | After | File |
+|---|---|---|---|
+| Avatar display size | 64×64 | **32×32** | `scenes/world/sprites.config.ts` + `scenes/tavern/sprites.config.ts` |
+| Avatar feet-body | 32×16 at (16, 44) | **16×8 at (8, 22)** | same (halved in lockstep with display) |
+| World camera zoom | 1.0 | **1.69** (two +30% steps) | `scenes/world/camera.config.ts` |
+| Tavern camera zoom | 1.5 | unchanged | — |
+
+Source spritesheets stay at their authored 64×64 frames — Phaser's `setDisplaySize` handles the scale. Camera bumps counterweight the size reduction so characters still read at a comparable on-screen size while the new art fills more of the viewport. All noted in the corresponding `CLAUDE.md` invariants sections (game-level, WorldScene, TavernScene).
+
 ### Cyberpunk world.tmj ingestion (2026-04-19 evening)
 
 User provided a redesigned `world.tmj` with cyberpunk-themed art (zip at `~/Downloads/Arcadia/`). Ingested:

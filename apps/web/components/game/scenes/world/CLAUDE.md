@@ -5,8 +5,8 @@ Outdoor isometric world. Owns the local avatar, keyboard + click-to-move + jump 
 ## Files
 
 - `WorldScene.ts` — scene class. Imports configs; no hardcoded tweakable values.
-- `camera.config.ts` — `{ zoom, followLerp, deadzone, bounds, fadeInMs, fadeOutMs }` + `WORLD_TILE_SIZE` + `WORLD_TILE_DIMENSIONS`.
-- `sprites.config.ts` — avatar (spawnTile, size, bodyOffset, walkSpeed, clickArrivalThreshold), buildings (entranceTile, exitTile, footprintRect, fillColor per building).
+- `camera.config.ts` — `{ zoom, followLerp, deadzone, bounds, fadeInMs, fadeOutMs }` + `WORLD_TILE_SIZE` + `WORLD_TILE_DIMENSIONS`. Current `zoom = 1.69` (2026-04-19 — 1.0 → 1.3 → 1.69 after the avatar-size halving to keep characters readable against the cyberpunk tileset).
+- `sprites.config.ts` — avatar (`spawnTile`, `size = 32×32` halved 2026-04-19, `bodyOffset = 16×8` feet-box, `walkSpeed`, `clickArrivalThreshold`), buildings (entranceTile, exitTile, footprintRect, fillColor per building).
 - `layers.config.ts` — y-sort layer order, overlay layer names, depth bands.
 - `local-avatar.ts` — `LocalAvatar` class. Two render paths: Phaser `Sprite` if the avatar's spritesheets are registered, else colored `Rectangle` placeholder. Owns direction + isMoving + isJumping state, display name text, level badge, `playAnim()`, `triggerJump()`.
 - `input.ts` — pure input-math helpers: `resolveInputVelocity`, `resolveInputDirection`, `resolveClickTargetVelocity`, `velocityToFacingDirection`. All unit-testable without Phaser.
@@ -33,9 +33,10 @@ Outdoor isometric world. Owns the local avatar, keyboard + click-to-move + jump 
 ## Key invariants
 
 - Idle ↔ walk is a zero-delay `isMoving` toggle (no 2s timer).
-- Collision comes from the tilemap `collision` layer; building Rectangles are visual-only.
-- Body offsets / spawn tiles / walk speed / fade durations / arrival threshold all live in configs.
+- Collision comes from the tilemap `collision` layer; building Rectangles are visual-only (and hidden since 2026-04-19 — see below).
+- Body offsets / spawn tiles / walk speed / fade durations / arrival threshold / zoom all live in configs.
 - Character facing is cardinal (n/e/s/w), from `velocityToFacingDirection`.
+- **Avatar display size:** `32×32` via `setDisplaySize` (source sheets stay 64×64). **Camera zoom:** `1.69`. Tweak both together if you change one — see `camera.config.ts` + `sprites.config.ts` for the coupled history.
 
 ## Phase ownership
 
