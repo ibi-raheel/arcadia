@@ -19,10 +19,18 @@ import {
   setVisualsLevel,
   syncVisualAttachments,
   type AvatarBody,
+  type AvatarSize,
   type AvatarVisuals,
 } from './avatar-renderer';
 import { WORLD_TILE_SIZE } from './camera.config';
 import { worldSpritesConfig } from './sprites.config';
+
+export type AvatarBodyOffset = {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+};
 
 export type LocalAvatarOptions = {
   readonly memberId: string;
@@ -32,6 +40,10 @@ export type LocalAvatarOptions = {
   /** Exact pixel spawn — wins over `spawnTile` when provided (tavern
    *  uses this because its background is an image, not an iso tilemap). */
   readonly spawnPixel?: { readonly x: number; readonly y: number };
+  /** Display size override — defaults to worldSpritesConfig.avatar.size. */
+  readonly size?: AvatarSize;
+  /** Physics body offset override — must pair with `size`. */
+  readonly bodyOffset?: AvatarBodyOffset;
 };
 
 export class LocalAvatar {
@@ -57,13 +69,16 @@ export class LocalAvatar {
       spawnPx.x,
       spawnPx.y,
       options.displayName,
+      1,
+      options.size,
     );
 
+    const bodyOffset = options.bodyOffset ?? cfg.bodyOffset;
     scene.physics.add.existing(this.visuals.gameObject);
     this.body = this.visuals.gameObject.body as Phaser.Physics.Arcade.Body;
     this.body.setCollideWorldBounds(true);
-    this.body.setSize(cfg.bodyOffset.width, cfg.bodyOffset.height);
-    this.body.setOffset(cfg.bodyOffset.x, cfg.bodyOffset.y);
+    this.body.setSize(bodyOffset.width, bodyOffset.height);
+    this.body.setOffset(bodyOffset.x, bodyOffset.y);
   }
 
   get rect(): AvatarBody {
