@@ -1,16 +1,10 @@
-// Bottom-centred chat composer. Full-width pill at the bottom of the
-// viewport matching the example UX — users type, press Enter (or the
-// SEND button) to post, the message pops as a speech bubble above the
-// speaker's avatar via TavernScene.
+// Bottom-centred chat composer. Hidden by default — press **Tab** to open
+// "chat mode". While open, Phaser's keyboard plugin is disabled so WASD
+// types letters. Enter / Send submits; Escape discards + closes. Closing
+// re-enables Phaser's keyboard so the avatar can move again.
 //
-// Focus handoff to the game canvas:
-//   - While the input is focused, Phaser's keyboard plugin is disabled
-//     (via the onFocusChange callback → scene event) so WASD types
-//     letters instead of also moving the avatar.
-//   - Tab (pressed while the input isn't focused) focuses the input —
-//     "enter chat mode" shortcut.
-//   - Enter submits, Escape blurs + discards draft.
-//   - Every blur path re-enables Phaser's keyboard.
+// The chat bar is unmounted while closed so it can't accidentally steal
+// focus and starve the canvas of keyboard events.
 
 'use client';
 
@@ -26,7 +20,7 @@ type Props = {
   readonly memberId: string;
   readonly displayName: string;
   readonly onMessageReceived?: (message: TavernMessage) => void;
-  /** Called with `true` when the input gains focus, `false` on blur. */
+  /** Called with `true` when the bar opens, `false` when it closes. */
   readonly onFocusChange?: (focused: boolean) => void;
 };
 
@@ -36,44 +30,46 @@ export function ChatPanel({
   displayName,
   onMessageReceived,
   onFocusChange,
-}: Props): React.JSX.Element {
+}: Props): React.JSX.Element | null {
   const { send } = useTavernChat({ realmId, memberId, onMessageReceived });
   const [draft, setDraft] = useState('');
-  const [focused, setFocused] = useState(false);
+  const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const blurInput = useCallback(() => {
-    inputRef.current?.blur();
+  const close = useCallback(() => {
+    setDraft('');
+    setOpen(false);
   }, []);
 
   const handleSubmit = useCallback(
     async (e?: React.FormEvent) => {
       e?.preventDefault();
       const trimmed = draft.trim();
-      if (!trimmed) return;
+      if (!trimmed) {
+        close();
+        return;
+      }
       setDraft('');
       await send(trimmed);
-      blurInput();
+      close();
     },
-    [draft, send, blurInput],
+    [draft, send, close],
   );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        setDraft('');
-        blurInput();
+        close();
       }
       // Enter is handled by the form's submit.
     },
-    [blurInput],
+    [close],
   );
 
-  // Tab-to-focus — document-level listener so the key reaches us even when
-  // the canvas has focus. Only intercept when the user is outside any
-  // editable element; don't block Tab's normal accessibility traversal
-  // when they're already inside a form field.
+  // Tab-to-open — document-level listener intercepts Tab and opens the bar
+  // unless the user is already inside an editable element (preserves
+  // accessibility Tab-traversal inside forms).
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent): void => {
       if (e.key !== 'Tab') return;
@@ -84,7 +80,7 @@ export function ChatPanel({
         (target?.isContentEditable ?? false);
       if (isEditable) return;
       e.preventDefault();
-      inputRef.current?.focus();
+      setOpen(true);
     };
     document.addEventListener('keydown', handleGlobalKeyDown);
     return () => {
@@ -92,20 +88,31 @@ export function ChatPanel({
     };
   }, []);
 
-  // Surface focus state changes to the parent so GameTavern can toggle the
-  // scene's keyboard plugin. We call onFocusChange on every focused-state
-  // flip; the parent handler is expected to be idempotent.
+  // Focus the input the moment the bar opens — one tick later so the input
+  // is mounted in the DOM.
   useEffect(() => {
-    onFocusChange?.(focused);
-  }, [focused, onFocusChange]);
+    if (open) {
+      const id = window.setTimeout(() => inputRef.current?.focus(), 0);
+      return () => window.clearTimeout(id);
+    }
+    return undefined;
+  }, [open]);
+
+  // Notify the parent so GameTavern can disable Phaser's keyboard plugin
+  // while the bar is open. Visibility-driven (not DOM-focus-driven) so
+  // there's no window where the scene thinks chat is "focused" while the
+  // bar isn't actually showing.
+  useEffect(() => {
+    onFocusChange?.(open);
+  }, [open, onFocusChange]);
+
+  if (!open) return null;
 
   return (
     <div className="pointer-events-none absolute bottom-6 left-1/2 z-30 w-[min(600px,92vw)] -translate-x-1/2">
       <form
         onSubmit={handleSubmit}
-        className={`pointer-events-auto flex items-center gap-2 rounded-2xl border bg-[rgba(30,20,15,0.85)] px-3 py-2 shadow-xl backdrop-blur transition-colors ${
-          focused ? 'border-amber-500/60' : 'border-amber-900/40'
-        }`}
+        className="pointer-events-auto flex items-center gap-2 rounded-2xl border border-amber-500/60 bg-[rgba(30,20,15,0.92)] px-3 py-2 shadow-xl backdrop-blur"
       >
         <input
           ref={inputRef}
@@ -113,9 +120,10 @@ export function ChatPanel({
           value={draft}
           onChange={(e) => setDraft(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
           onKeyDown={handleKeyDown}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder={`${displayName} says…  (press Tab to chat)`}
+          // Blurring the input while the bar is open shouldn't close the
+          // bar (user might click elsewhere and come back). Escape + Send
+          // are the only close paths.
+          placeholder={`${displayName} says…  (Esc to cancel)`}
           className="flex-1 bg-transparent px-2 py-1 text-neutral-100 placeholder:text-neutral-400 focus:outline-none"
           maxLength={MAX_MESSAGE_LENGTH}
           autoComplete="off"
