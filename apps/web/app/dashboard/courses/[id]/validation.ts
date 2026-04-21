@@ -2,6 +2,7 @@
 // Vitest can import without the `@/` alias.
 
 export const SECTION_TITLE_MAX = 120;
+export const LESSON_TITLE_MAX = 120;
 
 export function validateSectionTitle(
   raw: string,
@@ -10,6 +11,17 @@ export function validateSectionTitle(
   if (title.length === 0) return { ok: false, error: 'Section title is required.' };
   if (title.length > SECTION_TITLE_MAX) {
     return { ok: false, error: `Section title must be ${SECTION_TITLE_MAX} characters or fewer.` };
+  }
+  return { ok: true, value: title };
+}
+
+export function validateLessonTitle(
+  raw: string,
+): { ok: true; value: string } | { ok: false; error: string } {
+  const title = raw.trim();
+  if (title.length === 0) return { ok: false, error: 'Lesson title is required.' };
+  if (title.length > LESSON_TITLE_MAX) {
+    return { ok: false, error: `Lesson title must be ${LESSON_TITLE_MAX} characters or fewer.` };
   }
   return { ok: true, value: title };
 }
