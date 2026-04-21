@@ -25,16 +25,13 @@ import {
   reorderSections,
 } from '../actions';
 import { SECTION_TITLE_MAX } from '../validation';
+import { LessonList, type LessonRow } from './LessonList';
 
 export type SectionRow = {
   readonly id: string;
   readonly title: string;
   readonly sort_order: number;
-  readonly lessons: ReadonlyArray<{
-    readonly id: string;
-    readonly title: string;
-    readonly type: 'video' | 'written' | null;
-  }>;
+  readonly lessons: readonly LessonRow[];
 };
 
 type Props = {
@@ -232,15 +229,14 @@ function SortableSection({
         <SectionTitleEditor section={section} courseId={courseId} onError={onError} />
       </div>
 
-      {section.lessons.length > 0 && (
-        <ul className="space-y-0.5 border-t border-slate-800 px-3 py-2 pl-6">
-          {section.lessons.map((l) => (
-            <li key={l.id} className="text-xs text-slate-400">
-              {l.type === 'video' ? '▶' : '✎'} {l.title}
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="border-t border-slate-800 px-3 py-2 pl-6">
+        <LessonList
+          courseId={courseId}
+          sectionId={section.id}
+          lessons={section.lessons}
+          onError={onError}
+        />
+      </div>
     </li>
   );
 }

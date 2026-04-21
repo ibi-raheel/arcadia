@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
-import { validateReorderIds, validateSectionTitle } from './validation';
+import { validateLessonTitle, validateReorderIds, validateSectionTitle } from './validation';
 
 type Result = { readonly ok: true } | { readonly ok: false; readonly error: string };
 
@@ -122,6 +122,112 @@ export async function reorderSections(
   // can't touch sections owned by another creator even if a bad id leaks in.
   const updates = validation.value.map((id, index) =>
     supabase.from('sections').update({ sort_order: index }).eq('id', id).eq('course_id', courseId),
+  );
+  const results = await Promise.all(updates);
+  const firstError = results.find((r) => r.error);
+  if (firstError?.error) return { ok: false, error: firstError.error.message };
+
+  revalidatePath(`/dashboard/courses/${courseId}`);
+  return { ok: true };
+}
+
+// ---- Lesson actions -----------------------------------------------------
+
+export async function createLesson(
+  courseId: string,
+  sectionId: string,
+  rawTitle: string,
+): Promise<Result> {
+  const ownerCheck = await assertOwner(courseId);
+  if (!ownerCheck.ok) return ownerCheck;
+
+  const validation = validateLessonTitle(rawTitle);
+  if (!validation.ok) return { ok: false, error: validation.error };
+
+  const supabase = getSupabaseServerClient();
+
+  const { data: last } = await supabase
+    .from('lessons')
+    .select('sort_order')
+    .eq('section_id', sectionId)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .maybeSingle<{ sort_order: number }>();
+  const nextOrder = (last?.sort_order ?? -1) + 1;
+
+  // Default to written lesson; creator switches to video via the editor
+  // (Week 9 Step 8). `course_id` is denormalized for RLS scope.
+  const { error } = await supabase.from('lessons').insert({
+    course_id: courseId,
+    section_id: sectionId,
+    title: validation.value,
+    type: 'written',
+    sort_order: nextOrder,
+  });
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/dashboard/courses/${courseId}`);
+  return { ok: true };
+}
+
+export async function renameLesson(
+  courseId: string,
+  lessonId: string,
+  rawTitle: string,
+): Promise<Result> {
+  const ownerCheck = await assertOwner(courseId);
+  if (!ownerCheck.ok) return ownerCheck;
+
+  const validation = validateLessonTitle(rawTitle);
+  if (!validation.ok) return { ok: false, error: validation.error };
+
+  const supabase = getSupabaseServerClient();
+  const { error } = await supabase
+    .from('lessons')
+    .update({ title: validation.value })
+    .eq('id', lessonId)
+    .eq('course_id', courseId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/dashboard/courses/${courseId}`);
+  return { ok: true };
+}
+
+export async function deleteLesson(courseId: string, lessonId: string): Promise<Result> {
+  const ownerCheck = await assertOwner(courseId);
+  if (!ownerCheck.ok) return ownerCheck;
+
+  const supabase = getSupabaseServerClient();
+  const { error } = await supabase
+    .from('lessons')
+    .delete()
+    .eq('id', lessonId)
+    .eq('course_id', courseId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/dashboard/courses/${courseId}`);
+  return { ok: true };
+}
+
+export async function reorderLessons(
+  courseId: string,
+  sectionId: string,
+  orderedIds: readonly string[],
+): Promise<Result> {
+  const ownerCheck = await assertOwner(courseId);
+  if (!ownerCheck.ok) return ownerCheck;
+
+  const validation = validateReorderIds(orderedIds);
+  if (!validation.ok) return { ok: false, error: validation.error };
+
+  const supabase = getSupabaseServerClient();
+  const updates = validation.value.map((id, index) =>
+    supabase
+      .from('lessons')
+      .update({ sort_order: index })
+      .eq('id', id)
+      .eq('course_id', courseId)
+      .eq('section_id', sectionId),
   );
   const results = await Promise.all(updates);
   const firstError = results.find((r) => r.error);

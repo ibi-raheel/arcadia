@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { SECTION_TITLE_MAX, validateReorderIds, validateSectionTitle } from '../validation';
+import {
+  LESSON_TITLE_MAX,
+  SECTION_TITLE_MAX,
+  validateLessonTitle,
+  validateReorderIds,
+  validateSectionTitle,
+} from '../validation';
 
 describe('validateSectionTitle', () => {
   it('trims whitespace and accepts', () => {
@@ -22,6 +28,27 @@ describe('validateSectionTitle', () => {
   it('rejects over the limit', () => {
     const r = validateSectionTitle('a'.repeat(SECTION_TITLE_MAX + 1));
     expect(r.ok).toBe(false);
+  });
+});
+
+describe('validateLessonTitle', () => {
+  it('trims and accepts', () => {
+    const r = validateLessonTitle('  Lesson 1  ');
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value).toBe('Lesson 1');
+  });
+
+  it('rejects empty', () => {
+    expect(validateLessonTitle('').ok).toBe(false);
+    expect(validateLessonTitle('   ').ok).toBe(false);
+  });
+
+  it('accepts exactly at the limit', () => {
+    expect(validateLessonTitle('a'.repeat(LESSON_TITLE_MAX)).ok).toBe(true);
+  });
+
+  it('rejects over the limit', () => {
+    expect(validateLessonTitle('a'.repeat(LESSON_TITLE_MAX + 1)).ok).toBe(false);
   });
 });
 
