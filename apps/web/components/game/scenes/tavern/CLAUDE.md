@@ -1,12 +1,12 @@
 # TavernScene
 
-Interior room. Image-backed background (1376×768 cyberpunk pixel art) with a local avatar, Colyseus-synced remote peers, and a React chat overlay. No tile collision yet — the avatar walks freely within the image's physics-world rectangle. Colliders are a follow-up.
+Interior room. Image-backed background (1536×1024 pixel art, user-supplied 2026-04-20; prior 1376×768 cyberpunk image retired) with a local avatar, Colyseus-synced remote peers, and a React chat overlay. No tile collision yet — the avatar walks freely within the image's physics-world rectangle. Colliders are a follow-up.
 
 ## Files
 
 - `TavernScene.ts` — scene class. Renders `tavern-interior.png` as a depth-0 Image at origin (0, 0); reuses `LocalAvatar`, `RemoteAvatar`, `avatar-animations`, input resolvers, `move-throttle` from `scenes/world/`. Owns the speech-bubble machinery (see events below).
-- `camera.config.ts` — zoom `1.05×` (zoomed out 30% from the original 1.5× on 2026-04-20); rect-shaped `bounds` matching `TAVERN_INTERIOR_SIZE` (1376×768).
-- `sprites.config.ts` — avatar `spawnPixel: { 688, 620 }` (bottom-centre of the image), `size = 128×128` (4× WorldScene's 32×32; 2026-04-20), feet-body `64×32` at `(32, 88)`, walk speed.
+- `camera.config.ts` — zoom `1.365×` (2026-04-20, +30% to counterweight the avatar downscale); rect-shaped `bounds` matching `TAVERN_INTERIOR_SIZE` (1536×1024).
+- `sprites.config.ts` — avatar `spawnPixel: { 768, 826 }` (bottom-centre of the new interior), `size = 90×90` (−30% from the 128×128 phase on 2026-04-20), feet-body `45×22` at `(22, 62)`, walk speed.
 - `layers.config.ts` — depth bands only (ground/dynamic/decor); tilemap layer names retained but unused since the image-backed swap.
 
 ## Assets loaded
