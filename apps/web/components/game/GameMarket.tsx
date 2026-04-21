@@ -11,6 +11,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { BuildingTransition } from './BuildingTransition';
+import { LevelUpBanner } from './LevelUpBanner';
+import { useLevelSync } from './net/use-level-sync';
 import { BootScene } from './scenes/boot/BootScene';
 import {
   NEXT_SCENE_KEY_REGISTRY_KEY,
@@ -37,6 +39,8 @@ type Props = {
 };
 
 export default function GameMarket({ member, stalls, stallDetails }: Props): React.JSX.Element {
+  useLevelSync({ memberId: member.memberId });
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -144,6 +148,7 @@ export default function GameMarket({ member, stalls, stallDetails }: Props): Rea
       </div>
       {activeStall && <StallView stall={activeStall} onClose={closeStall} />}
       <BuildingTransition building="market" ready={ready} />
+      <LevelUpBanner />
     </div>
   );
 }

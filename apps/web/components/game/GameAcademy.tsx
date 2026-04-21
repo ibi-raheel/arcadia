@@ -9,6 +9,8 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { BuildingTransition } from './BuildingTransition';
+import { LevelUpBanner } from './LevelUpBanner';
+import { useLevelSync } from './net/use-level-sync';
 import { BootScene } from './scenes/boot/BootScene';
 import {
   NEXT_SCENE_KEY_REGISTRY_KEY,
@@ -30,6 +32,8 @@ type Props = {
 };
 
 export default function GameAcademy({ member, courses }: Props): React.JSX.Element {
+  useLevelSync({ memberId: member.memberId });
+
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
@@ -94,6 +98,7 @@ export default function GameAcademy({ member, courses }: Props): React.JSX.Eleme
         ← Return to World
       </button>
       <BuildingTransition building="academy" ready={ready} />
+      <LevelUpBanner />
     </div>
   );
 }
