@@ -15,6 +15,7 @@ import * as Phaser from 'phaser';
 import type { ColyseusConnection, ColyseusRoom } from '../../net/colyseus-client';
 import { BOOT_ASSETS } from '../boot/asset-manifest';
 import { isAvatarId } from '../shared/avatar-palette';
+import { spawnColliders } from '../shared/colliders';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -315,7 +316,12 @@ export class TavernScene extends Phaser.Scene {
     this.localAvatar = avatar;
     this.registerYSortable(avatar);
 
-    // No collision layer yet — image-backed tavern, colliders come later.
+    // Collider scaffold — no-op until tavernLayersConfig.colliders is
+    // populated by hand (see TAVERN_COLLIDERS in layers.config.ts).
+    if (tavernLayersConfig.colliders.length > 0) {
+      const group = spawnColliders(this, tavernLayersConfig.colliders);
+      this.physics.add.collider(avatar.body, group);
+    }
 
     this.cameras.main.startFollow(
       avatar.rect,

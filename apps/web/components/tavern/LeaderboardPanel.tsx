@@ -7,9 +7,20 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { AVATAR_NAMES, isAvatarId } from '@/components/game/scenes/shared/avatar-palette';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 import type { LeaderboardEntry } from './types';
+
+/** Fallback chain: real display name → avatar canonical name → "Player". */
+function resolveDisplayName(entry: LeaderboardEntry): string {
+  const name = entry.display_name?.trim();
+  if (name) return name;
+  if (entry.avatar_id && isAvatarId(entry.avatar_id)) {
+    return AVATAR_NAMES[entry.avatar_id];
+  }
+  return 'Player';
+}
 
 const LIMIT = 10;
 
@@ -35,7 +46,7 @@ export function LeaderboardPanel({ realmId, memberId }: Props): React.JSX.Elemen
     void (async () => {
       const { data, error } = await supabase
         .from('memberships')
-        .select('member_id, display_name, xp, level')
+        .select('member_id, display_name, avatar_id, xp, level')
         .eq('realm_id', realmId)
         .order('xp', { ascending: false })
         .limit(LIMIT);
@@ -133,7 +144,7 @@ export function LeaderboardPanel({ realmId, memberId }: Props): React.JSX.Elemen
             >
               <span className="truncate">
                 <span className="mr-1 text-xs text-neutral-500">{idx + 1}.</span>
-                {e.display_name}
+                {resolveDisplayName(e)}
               </span>
               <span className="shrink-0 text-xs text-neutral-400">
                 Lv {e.level} · {e.xp} XP

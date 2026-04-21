@@ -11,7 +11,8 @@ export type TavernMessage = {
 
 export type LeaderboardEntry = {
   readonly member_id: string;
-  readonly display_name: string;
+  readonly display_name: string | null;
+  readonly avatar_id: string | null;
   readonly xp: number;
   readonly level: number;
 };
