@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation';
 
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
+import { SectionTree, type SectionRow } from './_components/SectionTree';
+
 export const dynamic = 'force-dynamic';
 
 type Course = {
@@ -11,21 +13,6 @@ type Course = {
   description: string | null;
   published: boolean;
   creator_id: string | null;
-};
-
-type Section = {
-  id: string;
-  title: string;
-  sort_order: number;
-};
-
-type Lesson = {
-  id: string;
-  section_id: string;
-  title: string;
-  type: 'video' | 'written' | null;
-  sort_order: number;
-  is_preview: boolean;
 };
 
 type Params = { readonly params: { readonly id: string } };
@@ -60,16 +47,20 @@ export default async function CourseEditorPage({ params }: Params): Promise<Reac
     .eq('course_id', params.id)
     .order('sort_order', { ascending: true });
 
-  const sectionsWithLessons = (sections ?? []).map((s) => ({
-    ...s,
-    lessons: (lessons ?? []).filter((l) => l.section_id === s.id),
+  const sectionsWithLessons: SectionRow[] = (sections ?? []).map((s) => ({
+    id: s.id,
+    title: s.title,
+    sort_order: s.sort_order,
+    lessons: (lessons ?? [])
+      .filter((l) => l.section_id === s.id)
+      .map((l) => ({ id: l.id, title: l.title, type: l.type })),
   }));
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <Header course={course} />
       <div className="mx-auto grid max-w-6xl grid-cols-[300px_1fr] gap-6 p-6">
-        <SectionTree sections={sectionsWithLessons} />
+        <SectionTree courseId={course.id} initialSections={sectionsWithLessons} />
         <LessonPane hasSections={sectionsWithLessons.length > 0} />
       </div>
     </main>
@@ -106,56 +97,6 @@ function PublishedBadge({ published }: { readonly published: boolean }): React.J
     <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-400">
       Draft
     </span>
-  );
-}
-
-type SectionWithLessons = Section & { readonly lessons: readonly Lesson[] };
-
-function SectionTree({
-  sections,
-}: {
-  readonly sections: readonly SectionWithLessons[];
-}): React.JSX.Element {
-  return (
-    <aside className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-          Sections
-        </h2>
-        <button
-          type="button"
-          disabled
-          title="Coming in Step 5"
-          className="rounded-md bg-slate-800 px-2 py-1 text-xs font-medium text-slate-500 disabled:cursor-not-allowed"
-        >
-          + Add
-        </button>
-      </div>
-      {sections.length === 0 ? (
-        <p className="text-sm text-slate-500">
-          No sections yet. Section + lesson CRUD lands in Step 5.
-        </p>
-      ) : (
-        <ol className="space-y-3">
-          {sections.map((s) => (
-            <li key={s.id}>
-              <div className="text-sm font-medium text-slate-200">{s.title}</div>
-              {s.lessons.length === 0 ? (
-                <p className="pl-3 text-xs text-slate-500">No lessons yet.</p>
-              ) : (
-                <ul className="mt-1 space-y-1 pl-3">
-                  {s.lessons.map((l) => (
-                    <li key={l.id} className="text-xs text-slate-400">
-                      {l.type === 'video' ? '▶' : '✎'} {l.title}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
-        </ol>
-      )}
-    </aside>
   );
 }
 
