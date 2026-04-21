@@ -54,7 +54,7 @@ See `/docs/mvp/tad.md` §1.1 for the exact service-responsibility split and §2 
 - **GitHub MCP** (installed — ADR 0002) — PR review and Actions logs for anything touching `/apps/web`.
 - **Chrome DevTools MCP** (proposed) — frame-time and network profiling.
 - **Playwright MCP** (proposed) — scripted E2E.
-- **Cloudflare Stream MCP** (proposed) — upload / transcode status / signed URL generation. Install with Phase 3 Week 9.
+- **Cloudflare Stream MCP** (deferred) — ADR 0006 picked YouTube unlisted for the Phase-3 demo; CF Stream is the post-MVP target. Install when we execute the swap-back.
 - **Phaser scene skill** (proposed, via `skill-creator`) — scaffold new scenes with iso-math boilerplate.
 - `/review` (installed) — before any PR merge.
 - `/security-review` (installed) — **run before every merge that touches auth, RLS, tokens, API routes, or creator / member permissions.**

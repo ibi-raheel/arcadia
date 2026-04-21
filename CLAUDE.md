@@ -24,7 +24,7 @@ Locked via `/docs/mvp/tad.md` v1.1. Promote to an ADR in `/planning/decisions/` 
 - **Game engine:** Phaser 3 (3.88+), orthographic tilemaps with 2:1 iso-style sprites
 - **Multiplayer:** Colyseus 0.16.x on Railway (Redis-backed) — pinned per ADR 0005 (0.17 server incompatible with 0.16 client on seat-reservation shape)
 - **Backend / auth / DB / realtime:** Supabase (Postgres + RLS + Auth + Realtime + Storage)
-- **Video delivery:** Cloudflare Stream (signed playback URLs)
+- **Video delivery:** YouTube unlisted (MVP demo only — ADR 0006). CF Stream remains the post-MVP target; swap-back path documented in ADR 0006.
 - **UI:** Tailwind CSS 3+
 - **Language:** TypeScript 5+
 - **Map authoring:** Tiled Map Editor (`.tmj` format)
@@ -60,7 +60,9 @@ The MVP documents are the source of truth for scope, architecture, and sequencin
 | Write a feature spec | `/planning/specs` *(empty — Phase 2+)* | `planning/CONTEXT.md`, related architecture docs | GitHub MCP |
 | Write / update architecture doc | `/planning/architecture` | `planning/CONTEXT.md` | GitHub MCP; `pptx` if preparing a stakeholder deck |
 | Record a technical decision (ADR) | `/planning/decisions` | `planning/CONTEXT.md`, related ADRs | GitHub MCP |
-| Web client + API routes (Next.js — rendering, UI, auth, API) | `/apps/web` | `apps/CONTEXT.md`, `apps/web/.env.local.example` (for env-var setup) | Claude in Chrome MCP; Vercel MCP; Supabase MCP; GitHub MCP; `/review`; `/security-review`; Chrome DevTools + Playwright MCPs (proposed); Cloudflare Stream MCP (proposed — Phase 3) |
+| Web client + API routes (Next.js — rendering, UI, auth, API) | `/apps/web` | `apps/CONTEXT.md`, `apps/web/.env.local.example` (for env-var setup) | Claude in Chrome MCP; Vercel MCP; Supabase MCP; GitHub MCP; `/review`; `/security-review`; Chrome DevTools + Playwright MCPs (proposed) |
+| **Creator dashboard** (course builder, section/lesson CRUD, publish) | `/apps/web/app/dashboard` | `apps/web/app/dashboard/courses/[id]/actions.ts` (server actions), `validation.ts` (pure validators, Vitest-testable) | Supabase MCP (read-only); `/review` |
+| **Academy** (member course viewer) | `/apps/web/app/academy` *(Phase 3 Week 10 — empty until Step 11)* | `apps/web/app/academy/page.tsx` (currently the Phase-1 shell) | — |
 | **Phaser scene tweaks** (camera / sprites / layers / animations / input) | `/apps/web/components/game/scenes/<scene>` | that scene's `CLAUDE.md` + its `*.config.ts` files | Claude in Chrome MCP (visual verify) |
 | **Art ingestion** (avatars / tilesets / maps — crop, place, register) | `/apps/web/public` (art-workstation CLAUDE.md) | `apps/web/public/CLAUDE.md` (the workstation), `scripts/{crop,upscale}-*.mjs`, `scripts/generate-world-tmj.mjs` | — |
 | **Design the world map by hand in Tiled GUI** | Tiled desktop app, opening `apps/web/public/maps/world.tmj` | `docs/tiled-gui-quickstart.md` (step-by-step) | Tiled (external app) |
@@ -134,7 +136,7 @@ This is the plug-and-play layer. Tools are wired into the workspaces above — t
 ### MCPs — proposed (install as the stack comes online)
 
 - **Railway MCP** — Colyseus deploy status, logs, env vars. **Deferred** per ADR 0002 — no sufficiently mature community MCP as of 2026-04-18. Use Railway dashboard + CLI until then.
-- **Cloudflare Stream MCP** — video upload / transcode status / signed URL generation. Install alongside Phase 3 Week 9 when CF Stream comes online.
+- **Cloudflare Stream MCP** — video upload / transcode status / signed URL generation. **Deferred:** ADR 0006 picked YouTube unlisted for the Phase-3 demo; CF Stream swap-back is post-MVP. Install when we execute the swap.
 - **Playwright MCP** — scripted E2E tests once the client has real routes.
 - **Chrome DevTools MCP** — performance profiling (frame times, network) for rendering and realtime work.
 - **Sentry MCP** — error tracking in prod.
