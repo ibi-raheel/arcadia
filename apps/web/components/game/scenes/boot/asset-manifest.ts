@@ -55,6 +55,12 @@ export const BOOT_ASSETS = {
     key: 'tavern-interior',
     path: '/tavern-interior.png',
   },
+  // Phase 3.5: user-supplied academy interior. 1536×1024 image; AcademyScene
+  // renders it as a flat background and positions course podiums on top.
+  academyInterior: {
+    key: 'academy-interior',
+    path: '/academy-interior.png',
+  },
 } as const;
 
 export type BootAssetKey = keyof typeof BOOT_ASSETS;
