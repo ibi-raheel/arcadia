@@ -22,8 +22,8 @@ describe('tavernCameraConfig', () => {
     expect(tavernCameraConfig.fadeOutMs).toBeGreaterThan(0);
   });
 
-  it('bounds match the tavern interior image dimensions (1376×768)', () => {
-    expect(TAVERN_INTERIOR_SIZE).toEqual({ width: 1376, height: 768 });
+  it('bounds match the tavern interior image dimensions (1536×1024)', () => {
+    expect(TAVERN_INTERIOR_SIZE).toEqual({ width: 1536, height: 1024 });
     expect(tavernCameraConfig.bounds).toEqual({
       x: 0,
       y: 0,
