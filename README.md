@@ -8,11 +8,16 @@ Each community (**Realm**) gives members an avatar, a space to gather (**Tavern*
 
 ## Status
 
-🚀 MVP build — **Phase 4 shipped 2026-04-21**. Market catalogue + creator analytics live on top of the Phase 3 creator→member loop.
+🚀 MVP build — **Phase 5 core live 2026-04-21**. Gamification loop shipped on top of the Phase 3 / 4 creator + market flows.
 
-- **`/market`** — Phaser "market hall" with one stall per published course. Walk up, click, a **stall modal** opens over a blurred Phaser canvas. Previews play inline; enrol is one click and keeps you in the hall. Avatar position persists across reloads via localStorage.
-- **`/dashboard/courses/[id]/analytics`** — creator-only: enrolment count, completion rate, active-in-7d, recent-activity table. Service-role admin read, owner-verified.
-- **Phase 3 loop still intact** from 2026-04-20: `/dashboard`, course editor, YouTube unlisted video host (ADR 0006), `/academy` Phaser hall, YouTube IFrame Player with resume + 80% completion, `react-markdown` for written lessons with scroll-to-complete.
+- **Lesson completion awards +25 XP** via a Supabase trigger. Level auto-recomputes at 100 / 300 / 600 / 1000 XP thresholds (1–5).
+- **Level-up banner** — client subscribes to its own `memberships` row via Realtime; on any level-up, a gold portal overlay animates for 2 s on whichever Phaser scene is active.
+- **Peer badges update live** — the owning client sends `MSG.UPDATE_LEVEL` to its Colyseus room, `AvatarState.level` propagates to all peers in real time.
+- **Tavern leaderboard** now shows real XP values (previously zeroes).
+- **Phase 4 loop still intact** from 2026-04-21: `/market` Phaser hall + stall modal + enrol; `/dashboard/courses/[id]/analytics`.
+- **Phase 3 loop still intact** from 2026-04-20: `/dashboard`, course editor, YouTube unlisted video host (ADR 0006), `/academy` Phaser hall with YouTube IFrame Player + `react-markdown` lessons.
+
+Phase 5 polish pending: 60 FPS measurement, stall enrolment-count wiring, leaderboard display-name fallback, collider scaffold, building-entry art. See [`phases/phase-05_status.md`](phases/phase-05_status.md).
 
 - **Creator dashboard** (`/dashboard`, role-gated) — course list, two-pane editor, drag-reorder sections + lessons, Markdown editor with autosave, YouTube URL editor, publish toggle.
 - **Academy** (`/academy`) — **Phaser scene** mirroring the Tavern. Walk around a 1536×1024 interior, click a course podium to open the React course viewer.
