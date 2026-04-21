@@ -3,6 +3,7 @@
 
 export const SECTION_TITLE_MAX = 120;
 export const LESSON_TITLE_MAX = 120;
+export const LESSON_CONTENT_MAX = 50_000; // ~10k words of Markdown; plenty for a lesson.
 
 export function validateSectionTitle(
   raw: string,
@@ -24,6 +25,20 @@ export function validateLessonTitle(
     return { ok: false, error: `Lesson title must be ${LESSON_TITLE_MAX} characters or fewer.` };
   }
   return { ok: true, value: title };
+}
+
+export function validateLessonContent(
+  raw: string,
+): { ok: true; value: string } | { ok: false; error: string } {
+  // Content may legitimately be empty (new lesson). Only policy the upper
+  // bound; surrounding whitespace is preserved since Markdown cares.
+  if (raw.length > LESSON_CONTENT_MAX) {
+    return {
+      ok: false,
+      error: `Lesson content must be ${LESSON_CONTENT_MAX} characters or fewer.`,
+    };
+  }
+  return { ok: true, value: raw };
 }
 
 export function validateReorderIds(

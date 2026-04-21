@@ -32,9 +32,14 @@ export type SectionRow = {
 type Props = {
   readonly courseId: string;
   readonly initialSections: readonly SectionRow[];
+  readonly selectedLessonId?: string | null;
 };
 
-export function SectionTree({ courseId, initialSections }: Props): React.JSX.Element {
+export function SectionTree({
+  courseId,
+  initialSections,
+  selectedLessonId = null,
+}: Props): React.JSX.Element {
   const router = useRouter();
   const [sections, setSections] = useState<readonly SectionRow[]>(initialSections);
   const [pending, startTransition] = useTransition();
@@ -99,7 +104,13 @@ export function SectionTree({ courseId, initialSections }: Props): React.JSX.Ele
           <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
             <ol className={`space-y-2 ${pending ? 'opacity-70' : ''}`}>
               {sections.map((s) => (
-                <SortableSection key={s.id} section={s} courseId={courseId} onError={setError} />
+                <SortableSection
+                  key={s.id}
+                  section={s}
+                  courseId={courseId}
+                  onError={setError}
+                  selectedLessonId={selectedLessonId}
+                />
               ))}
             </ol>
           </SortableContext>
@@ -185,10 +196,12 @@ function SortableSection({
   section,
   courseId,
   onError,
+  selectedLessonId,
 }: {
   readonly section: SectionRow;
   readonly courseId: string;
   readonly onError: (message: string | null) => void;
+  readonly selectedLessonId: string | null;
 }): React.JSX.Element {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: section.id,
@@ -225,6 +238,7 @@ function SortableSection({
           sectionId={section.id}
           lessons={section.lessons}
           onError={onError}
+          selectedLessonId={selectedLessonId}
         />
       </div>
     </li>

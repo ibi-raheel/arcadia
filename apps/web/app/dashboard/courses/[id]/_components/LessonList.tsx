@@ -15,10 +15,10 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 
-import { createLesson, deleteLesson, renameLesson, reorderLessons } from '../actions';
+import { createLesson, deleteLesson, reorderLessons } from '../actions';
 import { LESSON_TITLE_MAX } from '../validation';
 
 export type LessonRow = {
@@ -32,9 +32,16 @@ type Props = {
   readonly sectionId: string;
   readonly lessons: readonly LessonRow[];
   readonly onError: (message: string | null) => void;
+  readonly selectedLessonId: string | null;
 };
 
-export function LessonList({ courseId, sectionId, lessons, onError }: Props): React.JSX.Element {
+export function LessonList({
+  courseId,
+  sectionId,
+  lessons,
+  onError,
+  selectedLessonId,
+}: Props): React.JSX.Element {
   const router = useRouter();
   const [items, setItems] = useState<readonly LessonRow[]>(lessons);
   const [, startTransition] = useTransition();
@@ -84,7 +91,13 @@ export function LessonList({ courseId, sectionId, lessons, onError }: Props): Re
           <SortableContext items={items.map((l) => l.id)} strategy={verticalListSortingStrategy}>
             <ul className="space-y-1">
               {items.map((l) => (
-                <SortableLesson key={l.id} lesson={l} courseId={courseId} onError={onError} />
+                <SortableLesson
+                  key={l.id}
+                  lesson={l}
+                  courseId={courseId}
+                  onError={onError}
+                  isSelected={l.id === selectedLessonId}
+                />
               ))}
             </ul>
           </SortableContext>
@@ -100,11 +113,15 @@ function SortableLesson({
   lesson,
   courseId,
   onError,
+  isSelected,
 }: {
   readonly lesson: LessonRow;
   readonly courseId: string;
   readonly onError: (message: string | null) => void;
+  readonly isSelected: boolean;
 }): React.JSX.Element {
+  const router = useRouter();
+  const pathname = usePathname();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: lesson.id,
   });
@@ -112,14 +129,35 @@ function SortableLesson({
     transform: CSS.Transform.toString(transform),
     transition,
   } as React.CSSProperties;
+  const [pending, startTransition] = useTransition();
+
+  const select = (): void => {
+    router.push(`${pathname}?lesson=${lesson.id}`, { scroll: false });
+  };
+
+  const remove = (): void => {
+    if (!window.confirm(`Delete lesson "${lesson.title}"?`)) return;
+    startTransition(async () => {
+      const result = await deleteLesson(courseId, lesson.id);
+      if (!result.ok) onError(result.error);
+      else {
+        onError(null);
+        // If the deleted lesson was selected, drop the query param.
+        if (isSelected) router.push(pathname, { scroll: false });
+        else router.refresh();
+      }
+    });
+  };
 
   return (
     <li
       ref={setNodeRef}
       style={style}
-      className={`rounded-md border border-slate-800 bg-slate-950/50 ${
-        isDragging ? 'opacity-40' : ''
-      }`}
+      className={`rounded-md border ${
+        isSelected
+          ? 'border-emerald-600 bg-slate-900'
+          : 'border-slate-800 bg-slate-950/50 hover:border-slate-700'
+      } ${isDragging ? 'opacity-40' : ''}`}
     >
       <div className="flex items-center gap-2 p-1.5 pl-2">
         <button
@@ -132,97 +170,26 @@ function SortableLesson({
           ⋮⋮
         </button>
         <span className="text-xs text-slate-500">{lesson.type === 'video' ? '▶' : '✎'}</span>
-        <LessonTitleEditor lesson={lesson} courseId={courseId} onError={onError} />
-      </div>
-    </li>
-  );
-}
-
-function LessonTitleEditor({
-  lesson,
-  courseId,
-  onError,
-}: {
-  readonly lesson: LessonRow;
-  readonly courseId: string;
-  readonly onError: (message: string | null) => void;
-}): React.JSX.Element {
-  const router = useRouter();
-  const [editing, setEditing] = useState(false);
-  const [title, setTitle] = useState(lesson.title);
-  const [pending, startTransition] = useTransition();
-
-  const commit = (): void => {
-    if (title.trim() === lesson.title) {
-      setEditing(false);
-      return;
-    }
-    startTransition(async () => {
-      const result = await renameLesson(courseId, lesson.id, title);
-      if (!result.ok) {
-        onError(result.error);
-        setTitle(lesson.title);
-      } else {
-        onError(null);
-        setEditing(false);
-        router.refresh();
-      }
-    });
-  };
-
-  const remove = (): void => {
-    if (!window.confirm(`Delete lesson "${lesson.title}"?`)) return;
-    startTransition(async () => {
-      const result = await deleteLesson(courseId, lesson.id);
-      if (!result.ok) onError(result.error);
-      else {
-        onError(null);
-        router.refresh();
-      }
-    });
-  };
-
-  return (
-    <div className="flex flex-1 items-center gap-1">
-      {editing ? (
-        <input
-          autoFocus
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value.slice(0, LESSON_TITLE_MAX))}
-          onBlur={commit}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              commit();
-            }
-            if (e.key === 'Escape') {
-              setTitle(lesson.title);
-              setEditing(false);
-            }
-          }}
-          disabled={pending}
-          className="flex-1 rounded border border-slate-700 bg-slate-950 px-1.5 py-0.5 text-xs text-slate-100 focus:border-emerald-500 focus:outline-none"
-        />
-      ) : (
         <button
           type="button"
-          onClick={() => setEditing(true)}
-          className="flex-1 truncate text-left text-xs text-slate-300 hover:text-white"
+          onClick={select}
+          className={`flex-1 truncate text-left text-xs ${
+            isSelected ? 'text-emerald-200' : 'text-slate-300 hover:text-white'
+          }`}
         >
           {lesson.title}
         </button>
-      )}
-      <button
-        type="button"
-        onClick={remove}
-        disabled={pending}
-        title="Delete lesson"
-        className="rounded px-1 py-0.5 text-[10px] text-slate-600 transition hover:bg-red-950/40 hover:text-red-300 disabled:opacity-30"
-      >
-        ✕
-      </button>
-    </div>
+        <button
+          type="button"
+          onClick={remove}
+          disabled={pending}
+          title="Delete lesson"
+          className="rounded px-1 py-0.5 text-[10px] text-slate-600 transition hover:bg-red-950/40 hover:text-red-300 disabled:opacity-30"
+        >
+          ✕
+        </button>
+      </div>
+    </li>
   );
 }
 
