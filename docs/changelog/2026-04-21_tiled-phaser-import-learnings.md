@@ -1,26 +1,25 @@
-# 2026-04-21 — Tiled → Phaser import pipeline: learnings
+# 2026-04-21 — Tiled → Phaser import: the working pattern
 
-Captured while iterating on throwaway preview branches (`world-preview-square`, `world-preview-v2`, `world-v3`) for the ADR-0007 world swap. These bit us; ADR 0007 now carries the canonical wiring.
+Captured after landing `world-v1-preview`, which renders `Arcadia world1.tmj` correctly: 50×50 orthogonal @ 64px, 96 embedded tilesets, mixed 128/256/512/1024 decor on object layers.
 
-## The five rules
+## The seven rules
 
-1. **Embed Tilesets when exporting.** Phaser rejects external `.tsx` refs. `scripts/import-tiled-world.mjs` inlines them as a fallback, but authoring with Embed Tilesets on is the canonical flow.
-2. **`load.image`, never `load.spritesheet`, for tilesets.** Spritesheet frames override the tileset's internal slicing → `createFromObjects` renders the whole PNG per object (Phaser #5403). `addTilesetImage` slices internally using `tilewidth` / `tileheight` from the TMJ.
-3. **`map.createFromObjects(layerName, { classType: Phaser.GameObjects.Sprite })` with no `frame` param.** Phaser resolves `gid → tileset → frame` via the `firstgid` ranges. If you're computing `gid - firstgid` by hand, you loaded a spritesheet by mistake.
-4. **Iterate tile layers by index.** Duplicate layer names are legal in Tiled — use `map.layers.forEach((_, idx) => map.createLayer(idx, tilesets, 0, 0))`.
-5. **`sprite.setDepth(sprite.y)` per object-layer sprite.** Pairs with the avatar's `depth = y + halfHeight` for y-sort.
+1. **Embed Tilesets on export.** Phaser rejects external `.tsx` refs.
+2. **`load.spritesheet` per tileset** with `frameWidth` / `frameHeight` from the TMJ `tilewidth` / `tileheight`. Registers one frame per tile.
+3. **Explicit frame picking:** `localTileIndex = gid - tileset.firstgid`, then `add.sprite(x, y, 'ts-<name>', localTileIndex)`. Don't use `createFromObjects` — fragile across multi-tileset maps.
+4. **Shift object y by `+ map.tileHeight`.** Tiled's tile-object y sits one grid row above where the sprite visually belongs.
+5. **`setOrigin(0, 1)`** (bottom-left), then `setDisplaySize(obj.width, obj.height)` per object sprite.
+6. **`setDepth(y)`** per object sprite for y-sort against the avatar.
+7. **Iterate tile layers by index**, not name — duplicate layer names are legal in Tiled.
 
-## Reference implementation
+Reference: `apps/web/app/world-v1/GameWorldV1.tsx` (commit `7d5b7ef`). Canonical wiring now lives in ADR 0007 under "Phaser wiring — the pattern that actually works".
 
-`apps/web/app/world-v3/GameWorldV3.tsx` (commit `8d95c0e`) — working throwaway scene that demonstrates all five rules.
+## Dead ends
 
-## What we tried that was wrong
-
-- Switching to `load.spritesheet` with `frameWidth` / `frameHeight` — broke `createFromObjects`.
-- Explicit frame picking via `add.sprite(x, y, key, gid - firstgid)` — works for single tiles but throws away Phaser's gid resolution, and the moment you have multiple tilesets the firstgid math gets fragile.
-- `tileoffset` hacks to paper over the oversized-tile anchor mismatch — Phaser team has flagged these as workarounds, not the path (see ADR 0007 §Context).
+- **`load.image` + `createFromObjects`** — the answer most online guides give. Rendered the whole sheet per object against multi-tileset maps.
+- **`tileoffset` hacks** to paper over the oversized-tile anchor mismatch — upstream flags these as workaround-not-path (see ADR 0007 §Context).
+- **Skipping the y-shift.** Every sprite floats one grid row too high without `+ map.tileHeight`.
 
 ## Downstream
 
-- ADR 0007 now carries the five rules under a "Phaser wiring gotchas" section.
-- When the world-swap lands on `/world`, wire via a shared helper — don't re-implement per scene.
+When the world swap lands on `/world`, wire via a shared helper (`spawnObjectLayer`) rather than re-implementing per scene.
