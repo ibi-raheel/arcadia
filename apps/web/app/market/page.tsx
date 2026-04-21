@@ -144,8 +144,10 @@ export default async function MarketPage({ searchParams }: Params): Promise<Reac
     };
   }
 
-  const initialCourseId =
-    searchParams?.course && stallDetails[searchParams.course] ? searchParams.course : null;
+  // Client GameMarket derives the selected stall from ?course= on its
+  // own — we just need to guard against nonexistent ids the server
+  // would otherwise try to pass through. No `initialCourseId` prop.
+  void searchParams?.course;
 
   if (stalls.length === 0) {
     return (
@@ -164,12 +166,5 @@ export default async function MarketPage({ searchParams }: Params): Promise<Reac
     );
   }
 
-  return (
-    <GameMarket
-      member={member}
-      stalls={stalls}
-      stallDetails={stallDetails}
-      initialCourseId={initialCourseId}
-    />
-  );
+  return <GameMarket member={member} stalls={stalls} stallDetails={stallDetails} />;
 }
