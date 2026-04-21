@@ -1,7 +1,8 @@
 // Phase 4 market mount. Mirrors GameAcademy's single-player shape +
-// adds a React HUD (search / sort) on top of the Phaser canvas and a
-// full-screen StallView modal that opens when the scene emits
-// MARKET_OPEN_STALL_EVENT. URL carries ?course=<id> for shareability.
+// adds a React HUD (search) on top of the Phaser canvas and a full-screen
+// StallView modal that opens when the scene emits MARKET_OPEN_STALL_EVENT.
+// URL carries ?course=<id>; the URL is the sole source of truth for
+// which stall (if any) is open — avoids state/URL races.
 
 'use client';
 
@@ -33,24 +34,26 @@ type Props = {
   readonly member: SceneMember;
   readonly stalls: readonly MarketStall[];
   readonly stallDetails: Readonly<Record<string, StallData>>;
-  readonly initialCourseId: string | null;
 };
 
-export default function GameMarket({
-  member,
-  stalls,
-  stallDetails,
-  initialCourseId,
-}: Props): React.JSX.Element {
+export default function GameMarket({ member, stalls, stallDetails }: Props): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const [preloadProgress, setPreloadProgress] = useState<number | null>(null);
   const [search, setSearch] = useState('');
-  const [openCourseId, setOpenCourseId] = useState<string | null>(initialCourseId);
 
-  // Phaser lifecycle.
+  // URL is the single source of truth for the open stall id.
+  const openCourseId = searchParams.get('course');
+
+  // Keep a ref to router so the Phaser lifecycle effect (mounted once)
+  // can call the latest router.replace on stall-click events.
+  const routerRef = useRef(router);
+  useEffect(() => {
+    routerRef.current = router;
+  }, [router]);
+
   useEffect(() => {
     if (!containerRef.current || gameRef.current) return;
 
@@ -76,7 +79,8 @@ export default function GameMarket({
     });
 
     const handleOpenStall = (courseId: string): void => {
-      setOpenCourseId(courseId);
+      // Navigate only — the URL flips the modal open via `openCourseId`.
+      routerRef.current.replace(`/market?course=${courseId}`, { scroll: false });
     };
     game.events.on(MARKET_OPEN_STALL_EVENT, handleOpenStall);
 
@@ -101,33 +105,14 @@ export default function GameMarket({
     g.events.emit(MARKET_FILTER_EVENT, search);
   }, [search]);
 
-  // URL ?course=<id> is the canonical source of truth for modal state.
-  // Keep it in sync with openCourseId both ways.
-  useEffect(() => {
-    const paramId = searchParams.get('course');
-    if (paramId !== openCourseId) setOpenCourseId(paramId);
-  }, [searchParams, openCourseId]);
-
-  const updateCourseParam = useCallback(
-    (next: string | null) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (next) params.set('course', next);
-      else params.delete('course');
-      const qs = params.toString();
-      router.replace(qs ? `/market?${qs}` : '/market', { scroll: false });
-    },
-    [router, searchParams],
-  );
-
-  const openStall = (courseId: string): void => {
-    setOpenCourseId(courseId);
-    updateCourseParam(courseId);
-  };
-
   const closeStall = useCallback(() => {
-    setOpenCourseId(null);
-    updateCourseParam(null);
-  }, [updateCourseParam]);
+    // Drop ?course= — the derived `openCourseId` then flips null and
+    // the modal unmounts.
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('course');
+    const qs = params.toString();
+    router.replace(qs ? `/market?${qs}` : '/market', { scroll: false });
+  }, [router, searchParams]);
 
   const handleReturnToWorld = (): void => router.push('/world?from=market');
 
@@ -157,43 +142,8 @@ export default function GameMarket({
           className="w-56 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
         />
       </div>
-      {activeStall && (
-        <StallView
-          stall={activeStall}
-          onClose={closeStall}
-          /* Close-handler also drops ?course= */
-        />
-      )}
-      {/* Passing the scene-click handler up is unnecessary — the game's
-          event listener above already drives openStall via setOpenCourseId.
-          But we need to trigger updateCourseParam when the scene opens it. */}
-      <StallParamSync openCourseId={openCourseId} onChange={openStall} />
+      {activeStall && <StallView stall={activeStall} onClose={closeStall} />}
       <BuildingTransition building="market" ready={ready} />
     </div>
   );
-}
-
-/**
- * Tiny helper that calls `onChange` whenever the scene emits an open-stall
- * event (piped through `openCourseId` state) so the URL param stays in sync.
- * Rendered as a child of GameMarket so it can run a useEffect keyed on
- * openCourseId without re-triggering the main lifecycle effect.
- */
-function StallParamSync({
-  openCourseId,
-  onChange,
-}: {
-  readonly openCourseId: string | null;
-  readonly onChange: (courseId: string) => void;
-}): null {
-  const lastSeenRef = useRef<string | null>(openCourseId);
-  useEffect(() => {
-    if (openCourseId !== lastSeenRef.current && openCourseId != null) {
-      lastSeenRef.current = openCourseId;
-      onChange(openCourseId);
-    } else {
-      lastSeenRef.current = openCourseId;
-    }
-  }, [openCourseId, onChange]);
-  return null;
 }
