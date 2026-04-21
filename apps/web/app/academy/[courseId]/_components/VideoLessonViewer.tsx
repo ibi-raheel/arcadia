@@ -71,9 +71,12 @@ export type VideoLessonInitial = {
 
 type Props = {
   readonly initial: VideoLessonInitial;
+  /** Preview mode (Market stall view): skip progress tracking + duration
+   *  capture + completion side-effects. Player still resumes at startSec. */
+  readonly previewOnly?: boolean;
 };
 
-export function VideoLessonViewer({ initial }: Props): React.JSX.Element {
+export function VideoLessonViewer({ initial, previewOnly = false }: Props): React.JSX.Element {
   const router = useRouter();
   const hostRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayer | null>(null);
@@ -88,6 +91,7 @@ export function VideoLessonViewer({ initial }: Props): React.JSX.Element {
 
     const sendProgress = async (watched: number): Promise<void> => {
       lastWatchedRef.current = watched;
+      if (previewOnly) return;
       const result = await upsertLessonProgress(initial.lessonId, watched, durationRef.current);
       if (!result.ok) {
         setError(result.error);
@@ -108,6 +112,7 @@ export function VideoLessonViewer({ initial }: Props): React.JSX.Element {
     };
 
     const forceComplete = async (): Promise<void> => {
+      if (previewOnly) return;
       if (markedCompleteRef.current) return;
       markedCompleteRef.current = true;
       // markLessonCompleted is duration-independent; used when the video
@@ -162,7 +167,9 @@ export function VideoLessonViewer({ initial }: Props): React.JSX.Element {
             // Without this, the 80% threshold can't be evaluated during
             // playback, so completion would never fire from the polling
             // path. STATE_ENDED's forceComplete() is the safety net.
-            if (durationRef.current === null) {
+            // Skipped in previewOnly mode — no server-side writes from
+            // Market stall previews.
+            if (!previewOnly && durationRef.current === null) {
               const reported = Math.round(event.target.getDuration());
               if (reported > 0) {
                 durationRef.current = reported;
@@ -195,6 +202,7 @@ export function VideoLessonViewer({ initial }: Props): React.JSX.Element {
     // can't use sendBeacon easily here (Next Server Actions expect RSC
     // POSTs), so fall through to a synchronous fire-and-forget.
     const handleBeforeUnload = (): void => {
+      if (previewOnly) return;
       const lastWatched = lastWatchedRef.current;
       void flushLessonProgress(
         initial.lessonId,

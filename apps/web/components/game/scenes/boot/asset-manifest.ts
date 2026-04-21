@@ -61,6 +61,12 @@ export const BOOT_ASSETS = {
     key: 'academy-interior',
     path: '/academy-interior.png',
   },
+  // Phase 4: user-supplied market interior. 1536×1024 image; MarketScene
+  // renders it and positions course "stalls" on top.
+  marketInterior: {
+    key: 'market-interior',
+    path: '/market-interior.png',
+  },
 } as const;
 
 export type BootAssetKey = keyof typeof BOOT_ASSETS;

@@ -13,12 +13,16 @@ type Props = {
   readonly lessonId: string;
   readonly content: string;
   readonly initiallyCompleted: boolean;
+  /** Preview mode (Market stall view): render content but never record
+   *  completion / scroll-hit state server-side. */
+  readonly previewOnly?: boolean;
 };
 
 export function WrittenLessonViewer({
   lessonId,
   content,
   initiallyCompleted,
+  previewOnly = false,
 }: Props): React.JSX.Element {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [completed, setCompleted] = useState(initiallyCompleted);
@@ -33,7 +37,9 @@ export function WrittenLessonViewer({
 
   // Intersection observer on a sentinel placed at the end of the
   // content — fires once when the reader has scrolled to >= 90%.
+  // Skipped in previewOnly mode.
   useEffect(() => {
+    if (previewOnly) return;
     if (markedRef.current) return;
     const el = sentinelRef.current;
     if (!el) return;
@@ -60,7 +66,7 @@ export function WrittenLessonViewer({
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [lessonId]);
+  }, [lessonId, previewOnly]);
 
   return (
     <div>
