@@ -371,6 +371,99 @@ const env = loadTestEnvOrSkip();
     });
   });
 
+  describe('Phase 3 — creator ownership + enrolment gating (migration 20260421000001)', () => {
+    // Separate seed so these tests don't collide with the general-leakage
+    // setup: a course *owned* by userA (creator_id = userA.id), unpublished,
+    // with one non-preview lesson. Plus userD in mvp-realm with zero
+    // enrolments — used to assert non-enrolled access to courseA is blocked.
+    let ownedCourseAId: string;
+    let ownedLessonAId: string;
+    let userD: TestUser;
+
+    beforeAll(async () => {
+      userD = await createTestUser(admin, `leakage-d-${suffix}@arcadia.test`, testPassword);
+
+      const owned = await admin
+        .from('courses')
+        .insert({
+          realm_id: mvpRealmId,
+          creator_id: userA.id,
+          title: `Owned Course A ${suffix}`,
+          description: 'userA draft',
+          published: false,
+        })
+        .select('id')
+        .single();
+      if (owned.error || !owned.data) throw new Error(`seed owned course: ${owned.error?.message}`);
+      ownedCourseAId = owned.data.id;
+
+      const section = await admin
+        .from('sections')
+        .insert({ course_id: ownedCourseAId, title: 'Owned S1', sort_order: 0 })
+        .select('id')
+        .single();
+
+      const lesson = await admin
+        .from('lessons')
+        .insert({
+          course_id: ownedCourseAId,
+          section_id: section.data!.id,
+          title: 'Owned L1',
+          type: 'written',
+          content: 'draft content',
+          sort_order: 0,
+          is_preview: false,
+        })
+        .select('id')
+        .single();
+      ownedLessonAId = lesson.data!.id;
+    });
+
+    afterAll(async () => {
+      if (userD) await deleteTestUser(admin, userD.id);
+      // Course + child rows get cleaned up by ON DELETE CASCADE on realm
+      // delete in the outer afterAll; ownedCourse is in mvp-realm which
+      // isn't dropped. Delete the owned course explicitly.
+      if (ownedCourseAId) await admin.from('courses').delete().eq('id', ownedCourseAId);
+    });
+
+    it('non-enrolled member in mvp-realm cannot SELECT a non-preview lesson (content gate)', async () => {
+      // userD is in mvp-realm but has no enrolments in courseA.
+      // lesson_access RLS: is_preview OR enrolled OR creator_owns_course.
+      // None of those hold for userD vs lessonA → invisible.
+      const client = await userAnonClient(env!, userD);
+      const { data, error } = await client.from('lessons').select('id, title').eq('id', lessonAId);
+      expect(error).toBeNull();
+      expect(data ?? []).toHaveLength(0);
+    });
+
+    it('creator CAN SELECT their own unpublished course (no enrolment required)', async () => {
+      // course_member_read policy: (published AND realm) OR creator_id = auth.uid().
+      // ownedCourseA is unpublished; only the creator clause keeps it visible.
+      const client = await userAnonClient(env!, userA);
+      const { data, error } = await client
+        .from('courses')
+        .select('id, title, published')
+        .eq('id', ownedCourseAId);
+      expect(error).toBeNull();
+      expect(data ?? []).toHaveLength(1);
+      expect(data![0]!.published).toBe(false);
+    });
+
+    it('creator CAN SELECT non-preview lessons of their own course without an enrolment row', async () => {
+      // userA has no enrolments row for ownedCourseA (it's their draft).
+      // lesson_access clause 3 (course belongs to caller) must hold.
+      const client = await userAnonClient(env!, userA);
+      const { data, error } = await client
+        .from('lessons')
+        .select('id, title, content')
+        .eq('id', ownedLessonAId);
+      expect(error).toBeNull();
+      expect(data ?? []).toHaveLength(1);
+      expect(data![0]!.title).toBe('Owned L1');
+    });
+  });
+
   describe('same-realm legitimate access still works', () => {
     it('userA CAN SELECT userB membership (same-realm, leaderboard path)', async () => {
       const client = await userAnonClient(env!, userA);
