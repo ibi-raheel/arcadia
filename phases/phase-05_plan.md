@@ -21,7 +21,7 @@ Out of scope: tavern-message XP (TAD §8.2 has +5 per message with a rate-limit 
 | G | **Level-up banner UI** | A 2-second fullscreen overlay (gold gradient ribbon across the centre, new level + XP required for next bracket). Plain React component mounted via a `LevelUpBanner` portal triggered by `eventBus`. Not a Phaser animation — React overlay is cheaper + looks consistent across all four scenes. | Banner crosses scene boundaries (level-up can fire during `/world` or while reading a course) so a React portal is the single implementation that works everywhere. |
 | H | **Peer level-badge update** | The `AvatarState.level` field already drives the remote-avatar badge in World + Tavern. `applyUpdateLevel` in `realm-handlers.ts` mutates it; the schema broadcast propagates to all peers; remote-avatar visuals re-read and call `setVisualsLevel`. | Zero new client work — Phase 2 already implements the rendering path. Phase-5 just confirms it fires end-to-end. |
 | I | **Leaderboard re-activation** | The Tavern's `LeaderboardPanel` already subscribes to `memberships` updates + orders by `xp DESC LIMIT 10`. Values were 0 because no XP had ever been awarded. Once the trigger is live, the panel is automatically correct — no code change. | Covered by Phase 2's work; Phase 5 exit-criteria verification is the only thing left. |
-| J | **Migration bundle** | Single migration `20260422000002_phase5_gamification.sql`: `calculate_level`, `award_xp`, `on_lesson_complete`, `trg_lesson_complete`. No schema changes — all PL/pgSQL. Safe to apply alongside the code rollout. | One cohesive SQL surface; easy to revert (drop trigger + 3 functions) if anything goes sideways. |
+| J | **Migration bundle** | Single migration `20260422000002_phase5_gamification.sql`: `calculate_level`, `award_xp`, `on_lesson_complete`, `trg_lesson_complete`, **plus** `get_enrolment_count(course_id)` SECURITY DEFINER from polish Step 13. No schema changes — all PL/pgSQL. **Apply to `arcadia-test` only for local smoke; prod migration deferred per user decision 2026-04-21.** | One cohesive SQL surface; easy to revert (drop trigger + 4 functions). Prod hold protects the live creator loop from any trigger-misfire surprises until local verification passes. |
 | K | **Pure helper tests** | `calculate_level` JS mirror in `packages/shared/src/schemas/` (already has `MIN_LEVEL=1, MAX_LEVEL=5`): add a tiny `xp-thresholds.ts` + tests asserting 1/2/3/4/5 at the boundary XP values. Keeps client-side code from drifting if someone displays "X XP until next level" later. | Pure + testable; mirrors the server function without duplicating its authority (DB trigger still writes the level). |
 | L | **RLS test additions** | One new case in `rls-cross-member-leakage.test.ts`: another member setting `completed=true` on their own `lesson_progress` must not award XP to me (already implicit in the trigger, but the test pins it). | Matches the Phase-3 test density; two-line test. |
 | M | **Perf pass** | 60 FPS measurement in Chrome DevTools Performance panel against `/world`, `/tavern`, `/academy`, `/market` with the real 2025-04 art loaded. Record in the Phase-5 status entry. No code changes unless we dip under 58 FPS sustained. | Phase-plan §Phase 5 exit criteria explicitly calls for it. |
@@ -59,6 +59,22 @@ Out of scope: tavern-message XP (TAD §8.2 has +5 per message with a rate-limit 
 
 ---
 
+### Bundled polish steps (approved 2026-04-21)
+
+Five items pulled from `phases/phase-02_polish_backlog.md` and Phase-4 punts. All sized to 30 min – 2 hours.
+
+13. **Stall enrolment-count RPC.** The Market currently shows "0 enrolled" on every stall because `enrolment_self_read` RLS hides other members' rows. Add `get_enrolment_count(course_id uuid)` SECURITY DEFINER function returning an integer (published-course guard inside the body). Call it per-course in `app/market/page.tsx`'s server fetch and stop passing zeros to `MARKET_STALLS_REGISTRY_KEY`. Same migration as Phase-5 gamification (same `.sql` file; keeps the polish bundle coherent).
+
+14. **Leaderboard display-name fallback.** `LeaderboardPanel` currently renders `memberships.display_name` directly — null rows show as empty strings. Add a small fallback chain in the panel: `display_name → AVATAR_NAMES[avatar_id] → "Player"`. Pure client-side change; no schema work. Ship with Phase-5 since XP finally populates the leaderboard.
+
+15. **Interior colliders scaffold.** Add a `colliders: readonly PixelRect[]` entry to each image-backed scene's `layers.config.ts` (Tavern, Academy, Market). `scenes/shared/colliders.ts` helper builds a `StaticGroup` from the config + wires `scene.physics.add.collider(localAvatar, group)` in one line. Ship with empty arrays as defaults — avatar still walks over everything until user supplies rects. User fills in per scene via a follow-up commit when ready (separate JSON coords would be a nice pairing but is optional). Unit test the helper against a synthetic rect list.
+
+16. **Building-entry art triage.** Quick pass on `/world`: confirm the Tavern + Market building-entry tiles still use Phase-1 invisible placeholders, flag which ones block the demo visually. If any are jarring enough that a demo viewer would notice, drop a single decor-layer gid over each (temporary placeholder, not final art). User decides per building.
+
+17. **Reactions UI re-add (conditional).** Backend `toggle_reaction` RPC + RLS tests have been live since Phase 2; only the `ReactionPicker.tsx` UI was removed. If time permits in the Phase-5 window, cherry-pick commit `44c577a` from branch `phase-02-chat-polish-v2` back onto main and re-wire it into the current speech-bubble chat. **Skip entirely** if the Phase-5 loop work runs long; the reaction backend can wait indefinitely.
+
+---
+
 ### Test criteria (Phase 5 exit)
 
 1. **XP awarded.** Member marks lesson complete → `memberships.xp += 25` + `level` recomputed in DB. Admin query confirms.
@@ -68,6 +84,7 @@ Out of scope: tavern-message XP (TAD §8.2 has +5 per message with a rate-limit 
 5. **60 FPS.** Every scene holds ≥58 FPS median on the reference machine.
 6. **CI green.** Typecheck + lint + tests across all three workspaces. RLS suite runnable when `TEST_SUPABASE_*` env is set.
 7. **No regressions.** All prior smoke tests (Phase 3 creator flow, Phase 4 market flow) still work end-to-end.
+8. **Bundled polish exit.** Stall enrolment counts render a non-zero number when any member is enrolled; leaderboard shows "Player" (or avatar-canonical name) for members with no `display_name` set instead of an empty row; each image-backed scene has a `colliders: []` entry in its config (populated later by user-supplied coords without code changes).
 
 ---
 
@@ -84,8 +101,10 @@ Out of scope: tavern-message XP (TAD §8.2 has +5 per message with a rate-limit 
 
 ### What I need from you before starting
 
-1. Approve or override decisions **A–M**. Default is "approved as recommended" since they're all TAD-direct.
-2. Confirm the migration-timing question: land the gamification migration alongside the first hook/banner deploy (default, my rec), or hold it until after the banner demos locally against arcadia-test?
-3. Anything else you want bundled into Phase 5 (e.g. polish items from `phase-02_polish_backlog.md`) — say "bundle backlog" and I'll pull in tavern/academy colliders + leaderboard display-name fallback + building-entry art tracking. Default: no bundle, Phase 5 stays focused.
+**All approved 2026-04-21:**
 
-Once A–M + those two are confirmed, Step 1 kicks off.
+- Decisions A–M locked as recommended.
+- **Migration timing: local first.** Apply `20260422000002_phase5_gamification.sql` to `arcadia-test` only for the duration of Step 1 → Step 10. Prod migration happens after the banner demos locally (or on a Vercel preview pointed at arcadia-test, whichever we do). **Nothing Phase-5 hits prod until the local smoke is green.**
+- **Bundle polish backlog.** Phase-5 expands from 12 steps to 17, adding: stall enrolment-count RPC, leaderboard display-name fallback, tavern+academy+market colliders scaffold, and academy-art punt triage. See the bundled-polish steps below.
+
+Step 1 kicks off immediately.
