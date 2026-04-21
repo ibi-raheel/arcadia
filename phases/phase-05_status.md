@@ -2,6 +2,62 @@
 
 Source plan: `phase-05_plan.md`. Entries chronological, newest on top.
 
+## 2026-04-21 — Phase 5 EXIT (engineering complete)
+
+**15 of 17 steps shipped.** Core gamification loop live on prod + bundled-polish items landed. Steps 11–12 are manual QA pending user pass; Steps 16–17 are explicit punts to the polish backlog.
+
+### Shipped in this close-out pass (Steps 13 / 14 / 15)
+
+- **Step 13 — `get_enrolment_count` wired into `/market`.** The SECURITY DEFINER RPC was already live from the Phase-5 migration (backend done in Step 1); the server component was still seeding 0 on every stall. Now calls the RPC in parallel for all visible courses; stall cards + modal both surface a real "N enrolled" number. Commit `2157ece`.
+- **Step 14 — Leaderboard display-name fallback.** `memberships.display_name` is now `string | null` on the wire; `LeaderboardPanel` pulls `avatar_id` alongside and renders via `resolveDisplayName()`: real display name → `AVATAR_NAMES[avatar_id]` → `"Player"`. No empty rows. Realtime UPDATE payloads carry the full row so the subscription-side merge path works unchanged. Commit `598dfdf`.
+- **Step 15 — Image-backed scene collider scaffold.** `scenes/shared/colliders.ts` exposes `spawnColliders(scene, rects)` that builds a StaticGroup from a `PixelRect[]` config. Each image-backed scene (Tavern / Academy / Market) has a `colliders: []` entry + a no-op wire in `create()`. Ships empty — avatar still walks over everything until user drops rectangles into the exported `*_COLLIDERS` arrays. Activates with zero code change. Commit `598dfdf`.
+
+### Deferred to polish backlog
+
+- **Step 11 — 60 FPS measurement.** Manual DevTools Performance recording per Phaser scene on a mid-range laptop. Not a blocker; can run whenever. Entry point: Chrome DevTools → Performance → record 10 s of `/world` movement → check average FPS ≥ 58.
+- **Step 12 — Demo-cut walkthrough.** End-to-end rehearsal on prod. Run when preparing for the actual demo recording.
+- **Step 16 — Building-entry art on `/world`.** Tavern + Market entrance tiles still Phase-1 invisible overlap zones. Academy sprite already placed in Phase 2. Separate item in `phases/phase-02_polish_backlog.md`.
+- **Step 17 — Reactions UI re-add.** Backend `toggle_reaction` RPC + RLS suite still intact; `ReactionPicker.tsx` retrievable from branch `phase-02-chat-polish-v2` commit `44c577a`. Deferred per "conditional" framing in the plan.
+
+### Migration state
+
+All five Phase-3-through-5 migrations applied to both `arcadia-test` and `arcadia` (prod):
+
+| Migration | Scope |
+|---|---|
+| `20260421000001_phase3_courses_lessons_progress` | `courses.creator_id`, `lessons.youtube_video_id` / `duration_sec`, creator-scoped RLS, enrolment insert policies |
+| `20260421000002_phase3_storage_course_thumbnails` | `course-thumbnails` Storage bucket |
+| `20260421000003_phase3_membership_roles` | `memberships.role`, `user_has_creator_role()` helper |
+| `20260421000004_phase3_set_lesson_duration` | Viewer-writable duration RPC |
+| `20260422000001_phase4_market_indexes` | Market-grid + completed-progress indexes |
+| `20260422000002_phase5_gamification` | `calculate_level`, `award_xp`, `on_lesson_complete` trigger, `get_enrolment_count` |
+
+### Phase 5 exit criteria
+
+| Criterion | Status |
+|---|---|
+| Lesson completion → +25 XP awarded via trigger | ✅ verified 2026-04-21 smoke |
+| Level auto-recomputes at TAD thresholds | ✅ `calculate_level()` verified |
+| Banner animates on level-up | ✅ user-confirmed smoke |
+| Peer level badge updates live via `UPDATE_LEVEL` | ✅ Colyseus path covered, Phase 2 test suite + manual verification |
+| Tavern leaderboard renders non-zero XP | ✅ user-confirmed smoke |
+| Stall enrolment count reflects reality | ✅ (post Step 13 wire) |
+| Leaderboard handles missing display_name gracefully | ✅ (post Step 14 fallback) |
+| Colliders activate from config without code change | ✅ (post Step 15 scaffold, arrays ship empty) |
+| CI green | ✅ typecheck / lint / 152 tests across all three workspaces |
+| No regressions in Phases 3 / 4 | ✅ |
+
+### Ready for MVP launch prep
+
+Phase 5 was the last planned phase in `/docs/mvp/phase-plan.md`. MVP is now feature-complete on paper. Realistic next things worth considering (not a phase, just a backlog):
+
+- **Step 11 + Step 12** — run them when preparing the actual demo.
+- **World swap** — orthogonal top-down with object layers for oversized decor (ADR 0007). Parked behind "Tiled re-author" on the user side.
+- **Backlog from `phases/phase-02_polish_backlog.md`** — tavern/market building-entry art, Tavern colliders (need user-supplied rects), Academy multiplayer, reactions UI.
+- **Production-readiness** — monitoring, backups, SLA docs, rate-limit hardening. Phase 6+ if we ever formalise.
+
+---
+
 ## 2026-04-21 — Gamification core live on prod (Steps 1–10)
 
 **Lesson completion → XP → level-up → peer level badge loop working end-to-end on `arcadia-web-swart.vercel.app`.** Migration landed on arcadia-test first (per decision), smoked locally, then promoted to prod. User ran the full creator → member → level-up smoke on prod and confirmed:
