@@ -8,26 +8,26 @@ Each community (**Realm**) gives members an avatar, a space to gather (**Tavern*
 
 ## Status
 
-🚀 MVP build — **Phase 5 core live 2026-04-21**. Gamification loop shipped on top of the Phase 3 / 4 creator + market flows.
+🚀 **MVP feature-complete 2026-04-21.** All five phases in `/docs/mvp/phase-plan.md` shipped and verified on prod. 15 of 17 Phase-5 steps landed in code; the two remaining (60 FPS measurement + demo-cut rehearsal) are manual QA that runs before the actual demo recording.
 
-- **Lesson completion awards +25 XP** via a Supabase trigger. Level auto-recomputes at 100 / 300 / 600 / 1000 XP thresholds (1–5).
-- **Level-up banner** — client subscribes to its own `memberships` row via Realtime; on any level-up, a gold portal overlay animates for 2 s on whichever Phaser scene is active.
-- **Peer badges update live** — the owning client sends `MSG.UPDATE_LEVEL` to its Colyseus room, `AvatarState.level` propagates to all peers in real time.
-- **Tavern leaderboard** now shows real XP values (previously zeroes).
-- **Phase 4 loop still intact** from 2026-04-21: `/market` Phaser hall + stall modal + enrol; `/dashboard/courses/[id]/analytics`.
-- **Phase 3 loop still intact** from 2026-04-20: `/dashboard`, course editor, YouTube unlisted video host (ADR 0006), `/academy` Phaser hall with YouTube IFrame Player + `react-markdown` lessons.
+**What's live at `arcadia-web-swart.vercel.app`:**
 
-Phase 5 polish pending: 60 FPS measurement, stall enrolment-count wiring, leaderboard display-name fallback, collider scaffold, building-entry art. See [`phases/phase-05_status.md`](phases/phase-05_status.md).
+- **`/`** — role-aware hub (World / Market / Dashboard).
+- **`/world`** — Phaser iso world, Colyseus multiplayer, building entrances.
+- **`/tavern`** — image-backed bar, Tab-to-chat with speech bubbles, live XP leaderboard.
+- **`/academy`** — Phaser course hall with walkable podiums.
+- **`/academy/[courseId]`** — YouTube IFrame Player (resume + 80% completion) + `react-markdown` lessons (scroll-to-complete).
+- **`/market`** — Phaser stall hall with search HUD; click a stall → modal with blurred backdrop, inline previews, one-click enrol, real enrolment counts.
+- **`/dashboard`** — creator list (role-gated).
+- **`/dashboard/courses/[id]`** — two-pane editor (drag-reorder, Markdown + YouTube editors, publish toggle, Analytics pill).
+- **`/dashboard/courses/[id]/analytics`** — enrolment count, completion rate, active-in-7d, recent activity.
+- **Gamification** — lesson completion → +25 XP via DB trigger → level recomputes → banner animates → peer badges sync via Colyseus `UPDATE_LEVEL`.
 
-- **Creator dashboard** (`/dashboard`, role-gated) — course list, two-pane editor, drag-reorder sections + lessons, Markdown editor with autosave, YouTube URL editor, publish toggle.
-- **Academy** (`/academy`) — **Phaser scene** mirroring the Tavern. Walk around a 1536×1024 interior, click a course podium to open the React course viewer.
-- **Course viewer** (`/academy/[courseId]`) — YouTube IFrame Player (resume + 80%-watched completion), react-markdown for written lessons (90%-scroll completion), course progress bar.
-- **Video host:** YouTube unlisted, demo-only per ADR 0006. Swap to a real host required before paying creators.
-- **Tavern + Academy** share new user-supplied 1536×1024 interior art; avatar downscaled to 90×90, camera zoomed to 1.365×.
+**Video host is YouTube unlisted** (ADR 0006, demo-only scope — swap to a real host required before paying creators).
 
-**Earlier phases.** Phase 2 (shipped 2026-04-19): `/world` multiplayer (cyberpunk iso map, Colyseus 0.16 on Railway, remote avatars with linear interpolation) and `/tavern` (image-backed bar, Tab-to-chat with speech bubbles, XP-leaderboard sidebar, RPC-gated reactions backend).
+**Beyond the MVP plan:** world swap to orthogonal top-down (ADR 0007, user-side Tiled re-author parked), collider rect coords, 60 FPS / demo-cut passes, production hardening. All tracked in [`phases/phase-02_polish_backlog.md`](phases/phase-02_polish_backlog.md) + [`phases/phase-05_status.md`](phases/phase-05_status.md).
 
-Next up: **Phase 4** — `/market` (course catalogue), creator analytics dashboard. See [`phases/phase-03_status.md`](phases/phase-03_status.md) for the Phase 3 log, [`docs/changelog/2026-04-20_phase-03-exit.md`](docs/changelog/2026-04-20_phase-03-exit.md) for the shipped summary, [`docs/guides/phase-03-setup.md`](docs/guides/phase-03-setup.md) for the creator-flow setup walkthrough, and [`docs/claude-scoping.md`](docs/claude-scoping.md) for where to `cd` when opening Claude.
+**Phase exit logs:** [Phase 3](docs/changelog/2026-04-20_phase-03-exit.md) · [Phase 4](docs/changelog/2026-04-21_phase-04-exit.md) · [Phase 5](docs/changelog/2026-04-21_phase-05-exit.md). Creator-flow setup walkthrough in [`docs/guides/phase-03-setup.md`](docs/guides/phase-03-setup.md); workspace scoping cheat sheet in [`docs/claude-scoping.md`](docs/claude-scoping.md).
 
 ### Live services
 
