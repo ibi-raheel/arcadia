@@ -18,12 +18,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 
-import {
-  createLesson,
-  deleteLesson,
-  renameLesson,
-  reorderLessons,
-} from '../actions';
+import { createLesson, deleteLesson, renameLesson, reorderLessons } from '../actions';
 import { LESSON_TITLE_MAX } from '../validation';
 
 export type LessonRow = {
@@ -51,9 +46,7 @@ export function LessonList({ courseId, sectionId, lessons, onError }: Props): Re
     setItems(lessons);
   }, [lessons]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-  );
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const handleDragEnd = (event: DragEndEvent): void => {
     const { active, over } = event;

@@ -61,9 +61,7 @@ export default async function Home(): Promise<React.JSX.Element> {
           href="/world"
           className="group rounded-xl border border-slate-800 bg-slate-900 p-6 text-left transition hover:border-emerald-500 hover:bg-slate-800/60"
         >
-          <div className="text-xs font-medium uppercase tracking-wide text-emerald-400">
-            Play
-          </div>
+          <div className="text-xs font-medium uppercase tracking-wide text-emerald-400">Play</div>
           <div className="mt-1 text-lg font-semibold text-slate-100">Enter the World</div>
           <p className="mt-1 text-sm text-slate-400">
             Walk around, chat in the Tavern, meet other members.
@@ -75,13 +73,9 @@ export default async function Home(): Promise<React.JSX.Element> {
             href="/dashboard"
             className="group rounded-xl border border-slate-800 bg-slate-900 p-6 text-left transition hover:border-amber-500 hover:bg-slate-800/60"
           >
-            <div className="text-xs font-medium uppercase tracking-wide text-amber-400">
-              Create
-            </div>
+            <div className="text-xs font-medium uppercase tracking-wide text-amber-400">Create</div>
             <div className="mt-1 text-lg font-semibold text-slate-100">Open the Dashboard</div>
-            <p className="mt-1 text-sm text-slate-400">
-              Build and publish courses for your realm.
-            </p>
+            <p className="mt-1 text-sm text-slate-400">Build and publish courses for your realm.</p>
           </Link>
         ) : (
           <div className="rounded-xl border border-dashed border-slate-800 bg-slate-900/40 p-6 text-left">
@@ -97,10 +91,7 @@ export default async function Home(): Promise<React.JSX.Element> {
       </div>
 
       <form action="/api/auth/signout" method="post" className="mt-2">
-        <button
-          type="submit"
-          className="text-xs text-slate-500 transition hover:text-slate-300"
-        >
+        <button type="submit" className="text-xs text-slate-500 transition hover:text-slate-300">
           Sign out
         </button>
       </form>

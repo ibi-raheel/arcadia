@@ -89,10 +89,7 @@ export async function deleteSection(courseId: string, sectionId: string): Promis
   // Cascade: delete child lessons first (FK has no ON DELETE CASCADE at
   // the schema level). RLS on lessons lets the creator delete via the
   // course-ownership clause.
-  const { error: lessonErr } = await supabase
-    .from('lessons')
-    .delete()
-    .eq('section_id', sectionId);
+  const { error: lessonErr } = await supabase.from('lessons').delete().eq('section_id', sectionId);
   if (lessonErr) return { ok: false, error: lessonErr.message };
 
   const { error } = await supabase

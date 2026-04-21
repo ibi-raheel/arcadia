@@ -18,12 +18,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, useTransition } from 'react';
 
-import {
-  createSection,
-  deleteSection,
-  renameSection,
-  reorderSections,
-} from '../actions';
+import { createSection, deleteSection, renameSection, reorderSections } from '../actions';
 import { SECTION_TITLE_MAX } from '../validation';
 import { LessonList, type LessonRow } from './LessonList';
 
@@ -53,9 +48,7 @@ export function SectionTree({ courseId, initialSections }: Props): React.JSX.Ele
     setSections(initialSections);
   }, [initialSections]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-  );
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -89,9 +82,7 @@ export function SectionTree({ courseId, initialSections }: Props): React.JSX.Ele
   return (
     <aside className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-          Sections
-        </h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Sections</h2>
         <AddSectionButton courseId={courseId} onError={setError} />
       </div>
 
@@ -101,23 +92,14 @@ export function SectionTree({ courseId, initialSections }: Props): React.JSX.Ele
 
       {sections.length === 0 ? (
         <p className="text-sm text-slate-500">
-          No sections yet. Click <span className="font-medium text-slate-300">+ Add</span> to
-          start.
+          No sections yet. Click <span className="font-medium text-slate-300">+ Add</span> to start.
         </p>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext
-            items={sections.map((s) => s.id)}
-            strategy={verticalListSortingStrategy}
-          >
+          <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
             <ol className={`space-y-2 ${pending ? 'opacity-70' : ''}`}>
               {sections.map((s) => (
-                <SortableSection
-                  key={s.id}
-                  section={s}
-                  courseId={courseId}
-                  onError={setError}
-                />
+                <SortableSection key={s.id} section={s} courseId={courseId} onError={setError} />
               ))}
             </ol>
           </SortableContext>
