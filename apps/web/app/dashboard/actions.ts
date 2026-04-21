@@ -23,11 +23,16 @@ export async function createCourse(raw: CreateCourseInput): Promise<CreateCourse
 
   const { data: membership, error: membershipError } = await supabase
     .from('memberships')
-    .select('realm_id')
+    .select('realm_id, role')
     .eq('member_id', user.id)
     .maybeSingle();
   if (membershipError || !membership?.realm_id) {
     return { ok: false, error: 'No realm for member.' };
+  }
+  // Defence-in-depth — RLS `course_creator_insert` also enforces this,
+  // but returning a clean error here is better UX than a generic 403.
+  if (membership.role !== 'creator' && membership.role !== 'admin') {
+    return { ok: false, error: 'Only creators can create courses.' };
   }
 
   const { data: course, error: insertError } = await supabase

@@ -2,6 +2,32 @@
 
 Source plan: `phase-03_plan.md`. Status entries chronological, newest on top.
 
+## 2026-04-20 — Step 3 + role gate (decision A revised)
+
+**Shipped Step 3 — `/dashboard` + course list + create-course dialog.** Server component gated on auth; role gate added after user flagged that the admin login should be distinct. Decision A amended mid-Step: course creation is now restricted to `memberships.role in ('creator','admin')` rather than any authed member.
+
+Files:
+
+- Migration `20260421000003_phase3_membership_roles.sql` — adds `memberships.role` column + `user_has_creator_role()` helper + tightens `course_creator_insert` to require the role.
+- `app/dashboard/page.tsx` — server component with role check; renders a 403 UI for non-creators.
+- `app/dashboard/actions.ts` — `createCourse` / `createCourseAndRedirect` server actions (RLS + a defense-in-depth role check).
+- `app/dashboard/_components/CreateCourseDialog.tsx` — modal; Tab+Esc + useTransition; field caps at 120 / 500 chars.
+- `app/dashboard/validation.ts` + `__tests__/validation.test.ts` — 6 unit tests, pure.
+
+Typecheck / lint / 104 tests (98 prev + 6 new) / Next.js build — all green. `/dashboard` route is 1.63 kB / 97.7 kB first-load, server-rendered per request.
+
+**User actions still pending before Step 4:**
+
+1. Apply migration `20260421000003_phase3_membership_roles.sql` via the Supabase SQL editor (same flow as the last two).
+2. Promote yourself to creator with one SQL line (see status instructions).
+
+Once done, visit `/dashboard` on the preview and confirm:
+- As a `member` role → 403 page rendered.
+- As a `creator` role → empty-state or course list shown.
+- Create-course dialog → validates + inserts + redirects to the (still-404) editor. Course appears on `/dashboard` reload.
+
+---
+
 ## 2026-04-20 — Phase 3 kickoff (with same-day video-host pivots)
 
 **Pre-plan decisions A–M approved.** D + G + K + M were amended twice the same day as the user weighed free-tier options:
