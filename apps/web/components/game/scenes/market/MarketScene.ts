@@ -26,6 +26,33 @@ import { marketSpritesConfig } from './sprites.config';
 
 export const MARKET_SCENE_KEY = 'MarketScene' as const;
 
+const POSITION_LS_PREFIX = 'arcadia:market:avatar-pos:';
+const POSITION_SAVE_INTERVAL_MS = 500;
+
+type SavedPosition = { readonly x: number; readonly y: number };
+
+function loadSavedPosition(memberId: string): SavedPosition | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(POSITION_LS_PREFIX + memberId);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<SavedPosition>;
+    if (typeof parsed.x !== 'number' || typeof parsed.y !== 'number') return null;
+    return { x: parsed.x, y: parsed.y };
+  } catch {
+    return null;
+  }
+}
+
+function saveSavedPosition(memberId: string, pos: SavedPosition): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(POSITION_LS_PREFIX + memberId, JSON.stringify(pos));
+  } catch {
+    // Quota exceeded or storage disabled — silently skip.
+  }
+}
+
 /**
  * Shape of stall data the page passes in via the registry. One stall
  * rendered per entry.
@@ -68,6 +95,9 @@ export class MarketScene extends Phaser.Scene {
   };
   private clickTarget: { x: number; y: number } | null = null;
 
+  private memberId: string | null = null;
+  private lastPositionSaveAt = 0;
+
   constructor() {
     super({ key: MARKET_SCENE_KEY });
   }
@@ -92,9 +122,17 @@ export class MarketScene extends Phaser.Scene {
 
     // HUD search → hide non-matching stalls.
     this.game.events.on(MARKET_FILTER_EVENT, this.applyFilter, this);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+    const onShutdown = (): void => {
       this.game.events.off(MARKET_FILTER_EVENT, this.applyFilter, this);
-    });
+      if (this.memberId != null && this.localAvatar) {
+        saveSavedPosition(this.memberId, {
+          x: this.localAvatar.x,
+          y: this.localAvatar.y,
+        });
+      }
+    };
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, onShutdown);
+    this.events.once(Phaser.Scenes.Events.DESTROY, onShutdown);
   }
 
   private createLocalAvatar(): void {
@@ -103,11 +141,25 @@ export class MarketScene extends Phaser.Scene {
       console.warn('MarketScene: no valid member in registry; skipping avatar.');
       return;
     }
+    this.memberId = member.memberId;
+    // Prefer last-known position from localStorage so reloads don't yank
+    // the member back to spawn. Clamp inside world bounds just in case
+    // the image size has changed since the last save.
+    const saved = loadSavedPosition(member.memberId);
+    const defaults = marketSpritesConfig.avatar.spawnPixel;
+    const bounds = marketCameraConfig.bounds;
+    const spawnPixel = saved
+      ? {
+          x: Math.min(Math.max(saved.x, 0), bounds.width),
+          y: Math.min(Math.max(saved.y, 0), bounds.height),
+        }
+      : defaults;
+
     const avatar = new LocalAvatar(this, {
       memberId: member.memberId,
       avatarId: member.avatarId,
       displayName: member.displayName,
-      spawnPixel: marketSpritesConfig.avatar.spawnPixel,
+      spawnPixel,
       size: marketSpritesConfig.avatar.size,
       bodyOffset: marketSpritesConfig.avatar.bodyOffset,
     });
@@ -247,7 +299,7 @@ export class MarketScene extends Phaser.Scene {
     };
   }
 
-  public override update(_time: number, _deltaMs: number): void {
+  public override update(time: number, _deltaMs: number): void {
     if (!this.localAvatar) return;
 
     const input = this.readInputState();
@@ -292,6 +344,18 @@ export class MarketScene extends Phaser.Scene {
     const { yAnchorRatio } = marketLayersConfig.ySort;
     for (const obj of this.ySortables) {
       obj.setDepth(calculateYSortDepth(obj, { depthBase, yAnchorRatio }));
+    }
+
+    // Persist position to localStorage every POSITION_SAVE_INTERVAL_MS
+    // so page reloads pick up where the member left off. Skipped when
+    // the avatar isn't actually moving — no point burning IO for nothing.
+    if (
+      this.memberId != null &&
+      moving &&
+      time - this.lastPositionSaveAt >= POSITION_SAVE_INTERVAL_MS
+    ) {
+      saveSavedPosition(this.memberId, { x: this.localAvatar.x, y: this.localAvatar.y });
+      this.lastPositionSaveAt = time;
     }
   }
 }
