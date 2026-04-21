@@ -74,18 +74,6 @@ When the world-swap work gets picked up (currently punted to the polish list):
 
 No Phase-5 impact. Gamification + polish bundle (Phase 5) proceeds as planned with the existing iso world.
 
-## Phaser wiring gotchas (learned in world-v3 preview)
-
-These are the traps that cost us a day on the `world-v3` throwaway branch. Bake them into every new world scene:
-
-1. **Export with "Embed Tilesets" checked.** Phaser's TMJ loader refuses external `.tsx` refs — it expects every tileset inlined in the TMJ. The import script (`scripts/import-tiled-world.mjs`) inlines external refs as a fallback, but authoring with Embed Tilesets on is the canonical flow.
-2. **Load tilesets as `load.image`, NOT `load.spritesheet`.** Phaser's `addTilesetImage` slices the PNG internally using the TMJ's `tilewidth` / `tileheight`. Loading as a spritesheet overrides that slicing, and `createFromObjects` then renders the **entire sheet per object** instead of the correct frame. This is Phaser issue #5403 and will eat hours if you don't know about it.
-3. **Use `map.createFromObjects(layerName, { classType: Phaser.GameObjects.Sprite })` — no `frame` param.** Phaser walks each object's `gid`, finds the owning tileset via `firstgid` range, and picks the right frame from the tileset's internal slicing. Zero manual frame math. If you find yourself computing `gid - firstgid`, you have loaded a spritesheet instead of an image.
-4. **Iterate tile layers by index, not name.** Duplicate layer names are legal in Tiled; `map.layers.forEach((_, idx) => map.createLayer(idx, tilesets, 0, 0))` avoids the ambiguity.
-5. **Set `setDepth(sprite.y)` on each spawned object sprite.** That's the y-sort hook — pairs with the avatar's own `depth = y + halfHeight`.
-
-Reference implementation: `apps/web/app/world-v3/GameWorldV3.tsx` (commit `8d95c0e`).
-
 ## References
 
 - Phaser issue #5516 — oversized tile anchor mismatch: https://github.com/photonstorm/phaser/issues/5516
@@ -95,4 +83,3 @@ Reference implementation: `apps/web/app/world-v3/GameWorldV3.tsx` (commit `8d95c
 - Tiled docs — `tileoffset`: https://doc.mapeditor.org/en/stable/reference/tmx-map-format/#tileoffset
 - Phaser example — createFromObjects: https://phaser.io/examples/v3/view/tilemap/create-from-objects
 - Ourcade guide — Tiled object-layer properties: https://blog.ourcade.co/posts/2020/phaser-3-tiled-object-layer-properties/
-- Phaser issue #5403 — spritesheet load breaks createFromObjects: https://github.com/photonstorm/phaser/issues/5403
