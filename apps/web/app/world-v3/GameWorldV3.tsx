@@ -18,7 +18,13 @@ const AVATAR_DISPLAY_SIZE = 128;
 const AVATAR_BODY_OFFSET = { x: 32, y: 88, width: 64, height: 32 } as const;
 const WALK_SPEED = 260;
 
-type InlineTileset = { name: string; image: string; objectalignment?: string };
+type InlineTileset = {
+  name: string;
+  image: string;
+  tilewidth: number;
+  tileheight: number;
+  objectalignment?: string;
+};
 
 class WorldV3Scene extends Phaser.Scene {
   private tilesetPreloads: InlineTileset[] = [];
@@ -42,14 +48,23 @@ class WorldV3Scene extends Phaser.Scene {
       const data = this.cache.tilemap.get(MAP_KEY)?.data;
       if (!data) return;
       this.tilesetPreloads = (data.tilesets ?? [])
-        .filter((t: InlineTileset) => !!t.image && !!t.name)
+        .filter((t: InlineTileset) => !!t.image && !!t.name && !!t.tilewidth)
         .map((t: InlineTileset) => ({
           name: t.name,
           image: t.image,
+          tilewidth: t.tilewidth,
+          tileheight: t.tileheight,
           objectalignment: t.objectalignment,
         }));
+      // Load each tileset as a SPRITESHEET with its per-tile dimensions.
+      // This registers one texture-frame per tile on the image so
+      // map.createFromObjects + raw add.sprite(x, y, key, frame) both
+      // pick the right tile instead of the whole sheet.
       for (const ts of this.tilesetPreloads) {
-        this.load.image(`ts-${ts.name}`, ts.image);
+        this.load.spritesheet(`ts-${ts.name}`, ts.image, {
+          frameWidth: ts.tilewidth,
+          frameHeight: ts.tileheight,
+        });
       }
       this.load.start();
     });
