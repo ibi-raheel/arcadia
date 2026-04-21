@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation';
 
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
+import { VideoLessonViewer } from './_components/VideoLessonViewer';
+
 export const dynamic = 'force-dynamic';
 
 type Course = {
@@ -23,6 +25,7 @@ type Lesson = {
 type SelectedLesson = Lesson & {
   content: string | null;
   youtube_video_id: string | null;
+  duration_sec: number | null;
 };
 
 type Params = {
@@ -83,6 +86,10 @@ export default async function CourseViewerPage({
     ? await loadSelectedLesson(selectedLessonId, params.courseId)
     : null;
 
+  const selectedProgress =
+    selectedLessonId && progress ? progress.find((p) => p.lesson_id === selectedLessonId) : null;
+  const startSec = selectedProgress?.watched_secs ?? 0;
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <header className="border-b border-slate-800 bg-slate-900/60">
@@ -133,7 +140,7 @@ export default async function CourseViewerPage({
 
         <section className="min-h-[500px] rounded-xl border border-slate-800 bg-slate-900/40 p-6">
           {selectedLesson ? (
-            <LessonPlaceholder lesson={selectedLesson} />
+            <LessonBody lesson={selectedLesson} startSec={startSec} />
           ) : (
             <div className="grid h-full place-items-center text-sm text-slate-500">
               Select a lesson from the left rail to start.
@@ -152,7 +159,9 @@ async function loadSelectedLesson(
   const supabase = getSupabaseServerClient();
   const { data } = await supabase
     .from('lessons')
-    .select('id, section_id, title, type, sort_order, content, youtube_video_id, course_id')
+    .select(
+      'id, section_id, title, type, sort_order, content, youtube_video_id, duration_sec, course_id',
+    )
     .eq('id', lessonId)
     .maybeSingle<SelectedLesson & { course_id: string }>();
   if (!data || data.course_id !== courseId) return null;
@@ -208,23 +217,34 @@ function CourseProgress({
   );
 }
 
-// Step 13 replaces this with a real YouTube IFrame Player; Step 15
-// replaces the written branch with react-markdown rendering.
-function LessonPlaceholder({ lesson }: { readonly lesson: SelectedLesson }): React.JSX.Element {
+// Step 15 will replace the written branch with react-markdown rendering.
+function LessonBody({
+  lesson,
+  startSec,
+}: {
+  readonly lesson: SelectedLesson;
+  readonly startSec: number;
+}): React.JSX.Element {
   return (
     <div>
       <h2 className="text-xl font-semibold">{lesson.title}</h2>
       <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">
         {lesson.type ?? 'written'} lesson
       </p>
-      <div className="mt-6 rounded-lg border border-slate-800 bg-slate-950/50 p-6">
+      <div className="mt-6">
         {lesson.type === 'video' && lesson.youtube_video_id ? (
-          <p className="text-sm text-slate-400">
-            Video player lands in Step 13. Stored id:{' '}
-            <span className="font-mono text-slate-300">{lesson.youtube_video_id}</span>
-          </p>
+          <VideoLessonViewer
+            initial={{
+              lessonId: lesson.id,
+              videoId: lesson.youtube_video_id,
+              startSec,
+              durationSec: lesson.duration_sec,
+            }}
+          />
         ) : lesson.content ? (
-          <pre className="whitespace-pre-wrap text-sm text-slate-300">{lesson.content}</pre>
+          <pre className="whitespace-pre-wrap rounded-lg border border-slate-800 bg-slate-950/50 p-6 text-sm text-slate-300">
+            {lesson.content}
+          </pre>
         ) : (
           <p className="text-sm text-slate-500">Nothing to show yet.</p>
         )}
