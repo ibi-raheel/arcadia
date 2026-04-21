@@ -5,8 +5,10 @@ import { revalidatePath } from 'next/cache';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 import {
+  parseYouTubeId,
   validateLessonContent,
   validateLessonTitle,
+  validateLessonType,
   validateReorderIds,
   validateSectionTitle,
 } from './validation';
@@ -217,6 +219,75 @@ export async function updateLessonContent(
   // No revalidatePath — the editor refreshes its own state; avoids a
   // full page re-render on every keystroke save.
   return { ok: true };
+}
+
+export async function updateLessonType(
+  courseId: string,
+  lessonId: string,
+  rawType: string,
+): Promise<Result> {
+  const ownerCheck = await assertOwner(courseId);
+  if (!ownerCheck.ok) return ownerCheck;
+
+  const validation = validateLessonType(rawType);
+  if (!validation.ok) return { ok: false, error: validation.error };
+
+  const supabase = getSupabaseServerClient();
+  const { error } = await supabase
+    .from('lessons')
+    .update({ type: validation.value })
+    .eq('id', lessonId)
+    .eq('course_id', courseId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/dashboard/courses/${courseId}`);
+  return { ok: true };
+}
+
+/**
+ * Set a lesson's YouTube video id. Accepts a full YouTube URL (any of
+ * the common shapes) or a bare 11-char id. Clears the id when raw is
+ * blank.
+ */
+export async function updateLessonYouTubeId(
+  courseId: string,
+  lessonId: string,
+  raw: string,
+): Promise<(Result & { readonly videoId?: string | null }) | Result> {
+  const ownerCheck = await assertOwner(courseId);
+  if (!ownerCheck.ok) return ownerCheck;
+
+  const trimmed = raw.trim();
+  const supabase = getSupabaseServerClient();
+
+  if (trimmed.length === 0) {
+    const { error } = await supabase
+      .from('lessons')
+      .update({ youtube_video_id: null, duration_sec: null })
+      .eq('id', lessonId)
+      .eq('course_id', courseId);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath(`/dashboard/courses/${courseId}`);
+    return { ok: true, videoId: null };
+  }
+
+  const videoId = parseYouTubeId(trimmed);
+  if (!videoId) {
+    return { ok: false, error: 'Not a valid YouTube URL or ID.' };
+  }
+
+  // duration_sec is reset here — the viewer captures it via the IFrame
+  // API on first successful load (Week 10 Step 13). Keeping it NULL
+  // until then is correct.
+  const { error } = await supabase
+    .from('lessons')
+    .update({ youtube_video_id: videoId, duration_sec: null })
+    .eq('id', lessonId)
+    .eq('course_id', courseId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/dashboard/courses/${courseId}`);
+  return { ok: true, videoId };
 }
 
 export async function deleteLesson(courseId: string, lessonId: string): Promise<Result> {

@@ -4,8 +4,10 @@ import {
   LESSON_CONTENT_MAX,
   LESSON_TITLE_MAX,
   SECTION_TITLE_MAX,
+  parseYouTubeId,
   validateLessonContent,
   validateLessonTitle,
+  validateLessonType,
   validateReorderIds,
   validateSectionTitle,
 } from '../validation';
@@ -75,6 +77,63 @@ describe('validateLessonContent', () => {
   it('accepts exactly at the limit', () => {
     const r = validateLessonContent('a'.repeat(LESSON_CONTENT_MAX));
     expect(r.ok).toBe(true);
+  });
+});
+
+describe('parseYouTubeId', () => {
+  const VALID = 'dQw4w9WgXcQ';
+
+  it('accepts a bare 11-char id', () => {
+    expect(parseYouTubeId(VALID)).toBe(VALID);
+  });
+
+  it('parses youtube.com/watch?v=', () => {
+    expect(parseYouTubeId(`https://www.youtube.com/watch?v=${VALID}`)).toBe(VALID);
+    expect(parseYouTubeId(`https://www.youtube.com/watch?v=${VALID}&feature=share`)).toBe(VALID);
+  });
+
+  it('parses youtu.be short link', () => {
+    expect(parseYouTubeId(`https://youtu.be/${VALID}`)).toBe(VALID);
+    expect(parseYouTubeId(`https://youtu.be/${VALID}?t=42`)).toBe(VALID);
+  });
+
+  it('parses embed and nocookie variants', () => {
+    expect(parseYouTubeId(`https://www.youtube.com/embed/${VALID}`)).toBe(VALID);
+    expect(parseYouTubeId(`https://www.youtube-nocookie.com/embed/${VALID}`)).toBe(VALID);
+  });
+
+  it('parses shorts links', () => {
+    expect(parseYouTubeId(`https://www.youtube.com/shorts/${VALID}`)).toBe(VALID);
+  });
+
+  it('trims whitespace', () => {
+    expect(parseYouTubeId(`   ${VALID}   `)).toBe(VALID);
+  });
+
+  it('rejects nonsense', () => {
+    expect(parseYouTubeId('')).toBeNull();
+    expect(parseYouTubeId('   ')).toBeNull();
+    // Contains '!' which isn't in the allowed charset — rejected even at 11 chars.
+    expect(parseYouTubeId('abc!def@ghi')).toBeNull();
+    expect(parseYouTubeId('https://example.com/watch?v=short')).toBeNull();
+  });
+
+  it('rejects ids of wrong length', () => {
+    expect(parseYouTubeId('a'.repeat(10))).toBeNull();
+    expect(parseYouTubeId('a'.repeat(12))).toBeNull();
+  });
+});
+
+describe('validateLessonType', () => {
+  it('accepts written / video', () => {
+    expect(validateLessonType('written').ok).toBe(true);
+    expect(validateLessonType('video').ok).toBe(true);
+  });
+
+  it('rejects anything else', () => {
+    expect(validateLessonType('audio').ok).toBe(false);
+    expect(validateLessonType('').ok).toBe(false);
+    expect(validateLessonType('VIDEO').ok).toBe(false);
   });
 });
 
