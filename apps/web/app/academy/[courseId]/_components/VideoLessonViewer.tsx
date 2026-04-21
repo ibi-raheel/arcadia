@@ -98,12 +98,22 @@ export function VideoLessonViewer({ initial }: Props): React.JSX.Element {
       }
     };
 
+    // Clamp start to just before the end. If last session recorded
+    // watched_secs == duration (natural ENDED state), loading with
+    // `start >= duration` renders a black frame — YouTube can't seek past
+    // the clip. Back off to 0 so the user sees a valid thumbnail.
+    const END_SAFETY_SEC = 2;
+    const clampedStart =
+      initial.durationSec != null && initial.startSec >= initial.durationSec - END_SAFETY_SEC
+        ? 0
+        : Math.max(0, Math.floor(initial.startSec));
+
     void loadIframeApi().then(() => {
       if (cancelled || !hostRef.current || !window.YT) return;
       const player = new window.YT.Player(hostRef.current, {
         videoId: initial.videoId,
         playerVars: {
-          start: Math.max(0, Math.floor(initial.startSec)),
+          start: clampedStart,
           rel: 0,
           modestbranding: 1,
           iv_load_policy: 3,
