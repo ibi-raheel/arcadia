@@ -487,4 +487,94 @@ const env = loadTestEnvOrSkip();
       expect(data![0]!.completed).toBe(true);
     });
   });
+
+  describe('Phase 5 — lesson-completion XP trigger (migration 20260422000002)', () => {
+    // Pins the plan's decision-L invariant: userA flipping their own
+    // lesson_progress.completed from false → true awards +25 XP to
+    // userA only. userB's XP stays untouched. The trigger resolves
+    // realm_id from the lesson's course server-side, so no client
+    // manipulation can redirect the award to another member.
+
+    let lesson2Id: string;
+
+    beforeAll(async () => {
+      // Need a lesson where userA has no existing progress row (so the
+      // flip from "no row" → completed=true cleanly fires the trigger
+      // once). Seed lessonA2 alongside the existing lessonA in courseA.
+      const lesson2 = await admin
+        .from('lessons')
+        .insert({
+          course_id: courseAId,
+          section_id: sectionAId,
+          title: 'Lesson A2',
+          type: 'written',
+          content: 'xp trigger smoke',
+          sort_order: 1,
+          is_preview: false,
+        })
+        .select('id')
+        .single();
+      if (lesson2.error || !lesson2.data) {
+        throw new Error(`create lessonA2: ${lesson2.error?.message}`);
+      }
+      lesson2Id = lesson2.data.id;
+    });
+
+    it('userA completing a lesson awards +25 XP to userA only (userB unchanged)', async () => {
+      // Capture starting XP via admin (bypasses memberships RLS).
+      const before = await admin
+        .from('memberships')
+        .select('member_id, xp')
+        .in('member_id', [userA.id, userB.id]);
+      if (before.error) throw new Error(`read pre-xp: ${before.error.message}`);
+      const beforeById = new Map(before.data!.map((m) => [m.member_id, m.xp]));
+      const xpA_before = beforeById.get(userA.id)!;
+      const xpB_before = beforeById.get(userB.id)!;
+
+      // userA flips their own lesson_progress via the anon client —
+      // the only path a browser has. RLS `progress_self_write`
+      // accepts; the trigger fires; XP is awarded to userA.
+      const client = await userAnonClient(env!, userA);
+      const { error: insertErr } = await client
+        .from('lesson_progress')
+        .insert({ lesson_id: lesson2Id, member_id: userA.id, completed: true, watched_secs: 0 });
+      expect(insertErr).toBeNull();
+
+      // Give the trigger a moment (synchronous in PG, but the HTTP
+      // round-trip needs to return before the next admin read).
+      const after = await admin
+        .from('memberships')
+        .select('member_id, xp')
+        .in('member_id', [userA.id, userB.id]);
+      const afterById = new Map(after.data!.map((m) => [m.member_id, m.xp]));
+
+      expect(afterById.get(userA.id)).toBe(xpA_before + 25);
+      expect(afterById.get(userB.id)).toBe(xpB_before);
+    });
+
+    it('re-upsert of an already-completed row does NOT double-award', async () => {
+      // Same row, flipped again. Trigger guard
+      // `coalesce(old.completed, false) = false` blocks the re-fire.
+      const xpBefore = await admin
+        .from('memberships')
+        .select('xp')
+        .eq('member_id', userA.id)
+        .single();
+
+      const client = await userAnonClient(env!, userA);
+      const { error } = await client
+        .from('lesson_progress')
+        .update({ completed: true })
+        .eq('lesson_id', lesson2Id)
+        .eq('member_id', userA.id);
+      expect(error).toBeNull();
+
+      const xpAfter = await admin
+        .from('memberships')
+        .select('xp')
+        .eq('member_id', userA.id)
+        .single();
+      expect(xpAfter.data!.xp).toBe(xpBefore.data!.xp);
+    });
+  });
 });
