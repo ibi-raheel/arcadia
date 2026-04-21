@@ -56,7 +56,7 @@ export default async function Home(): Promise<React.JSX.Element> {
         <p className="mt-2 text-neutral-400">Welcome back, {displayName}.</p>
       </div>
 
-      <div className="mt-2 grid w-full max-w-md gap-3 sm:grid-cols-2">
+      <div className="mt-2 grid w-full max-w-3xl gap-3 sm:grid-cols-3">
         <Link
           href="/world"
           className="group rounded-xl border border-slate-800 bg-slate-900 p-6 text-left transition hover:border-emerald-500 hover:bg-slate-800/60"
@@ -65,6 +65,17 @@ export default async function Home(): Promise<React.JSX.Element> {
           <div className="mt-1 text-lg font-semibold text-slate-100">Enter the World</div>
           <p className="mt-1 text-sm text-slate-400">
             Walk around, chat in the Tavern, meet other members.
+          </p>
+        </Link>
+
+        <Link
+          href="/market"
+          className="group rounded-xl border border-slate-800 bg-slate-900 p-6 text-left transition hover:border-purple-500 hover:bg-slate-800/60"
+        >
+          <div className="text-xs font-medium uppercase tracking-wide text-purple-400">Browse</div>
+          <div className="mt-1 text-lg font-semibold text-slate-100">Visit the Market</div>
+          <p className="mt-1 text-sm text-slate-400">
+            Discover new courses from creators in your realm.
           </p>
         </Link>
 
