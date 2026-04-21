@@ -16,7 +16,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useRouter } from 'next/navigation';
-import { useCallback, useState, useTransition } from 'react';
+import { useCallback, useEffect, useState, useTransition } from 'react';
 
 import {
   createSection,
@@ -44,6 +44,14 @@ export function SectionTree({ courseId, initialSections }: Props): React.JSX.Ele
   const [sections, setSections] = useState<readonly SectionRow[]>(initialSections);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+
+  // Sync local state when the server-rendered `initialSections` changes —
+  // e.g. after a create / rename / delete mutation calls router.refresh().
+  // Without this, `useState`'s one-time initialisation leaves the UI
+  // stuck on the pre-mutation list.
+  useEffect(() => {
+    setSections(initialSections);
+  }, [initialSections]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
