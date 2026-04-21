@@ -93,11 +93,24 @@ export default async function MarketPage({ searchParams }: Params): Promise<Reac
     sectionsByCourse.set(s.course_id, arr);
   }
 
-  // Global enrolment counts need to see *other* members' rows; the anon
-  // client only sees self-rows per `enrolment_self_read`. For the MVP we
-  // surface the self-enrolled flag but skip the global count (defaults to
-  // 0). A dedicated aggregate RPC or analytics view is a Phase-5 follow-up.
+  // `enrolment_self_read` RLS only lets the anon client see its own
+  // enrolment rows, so aggregating "N enrolled" per course requires the
+  // SECURITY DEFINER RPC get_enrolment_count (Phase 5 migration
+  // 20260422000002). Called per-course in parallel; the RPC internally
+  // guards that the course is published + same-realm, returning 0 for
+  // anything else without leaking existence.
   const enrolmentCountByCourse = new Map<string, number>();
+  if (rows.length > 0) {
+    const counts = await Promise.all(
+      rows.map(async (c) => {
+        const { data, error } = await supabase.rpc('get_enrolment_count', {
+          p_course_id: c.id,
+        });
+        return [c.id, error ? 0 : typeof data === 'number' ? data : 0] as const;
+      }),
+    );
+    for (const [id, n] of counts) enrolmentCountByCourse.set(id, n);
+  }
 
   const stalls: MarketStall[] = rows.map((c) => ({
     id: c.id,
