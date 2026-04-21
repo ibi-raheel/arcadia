@@ -15,7 +15,9 @@ import { useEffect, useRef, useState } from 'react';
 
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
+import { LevelUpBanner } from './LevelUpBanner';
 import { connectToRoom, type ColyseusConnection } from './net/colyseus-client';
+import { useLevelSync } from './net/use-level-sync';
 import { BootScene } from './scenes/boot/BootScene';
 import { PROGRESS_CALLBACK_REGISTRY_KEY } from './scenes/boot/asset-manifest';
 import { isAvatarId, type AvatarId } from './scenes/shared/avatar-palette';
@@ -109,6 +111,14 @@ export default function GameWorld(): React.JSX.Element {
   // null = Phaser hasn't started preloading yet; 0..1 from BootScene's
   // LoaderPlugin events; hidden once === 1.
   const [preloadProgress, setPreloadProgress] = useState<number | null>(null);
+  // State-backed so `useLevelSync` sees the latest connection reference
+  // and can route UPDATE_LEVEL to it once it's alive.
+  const [colyseusConn, setColyseusConn] = useState<ColyseusConnection | null>(null);
+
+  useLevelSync({
+    memberId: fetchState.status === 'ready' ? fetchState.member.memberId : null,
+    colyseus: colyseusConn,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -158,6 +168,7 @@ export default function GameWorld(): React.JSX.Element {
       }
 
       connectionRef.current = connection;
+      setColyseusConn(connection);
 
       const game = new Phaser.Game({
         type: Phaser.AUTO,
@@ -197,6 +208,7 @@ export default function GameWorld(): React.JSX.Element {
       if (game) game.destroy(true);
       const conn = connectionRef.current;
       connectionRef.current = null;
+      setColyseusConn(null);
       if (conn) void conn.leave();
     };
   }, [fetchState, router, spawnFrom]);
@@ -224,6 +236,7 @@ export default function GameWorld(): React.JSX.Element {
           progress={fetchState.status === 'loading' ? null : preloadProgress}
         />
       )}
+      <LevelUpBanner />
     </div>
   );
 }

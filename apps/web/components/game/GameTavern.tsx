@@ -17,6 +17,8 @@ import { ChatPanel } from '@/components/tavern/ChatPanel';
 import { LeaderboardPanel } from '@/components/tavern/LeaderboardPanel';
 
 import { BuildingTransition } from './BuildingTransition';
+import { LevelUpBanner } from './LevelUpBanner';
+import { useLevelSync } from './net/use-level-sync';
 import { connectToRoom, type ColyseusConnection } from './net/colyseus-client';
 import {
   TAVERN_CHAT_BLUR_EVENT,
@@ -88,6 +90,12 @@ export default function GameTavern(): React.JSX.Element {
   const [fetchState, setFetchState] = useState<SessionFetch>({ status: 'loading' });
   const [connectError, setConnectError] = useState<string | null>(null);
   const [preloadProgress, setPreloadProgress] = useState<number | null>(null);
+  const [colyseusConn, setColyseusConn] = useState<ColyseusConnection | null>(null);
+
+  useLevelSync({
+    memberId: fetchState.status === 'ready' ? fetchState.member.memberId : null,
+    colyseus: colyseusConn,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -137,6 +145,7 @@ export default function GameTavern(): React.JSX.Element {
       }
 
       connectionRef.current = connection;
+      setColyseusConn(connection);
 
       const game = new Phaser.Game({
         type: Phaser.AUTO,
@@ -169,6 +178,7 @@ export default function GameTavern(): React.JSX.Element {
       if (game) game.destroy(true);
       const conn = connectionRef.current;
       connectionRef.current = null;
+      setColyseusConn(null);
       if (conn) void conn.leave();
     };
   }, [fetchState]);
@@ -238,6 +248,7 @@ export default function GameTavern(): React.JSX.Element {
         </>
       )}
       <BuildingTransition building="tavern" ready={sceneReady} />
+      <LevelUpBanner />
     </div>
   );
 }
