@@ -127,9 +127,10 @@ Phaser 3 has no native isometric renderer. The MVP uses orthographic tilemaps wi
 |---|---|---|---|
 | BootScene | All game pages | — | Asset preload; Colyseus handshake; auth token validation |
 | WorldScene | `/world` | `world-realm1` | Isometric world; avatar movement; building entry detection |
-| TavernScene | `/tavern` | `tavern-realm1` | Interior tilemap; remote avatar sync; chat UI is React overlay |
+| TavernScene | `/tavern` | `tavern-realm1` | Image-backed interior (1536×1024); remote avatar sync; chat UI is React overlay |
+| AcademyScene | `/academy` | — | Phase 3.5 addition (2026-04-20). Image-backed interior (1536×1024); **single-player**; clickable course podiums route to the React course viewer at `/academy/[courseId]` |
 
-Academy and Market are pure React pages — no Phaser scene. The game canvas is unmounted when the member navigates to these pages and re-mounted when they return to `/world` or `/tavern`.
+> **MVP amendment (2026-04-20):** Original TAD said "Academy and Market are pure React pages — no Phaser scene." Phase 3.5 added **AcademyScene** so members walk the hall instead of seeing a grid. Market stays React-only. The course viewer at `/academy/[courseId]` is still React — only the entry / browse surface is a Phaser scene.
 
 ### 4.3 Avatar system
 

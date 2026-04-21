@@ -2,6 +2,67 @@
 
 Source plan: `phase-03_plan.md`. Status entries chronological, newest on top.
 
+## 2026-04-20 — Phase 3 EXIT (Step 18 smoke green)
+
+**Phase 3 is code-complete 2026-04-20** — same session Week 9 landed. End-to-end creator → member flow works on Vercel prod with real data.
+
+### Step 18 smoke results
+
+Run against prod (`arcadia-web-swart.vercel.app`) by user with the admin-role test account:
+
+| Flow | Result |
+|---|---|
+| Apply migration 04 (`set_lesson_duration` RPC) to prod | ✅ `prosecdef = true` |
+| Create course w/ 1 video + 1 written lesson, publish | ✅ |
+| `/academy` card / podium shows course w/ 0/2 · 0% | ✅ |
+| Click podium → course viewer | ✅ |
+| Video play → ≥10 s elapsed → progress upsert fires | ✅ |
+| Scrub past 80% → reload → ✓ in rail, 1/2 · 50% in header | ✅ |
+| Video resume from `watched_secs` on hard refresh | ✅ (after `ee82c88` clamp fix — see below) |
+| Written lesson renders w/ react-markdown + GFM | ✅ |
+| Scroll past 90% → "✓ Marked complete" | ✅ |
+| Reload → `✎` lesson shows ✓, 2/2 · 100% | ✅ |
+| Tavern non-regression (new art + 90×90 avatar + 1.365× zoom) | ✅ |
+| World → Academy → Course viewer → Return to World | ✅ |
+
+### Post-smoke fix
+
+One black-frame bug surfaced on the resume test: YouTube IFrame API renders a blank frame when `playerVars.start >= duration` (the case when last session ended at the natural finish and we saved `watched_secs = duration`). `VideoLessonViewer` now clamps `start` to 0 when `startSec >= durationSec - 2`. Commit `ee82c88`.
+
+### Phase 3 delta from plan
+
+- **Decision A revised mid-Step-3** — any authed member → `memberships.role in ('creator','admin')`. Migration `20260421000003` + role-aware home hub shipped same day.
+- **Decision D/G/K/M pivoted twice the same day** — CF Stream → Cloudinary → YouTube unlisted (demo scope per ADR 0006). `lessons.youtube_video_id` column, IFrame Player in the viewer, zero video-host credentials.
+- **Phase 3.5 added** — `/academy` became a Phaser scene instead of the planned React grid. Mirrors Tavern pattern (image-backed interior + walking avatar + clickable course podiums). `AcademyScene` + `GameAcademy` shipped same-day as Week 10.
+- **Migration 04 added post-plan** — `set_lesson_duration` SECURITY DEFINER RPC so the viewer can populate `duration_sec` on first play without needing creator-role UPDATE on lessons.
+
+### Phase 3 exit criteria (per `phase-03_plan.md`)
+
+| Exit criterion | Status |
+|---|---|
+| Creator publishes a course with one section, one video, one written lesson | ✅ |
+| Member opens `/academy`, watches video to 80%, progress bar updates | ✅ |
+| On re-entry, video resumes from last position | ✅ (post `ee82c88`) |
+| Written scroll-complete marks lesson done | ✅ |
+| RLS tests extended + no regressions | ✅ (3 new Phase-3 cases skipped locally, runnable in CI) |
+| Course progress bar derived correctly | ✅ |
+
+All met.
+
+### Open items punted to later phases
+
+- **Academy multiplayer.** Solo hall today; `academy-realm1` Colyseus room would mirror Tavern if wanted. Phase 5 polish candidate.
+- **Tavern + Academy colliders.** Avatar walks over furniture in both image-backed interiors. Already in `phases/phase-02_polish_backlog.md`.
+- **Real YouTube swap-back.** Mandatory before paying creators. Exit criteria in ADR 0006 (>30 min stored content, real UGC, or any payments).
+- **Duration-capture hygiene.** Creator-side editor could also trigger `set_lesson_duration` on video upload-parse to avoid first-viewer-gets-blank-UX. Minor.
+- **Analytics on lesson_progress.** Phase 4 dashboard material.
+
+### Ready for Phase 4
+
+Next: **Market + creator dashboard analytics (Week 11)**. Phase-plan §Phase 4 still applies as-is.
+
+---
+
 ## 2026-04-20 — Week 10 complete (Steps 11–17, Step 18 smoke pending)
 
 Member-side course viewer stack shipped. Course list + viewer + both lesson types + progress tracking + enrolment seed script all landed in one session.
