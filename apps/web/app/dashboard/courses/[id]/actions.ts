@@ -221,6 +221,19 @@ export async function updateLessonContent(
   return { ok: true };
 }
 
+export async function setCoursePublished(courseId: string, published: boolean): Promise<Result> {
+  const ownerCheck = await assertOwner(courseId);
+  if (!ownerCheck.ok) return ownerCheck;
+
+  const supabase = getSupabaseServerClient();
+  const { error } = await supabase.from('courses').update({ published }).eq('id', courseId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/dashboard/courses/${courseId}`);
+  revalidatePath('/dashboard');
+  return { ok: true };
+}
+
 export async function updateLessonType(
   courseId: string,
   lessonId: string,

@@ -2,6 +2,35 @@
 
 Source plan: `phase-03_plan.md`. Status entries chronological, newest on top.
 
+## 2026-04-20 — Week 9 complete (Steps 3–10)
+
+Whole Week-9 stack shipped in one session:
+
+| Step | Commit | Shipped |
+|---|---|---|
+| 3 | `23fa2cb` + `62a5f9d` | `/dashboard` list + create-course dialog + role-gate (decision A revised) |
+| 4 | `07f326f` | Course editor shell at `/dashboard/courses/[id]` |
+| 5 | `c0e3f15` + `860560f` | Sections CRUD + drag-reorder (`@dnd-kit/sortable`); useEffect sync fix for router.refresh |
+| 6 | `9483ddd` | Lessons CRUD + intra-section drag-reorder |
+| 7 | `3d0823d` | Markdown editor for written lessons (`@uiw/react-md-editor`), 2s debounced autosave, click-to-select via `?lesson=<id>` |
+| 8 | `b71d256` | Video lesson editor + type toggle (written ⇄ video); YouTube URL parser (5 URL shapes) + preview iframe |
+| 9 | _this commit_ | 3 new RLS integration tests (non-enrolled lesson access, creator-reads-own-unpublished-course, creator-reads-own-non-preview-lessons) — skipped locally, run in CI when `TEST_SUPABASE_*` is set |
+| 10 | _this commit_ | Publish / unpublish toggle in course editor header |
+
+**Validator coverage:** 25 pure-validator unit tests across `app/dashboard/**/__tests__/`. 131 total tests passing, 21 skipped (RLS suite requires env).
+
+**Prod schema state:** All three Phase-3 migrations applied to arcadia prod on 2026-04-20. User's prod account promoted to `role = admin`. Full creator flow exercised end-to-end on Vercel preview + prod.
+
+**Known gaps closed during execution:**
+
+- Prettier not run pre-commit → CI red for 6 commits; fixed in `8875d52` and the habit is now in the mental checklist.
+- `useState`'s one-time prop init left both `SectionTree` and `LessonList` stuck after mutations → `useEffect` sync pattern added (`860560f`).
+- Supabase MCP is read-only per ADR 0002 → user applies all migrations via the dashboard SQL editor; noted in setup guide.
+
+**Ready for Week 10.** Next: `/academy` route (Step 11) → course viewer at `/academy/[courseId]` (Step 12) → YouTube IFrame Player API viewer (Step 13) → progress tracking (Steps 14–15) → enrolment seeding (Step 17) → end-to-end smoke (Step 18).
+
+---
+
 ## 2026-04-20 — Step 3 + role gate (decision A revised)
 
 **Shipped Step 3 — `/dashboard` + course list + create-course dialog.** Server component gated on auth; role gate added after user flagged that the admin login should be distinct. Decision A amended mid-Step: course creation is now restricted to `memberships.role in ('creator','admin')` rather than any authed member.

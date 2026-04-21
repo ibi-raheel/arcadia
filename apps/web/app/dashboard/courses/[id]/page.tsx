@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
+import { PublishToggle } from './_components/PublishToggle';
 import { SectionTree, type SectionRow } from './_components/SectionTree';
 import { VideoLessonEditor, type VideoLesson } from './_components/VideoLessonEditor';
 import { WrittenLessonEditor, type WrittenLesson } from './_components/WrittenLessonEditor';
@@ -164,7 +165,7 @@ function Header({ course }: { readonly course: Course }): React.JSX.Element {
           <h1 className="text-lg font-semibold">{course.title}</h1>
           <PublishedBadge published={course.published} />
         </div>
-        {/* Publish toggle + section add buttons land in Steps 5/10. */}
+        <PublishToggle courseId={course.id} published={course.published} />
       </div>
     </header>
   );
