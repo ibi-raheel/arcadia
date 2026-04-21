@@ -10,6 +10,7 @@ import * as Phaser from 'phaser';
 
 import { BOOT_ASSETS } from '../boot/asset-manifest';
 import { isAvatarId } from '../shared/avatar-palette';
+import { spawnColliders } from '../shared/colliders';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -170,6 +171,14 @@ export class MarketScene extends Phaser.Scene {
       marketCameraConfig.deadzone.width,
       marketCameraConfig.deadzone.height,
     );
+
+    // Static colliders scaffold — no-op when the config's array is
+    // empty. User fills in layers.config.ts → MARKET_COLLIDERS with
+    // rectangles to block the avatar without any code change.
+    if (marketLayersConfig.colliders.length > 0) {
+      const group = spawnColliders(this, marketLayersConfig.colliders);
+      this.physics.add.collider(avatar.body, group);
+    }
   }
 
   private wireKeyboardInput(): void {

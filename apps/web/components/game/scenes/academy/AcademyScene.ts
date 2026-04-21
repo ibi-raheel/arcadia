@@ -9,6 +9,7 @@ import * as Phaser from 'phaser';
 
 import { BOOT_ASSETS } from '../boot/asset-manifest';
 import { isAvatarId } from '../shared/avatar-palette';
+import { spawnColliders } from '../shared/colliders';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -98,6 +99,11 @@ export class AcademyScene extends Phaser.Scene {
       academyCameraConfig.deadzone.width,
       academyCameraConfig.deadzone.height,
     );
+
+    if (academyLayersConfig.colliders.length > 0) {
+      const group = spawnColliders(this, academyLayersConfig.colliders);
+      this.physics.add.collider(avatar.body, group);
+    }
   }
 
   private wireKeyboardInput(): void {
