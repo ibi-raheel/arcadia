@@ -23,6 +23,19 @@ export default async function DashboardPage(): Promise<React.JSX.Element> {
   } = await supabase.auth.getUser();
   if (!user) redirect('/login?next=/dashboard');
 
+  // Role gate — only creators + admins can see /dashboard (decision A,
+  // revised 2026-04-20). Regular members get a 403-style page rather
+  // than a silent redirect, so the "wrong account?" case is discoverable.
+  const { data: membership } = await supabase
+    .from('memberships')
+    .select('role')
+    .eq('member_id', user.id)
+    .maybeSingle();
+  const role = membership?.role ?? 'member';
+  if (role !== 'creator' && role !== 'admin') {
+    return <NotAuthorised />;
+  }
+
   const { data: courses, error } = await supabase
     .from('courses')
     .select('id, title, description, published, updated_at')
@@ -95,6 +108,26 @@ function PublishedBadge({ published }: { readonly published: boolean }): React.J
     <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-400">
       Draft
     </span>
+  );
+}
+
+function NotAuthorised(): React.JSX.Element {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-slate-950 p-8 text-slate-100">
+      <div className="max-w-md rounded-xl border border-slate-800 bg-slate-900 p-8 text-center">
+        <h1 className="text-2xl font-semibold">Not a creator account</h1>
+        <p className="mt-2 text-sm text-slate-400">
+          The dashboard is for creators only. If you&rsquo;re expecting access, ask an admin to
+          promote your account, or switch to a creator account.
+        </p>
+        <Link
+          href="/world"
+          className="mt-6 inline-block rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
+        >
+          Back to the world
+        </Link>
+      </div>
+    </main>
   );
 }
 
