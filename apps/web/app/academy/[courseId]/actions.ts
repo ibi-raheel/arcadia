@@ -46,6 +46,39 @@ export async function upsertLessonProgress(
 }
 
 /**
+ * Explicit completion marker — used by the written-lesson viewer when
+ * the reader scrolls past the 90% sentinel. Keeps `watched_secs` intact
+ * if the row already exists; just flips `completed = true`.
+ */
+export async function markLessonCompleted(lessonId: string): Promise<Result> {
+  const supabase = getSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'Not signed in.' };
+
+  // Fetch existing watched_secs so we don't clobber it on upsert.
+  const { data: existing } = await supabase
+    .from('lesson_progress')
+    .select('watched_secs')
+    .eq('lesson_id', lessonId)
+    .eq('member_id', user.id)
+    .maybeSingle<{ watched_secs: number }>();
+
+  const { error } = await supabase.from('lesson_progress').upsert(
+    {
+      lesson_id: lessonId,
+      member_id: user.id,
+      completed: true,
+      watched_secs: existing?.watched_secs ?? 0,
+    },
+    { onConflict: 'lesson_id,member_id' },
+  );
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+/**
  * Called by the video viewer on YT `onReady` when `lessons.duration_sec`
  * is currently NULL — captures the duration reported by the IFrame API.
  * Backed by the SECURITY DEFINER RPC `set_lesson_duration` so any reader

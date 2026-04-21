@@ -2,6 +2,34 @@
 
 Source plan: `phase-03_plan.md`. Status entries chronological, newest on top.
 
+## 2026-04-20 — Week 10 complete (Steps 11–17, Step 18 smoke pending)
+
+Member-side course viewer stack shipped. Course list + viewer + both lesson types + progress tracking + enrolment seed script all landed in one session.
+
+| Step | What |
+|---|---|
+| 11 | `/academy` — server-rendered grid of enrolled-union-owned courses with thumbnail + progress bar. BuildingTransition overlay kept on entry. |
+| 12 | `/academy/[courseId]` — viewer shell. Header shows overall progress. Left rail: sections + lessons with type icon + `✓` for completed + selected highlight. Click → `?lesson=<id>`. |
+| 13 | Video lesson viewer. YouTube IFrame Player API loaded dynamically; `YT.Player` with `startSeconds = lesson_progress.watched_secs`. On `onReady`, captures duration via `set_lesson_duration` RPC (migration `20260421000004`) if `duration_sec IS NULL` — first-set-wins. |
+| 14 | Video progress tracking. `setInterval(10 s)` while `PLAYING`, upserts `lesson_progress`. Clears on `PAUSED` / `ENDED` / unmount with a final flush. `beforeunload` best-effort flush. `completed` flips at 80% of `duration_sec`. |
+| 15 | Written lesson viewer via `react-markdown` + `remark-gfm` + `@tailwindcss/typography`. IntersectionObserver on a sentinel at 90% scroll fires `markLessonCompleted` once per session. |
+| 16 | Course progress bars on both `/academy` cards and the `/academy/[courseId]` header — derived from `lesson_progress.completed` counts, no extra DB query. |
+| 17 | `scripts/grant-enrolment.ts` + `npm run grant-enrolment -- <email> <course-id>`. Idempotent (unique `(course_id, member_id)`). Prod-ref guard prevents accidental writes to arcadia prod unless `ALLOW_PROD=1`. |
+
+**Route sizes:** `/academy` 721 B / 97.2 kB · `/academy/[courseId]` 45.4 kB / 142 kB (react-markdown + remark-gfm load in the viewer bundle).
+
+**Pending user actions before full smoke test:**
+
+1. Apply migration `20260421000004_phase3_set_lesson_duration.sql` to **arcadia prod + test** (same Supabase SQL editor flow).
+2. Grant yourself an enrolment on a test course if you don't own it:
+   ```
+   cd apps/web && SUPABASE_SERVICE_KEY=... NEXT_PUBLIC_SUPABASE_URL=https://eqbzltiasmuckgsapkye.supabase.co ALLOW_PROD=1 npm run grant-enrolment -- ibi.raheel@gmail.com <course-id>
+   ```
+
+**Step 18 smoke (pending):** publish a course with one video + one written lesson, visit `/academy`, watch to 80% (video marks complete), scroll the written lesson past 90% (marks complete), close tab, reopen — video resumes from last watched second.
+
+---
+
 ## 2026-04-20 — Week 9 complete (Steps 3–10)
 
 Whole Week-9 stack shipped in one session:

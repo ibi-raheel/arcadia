@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 import { VideoLessonViewer } from './_components/VideoLessonViewer';
+import { WrittenLessonViewer } from './_components/WrittenLessonViewer';
 
 export const dynamic = 'force-dynamic';
 
@@ -140,7 +141,11 @@ export default async function CourseViewerPage({
 
         <section className="min-h-[500px] rounded-xl border border-slate-800 bg-slate-900/40 p-6">
           {selectedLesson ? (
-            <LessonBody lesson={selectedLesson} startSec={startSec} />
+            <LessonBody
+              lesson={selectedLesson}
+              startSec={startSec}
+              completed={completedSet.has(selectedLesson.id)}
+            />
           ) : (
             <div className="grid h-full place-items-center text-sm text-slate-500">
               Select a lesson from the left rail to start.
@@ -217,13 +222,14 @@ function CourseProgress({
   );
 }
 
-// Step 15 will replace the written branch with react-markdown rendering.
 function LessonBody({
   lesson,
   startSec,
+  completed,
 }: {
   readonly lesson: SelectedLesson;
   readonly startSec: number;
+  readonly completed: boolean;
 }): React.JSX.Element {
   return (
     <div>
@@ -242,9 +248,11 @@ function LessonBody({
             }}
           />
         ) : lesson.content ? (
-          <pre className="whitespace-pre-wrap rounded-lg border border-slate-800 bg-slate-950/50 p-6 text-sm text-slate-300">
-            {lesson.content}
-          </pre>
+          <WrittenLessonViewer
+            lessonId={lesson.id}
+            content={lesson.content}
+            initiallyCompleted={completed}
+          />
         ) : (
           <p className="text-sm text-slate-500">Nothing to show yet.</p>
         )}
