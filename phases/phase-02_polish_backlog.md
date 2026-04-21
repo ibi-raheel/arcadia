@@ -52,6 +52,23 @@ Deferred items from Phase 2. Each is self-contained and can be picked up between
 
 ---
 
+## 5. Orthogonal top-down world swap (deferred to polish)
+
+**Why:** User is authoring a new top-down world in Tiled (`sprites+worlds 2/`) to replace the current iso cyberpunk tilemap. First pipeline attempts (`world-preview-v2` branch, now deleted) surfaced the Tiled vs Phaser anchor mismatch for oversized tile-layer tiles — canonical fix is to split terrain (tile layers) from decor (object layers). **Captured in ADR 0007.**
+
+**Scope (when picked up):**
+- User re-authors the TMJ in Tiled: terrain stays as tile layers, every tree / lamp / fountain / building moves to an `object_decor` object layer via "Insert as object".
+- User exports with "Embed tilesets" checked.
+- Engineering writes a shared helper `spawnObjectLayer(scene, map, 'object_decor')` — calls `createFromObjects`, sets `origin (0, 1)` + `depth = y` per sprite.
+- WorldScene swaps iso render path for orthogonal + the new helper. Tavern / Academy / Market entrance zones rebind to new tile coords.
+- Retires the iso cyberpunk tilesets (kept in git history for rollback).
+
+**Effort:** ~4–6 hours after the Tiled re-author lands. Tiled re-author is a ~10 min manual step per current map size.
+
+**Status:** parked behind Phase 5 gamification + polish. Pick up anytime after Phase 5 exits.
+
+---
+
 **Not in this backlog** (explicitly Phase 5, per status doc):
 
 - Real-art 60 FPS measurement — belongs with the broader polish phase.
