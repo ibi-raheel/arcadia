@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 import { SectionTree, type SectionRow } from './_components/SectionTree';
+import { VideoLessonEditor, type VideoLesson } from './_components/VideoLessonEditor';
 import { WrittenLessonEditor, type WrittenLesson } from './_components/WrittenLessonEditor';
 
 export const dynamic = 'force-dynamic';
@@ -64,11 +65,10 @@ export default async function CourseEditorPage({
   }));
 
   // Resolve the selected lesson (from ?lesson=<id>), guarding that it
-  // actually belongs to this course. Anything else falls back to the
-  // "no selection" placeholder.
+  // actually belongs to this course.
   const selectedLessonId = searchParams?.lesson ?? null;
-  const selectedLesson: WrittenLesson | null = selectedLessonId
-    ? await loadLesson(selectedLessonId, course.id)
+  const selectedLesson = selectedLessonId
+    ? await loadSelectedLesson(selectedLessonId, course.id)
     : null;
 
   return (
@@ -81,10 +81,26 @@ export default async function CourseEditorPage({
           selectedLessonId={selectedLessonId}
         />
         <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-6">
-          {selectedLesson ? (
-            <WrittenLessonEditor courseId={course.id} lesson={selectedLesson} />
-          ) : (
+          {selectedLesson === null ? (
             <LessonPanePlaceholder hasSections={sectionsWithLessons.length > 0} />
+          ) : selectedLesson.type === 'video' ? (
+            <VideoLessonEditor
+              courseId={course.id}
+              lesson={{
+                id: selectedLesson.id,
+                title: selectedLesson.title,
+                youtube_video_id: selectedLesson.youtube_video_id,
+              }}
+            />
+          ) : (
+            <WrittenLessonEditor
+              courseId={course.id}
+              lesson={{
+                id: selectedLesson.id,
+                title: selectedLesson.title,
+                content: selectedLesson.content,
+              }}
+            />
           )}
         </div>
       </div>
@@ -92,25 +108,45 @@ export default async function CourseEditorPage({
   );
 }
 
-async function loadLesson(lessonId: string, courseId: string): Promise<WrittenLesson | null> {
+type SelectedLessonRow =
+  | (WrittenLesson & { readonly type: 'written' })
+  | (VideoLesson & {
+      readonly type: 'video';
+    });
+
+async function loadSelectedLesson(
+  lessonId: string,
+  courseId: string,
+): Promise<SelectedLessonRow | null> {
   const supabase = getSupabaseServerClient();
   const { data } = await supabase
     .from('lessons')
-    .select('id, title, content, course_id, type')
+    .select('id, title, content, youtube_video_id, course_id, type')
     .eq('id', lessonId)
     .maybeSingle<{
       id: string;
       title: string;
       content: string | null;
+      youtube_video_id: string | null;
       course_id: string;
       type: 'video' | 'written' | null;
     }>();
   if (!data || data.course_id !== courseId) return null;
-  // Video lessons get their dedicated editor in Step 8; for now fall
-  // through to the placeholder so the Markdown editor doesn't show on
-  // a video lesson.
-  if (data.type === 'video') return null;
-  return { id: data.id, title: data.title, content: data.content };
+  if (data.type === 'video') {
+    return {
+      type: 'video',
+      id: data.id,
+      title: data.title,
+      youtube_video_id: data.youtube_video_id,
+    };
+  }
+  // Default to written for null/written — matches createLesson default.
+  return {
+    type: 'written',
+    id: data.id,
+    title: data.title,
+    content: data.content,
+  };
 }
 
 function Header({ course }: { readonly course: Course }): React.JSX.Element {

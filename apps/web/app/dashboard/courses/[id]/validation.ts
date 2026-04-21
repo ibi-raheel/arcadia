@@ -41,6 +41,39 @@ export function validateLessonContent(
   return { ok: true, value: raw };
 }
 
+export const YOUTUBE_ID_LENGTH = 11;
+
+const YOUTUBE_ID_RE = /^[A-Za-z0-9_-]{11}$/;
+const YOUTUBE_URL_PATTERNS: readonly RegExp[] = [
+  /[?&]v=([A-Za-z0-9_-]{11})/, // youtube.com/watch?v=ID
+  /youtu\.be\/([A-Za-z0-9_-]{11})/, // youtu.be/ID
+  /youtube\.com\/embed\/([A-Za-z0-9_-]{11})/, // embed URL
+  /youtube-nocookie\.com\/embed\/([A-Za-z0-9_-]{11})/,
+  /youtube\.com\/shorts\/([A-Za-z0-9_-]{11})/,
+];
+
+/**
+ * Pull an 11-char YouTube video id out of a URL or bare-id string.
+ * Returns null on anything we can't confidently parse.
+ */
+export function parseYouTubeId(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) return null;
+  if (YOUTUBE_ID_RE.test(trimmed)) return trimmed;
+  for (const pattern of YOUTUBE_URL_PATTERNS) {
+    const m = trimmed.match(pattern);
+    if (m && m[1]) return m[1];
+  }
+  return null;
+}
+
+export function validateLessonType(
+  raw: string,
+): { ok: true; value: 'written' | 'video' } | { ok: false; error: string } {
+  if (raw === 'written' || raw === 'video') return { ok: true, value: raw };
+  return { ok: false, error: `Invalid lesson type: ${raw}` };
+}
+
 export function validateReorderIds(
   raw: readonly unknown[],
 ): { ok: true; value: readonly string[] } | { ok: false; error: string } {

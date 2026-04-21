@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import '@uiw/react-md-editor/markdown-editor.css';
 
-import { renameLesson, updateLessonContent } from '../actions';
+import { renameLesson, updateLessonContent, updateLessonType } from '../actions';
 import { LESSON_CONTENT_MAX, LESSON_TITLE_MAX } from '../validation';
 
 // @uiw/react-md-editor ships browser-only — dynamic import skips SSR,
@@ -33,6 +33,7 @@ export function WrittenLessonEditor({ courseId, lesson }: Props): React.JSX.Elem
   const [title, setTitle] = useState<string>(lesson.title);
   const [status, setStatus] = useState<SaveStatus>('idle');
   const [titlePending, startTitleTransition] = useTransition();
+  const [typePending, startTypeTransition] = useTransition();
 
   const saveTimer = useRef<number | null>(null);
   const latestContent = useRef<string>(content);
@@ -103,9 +104,26 @@ export function WrittenLessonEditor({ courseId, lesson }: Props): React.JSX.Elem
     });
   };
 
+  const convertToVideo = (): void => {
+    if (
+      !window.confirm(
+        'Convert to a video lesson? The Markdown content stays saved in the database but is hidden in the video editor.',
+      )
+    )
+      return;
+    startTypeTransition(async () => {
+      const result = await updateLessonType(courseId, lesson.id, 'video');
+      if (!result.ok) {
+        setStatus({ kind: 'error', message: result.error });
+      } else {
+        router.refresh();
+      }
+    });
+  };
+
   return (
     <section className="flex h-full flex-col">
-      <header className="mb-4 flex items-center justify-between gap-4">
+      <header className="mb-4 flex items-center gap-3">
         <input
           type="text"
           value={title}
@@ -121,6 +139,14 @@ export function WrittenLessonEditor({ courseId, lesson }: Props): React.JSX.Elem
           className="flex-1 rounded-lg border border-transparent bg-transparent px-2 py-1 text-xl font-semibold text-slate-100 hover:border-slate-800 focus:border-emerald-500 focus:bg-slate-950 focus:outline-none"
         />
         <SaveIndicator status={status} />
+        <button
+          type="button"
+          onClick={convertToVideo}
+          disabled={typePending}
+          className="rounded-md border border-slate-700 px-3 py-1 text-xs font-medium text-slate-300 transition hover:border-slate-500 hover:text-white disabled:opacity-50"
+        >
+          Convert to video
+        </button>
       </header>
 
       <div data-color-mode="dark" className="flex-1">
