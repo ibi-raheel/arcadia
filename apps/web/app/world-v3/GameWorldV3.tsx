@@ -80,20 +80,27 @@ class WorldV3Scene extends Phaser.Scene {
       map.createLayer(idx, tilesets, 0, 0);
     });
 
-    // Object layers → one Sprite per object, anchored per tileset's
-    // objectalignment (ADR 0007 pattern — honors what you set in Tiled).
+    // Object layers → Phaser's createFromObjects resolves each gid to
+    // the correct tileset + frame internally. Using this instead of raw
+    // add.sprite avoids the "whole spritesheet renders as one sprite"
+    // bug: add.sprite(x, y, key, frame) with a numeric frame only works
+    // on textures loaded via load.spritesheet. Our tilesets are loaded
+    // via load.image (required for tile-layer rendering via
+    // map.addTilesetImage), so the raw texture has no per-tile frames.
+    // createFromObjects reads frame info from the Phaser Tileset object
+    // that addTilesetImage built, giving the sprite the correct crop.
     for (const objectLayer of map.objects) {
-      for (const obj of objectLayer.objects) {
-        if (obj.gid == null) continue;
-        const tileset = findTilesetForGid(tilesets, obj.gid);
-        if (!tileset) continue;
-        const localTileIndex = obj.gid - tileset.firstgid;
-        const texKey = `ts-${tileset.name}`;
-        const sprite = this.add.sprite(obj.x ?? 0, obj.y ?? 0, texKey, localTileIndex);
-        applyOriginFromAlignment(sprite, tilesetAlignment(tileset));
-        // If Tiled-side was resized, honor it.
-        if (obj.width && obj.height) sprite.setDisplaySize(obj.width, obj.height);
-        sprite.setDepth(obj.y ?? 0);
+      const spawned = map.createFromObjects(objectLayer.name, {
+        classType: Phaser.GameObjects.Sprite,
+      });
+      for (let i = 0; i < spawned.length; i++) {
+        const sprite = spawned[i];
+        if (!(sprite instanceof Phaser.GameObjects.Sprite)) continue;
+        const obj = objectLayer.objects[i];
+        if (!obj) continue;
+        const tileset = obj.gid != null ? findTilesetForGid(tilesets, obj.gid) : undefined;
+        applyOriginFromAlignment(sprite, tileset ? tilesetAlignment(tileset) : 'bottomleft');
+        sprite.setDepth(sprite.y);
         this.objectSprites.push(sprite);
       }
     }
