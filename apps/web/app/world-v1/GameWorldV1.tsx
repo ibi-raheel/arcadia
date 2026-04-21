@@ -97,6 +97,9 @@ class WorldV1Scene extends Phaser.Scene {
 
     // Object layers → one Sprite per object. Explicit frame picking:
     // gid − tileset.firstgid = local tile index = frame index.
+    // Shift y by one map tileHeight: Tiled anchors the visual to the
+    // bottom of the cell, so obj.y lands one grid row above intended.
+    const yShift = map.tileHeight;
     for (const objectLayer of map.objects) {
       for (const obj of objectLayer.objects) {
         if (obj.gid == null) continue;
@@ -104,10 +107,11 @@ class WorldV1Scene extends Phaser.Scene {
         if (!tileset) continue;
         const localTileIndex = obj.gid - tileset.firstgid;
         const texKey = `ts-${tileset.name}`;
-        const sprite = this.add.sprite(obj.x ?? 0, obj.y ?? 0, texKey, localTileIndex);
+        const y = (obj.y ?? 0) + yShift;
+        const sprite = this.add.sprite(obj.x ?? 0, y, texKey, localTileIndex);
         applyOriginFromAlignment(sprite, tilesetAlignment(tileset));
         if (obj.width && obj.height) sprite.setDisplaySize(obj.width, obj.height);
-        sprite.setDepth(obj.y ?? 0);
+        sprite.setDepth(y);
         this.objectSprites.push(sprite);
       }
     }
