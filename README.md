@@ -8,7 +8,11 @@ Each community (**Realm**) gives members an avatar, a space to gather (**Tavern*
 
 ## Status
 
-🚀 MVP build — **Phase 3 shipped 2026-04-20**. Full creator → member content loop works on prod: build a course in the dashboard, publish, members find it in the Academy, watch videos with resume + progress tracking, read Markdown lessons with scroll-to-complete. Home page is a role-aware hub.
+🚀 MVP build — **Phase 4 shipped 2026-04-21**. Market catalogue + creator analytics live on top of the Phase 3 creator→member loop.
+
+- **`/market`** — Phaser "market hall" with one stall per published course. Walk up, click, a **stall modal** opens over a blurred Phaser canvas. Previews play inline; enrol is one click and keeps you in the hall. Avatar position persists across reloads via localStorage.
+- **`/dashboard/courses/[id]/analytics`** — creator-only: enrolment count, completion rate, active-in-7d, recent-activity table. Service-role admin read, owner-verified.
+- **Phase 3 loop still intact** from 2026-04-20: `/dashboard`, course editor, YouTube unlisted video host (ADR 0006), `/academy` Phaser hall, YouTube IFrame Player with resume + 80% completion, `react-markdown` for written lessons with scroll-to-complete.
 
 - **Creator dashboard** (`/dashboard`, role-gated) — course list, two-pane editor, drag-reorder sections + lessons, Markdown editor with autosave, YouTube URL editor, publish toggle.
 - **Academy** (`/academy`) — **Phaser scene** mirroring the Tavern. Walk around a 1536×1024 interior, click a course podium to open the React course viewer.
