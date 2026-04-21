@@ -45,6 +45,11 @@ export function StallView({ stall, onClose }: Props): React.JSX.Element {
   const [activePreviewId, setActivePreviewId] = useState<string | null>(null);
   const [enrolError, setEnrolError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  // Local "just enrolled this session" flag so the modal can flip UI
+  // instantly without a server refresh (which would tear down Phaser
+  // and reset the avatar position). Merges with the server `enrolled`.
+  const [locallyEnrolled, setLocallyEnrolled] = useState(false);
+  const isEnrolled = stall.enrolled || locallyEnrolled;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -68,7 +73,10 @@ export function StallView({ stall, onClose }: Props): React.JSX.Element {
       if (!result.ok) {
         setEnrolError(result.error);
       } else {
-        router.push(`/academy/${stall.id}`);
+        // Stay in the Market — don't redirect or refresh. Flip the local
+        // flag so the footer swaps to "Open in Academy" + show a success
+        // banner. Stall border will update on next full /market load.
+        setLocallyEnrolled(true);
       }
     });
   };
@@ -164,19 +172,34 @@ export function StallView({ stall, onClose }: Props): React.JSX.Element {
           </section>
         )}
 
+        {locallyEnrolled && (
+          <p className="mt-4 rounded-lg border border-emerald-700/60 bg-emerald-950/40 px-4 py-2 text-sm text-emerald-200">
+            ✓ You&rsquo;re enrolled. Keep browsing or open the course in the Academy.
+          </p>
+        )}
+
         <footer className="mt-6 flex items-center justify-between border-t border-slate-800 pt-4">
           <p className="text-xs text-slate-500">
             <span className="font-medium text-slate-300">Free while in beta</span> — no payment
             today.
           </p>
-          {stall.enrolled ? (
-            <button
-              type="button"
-              onClick={() => router.push(`/academy/${stall.id}`)}
-              className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
-            >
-              Open in Academy
-            </button>
+          {isEnrolled ? (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-slate-500 hover:text-white"
+              >
+                Keep browsing
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push(`/academy/${stall.id}`)}
+                className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
+              >
+                Open in Academy
+              </button>
+            </div>
           ) : (
             <div className="flex items-center gap-3">
               {enrolError && <span className="text-xs text-red-300">{enrolError}</span>}
