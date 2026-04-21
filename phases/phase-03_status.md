@@ -2,6 +2,17 @@
 
 Source plan: `phase-03_plan.md`. Status entries chronological, newest on top.
 
+## 2026-04-21 — Post-exit patches
+
+Two same-day follow-ups after the Phase 3 close-out; both on main:
+
+- **Academy interior art updated** (user-supplied replacement, 1536×1024 same as prior — no scene-config drift). Commit `9ce023e`.
+- **Video completion ✓ fix.** Reliance on the 80%-of-`duration_sec` threshold meant videos whose duration hadn't been captured in time (first-play race) would silently never flip `completed=true`. Plus the UI didn't refresh on threshold crossing, so the left-rail ✓ was invisible until a manual reload. `VideoLessonViewer` now (a) calls `markLessonCompleted` unconditionally on `STATE_ENDED`, bypassing the threshold path, and (b) fires `router.refresh()` once per mount when the 80% threshold crosses or ENDED triggers. Same commit `9ce023e`.
+
+Phase 3 exit criteria still all met.
+
+---
+
 ## 2026-04-20 — Phase 3 EXIT (Step 18 smoke green)
 
 **Phase 3 is code-complete 2026-04-20** — same session Week 9 landed. End-to-end creator → member flow works on Vercel prod with real data.
