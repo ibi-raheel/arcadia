@@ -1,8 +1,14 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
-import { flushLessonProgress, setLessonDurationIfNull, upsertLessonProgress } from '../actions';
+import {
+  flushLessonProgress,
+  markLessonCompleted,
+  setLessonDurationIfNull,
+  upsertLessonProgress,
+} from '../actions';
 
 // YouTube IFrame API player-state codes.
 const STATE_ENDED = 0;
@@ -68,11 +74,13 @@ type Props = {
 };
 
 export function VideoLessonViewer({ initial }: Props): React.JSX.Element {
+  const router = useRouter();
   const hostRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayer | null>(null);
   const pollTimerRef = useRef<number | null>(null);
   const durationRef = useRef<number | null>(initial.durationSec);
   const lastWatchedRef = useRef<number>(initial.startSec);
+  const markedCompleteRef = useRef<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -81,7 +89,36 @@ export function VideoLessonViewer({ initial }: Props): React.JSX.Element {
     const sendProgress = async (watched: number): Promise<void> => {
       lastWatchedRef.current = watched;
       const result = await upsertLessonProgress(initial.lessonId, watched, durationRef.current);
-      if (!result.ok) setError(result.error);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      // If the server-computed completion just flipped to true (watched
+      // crossed the 80% threshold), refresh so the left-rail ✓ updates
+      // without forcing the user to reload.
+      if (
+        !markedCompleteRef.current &&
+        durationRef.current != null &&
+        durationRef.current > 0 &&
+        watched >= 0.8 * durationRef.current
+      ) {
+        markedCompleteRef.current = true;
+        router.refresh();
+      }
+    };
+
+    const forceComplete = async (): Promise<void> => {
+      if (markedCompleteRef.current) return;
+      markedCompleteRef.current = true;
+      // markLessonCompleted is duration-independent; used when the video
+      // hits STATE_ENDED so we don't rely on the threshold arithmetic.
+      const result = await markLessonCompleted(initial.lessonId);
+      if (!result.ok) {
+        markedCompleteRef.current = false;
+        setError(result.error);
+      } else {
+        router.refresh();
+      }
     };
 
     const startPolling = (player: YTPlayer): void => {
@@ -122,6 +159,9 @@ export function VideoLessonViewer({ initial }: Props): React.JSX.Element {
           onReady: async (event) => {
             playerRef.current = event.target;
             // Capture duration on first play if we don't know it yet.
+            // Without this, the 80% threshold can't be evaluated during
+            // playback, so completion would never fire from the polling
+            // path. STATE_ENDED's forceComplete() is the safety net.
             if (durationRef.current === null) {
               const reported = Math.round(event.target.getDuration());
               if (reported > 0) {
@@ -134,9 +174,16 @@ export function VideoLessonViewer({ initial }: Props): React.JSX.Element {
           onStateChange: (event) => {
             if (event.data === STATE_PLAYING) {
               startPolling(event.target);
-            } else if (event.data === STATE_PAUSED || event.data === STATE_ENDED) {
+            } else if (event.data === STATE_PAUSED) {
               stopPolling();
               void sendProgress(event.target.getCurrentTime());
+            } else if (event.data === STATE_ENDED) {
+              stopPolling();
+              // Natural end-of-video → unconditional completion, regardless
+              // of whether duration_sec was captured in time to cross the
+              // 80% threshold. Also refreshes the UI so the ✓ shows.
+              void sendProgress(event.target.getCurrentTime());
+              void forceComplete();
             }
           },
         },
