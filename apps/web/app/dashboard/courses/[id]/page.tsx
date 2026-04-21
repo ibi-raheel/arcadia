@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 import { SectionTree, type SectionRow } from './_components/SectionTree';
+import { WrittenLessonEditor, type WrittenLesson } from './_components/WrittenLessonEditor';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,9 +16,15 @@ type Course = {
   creator_id: string | null;
 };
 
-type Params = { readonly params: { readonly id: string } };
+type Params = {
+  readonly params: { readonly id: string };
+  readonly searchParams?: { readonly lesson?: string };
+};
 
-export default async function CourseEditorPage({ params }: Params): Promise<React.JSX.Element> {
+export default async function CourseEditorPage({
+  params,
+  searchParams,
+}: Params): Promise<React.JSX.Element> {
   const supabase = getSupabaseServerClient();
 
   const {
@@ -56,15 +63,54 @@ export default async function CourseEditorPage({ params }: Params): Promise<Reac
       .map((l) => ({ id: l.id, title: l.title, type: l.type })),
   }));
 
+  // Resolve the selected lesson (from ?lesson=<id>), guarding that it
+  // actually belongs to this course. Anything else falls back to the
+  // "no selection" placeholder.
+  const selectedLessonId = searchParams?.lesson ?? null;
+  const selectedLesson: WrittenLesson | null = selectedLessonId
+    ? await loadLesson(selectedLessonId, course.id)
+    : null;
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <Header course={course} />
       <div className="mx-auto grid max-w-6xl grid-cols-[300px_1fr] gap-6 p-6">
-        <SectionTree courseId={course.id} initialSections={sectionsWithLessons} />
-        <LessonPane hasSections={sectionsWithLessons.length > 0} />
+        <SectionTree
+          courseId={course.id}
+          initialSections={sectionsWithLessons}
+          selectedLessonId={selectedLessonId}
+        />
+        <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-6">
+          {selectedLesson ? (
+            <WrittenLessonEditor courseId={course.id} lesson={selectedLesson} />
+          ) : (
+            <LessonPanePlaceholder hasSections={sectionsWithLessons.length > 0} />
+          )}
+        </div>
       </div>
     </main>
   );
+}
+
+async function loadLesson(lessonId: string, courseId: string): Promise<WrittenLesson | null> {
+  const supabase = getSupabaseServerClient();
+  const { data } = await supabase
+    .from('lessons')
+    .select('id, title, content, course_id, type')
+    .eq('id', lessonId)
+    .maybeSingle<{
+      id: string;
+      title: string;
+      content: string | null;
+      course_id: string;
+      type: 'video' | 'written' | null;
+    }>();
+  if (!data || data.course_id !== courseId) return null;
+  // Video lessons get their dedicated editor in Step 8; for now fall
+  // through to the placeholder so the Markdown editor doesn't show on
+  // a video lesson.
+  if (data.type === 'video') return null;
+  return { id: data.id, title: data.title, content: data.content };
 }
 
 function Header({ course }: { readonly course: Course }): React.JSX.Element {
@@ -100,22 +146,26 @@ function PublishedBadge({ published }: { readonly published: boolean }): React.J
   );
 }
 
-function LessonPane({ hasSections }: { readonly hasSections: boolean }): React.JSX.Element {
+function LessonPanePlaceholder({
+  hasSections,
+}: {
+  readonly hasSections: boolean;
+}): React.JSX.Element {
   return (
-    <section className="rounded-xl border border-slate-800 bg-slate-900/40 p-10 text-center">
+    <div className="p-6 text-center">
       {hasSections ? (
         <p className="text-slate-400">
-          Select a lesson from the left rail to edit. Inline editors come in Steps 7 (Markdown) and
-          8 (YouTube URL parser).
+          Select a lesson from the left rail to edit it here. Video lessons (YouTube) land in Step
+          8.
         </p>
       ) : (
         <div>
           <p className="text-slate-300">This course has no sections yet.</p>
           <p className="mt-2 text-sm text-slate-500">
-            Add one from the left rail (wired in Step 5) to start authoring lessons.
+            Add one from the left rail to start authoring lessons.
           </p>
         </div>
       )}
-    </section>
+    </div>
   );
 }

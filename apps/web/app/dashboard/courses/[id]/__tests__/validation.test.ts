@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  LESSON_CONTENT_MAX,
   LESSON_TITLE_MAX,
   SECTION_TITLE_MAX,
+  validateLessonContent,
   validateLessonTitle,
   validateReorderIds,
   validateSectionTitle,
@@ -49,6 +51,30 @@ describe('validateLessonTitle', () => {
 
   it('rejects over the limit', () => {
     expect(validateLessonTitle('a'.repeat(LESSON_TITLE_MAX + 1)).ok).toBe(false);
+  });
+});
+
+describe('validateLessonContent', () => {
+  it('accepts empty content (fresh lesson)', () => {
+    const r = validateLessonContent('');
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value).toBe('');
+  });
+
+  it('preserves whitespace (Markdown cares)', () => {
+    const r = validateLessonContent('  # title\n\n  paragraph  ');
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value).toBe('  # title\n\n  paragraph  ');
+  });
+
+  it('rejects content over the limit', () => {
+    const r = validateLessonContent('a'.repeat(LESSON_CONTENT_MAX + 1));
+    expect(r.ok).toBe(false);
+  });
+
+  it('accepts exactly at the limit', () => {
+    const r = validateLessonContent('a'.repeat(LESSON_CONTENT_MAX));
+    expect(r.ok).toBe(true);
   });
 });
 

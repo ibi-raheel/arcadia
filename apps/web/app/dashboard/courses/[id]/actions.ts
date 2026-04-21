@@ -4,7 +4,12 @@ import { revalidatePath } from 'next/cache';
 
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
-import { validateLessonTitle, validateReorderIds, validateSectionTitle } from './validation';
+import {
+  validateLessonContent,
+  validateLessonTitle,
+  validateReorderIds,
+  validateSectionTitle,
+} from './validation';
 
 type Result = { readonly ok: true } | { readonly ok: false; readonly error: string };
 
@@ -187,6 +192,30 @@ export async function renameLesson(
   if (error) return { ok: false, error: error.message };
 
   revalidatePath(`/dashboard/courses/${courseId}`);
+  return { ok: true };
+}
+
+export async function updateLessonContent(
+  courseId: string,
+  lessonId: string,
+  rawContent: string,
+): Promise<Result> {
+  const ownerCheck = await assertOwner(courseId);
+  if (!ownerCheck.ok) return ownerCheck;
+
+  const validation = validateLessonContent(rawContent);
+  if (!validation.ok) return { ok: false, error: validation.error };
+
+  const supabase = getSupabaseServerClient();
+  const { error } = await supabase
+    .from('lessons')
+    .update({ content: validation.value })
+    .eq('id', lessonId)
+    .eq('course_id', courseId);
+  if (error) return { ok: false, error: error.message };
+
+  // No revalidatePath — the editor refreshes its own state; avoids a
+  // full page re-render on every keystroke save.
   return { ok: true };
 }
 
