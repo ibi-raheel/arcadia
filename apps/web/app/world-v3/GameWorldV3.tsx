@@ -56,13 +56,15 @@ class WorldV3Scene extends Phaser.Scene {
           tileheight: t.tileheight,
           objectalignment: t.objectalignment,
         }));
-      // Load each tileset as a plain IMAGE. Phaser's map.addTilesetImage
-      // slices the image internally using tilewidth/tileheight from the
-      // TMJ, and createFromObjects resolves gid→frame using those slices.
-      // Loading as a spritesheet breaks createFromObjects (Phaser #5403) —
-      // the spritesheet frames override the tileset's internal frames.
+      // Load each tileset as a SPRITESHEET with its per-tile dimensions.
+      // This registers one texture-frame per tile on the image so
+      // map.createFromObjects + raw add.sprite(x, y, key, frame) both
+      // pick the right tile instead of the whole sheet.
       for (const ts of this.tilesetPreloads) {
-        this.load.image(`ts-${ts.name}`, ts.image);
+        this.load.spritesheet(`ts-${ts.name}`, ts.image, {
+          frameWidth: ts.tilewidth,
+          frameHeight: ts.tileheight,
+        });
       }
       this.load.start();
     });
@@ -93,19 +95,23 @@ class WorldV3Scene extends Phaser.Scene {
       map.createLayer(idx, tilesets, 0, 0);
     });
 
-    // Object layers → Phaser's canonical createFromObjects. It walks
-    // each object's gid, finds the owning tileset via firstgid range,
-    // creates a Sprite with the right texture + frame (from the tileset's
-    // internal slicing) + sets origin to (0, 1) matching Tiled. Zero
-    // manual frame computation.
+    // Object layers → one Sprite per object. Explicit frame picking:
+    // gid − tileset.firstgid = local tile index = frame index (since
+    // load.spritesheet registered frames "0", "1", "2", ... in the
+    // same order). No reliance on createFromObjects doing the right
+    // thing silently — we compute the frame ourselves.
     for (const objectLayer of map.objects) {
-      const spawned = map.createFromObjects(objectLayer.name, {
-        classType: Phaser.GameObjects.Sprite,
-      });
-      for (const go of spawned) {
-        if (!(go instanceof Phaser.GameObjects.Sprite)) continue;
-        go.setDepth(go.y);
-        this.objectSprites.push(go);
+      for (const obj of objectLayer.objects) {
+        if (obj.gid == null) continue;
+        const tileset = findTilesetForGid(tilesets, obj.gid);
+        if (!tileset) continue;
+        const localTileIndex = obj.gid - tileset.firstgid;
+        const texKey = `ts-${tileset.name}`;
+        const sprite = this.add.sprite(obj.x ?? 0, obj.y ?? 0, texKey, localTileIndex);
+        applyOriginFromAlignment(sprite, tilesetAlignment(tileset));
+        if (obj.width && obj.height) sprite.setDisplaySize(obj.width, obj.height);
+        sprite.setDepth(obj.y ?? 0);
+        this.objectSprites.push(sprite);
       }
     }
 
@@ -164,6 +170,59 @@ class WorldV3Scene extends Phaser.Scene {
       setDepth?: (v: number) => unknown;
     };
     go.setDepth?.(this.localAvatar.y + AVATAR_DISPLAY_SIZE / 2);
+  }
+}
+
+function findTilesetForGid(
+  tilesets: readonly Phaser.Tilemaps.Tileset[],
+  gid: number,
+): Phaser.Tilemaps.Tileset | undefined {
+  let best: Phaser.Tilemaps.Tileset | undefined;
+  for (const t of tilesets) {
+    if (t.firstgid <= gid && (!best || t.firstgid > best.firstgid)) best = t;
+  }
+  return best;
+}
+
+function tilesetAlignment(ts: Phaser.Tilemaps.Tileset): string {
+  // Phaser's Tileset type doesn't surface objectalignment as a typed
+  // property, but the parsed data is preserved on the underlying object.
+  const raw = (ts as unknown as { tileProperties?: unknown; objectAlignment?: string })
+    .objectAlignment;
+  return raw ?? 'bottomleft';
+}
+
+function applyOriginFromAlignment(sprite: Phaser.GameObjects.Sprite, alignment: string): void {
+  // Tiled's objectalignment values — map to Phaser origin (0..1 on each axis).
+  switch (alignment) {
+    case 'topleft':
+      sprite.setOrigin(0, 0);
+      break;
+    case 'top':
+      sprite.setOrigin(0.5, 0);
+      break;
+    case 'topright':
+      sprite.setOrigin(1, 0);
+      break;
+    case 'left':
+      sprite.setOrigin(0, 0.5);
+      break;
+    case 'center':
+      sprite.setOrigin(0.5, 0.5);
+      break;
+    case 'right':
+      sprite.setOrigin(1, 0.5);
+      break;
+    case 'bottom':
+      sprite.setOrigin(0.5, 1);
+      break;
+    case 'bottomright':
+      sprite.setOrigin(1, 1);
+      break;
+    case 'bottomleft':
+    default:
+      sprite.setOrigin(0, 1);
+      break;
   }
 }
 
