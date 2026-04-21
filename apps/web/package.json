@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint app components lib tests middleware.ts --max-warnings=0",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "grant-enrolment": "tsx scripts/grant-enrolment.ts"
   },
   "dependencies": {
     "@arcadia/shared": "*",
@@ -17,12 +18,15 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.47.0",
+    "@tailwindcss/typography": "^0.5.19",
     "@uiw/react-md-editor": "^4.1.0",
     "colyseus.js": "^0.16.0",
     "next": "14.2.35",
     "phaser": "^3.88.0",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "react-markdown": "^9.1.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
@@ -31,6 +35,7 @@
     "dotenv": "^16.4.5",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
