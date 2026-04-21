@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  COURSE_DESCRIPTION_MAX,
-  COURSE_TITLE_MAX,
-  validateCreateCourseInput,
-} from '../validation';
+import { COURSE_DESCRIPTION_MAX, COURSE_TITLE_MAX, validateCreateCourseInput } from '../validation';
 
 describe('validateCreateCourseInput', () => {
   it('accepts a valid payload and trims whitespace', () => {

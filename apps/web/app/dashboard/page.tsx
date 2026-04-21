@@ -63,11 +63,7 @@ export default async function DashboardPage(): Promise<React.JSX.Element> {
           <CreateCourseDialog />
         </header>
 
-        {courses && courses.length > 0 ? (
-          <CourseGrid courses={courses} />
-        ) : (
-          <EmptyState />
-        )}
+        {courses && courses.length > 0 ? <CourseGrid courses={courses} /> : <EmptyState />}
       </div>
     </main>
   );

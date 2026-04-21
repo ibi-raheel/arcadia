@@ -76,9 +76,7 @@ export function CreateCourseDialog(): React.JSX.Element {
             <h2 id="create-course-title" className="text-xl font-semibold text-slate-100">
               Create a course
             </h2>
-            <p className="mt-1 text-sm text-slate-400">
-              You can edit everything after creating.
-            </p>
+            <p className="mt-1 text-sm text-slate-400">You can edit everything after creating.</p>
 
             <form onSubmit={handleSubmit} className="mt-5 space-y-4">
               <label className="block">
@@ -102,9 +100,7 @@ export function CreateCourseDialog(): React.JSX.Element {
                 </span>
                 <textarea
                   value={description}
-                  onChange={(e) =>
-                    setDescription(e.target.value.slice(0, COURSE_DESCRIPTION_MAX))
-                  }
+                  onChange={(e) => setDescription(e.target.value.slice(0, COURSE_DESCRIPTION_MAX))}
                   maxLength={COURSE_DESCRIPTION_MAX}
                   rows={3}
                   className="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
@@ -117,9 +113,7 @@ export function CreateCourseDialog(): React.JSX.Element {
               </label>
 
               {error && (
-                <p className="rounded-lg bg-red-950/50 px-3 py-2 text-sm text-red-300">
-                  {error}
-                </p>
+                <p className="rounded-lg bg-red-950/50 px-3 py-2 text-sm text-red-300">{error}</p>
               )}
 
               <div className="flex justify-end gap-2 pt-1">
