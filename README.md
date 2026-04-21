@@ -8,11 +8,17 @@ Each community (**Realm**) gives members an avatar, a space to gather (**Tavern*
 
 ## Status
 
-🚀 MVP build — **Phase 3 Week 9 shipped 2026-04-20**. Creator dashboard is live at `/dashboard` (role-gated: `memberships.role in ('creator','admin')`) with course creation, two-pane course editor at `/dashboard/courses/[id]`, drag-reorder sections + lessons (`@dnd-kit/sortable`), Markdown editor for written lessons (`@uiw/react-md-editor`, 2 s debounced autosave), YouTube URL editor for video lessons (demo-only host per ADR 0006), and publish / unpublish toggle. Home page is a role-aware hub: members see **Enter the World**, creators also see **Open the Dashboard**.
+🚀 MVP build — **Phase 3 shipped 2026-04-20**. Full creator → member content loop works on prod: build a course in the dashboard, publish, members find it in the Academy, watch videos with resume + progress tracking, read Markdown lessons with scroll-to-complete. Home page is a role-aware hub.
 
-**Phase 2** (shipped 2026-04-19): two-tab multiplayer in `/world` (cyberpunk iso map, 4-tileset Tiled scene, remote avatars with linear interpolation) and `/tavern` (image-backed cyberpunk bar, Tab-to-chat with speech bubbles, XP-leaderboard sidebar). Knight + LPC-female avatars have real art; 03–08 render as colour placeholders. Colyseus 0.16 on Railway + Supabase Realtime + RPC-gated reactions (UI currently off per user).
+- **Creator dashboard** (`/dashboard`, role-gated) — course list, two-pane editor, drag-reorder sections + lessons, Markdown editor with autosave, YouTube URL editor, publish toggle.
+- **Academy** (`/academy`) — **Phaser scene** mirroring the Tavern. Walk around a 1536×1024 interior, click a course podium to open the React course viewer.
+- **Course viewer** (`/academy/[courseId]`) — YouTube IFrame Player (resume + 80%-watched completion), react-markdown for written lessons (90%-scroll completion), course progress bar.
+- **Video host:** YouTube unlisted, demo-only per ADR 0006. Swap to a real host required before paying creators.
+- **Tavern + Academy** share new user-supplied 1536×1024 interior art; avatar downscaled to 90×90, camera zoomed to 1.365×.
 
-Next up: **Week 10** — member-side course viewer at `/academy` + YouTube IFrame Player + progress tracking. See [`phases/phase-03_status.md`](phases/phase-03_status.md) for the Phase 3 log, [`phases/phase-02_status.md`](phases/phase-02_status.md) for the Phase 2 log, [`docs/guides/phase-03-setup.md`](docs/guides/phase-03-setup.md) for the creator-flow setup walkthrough, and [`docs/claude-scoping.md`](docs/claude-scoping.md) for where to `cd` when opening Claude.
+**Earlier phases.** Phase 2 (shipped 2026-04-19): `/world` multiplayer (cyberpunk iso map, Colyseus 0.16 on Railway, remote avatars with linear interpolation) and `/tavern` (image-backed bar, Tab-to-chat with speech bubbles, XP-leaderboard sidebar, RPC-gated reactions backend).
+
+Next up: **Phase 4** — `/market` (course catalogue), creator analytics dashboard. See [`phases/phase-03_status.md`](phases/phase-03_status.md) for the Phase 3 log, [`docs/changelog/2026-04-20_phase-03-exit.md`](docs/changelog/2026-04-20_phase-03-exit.md) for the shipped summary, [`docs/guides/phase-03-setup.md`](docs/guides/phase-03-setup.md) for the creator-flow setup walkthrough, and [`docs/claude-scoping.md`](docs/claude-scoping.md) for where to `cd` when opening Claude.
 
 ### Live services
 
