@@ -165,7 +165,15 @@ function Header({ course }: { readonly course: Course }): React.JSX.Element {
           <h1 className="text-lg font-semibold">{course.title}</h1>
           <PublishedBadge published={course.published} />
         </div>
-        <PublishToggle courseId={course.id} published={course.published} />
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/dashboard/courses/${course.id}/analytics`}
+            className="rounded-md border border-slate-700 px-3 py-1 text-xs font-medium text-slate-300 transition hover:border-slate-500 hover:text-white"
+          >
+            Analytics
+          </Link>
+          <PublishToggle courseId={course.id} published={course.published} />
+        </div>
       </div>
     </header>
   );
