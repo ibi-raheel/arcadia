@@ -31,6 +31,14 @@ const NPC_TIPS: readonly string[] = [
   'Lamps light up at dusk. Mostly.',
 ];
 
+type BridgeEntry = {
+  sprite: Phaser.GameObjects.Sprite;
+  centerX: number;
+  centerY: number;
+  route: string;
+  label: string;
+};
+
 type InlineTileset = {
   name: string;
   image: string;
@@ -54,6 +62,8 @@ class WorldSquareV3Scene extends Phaser.Scene {
   private npcBubble?: Phaser.GameObjects.Container;
   private npcBubbleText?: Phaser.GameObjects.Text;
   private npcWasNear = false;
+  private bridges: BridgeEntry[] = [];
+  private bridgeTriggered = false;
 
   constructor() {
     super({ key: 'WorldSquareV3Scene' });
@@ -133,9 +143,15 @@ class WorldSquareV3Scene extends Phaser.Scene {
         if (tileset.name.toLowerCase().includes('merchant')) {
           this.npcSprite = sprite;
         }
+        if (tileset.name.toLowerCase().includes('bridge')) {
+          const cx = (obj.x ?? 0) + (obj.width ?? 0) / 2;
+          const cy = y - (obj.height ?? 0) / 2;
+          this.bridges.push({ sprite, centerX: cx, centerY: cy, route: '', label: '' });
+        }
       }
     }
 
+    this.assignBridgeRoutes(map.widthInPixels, map.heightInPixels);
     if (this.npcSprite) this.createNpcBubble();
 
     const worldW = map.widthInPixels;
@@ -156,6 +172,91 @@ class WorldSquareV3Scene extends Phaser.Scene {
     this.cameras.main.setZoom(1.2);
 
     this.wireKeyboardInput();
+  }
+
+  private assignBridgeRoutes(worldW: number, worldH: number): void {
+    if (this.bridges.length === 0) return;
+    const cx = worldW / 2;
+    const cy = worldH / 2;
+    // Classify bridges by edge: compare displacement from map center.
+    const north = this.bridges
+      .filter((b) => Math.abs(b.centerY - cy) > Math.abs(b.centerX - cx) && b.centerY < cy)
+      .sort((a, b) => a.centerY - b.centerY)[0];
+    const south = this.bridges
+      .filter((b) => Math.abs(b.centerY - cy) > Math.abs(b.centerX - cx) && b.centerY > cy)
+      .sort((a, b) => b.centerY - a.centerY)[0];
+    const east = this.bridges
+      .filter((b) => Math.abs(b.centerX - cx) >= Math.abs(b.centerY - cy) && b.centerX > cx)
+      .sort((a, b) => b.centerX - a.centerX)[0];
+    const wire = (
+      entry: BridgeEntry | undefined,
+      route: string,
+      label: string,
+      neon: number,
+    ): void => {
+      if (!entry) return;
+      entry.route = route;
+      entry.label = label;
+      this.createNeonSign(entry, neon);
+    };
+    wire(north, '/academy', 'TO THE ACADEMY', 0x38bdf8);
+    wire(south, '/tavern', 'TO THE TAVERN', 0xf472b6);
+    wire(east, '/market', 'TO THE MARKET', 0xfacc15);
+  }
+
+  private createNeonSign(entry: BridgeEntry, colorInt: number): void {
+    const colorHex = `#${colorInt.toString(16).padStart(6, '0')}`;
+    const text = this.add
+      .text(0, 0, entry.label, {
+        fontFamily: '"Courier New", monospace',
+        fontSize: '26px',
+        fontStyle: 'bold',
+        color: colorHex,
+        stroke: colorHex,
+        strokeThickness: 1,
+      })
+      .setOrigin(0.5, 1)
+      .setPadding(18, 10, 18, 10);
+    text.setShadow(0, 0, colorHex, 12, true, true);
+    const bg = this.add.graphics();
+    const w = text.width;
+    const h = text.height;
+    bg.fillStyle(0x0b1220, 0.9);
+    bg.fillRoundedRect(-w / 2, -h, w, h, 10);
+    bg.lineStyle(3, colorInt, 1);
+    bg.strokeRoundedRect(-w / 2, -h, w, h, 10);
+    const container = this.add
+      .container(entry.centerX, entry.centerY - (entry.sprite.displayHeight * 0.55), [bg, text])
+      .setDepth(1_500_000);
+    // Subtle pulse so it reads as neon.
+    this.tweens.add({
+      targets: container,
+      alpha: { from: 0.85, to: 1 },
+      duration: 900,
+      yoyo: true,
+      repeat: -1,
+    });
+  }
+
+  private checkBridgeEntry(): void {
+    if (this.bridgeTriggered || !this.localAvatar) return;
+    const ax = this.localAvatar.x ?? 0;
+    const ay = this.localAvatar.y ?? 0;
+    for (const b of this.bridges) {
+      if (!b.route) continue;
+      const dx = ax - b.centerX;
+      const dy = ay - b.centerY;
+      const halfW = b.sprite.displayWidth / 2;
+      const halfH = b.sprite.displayHeight / 2;
+      if (Math.abs(dx) < halfW * 0.7 && Math.abs(dy) < halfH * 0.7) {
+        this.bridgeTriggered = true;
+        this.cameras.main.fadeOut(300, 0, 0, 0);
+        this.cameras.main.once('camerafadeoutcomplete', () => {
+          window.location.href = b.route;
+        });
+        return;
+      }
+    }
   }
 
   private createNpcBubble(): void {
@@ -244,6 +345,7 @@ class WorldSquareV3Scene extends Phaser.Scene {
     this.localAvatar.syncAttachments();
     this.localAvatar.setDepth(1_000_000);
     this.updateNpcBubble();
+    this.checkBridgeEntry();
   }
 }
 
