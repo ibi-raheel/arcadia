@@ -201,7 +201,7 @@ class WorldSquareV3Scene extends Phaser.Scene {
     // Sprite bounding box is much taller than the visible character (lots
     // of empty padding at the top). Anchor bubble just above the head
     // instead of the bbox top.
-    const headY = this.npcSprite.y - this.npcSprite.displayHeight * 0.6;
+    const headY = this.npcSprite.y - this.npcSprite.displayHeight * 0.78;
     this.npcBubble.setPosition(headX, headY);
     const dx = (this.localAvatar.x ?? 0) - headX;
     const dy = (this.localAvatar.y ?? 0) - (this.npcSprite.y - this.npcSprite.displayHeight / 2);
