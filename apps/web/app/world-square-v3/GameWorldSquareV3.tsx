@@ -17,6 +17,19 @@ const MAP_PATH = '/maps/arcadia-square-v3.tmj';
 const AVATAR_DISPLAY_SIZE = 128;
 const AVATAR_BODY_OFFSET = { x: 32, y: 88, width: 64, height: 32 } as const;
 const WALK_SPEED = 260;
+const NPC_PROXIMITY_PX = 220;
+const NPC_TIPS: readonly string[] = [
+  'Welcome to Arcadia, traveller!',
+  'Psst — the fountain drops a coin at midnight.',
+  'WASD gets you places. Arrow keys too.',
+  'Watch the shrubs. They move sometimes.',
+  'Careful crossing the bridge after rain.',
+  "If you see fireflies, you're close to something good.",
+  'The tavern brews a mean ale. Trust me.',
+  'Spacebar makes you jump. Try it.',
+  'The market opens past the cobblestones.',
+  'Lamps light up at dusk. Mostly.',
+];
 
 type InlineTileset = {
   name: string;
@@ -37,6 +50,10 @@ class WorldSquareV3Scene extends Phaser.Scene {
     D: Phaser.Input.Keyboard.Key;
   };
   private objectSprites: Phaser.GameObjects.Sprite[] = [];
+  private npcSprite?: Phaser.GameObjects.Sprite;
+  private npcBubble?: Phaser.GameObjects.Container;
+  private npcBubbleText?: Phaser.GameObjects.Text;
+  private npcWasNear = false;
 
   constructor() {
     super({ key: 'WorldSquareV3Scene' });
@@ -113,8 +130,13 @@ class WorldSquareV3Scene extends Phaser.Scene {
         if (obj.width && obj.height) sprite.setDisplaySize(obj.width, obj.height);
         sprite.setDepth(y);
         this.objectSprites.push(sprite);
+        if (tileset.name.toLowerCase().includes('merchant')) {
+          this.npcSprite = sprite;
+        }
       }
     }
+
+    if (this.npcSprite) this.createNpcBubble();
 
     const worldW = map.widthInPixels;
     const worldH = map.heightInPixels;
@@ -134,6 +156,56 @@ class WorldSquareV3Scene extends Phaser.Scene {
     this.cameras.main.setZoom(1.2);
 
     this.wireKeyboardInput();
+  }
+
+  private createNpcBubble(): void {
+    if (!this.npcSprite) return;
+    const text = this.add
+      .text(0, 0, '', {
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        fontSize: '16px',
+        color: '#0f172a',
+        wordWrap: { width: 240 },
+        align: 'center',
+      })
+      .setOrigin(0.5, 1)
+      .setPadding(10, 6, 10, 6);
+    const bg = this.add.graphics();
+    this.npcBubble = this.add.container(0, 0, [bg, text]).setDepth(2_000_000).setVisible(false);
+    this.npcBubble.setData('bg', bg);
+    this.npcBubbleText = text;
+  }
+
+  private showNpcBubble(): void {
+    if (!this.npcSprite || !this.npcBubble || !this.npcBubbleText) return;
+    const tip = NPC_TIPS[Math.floor(Math.random() * NPC_TIPS.length)] ?? '';
+    this.npcBubbleText.setText(tip);
+    const bg = this.npcBubble.getData('bg') as Phaser.GameObjects.Graphics;
+    const w = this.npcBubbleText.width;
+    const h = this.npcBubbleText.height;
+    bg.clear();
+    bg.fillStyle(0xffffff, 0.95);
+    bg.lineStyle(2, 0x1e293b, 1);
+    bg.fillRoundedRect(-w / 2, -h, w, h, 10);
+    bg.strokeRoundedRect(-w / 2, -h, w, h, 10);
+    // Tail
+    bg.fillTriangle(-8, 0, 8, 0, 0, 10);
+    bg.strokeTriangle(-8, 0, 8, 0, 0, 10);
+    this.npcBubble.setVisible(true);
+  }
+
+  private updateNpcBubble(): void {
+    if (!this.npcSprite || !this.npcBubble || !this.localAvatar) return;
+    // NPC sprite origin is bottom-left, so "top of head" ~ y - displayHeight
+    const headX = this.npcSprite.x + this.npcSprite.displayWidth / 2;
+    const headY = this.npcSprite.y - this.npcSprite.displayHeight - 8;
+    this.npcBubble.setPosition(headX, headY);
+    const dx = (this.localAvatar.x ?? 0) - headX;
+    const dy = (this.localAvatar.y ?? 0) - (this.npcSprite.y - this.npcSprite.displayHeight / 2);
+    const near = Math.hypot(dx, dy) < NPC_PROXIMITY_PX;
+    if (near && !this.npcWasNear) this.showNpcBubble();
+    if (!near && this.npcWasNear) this.npcBubble.setVisible(false);
+    this.npcWasNear = near;
   }
 
   private wireKeyboardInput(): void {
@@ -167,10 +239,8 @@ class WorldSquareV3Scene extends Phaser.Scene {
       this.localAvatar.playAnim(kbd.isMoving ? 'walk' : 'idle', this.localAvatar.direction);
     }
     this.localAvatar.syncAttachments();
-    const go = this.localAvatar.rect as Phaser.GameObjects.GameObject & {
-      setDepth?: (v: number) => unknown;
-    };
-    go.setDepth?.(this.localAvatar.y + AVATAR_DISPLAY_SIZE / 2);
+    this.localAvatar.setDepth(1_000_000);
+    this.updateNpcBubble();
   }
 }
 
