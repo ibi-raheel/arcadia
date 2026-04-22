@@ -202,7 +202,11 @@ class WorldSquareV3Scene extends Phaser.Scene {
     wire(north, '/academy', 'TO THE ACADEMY', 0x38bdf8);
     wire(south, '/tavern', 'TO THE TAVERN', 0xf472b6);
     wire(east, '/market', 'TO THE MARKET', 0xfacc15);
+    // Also expose world bounds to the sign positioner.
+    this.worldSize = { w: worldW, h: worldH };
   }
+
+  private worldSize?: { w: number; h: number };
 
   private createNeonSign(entry: BridgeEntry, colorInt: number): void {
     const colorHex = `#${colorInt.toString(16).padStart(6, '0')}`;
@@ -225,9 +229,20 @@ class WorldSquareV3Scene extends Phaser.Scene {
     bg.fillRoundedRect(-w / 2, -h, w, h, 10);
     bg.lineStyle(3, colorInt, 1);
     bg.strokeRoundedRect(-w / 2, -h, w, h, 10);
-    const container = this.add
-      .container(entry.centerX, entry.centerY - (entry.sprite.displayHeight * 0.55), [bg, text])
-      .setDepth(1_500_000);
+    // Bridges extend outside the map bounds, so anchoring the sign to the
+    // bridge's geometric center puts it offscreen. Shift toward map center
+    // by ~40% of the bridge's size so the sign floats above the entry
+    // point (the inside edge of the bridge that the avatar walks onto).
+    const mapCx = (this.worldSize?.w ?? 0) / 2;
+    const mapCy = (this.worldSize?.h ?? 0) / 2;
+    const dx = mapCx - entry.centerX;
+    const dy = mapCy - entry.centerY;
+    const len = Math.hypot(dx, dy) || 1;
+    const shiftX = (dx / len) * (entry.sprite.displayWidth * 0.4);
+    const shiftY = (dy / len) * (entry.sprite.displayHeight * 0.4);
+    const signX = entry.centerX + shiftX;
+    const signY = entry.centerY + shiftY - 60;
+    const container = this.add.container(signX, signY, [bg, text]).setDepth(1_500_000);
     // Subtle pulse so it reads as neon.
     this.tweens.add({
       targets: container,
