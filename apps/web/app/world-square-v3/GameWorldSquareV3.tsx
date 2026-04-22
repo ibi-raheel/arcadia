@@ -131,7 +131,7 @@ class WorldSquareV3Scene extends Phaser.Scene {
       bodyOffset: AVATAR_BODY_OFFSET,
     });
     this.cameras.main.startFollow(this.localAvatar.rect, true, 0.12, 0.12);
-    this.cameras.main.setZoom(0.6);
+    this.cameras.main.setZoom(1.2);
 
     this.wireKeyboardInput();
   }
