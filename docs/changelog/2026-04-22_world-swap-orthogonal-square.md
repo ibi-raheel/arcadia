@@ -19,7 +19,7 @@ The iso cyberpunk world on `/world` is retired. The new world is a 26×26 orthog
 ## What's paused
 
 - **Colyseus presence on `/world`.** The new scene is single-player. Per-scene rooms (Tavern) still carry multiplayer — only the outdoor world lost it in this swap. Re-adding is a follow-up; the scene already has a `GameWorld`-equivalent Phaser mount so wiring `Client.joinOrCreate('world-realm1')` back in is a localised change.
-- **Avatar onboarding gate on `/world`.** The old `GameWorld.tsx` redirected avatar-less members to `/onboarding/avatar`. The new page.tsx relies on middleware auth alone; onboarding-gate middleware still fires for routes that request it. If we need the redirect back, lift the avatar-fetch logic out of the legacy `GameWorld.tsx` into the new scene's wrapper.
+- **Avatar onboarding gate on `/world` — still fully working.** The redirect for avatar-less members is handled by middleware (`apps/web/middleware.ts` + `lib/avatar-gate.ts::pathRequiresAvatarGate`), not by the React component. `/world` is still covered by `isWorldOrTavernPath`, so avatar-less users get server-redirected to `/onboarding/avatar` before any page renders. (An earlier draft of this changelog incorrectly listed this as "paused" — it was never removed.)
 
 ## What's dead code now
 
