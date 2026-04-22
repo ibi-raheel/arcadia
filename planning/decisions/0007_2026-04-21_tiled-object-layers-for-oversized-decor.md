@@ -69,10 +69,22 @@ When the world-swap work gets picked up (currently punted to the polish list):
 
 1. User re-authors the Tiled map: keeps the `grass` / `mossycobble` / `cobblestone` tile layers, deletes `decor` / `decor2` tile layers, adds an `object_decor` object layer, re-drops every oversized piece via "Insert as object".
 2. User exports as TMJ with "Embed tilesets" checked → drops in `apps/web/public/maps/world.tmj`.
-3. Engineering wires a shared helper `spawnObjectLayer(scene, map, layerName)` that iterates `createFromObjects` output and applies `setOrigin(0, 1)` + `sprite.depth = sprite.y`.
+3. Engineering wires a shared helper `spawnObjectLayer(scene, map, layerName)` that walks each object, picks the frame via `gid − tileset.firstgid`, and applies the y-shift + `setOrigin(0, 1)` + `depth = y` per "Phaser wiring" section below.
 4. WorldScene swaps from current iso rendering to orthogonal — separate scope from this ADR but the ADR unblocks it.
 
 No Phase-5 impact. Gamification + polish bundle (Phase 5) proceeds as planned with the existing iso world.
+
+## Phaser wiring — the pattern that actually works
+
+Learned on `world-v3` and `world-v1-preview`. Reference implementation: `apps/web/app/world-v1/GameWorldV1.tsx` (commit `7d5b7ef`). Copy this for any new tilemap-backed scene.
+
+1. **Export with "Embed Tilesets" checked.** Phaser rejects external `.tsx` refs. `scripts/import-tiled-world.mjs` inlines them as a fallback, but authoring with Embed Tilesets on is the canonical flow.
+2. **Load each tileset as a `load.spritesheet`** with `frameWidth` / `frameHeight` from the TMJ's `tilewidth` / `tileheight`. One texture frame per tile. We tried `load.image` + `createFromObjects` (what many online guides recommend) — it rendered the **whole sheet per object**. Don't use it.
+3. **Explicit frame picking per object.** For each object with a `gid`: find the owning tileset by `firstgid` range, compute `localTileIndex = gid - tileset.firstgid`, then `this.add.sprite(x, y, 'ts-<name>', localTileIndex)`. Do NOT rely on `createFromObjects` — fragile across multi-tileset maps.
+4. **Shift object y by `map.tileHeight`.** Tiled's tile-object y lands one grid row above where the sprite visually belongs; adding `map.tileHeight` lines it up. Verified against 50×50 @ 64px + mixed 128/256/512/1024 decor.
+5. **`setOrigin(0, 1)`** (bottom-left) on each object sprite, then `setDisplaySize(obj.width, obj.height)` if the object carries explicit dimensions.
+6. **`setDepth(y)` per object sprite** — pairs with the avatar's `depth = y + halfHeight` for y-sort.
+7. **Iterate tile layers by index, not name.** Duplicate layer names are legal in Tiled: `map.layers.forEach((_, idx) => map.createLayer(idx, tilesets, 0, 0))`.
 
 ## References
 
@@ -83,3 +95,4 @@ No Phase-5 impact. Gamification + polish bundle (Phase 5) proceeds as planned wi
 - Tiled docs — `tileoffset`: https://doc.mapeditor.org/en/stable/reference/tmx-map-format/#tileoffset
 - Phaser example — createFromObjects: https://phaser.io/examples/v3/view/tilemap/create-from-objects
 - Ourcade guide — Tiled object-layer properties: https://blog.ourcade.co/posts/2020/phaser-3-tiled-object-layer-properties/
+- Phaser issue #5403 — spritesheet load breaks createFromObjects: https://github.com/photonstorm/phaser/issues/5403
