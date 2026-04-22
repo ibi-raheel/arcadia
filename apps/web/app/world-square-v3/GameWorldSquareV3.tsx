@@ -157,7 +157,10 @@ class WorldSquareV3Scene extends Phaser.Scene {
     const worldW = map.widthInPixels;
     const worldH = map.heightInPixels;
     this.cameras.main.setBounds(0, 0, worldW, worldH);
-    this.physics.world.setBounds(0, 0, worldW, worldH);
+    // Extend physics bounds by 512 on each side so the avatar can step
+    // onto bridges that extend past the map rectangle without hitting
+    // an invisible wall before the entry trigger fires.
+    this.physics.world.setBounds(-512, -512, worldW + 1024, worldH + 1024);
 
     registerAvatarAnimations(this);
     this.localAvatar = new LocalAvatar(this, {
@@ -239,7 +242,9 @@ class WorldSquareV3Scene extends Phaser.Scene {
     const len = Math.hypot(dx, dy) || 1;
     const shiftX = (dx / len) * (entry.sprite.displayWidth * 0.4);
     const shiftY = (dy / len) * (entry.sprite.displayHeight * 0.4);
-    const signX = entry.centerX + shiftX;
+    // Market sign needs an extra leftward nudge (it was hugging the edge).
+    const extraX = entry.label === 'TO THE MARKET' ? -90 : 0;
+    const signX = entry.centerX + shiftX + extraX;
     const signY = entry.centerY + shiftY - 60;
     const container = this.add.container(signX, signY, [bg, text]).setDepth(1_500_000);
     // Subtle pulse so it reads as neon.
