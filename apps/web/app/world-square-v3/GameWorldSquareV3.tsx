@@ -198,7 +198,10 @@ class WorldSquareV3Scene extends Phaser.Scene {
     if (!this.npcSprite || !this.npcBubble || !this.localAvatar) return;
     // NPC sprite origin is bottom-left, so "top of head" ~ y - displayHeight
     const headX = this.npcSprite.x + this.npcSprite.displayWidth / 2;
-    const headY = this.npcSprite.y - this.npcSprite.displayHeight - 8;
+    // Sprite bounding box is much taller than the visible character (lots
+    // of empty padding at the top). Anchor bubble just above the head
+    // instead of the bbox top.
+    const headY = this.npcSprite.y - this.npcSprite.displayHeight * 0.6;
     this.npcBubble.setPosition(headX, headY);
     const dx = (this.localAvatar.x ?? 0) - headX;
     const dy = (this.localAvatar.y ?? 0) - (this.npcSprite.y - this.npcSprite.displayHeight / 2);
