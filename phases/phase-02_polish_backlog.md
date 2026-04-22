@@ -52,20 +52,16 @@ Deferred items from Phase 2. Each is self-contained and can be picked up between
 
 ---
 
-## 5. Orthogonal top-down world swap (deferred to polish)
+## 5. Orthogonal top-down world swap — ✅ SHIPPED 2026-04-22
 
-**Why:** User is authoring a new top-down world in Tiled (`sprites+worlds 2/`) to replace the current iso cyberpunk tilemap. First pipeline attempts (`world-preview-v2` branch, now deleted) surfaced the Tiled vs Phaser anchor mismatch for oversized tile-layer tiles — canonical fix is to split terrain (tile layers) from decor (object layers). **Captured in ADR 0007.**
+`/world` now renders the orthogonal town square from `public/maps/arcadia-square-v3.tmj` via `app/world-square-v3/GameWorldSquareV3.tsx`. Scene implements the seven-rule Phaser wiring pattern in ADR 0007 §"Phaser wiring" (load.spritesheet + explicit gid-firstgid frame picking + y-shift + origin(0,1) + setDepth(y)). Bridges classified by quadrant auto-wire neon-signposted portals to `/academy` (north), `/market` (east), `/tavern` (south); merchant NPC adds proximity tip bubbles.
 
-**Scope (when picked up):**
-- User re-authors the TMJ in Tiled: terrain stays as tile layers, every tree / lamp / fountain / building moves to an `object_decor` object layer via "Insert as object".
-- User exports with "Embed tilesets" checked.
-- Engineering writes a shared helper `spawnObjectLayer(scene, map, 'object_decor')` — calls `createFromObjects`, sets `origin (0, 1)` + `depth = y` per sprite.
-- WorldScene swaps iso render path for orthogonal + the new helper. Tavern / Academy / Market entrance zones rebind to new tile coords.
-- Retires the iso cyberpunk tilesets (kept in git history for rollback).
+Full shipping details in [`docs/changelog/2026-04-22_world-swap-orthogonal-square.md`](../docs/changelog/2026-04-22_world-swap-orthogonal-square.md).
 
-**Effort:** ~4–6 hours after the Tiled re-author lands. Tiled re-author is a ~10 min manual step per current map size.
-
-**Status:** parked behind Phase 5 gamification + polish. Pick up anytime after Phase 5 exits.
+**Open follow-ups** (not blocking):
+- Re-add Colyseus presence on `/world` (per-scene realms like `/tavern` already have multiplayer; only the outdoor world paused).
+- Delete legacy iso code: `components/game/GameWorld.tsx`, `components/game/scenes/world/**`, `public/maps/world.tmj`, `public/tilesets/world.png`. All still compile + tests pass but nothing imports them at runtime.
+- Wire the west bridge (currently unlabelled + no destination).
 
 ---
 
