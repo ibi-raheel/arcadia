@@ -176,6 +176,7 @@ class WorldSquareV3Scene extends Phaser.Scene {
 
   private assignBridgeRoutes(worldW: number, worldH: number): void {
     if (this.bridges.length === 0) return;
+    this.worldSize = { w: worldW, h: worldH };
     const cx = worldW / 2;
     const cy = worldH / 2;
     // Classify bridges by edge: compare displacement from map center.
@@ -202,8 +203,6 @@ class WorldSquareV3Scene extends Phaser.Scene {
     wire(north, '/academy', 'TO THE ACADEMY', 0x38bdf8);
     wire(south, '/tavern', 'TO THE TAVERN', 0xf472b6);
     wire(east, '/market', 'TO THE MARKET', 0xfacc15);
-    // Also expose world bounds to the sign positioner.
-    this.worldSize = { w: worldW, h: worldH };
   }
 
   private worldSize?: { w: number; h: number };
