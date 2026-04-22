@@ -1,5 +1,7 @@
 # WorldScene
 
+> **NOT ROUTED ANY MORE (2026-04-22).** `/world` now renders `app/world-square-v3/GameWorldSquareV3.tsx` — the orthogonal town square per ADR 0007. The iso code below still compiles (and its tests still run) but no route imports it. Keep for reference until the follow-up cleanup commit removes it.
+
 Outdoor isometric world. Owns the local avatar, keyboard + click-to-move + jump input, collision, y-sort, camera follow, and building entrance zones.
 
 ## Files

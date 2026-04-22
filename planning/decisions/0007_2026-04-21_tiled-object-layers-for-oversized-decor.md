@@ -1,6 +1,6 @@
 # ADR 0007 — Use object layers (not tile layers) for oversized decor in Tiled maps
 
-**Status:** accepted
+**Status:** accepted — implemented on main 2026-04-22
 **Date:** 2026-04-21
 **Deciders:** user
 **Related:** `phases/phase-02_polish_backlog.md` (world-swap polish item), `docs/mvp/tad.md` §4.1 (rendering)
