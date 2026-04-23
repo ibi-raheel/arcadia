@@ -10,9 +10,9 @@ export const tavernSpritesConfig = {
     // 90×90 display — 128 × 0.7 (user request, 2026-04-20). Source sheets
     // stay 64×64; setDisplaySize upscales ~1.4× (pixelArt keeps nearest-
     // neighbour crisp).
-    size: { width: 90, height: 90 },
+    size: { width: 135, height: 135 },
     // Feet-only body offset scaled in lockstep with `size` (×0.7 vs 128×128).
-    bodyOffset: { x: 22, y: 62, width: 45, height: 22 },
+    bodyOffset: { x: 33, y: 93, width: 68, height: 33 },
     walkSpeed: 160,
     clickArrivalThreshold: 2,
   },

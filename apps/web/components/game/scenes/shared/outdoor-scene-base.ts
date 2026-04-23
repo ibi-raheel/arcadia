@@ -40,6 +40,14 @@ import { MEMBER_REGISTRY_KEY, type SceneMember } from '../world/WorldScene';
 
 type YSortableGameObject = YSortable & { setDepth: (depth: number) => unknown };
 
+/**
+ * Optional registry key the page mount writes to override the outdoor
+ * scene's default spawn position. Tavern-outside uses this with a
+ * `?from=<buildingId>` URL param so leaving a tavern drops the member
+ * back at that specific tavern's door.
+ */
+export const OUTDOOR_SPAWN_OVERRIDE_REGISTRY_KEY = 'outdoor-spawn-override';
+
 export type OutdoorSceneConfig = {
   /** BOOT_ASSETS.<key>.key — the Phaser texture key for the background image. */
   readonly imageKey: string;
@@ -131,11 +139,15 @@ export abstract class OutdoorSceneBase extends Phaser.Scene {
       return;
     }
 
+    const spawnOverride = this.registry.get(OUTDOOR_SPAWN_OVERRIDE_REGISTRY_KEY) as
+      | { readonly x: number; readonly y: number }
+      | undefined;
+
     const avatar = new LocalAvatar(this, {
       memberId: member.memberId,
       avatarId: member.avatarId,
       displayName: member.displayName,
-      spawnPixel: cfg.avatar.spawnPixel,
+      spawnPixel: spawnOverride ?? cfg.avatar.spawnPixel,
       size: cfg.avatar.size,
       bodyOffset: cfg.avatar.bodyOffset,
     });

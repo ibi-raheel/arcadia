@@ -15,8 +15,13 @@ import * as Phaser from 'phaser';
 import type { ColyseusConnection, ColyseusRoom } from '../../net/colyseus-client';
 import { BOOT_ASSETS } from '../boot/asset-manifest';
 import { isAvatarId } from '../shared/avatar-palette';
+import { tavernDisplayName } from '../shared/building-names';
 import { createCapacityHud, type CapacityHud } from '../shared/capacity-hud';
 import { spawnColliders } from '../shared/colliders';
+import {
+  createEdgeTriggerManager,
+  type EdgeTriggerManager,
+} from '../shared/edge-triggers';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -48,14 +53,6 @@ export const TAVERN_BUILDING_ID_REGISTRY_KEY = 'tavern-building-id';
 
 const MOVE_INTERVAL_MS = 50;
 const HUD_MAX_CLIENTS = 20;
-
-/** "tavern-a" → "Tavern A". Fallback to the raw id for anything unexpected. */
-function labelFromBuildingId(id: string | null): string {
-  if (!id) return 'Tavern';
-  const match = /^tavern-([a-z0-9]+)$/i.exec(id);
-  if (match && match[1]) return `Tavern ${match[1].toUpperCase()}`;
-  return id;
-}
 
 /**
  * Event emitted on `game.events` by the React chat layer when a new message
@@ -147,6 +144,7 @@ export class TavernScene extends Phaser.Scene {
   private unsubscribeConnected: (() => void) | null = null;
 
   private capacityHud?: CapacityHud;
+  private edgeTriggers?: EdgeTriggerManager;
 
   // Speech bubbles above speakers — keyed by memberId so a new message from
   // the same member replaces any active bubble.
@@ -184,9 +182,28 @@ export class TavernScene extends Phaser.Scene {
 
     const buildingId = this.registry.get(TAVERN_BUILDING_ID_REGISTRY_KEY) as string | null;
     this.capacityHud = createCapacityHud(this, {
-      label: labelFromBuildingId(buildingId),
+      label: tavernDisplayName(buildingId),
       max: HUD_MAX_CLIENTS,
     });
+
+    // Walk off the bottom edge to leave. Sends LEAVE_BUILDING through
+    // Colyseus before the fade so the server logs the transition (the
+    // old button-based flow did the same — moved into the scene now).
+    // `?from=<buildingId>` carries forward so /tavern-outside spawns the
+    // member next to the door they walked out of.
+    const baseEdge = tavernLayersConfig.returnEdge.bottom;
+    const returnRoute = buildingId
+      ? `${baseEdge?.route ?? '/tavern-outside'}?from=${encodeURIComponent(buildingId)}`
+      : (baseEdge?.route ?? '/tavern-outside');
+    this.edgeTriggers = createEdgeTriggerManager(
+      this,
+      bounds.width,
+      bounds.height,
+      { bottom: { route: returnRoute, threshold: baseEdge?.threshold ?? 120 } },
+      () => {
+        this.colyseus?.send(MSG.LEAVE_BUILDING, { building: 'tavern' });
+      },
+    );
 
     this.colyseus = this.registry.get(COLYSEUS_CONNECTION_REGISTRY_KEY) as
       | ColyseusConnection
@@ -436,6 +453,9 @@ export class TavernScene extends Phaser.Scene {
 
     this.capacityHud?.destroy();
     this.capacityHud = undefined;
+
+    this.edgeTriggers?.destroy();
+    this.edgeTriggers = undefined;
   }
 
   private sendMoveIfChanged(now: number): void {
@@ -535,6 +555,8 @@ export class TavernScene extends Phaser.Scene {
       this.localAvatar.syncAttachments();
 
       this.sendMoveIfChanged(this.time.now);
+
+      this.edgeTriggers?.update(this.localAvatar.x, this.localAvatar.y);
     }
 
     const depthBase = tavernLayersConfig.depth.dynamic;

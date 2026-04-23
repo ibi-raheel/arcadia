@@ -26,6 +26,12 @@ export type EdgeTriggerManager = {
 };
 
 /**
+ * Called synchronously as the trigger fires (before the fade starts).
+ * Scenes use this to send Colyseus LEAVE_BUILDING etc.
+ */
+export type EdgeTriggerFiredCallback = (side: EdgeSide, route: string) => void;
+
+/**
  * Pure edge-detection — unit-testable without Phaser.
  *
  * Returns the first matching edge config or null. Priority order is
@@ -55,22 +61,56 @@ export function createEdgeTriggerManager(
   worldWidth: number,
   worldHeight: number,
   edges: EdgeTriggers,
+  onFire?: EdgeTriggerFiredCallback,
 ): EdgeTriggerManager {
   let fired = false;
 
   return {
     update: (ax, ay) => {
       if (fired) return;
-      const hit = hitEdge(ax, ay, worldWidth, worldHeight, edges);
-      if (!hit) return;
+      const hitInfo = hitEdgeWithSide(ax, ay, worldWidth, worldHeight, edges);
+      if (!hitInfo) return;
       fired = true;
+      if (onFire) {
+        try {
+          onFire(hitInfo.side, hitInfo.cfg.route);
+        } catch (err) {
+          console.error('edge-trigger onFire callback threw:', err);
+        }
+      }
       scene.cameras.main.fadeOut(300, 0, 0, 0);
       scene.cameras.main.once('camerafadeoutcomplete', () => {
-        if (typeof window !== 'undefined') window.location.href = hit.route;
+        if (typeof window !== 'undefined') window.location.href = hitInfo.cfg.route;
       });
     },
     destroy: () => {
       /* no persistent objects — nothing to clean up */
     },
   };
+}
+
+/**
+ * Same as hitEdge but also returns which side fired. Kept separate so the
+ * pure `hitEdge` return shape stays minimal for external callers.
+ */
+function hitEdgeWithSide(
+  avatarX: number,
+  avatarY: number,
+  worldWidth: number,
+  worldHeight: number,
+  edges: EdgeTriggers,
+): { readonly side: EdgeSide; readonly cfg: EdgeTriggerConfig } | null {
+  if (edges.top && avatarY <= (edges.top.threshold ?? 48)) {
+    return { side: 'top', cfg: edges.top };
+  }
+  if (edges.bottom && avatarY >= worldHeight - (edges.bottom.threshold ?? 48)) {
+    return { side: 'bottom', cfg: edges.bottom };
+  }
+  if (edges.left && avatarX <= (edges.left.threshold ?? 48)) {
+    return { side: 'left', cfg: edges.left };
+  }
+  if (edges.right && avatarX >= worldWidth - (edges.right.threshold ?? 48)) {
+    return { side: 'right', cfg: edges.right };
+  }
+  return null;
 }
