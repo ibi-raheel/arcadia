@@ -15,7 +15,12 @@ import * as Phaser from 'phaser';
 import type { ColyseusConnection, ColyseusRoom } from '../../net/colyseus-client';
 import { BOOT_ASSETS } from '../boot/asset-manifest';
 import { isAvatarId } from '../shared/avatar-palette';
+import { tavernDisplayName } from '../shared/building-names';
+import { createCapacityHud, type CapacityHud } from '../shared/capacity-hud';
 import { spawnColliders } from '../shared/colliders';
+// Edge-trigger manager removed 2026-04-23 in favour of the archway
+// proximity check (see checkArchwayExit). The import stays out rather
+// than being left dangling — TAVERN_RETURN_EDGE is now empty too.
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -38,7 +43,15 @@ import { tavernSpritesConfig } from './sprites.config';
 
 export const TAVERN_SCENE_KEY = 'TavernScene' as const;
 
+/**
+ * Registry key the page component writes so the HUD can label the building
+ * in human-readable form. Set from the `?b=` query param on /tavern
+ * (2026-04-22 — pairs with Colyseus `filterBy(['building'])`).
+ */
+export const TAVERN_BUILDING_ID_REGISTRY_KEY = 'tavern-building-id';
+
 const MOVE_INTERVAL_MS = 50;
+const HUD_MAX_CLIENTS = 20;
 
 /**
  * Event emitted on `game.events` by the React chat layer when a new message
@@ -129,6 +142,14 @@ export class TavernScene extends Phaser.Scene {
   private readonly remoteAvatars = new Map<string, RemoteAvatar>();
   private unsubscribeConnected: (() => void) | null = null;
 
+  private capacityHud?: CapacityHud;
+
+  // 2026-04-23: archway-proximity exit state. exitReturnRoute is built
+  // per-session from the `?b=` query param so the outdoor scene can
+  // spawn the member next to the correct tavern door.
+  private exitReturnRoute = '/tavern-outside';
+  private exitFired = false;
+
   // Speech bubbles above speakers — keyed by memberId so a new message from
   // the same member replaces any active bubble.
   private readonly speechBubbles = new Map<string, Phaser.GameObjects.Container>();
@@ -144,6 +165,28 @@ export class TavernScene extends Phaser.Scene {
     const bg = this.add.image(0, 0, BOOT_ASSETS.tavernInterior.key);
     bg.setOrigin(0, 0);
     bg.setDepth(tavernLayersConfig.depth.ground);
+
+    // 2026-04-23 (v3): in-world "↓ Exit ↓" label anchored to the
+    // bottom-centre of the interior, directly above the archway the
+    // user identified in their follow-up screenshot.
+    const exitHint = this.add
+      .text(bg.displayWidth / 2, bg.displayHeight - 24, '↓ Exit ↓', {
+        fontFamily: '"Georgia", "Cambria", serif',
+        fontSize: '32px',
+        fontStyle: 'bold',
+        color: '#fef3c7',
+        stroke: '#1c1917',
+        strokeThickness: 5,
+      })
+      .setOrigin(0.5, 1);
+    exitHint.setDepth(tavernLayersConfig.depth.dynamic + 100);
+    this.tweens.add({
+      targets: exitHint,
+      alpha: { from: 0.7, to: 1 },
+      duration: 900,
+      yoyo: true,
+      repeat: -1,
+    });
 
     const { bounds, zoom, fadeInMs } = tavernCameraConfig;
     this.cameras.main.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
@@ -162,6 +205,24 @@ export class TavernScene extends Phaser.Scene {
     // keyboard plugin is on by default so WASD works immediately even if
     // that initial event was dropped.
     if (this.input.keyboard) this.input.keyboard.enabled = true;
+
+    const buildingId = this.registry.get(TAVERN_BUILDING_ID_REGISTRY_KEY) as string | null;
+    this.capacityHud = createCapacityHud(this, {
+      label: tavernDisplayName(buildingId),
+      max: HUD_MAX_CLIENTS,
+    });
+
+    // 2026-04-23 (v4): exit fires when the avatar is within the
+    // archway's radius — the "portal" sits at the visible door in the
+    // bottom-centre of the PNG, not on an edge band. `?from=<id>` is
+    // carried to /tavern-outside so the outdoor scene can spawn the
+    // member next to the door they used. LEAVE_BUILDING is emitted on
+    // fire to keep server-side transition logs consistent with the old
+    // button-based flow.
+    const archway = tavernLayersConfig.exitArchway;
+    this.exitReturnRoute = buildingId
+      ? `${archway.route}?from=${encodeURIComponent(buildingId)}`
+      : archway.route;
 
     this.colyseus = this.registry.get(COLYSEUS_CONNECTION_REGISTRY_KEY) as
       | ColyseusConnection
@@ -344,6 +405,28 @@ export class TavernScene extends Phaser.Scene {
     if (idx >= 0) this.ySortables.splice(idx, 1);
   }
 
+  /**
+   * Fires the tavern → /tavern-outside transition once the avatar is
+   * within the archway's proximity radius. Replaces the earlier
+   * bottom-edge-threshold approach, which tripped halfway across the
+   * room instead of at the visible door (user 2026-04-23: "have the
+   * portal to go back there" pointing at the archway).
+   */
+  private checkArchwayExit(): void {
+    if (this.exitFired || !this.localAvatar) return;
+    const archway = tavernLayersConfig.exitArchway;
+    const dx = this.localAvatar.x - archway.centerX;
+    const dy = this.localAvatar.y - archway.centerY;
+    if (Math.hypot(dx, dy) > archway.radius) return;
+    this.exitFired = true;
+    this.colyseus?.send(MSG.LEAVE_BUILDING, { building: 'tavern' });
+    this.cameras.main.fadeOut(300, 0, 0, 0);
+    const route = this.exitReturnRoute;
+    this.cameras.main.once('camerafadeoutcomplete', () => {
+      if (typeof window !== 'undefined') window.location.href = route;
+    });
+  }
+
   private async wireRemoteAvatars(room: ColyseusRoom): Promise<void> {
     this.teardownRemoteAvatars();
 
@@ -354,11 +437,21 @@ export class TavernScene extends Phaser.Scene {
 
     avatarsProxy.onAdd((state: AvatarState, sessionId: string) => {
       this.addRemoteAvatar(sessionId, state, room.sessionId, $);
+      this.refreshHud(room);
     }, true);
 
     avatarsProxy.onRemove((_state: AvatarState, sessionId: string) => {
       this.removeRemoteAvatar(sessionId);
+      this.refreshHud(room);
     });
+
+    this.refreshHud(room);
+  }
+
+  private refreshHud(room: ColyseusRoom): void {
+    if (!this.capacityHud) return;
+    const count = (room.state.avatars as unknown as { size: number }).size;
+    this.capacityHud.setCount(count);
   }
 
   private addRemoteAvatar(
@@ -398,6 +491,9 @@ export class TavernScene extends Phaser.Scene {
       this.unsubscribeConnected();
       this.unsubscribeConnected = null;
     }
+
+    this.capacityHud?.destroy();
+    this.capacityHud = undefined;
   }
 
   private sendMoveIfChanged(now: number): void {
@@ -497,6 +593,8 @@ export class TavernScene extends Phaser.Scene {
       this.localAvatar.syncAttachments();
 
       this.sendMoveIfChanged(this.time.now);
+
+      this.checkArchwayExit();
     }
 
     const depthBase = tavernLayersConfig.depth.dynamic;

@@ -12,7 +12,12 @@ export const MSG = {
 
 export type MessageType = (typeof MSG)[keyof typeof MSG];
 
-export type BuildingId = 'tavern' | 'academy' | 'market';
+// 2026-04-22: 'coworking' added alongside the new coworking-inside interior
+// (one Colyseus room type per building name on the server). The exterior
+// scenes outside (academy-outside / tavern-outside / coworking-outside) are
+// not included — they're single-player and never ENTER/LEAVE the game-server
+// side log stream.
+export type BuildingId = 'tavern' | 'academy' | 'market' | 'coworking';
 
 export interface MovePayload {
   x: number;

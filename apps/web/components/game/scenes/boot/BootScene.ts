@@ -41,6 +41,24 @@ export class BootScene extends Phaser.Scene {
     this.load.image(BOOT_ASSETS.tavernInterior.key, BOOT_ASSETS.tavernInterior.path);
     this.load.image(BOOT_ASSETS.academyInterior.key, BOOT_ASSETS.academyInterior.path);
     this.load.image(BOOT_ASSETS.marketInterior.key, BOOT_ASSETS.marketInterior.path);
+    // 2026-04-22 image-backed outdoor set — each PNG is ~9 MB, so only
+    // load the one the active scene actually uses. Without this gate,
+    // every /academy / /tavern / /market navigation sat on a ~45 MB
+    // preload even though those scenes don't touch the outdoor images.
+    const nextScene =
+      (this.game.registry.get(NEXT_SCENE_KEY_REGISTRY_KEY) as string | undefined) ??
+      NEXT_SCENE_KEY_AFTER_BOOT;
+    const outdoorAsset: { readonly key: string; readonly path: string } | undefined = (
+      {
+        SquareScene: BOOT_ASSETS.squareOutside,
+        AcademyOutsideScene: BOOT_ASSETS.academyOutside,
+        TavernOutsideScene: BOOT_ASSETS.tavernOutside,
+        CoworkingOutsideScene: BOOT_ASSETS.coworkingOutside,
+        CoworkingInsideScene: BOOT_ASSETS.coworkingInside,
+      } as Record<string, { readonly key: string; readonly path: string } | undefined>
+    )[nextScene];
+    if (outdoorAsset) this.load.image(outdoorAsset.key, outdoorAsset.path);
+
     this.load.tilemapTiledJSON(BOOT_ASSETS.tilemap.key, BOOT_ASSETS.tilemap.path);
     this.load.tilemapTiledJSON(BOOT_ASSETS.tavernTilemap.key, BOOT_ASSETS.tavernTilemap.path);
 

@@ -147,7 +147,11 @@ export default function GameMarket({ member, stalls, stallDetails }: Props): Rea
         />
       </div>
       {activeStall && <StallView stall={activeStall} onClose={closeStall} />}
-      <BuildingTransition building="market" ready={ready} />
+      <BuildingTransition
+        ready={ready}
+        displayName="The Market"
+        backgroundImage="/market-interior.png"
+      />
       <LevelUpBanner />
     </div>
   );

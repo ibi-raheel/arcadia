@@ -20,10 +20,18 @@ export type AvatarVisuals = {
   readonly gameObject: AvatarBody;
   /** Non-null only when the avatar rendered as a Sprite (sheet registered). */
   readonly sprite: Phaser.GameObjects.Sprite | null;
+  /**
+   * Combined "Name · Lv N" label above the avatar. 2026-04-23: merged
+   * from separate name + level badge into a single bigger label per
+   * user feedback ("increase font size, display level right next to
+   * the name, better looking font").
+   */
   readonly nameText: Phaser.GameObjects.Text;
-  readonly levelBadge: Phaser.GameObjects.Text;
   /** Display size used at creation — drives `syncVisualAttachments` offsets. */
   readonly size: AvatarSize;
+  /** Mutable so `setVisualsLevel` can rebuild the combined label text. */
+  displayName: string;
+  level: number;
 };
 
 export function createAvatarVisuals(
@@ -64,53 +72,44 @@ export function createAvatarVisuals(
   const displayName = cleanName.slice(0, DISPLAY_NAME_MAX);
 
   const nameText = scene.add
-    .text(x, y - size.height / 2 - 4, displayName, {
-      fontFamily: 'system-ui, sans-serif',
-      fontSize: '12px',
-      color: '#ffffff',
-      stroke: '#000000',
-      strokeThickness: 3,
+    .text(x, y - size.height / 2 - 6, `${displayName} · Lv ${level}`, {
+      // Warm serif face reads as an RPG nameplate and scales well
+      // without getting pixel-fuzzy at the new larger size.
+      fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
+      fontSize: '20px',
+      fontStyle: 'bold',
+      color: '#fef3c7',
+      stroke: '#1c1917',
+      strokeThickness: 4,
     })
     .setOrigin(0.5, 1);
 
-  const levelBadge = scene.add
-    .text(x, y + size.height / 2 + 4, `Lv ${level}`, {
-      fontFamily: 'system-ui, sans-serif',
-      fontSize: '10px',
-      color: '#ffffff',
-      backgroundColor: '#222',
-      padding: { left: 4, right: 4, top: 1, bottom: 1 },
-    })
-    .setOrigin(0.5, 0);
-
-  return { gameObject, sprite, nameText, levelBadge, size };
+  return { gameObject, sprite, nameText, size, displayName, level };
 }
 
 /**
- * Keep the name + level badge glued to the current body position. Called
- * every frame from the scene's update() loop.
+ * Keep the name label glued to the current body position. Called every
+ * frame from the scene's update() loop.
  */
 export function syncVisualAttachments(visuals: AvatarVisuals): void {
   const dy = visuals.size.height / 2;
-  visuals.nameText.setPosition(visuals.gameObject.x, visuals.gameObject.y - dy - 4);
-  visuals.levelBadge.setPosition(visuals.gameObject.x, visuals.gameObject.y + dy + 4);
+  visuals.nameText.setPosition(visuals.gameObject.x, visuals.gameObject.y - dy - 6);
 }
 
 /** Apply the same depth to body + attachments (y-sort). */
 export function setVisualsDepth(visuals: AvatarVisuals, depth: number): void {
   visuals.gameObject.setDepth(depth);
   visuals.nameText.setDepth(depth + 0.1);
-  visuals.levelBadge.setDepth(depth + 0.1);
 }
 
-/** Update the level badge text (called when AvatarState.level changes). */
+/** Update the level portion of the combined nameplate. */
 export function setVisualsLevel(visuals: AvatarVisuals, level: number): void {
-  visuals.levelBadge.setText(`Lv ${level}`);
+  visuals.level = level;
+  visuals.nameText.setText(`${visuals.displayName} · Lv ${level}`);
 }
 
 /** Clean up all game objects — use on scene teardown or when a peer leaves. */
 export function destroyVisuals(visuals: AvatarVisuals): void {
   visuals.gameObject.destroy();
   visuals.nameText.destroy();
-  visuals.levelBadge.destroy();
 }

@@ -16,7 +16,7 @@ const MARKET_CAM_BOUNDS: PixelRect = {
 
 export const marketCameraConfig = {
   // Matches Tavern + Academy for visual consistency building-to-building.
-  zoom: 1.365,
+  zoom: 1.0,
   followLerp: 0.12,
   deadzone: { width: 120, height: 80 },
   bounds: MARKET_CAM_BOUNDS,

@@ -19,13 +19,27 @@ export type AvatarGateInput = {
   readonly avatarId: string | null;
 };
 
-function isWorldOrTavernPath(pathname: string): boolean {
-  return (
-    pathname === '/world' ||
-    pathname.startsWith('/world/') ||
-    pathname === '/tavern' ||
-    pathname.startsWith('/tavern/')
-  );
+// 2026-04-22: expanded from /world + /tavern to cover every scene that
+// renders a member-owned avatar — the three new outdoor scenes all expect
+// `memberships.avatar_id` to be set before Phaser mounts.
+const AVATAR_SCENE_EXACT = new Set<string>([
+  '/world',
+  '/tavern',
+  '/academy-outside',
+  '/tavern-outside',
+  '/coworking',
+]);
+const AVATAR_SCENE_PREFIXES = [
+  '/world/',
+  '/tavern/',
+  '/academy-outside/',
+  '/tavern-outside/',
+  '/coworking/',
+];
+
+function isAvatarScenePath(pathname: string): boolean {
+  if (AVATAR_SCENE_EXACT.has(pathname)) return true;
+  return AVATAR_SCENE_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
 function isAvatarPickerPath(pathname: string): boolean {
@@ -38,7 +52,7 @@ export function decideAvatarGate(input: AvatarGateInput): AvatarGateDecision {
 
   const { pathname, avatarId } = input;
 
-  if (isWorldOrTavernPath(pathname) && avatarId === null) {
+  if (isAvatarScenePath(pathname) && avatarId === null) {
     return { kind: 'redirect', to: '/onboarding/avatar' };
   }
 
@@ -52,5 +66,5 @@ export function decideAvatarGate(input: AvatarGateInput): AvatarGateDecision {
 /** Does this path need an avatar_id lookup to resolve? Middleware uses this
  *  to skip the DB roundtrip on every other request. */
 export function pathRequiresAvatarGate(pathname: string): boolean {
-  return isWorldOrTavernPath(pathname) || isAvatarPickerPath(pathname);
+  return isAvatarScenePath(pathname) || isAvatarPickerPath(pathname);
 }
