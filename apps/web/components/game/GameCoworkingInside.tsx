@@ -1,39 +1,33 @@
-// Mirrors GameWorld for /tavern. Fetches session + member, opens the
-// `tavern-realm1` Colyseus room, mounts Phaser with [BootScene, TavernScene].
-// Emits MSG.LEAVE_BUILDING before routing back to /world so the game-server
-// gets a clean transition log.
+// Mirrors GameTavern but for a tent interior. Reads `?b=<building>` from the
+// URL, passes it as both the Colyseus join option (so `filterBy(['building'])`
+// routes to the right room) and the scene-registry building ID (so the HUD
+// labels correctly).
 
 'use client';
 
 import * as Phaser from 'phaser';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { MSG } from '@arcadia/shared';
 
-import { ChatPanel } from '@/components/tavern/ChatPanel';
-import { LeaderboardPanel } from '@/components/tavern/LeaderboardPanel';
+import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
-import { BuildingTransition } from './BuildingTransition';
 import { LevelUpBanner } from './LevelUpBanner';
 import { useLevelSync } from './net/use-level-sync';
 import { connectToRoom, type ColyseusConnection } from './net/colyseus-client';
-import {
-  TAVERN_BUILDING_ID_REGISTRY_KEY,
-  TAVERN_CHAT_BLUR_EVENT,
-  TAVERN_CHAT_FOCUS_EVENT,
-  TAVERN_SPEECH_EVENT,
-} from './scenes/tavern/TavernScene';
 import { BootScene } from './scenes/boot/BootScene';
 import {
   NEXT_SCENE_KEY_REGISTRY_KEY,
   PROGRESS_CALLBACK_REGISTRY_KEY,
 } from './scenes/boot/asset-manifest';
+import { coworkingInsideCameraConfig } from './scenes/coworking-inside/camera.config';
+import {
+  COWORKING_BUILDING_ID_REGISTRY_KEY,
+  CoworkingInsideScene,
+  COWORKING_INSIDE_SCENE_KEY,
+} from './scenes/coworking-inside/CoworkingInsideScene';
 import { isAvatarId, type AvatarId } from './scenes/shared/avatar-palette';
-import { TavernScene, TAVERN_SCENE_KEY } from './scenes/tavern/TavernScene';
-import { tavernCameraConfig } from './scenes/tavern/camera.config';
 import {
   COLYSEUS_CONNECTION_REGISTRY_KEY,
   MEMBER_REGISTRY_KEY,
@@ -66,44 +60,31 @@ async function fetchSession(): Promise<SessionFetch> {
   if (!isAvatarId(data.avatar_id)) {
     return { status: 'error', message: `Invalid avatar_id "${data.avatar_id}".` };
   }
-  if (!data.realm_id) {
-    return { status: 'error', message: 'No realm for member.' };
-  }
+  if (!data.realm_id) return { status: 'error', message: 'No realm for member.' };
   const avatarId: AvatarId = data.avatar_id;
-  const displayName = data.display_name ?? 'Player';
   return {
     status: 'ready',
     member: {
       memberId: session.user.id,
       realmId: data.realm_id,
       avatarId,
-      displayName,
+      displayName: data.display_name ?? 'Player',
     },
     accessToken: session.access_token,
   };
 }
 
-// 2026-04-22: each tavern door on the outdoor scene passes a distinct
-// `?b=<buildingId>` and Colyseus `filterBy(['building'])` shards rooms
-// accordingly. Legacy links without `?b=` default to `tavern-a` so the
-// one-tavern mental model stays intact for anyone deep-linking straight
-// to /tavern.
-const DEFAULT_BUILDING_ID = 'tavern-a';
-
-export default function GameTavern(): React.JSX.Element {
+export default function GameCoworkingInside(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const buildingId = useMemo(
-    () => searchParams.get('b') || DEFAULT_BUILDING_ID,
-    [searchParams],
-  );
+  const buildingId = useMemo(() => searchParams.get('b') ?? '', [searchParams]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const connectionRef = useRef<ColyseusConnection | null>(null);
   const [fetchState, setFetchState] = useState<SessionFetch>({ status: 'loading' });
   const [connectError, setConnectError] = useState<string | null>(null);
-  const [preloadProgress, setPreloadProgress] = useState<number | null>(null);
+  const [, setPreloadProgress] = useState<number | null>(null);
   const [colyseusConn, setColyseusConn] = useState<ColyseusConnection | null>(null);
 
   useLevelSync({
@@ -126,7 +107,8 @@ export default function GameTavern(): React.JSX.Element {
       fetchState.status !== 'ready' ||
       !containerRef.current ||
       gameRef.current ||
-      !COLYSEUS_ENDPOINT
+      !COLYSEUS_ENDPOINT ||
+      buildingId.length === 0
     ) {
       if (fetchState.status === 'ready' && !COLYSEUS_ENDPOINT) {
         setConnectError('NEXT_PUBLIC_COLYSEUS_URL is not configured');
@@ -141,7 +123,7 @@ export default function GameTavern(): React.JSX.Element {
       try {
         connection = await connectToRoom({
           endpoint: COLYSEUS_ENDPOINT,
-          roomName: 'tavern-realm1',
+          roomName: 'coworking-realm1',
           accessToken: fetchState.accessToken,
           building: buildingId,
           onReconnectFailed: (err) => {
@@ -170,16 +152,16 @@ export default function GameTavern(): React.JSX.Element {
         physics: { default: 'arcade', arcade: { gravity: { x: 0, y: 0 }, debug: false } },
         scale: {
           mode: Phaser.Scale.RESIZE,
-          width: tavernCameraConfig.bounds.width,
-          height: tavernCameraConfig.bounds.height,
+          width: coworkingInsideCameraConfig.bounds.width,
+          height: coworkingInsideCameraConfig.bounds.height,
         },
-        scene: [BootScene, TavernScene],
+        scene: [BootScene, CoworkingInsideScene],
       });
 
       game.registry.set(MEMBER_REGISTRY_KEY, fetchState.member);
       game.registry.set(COLYSEUS_CONNECTION_REGISTRY_KEY, connection);
-      game.registry.set(NEXT_SCENE_KEY_REGISTRY_KEY, TAVERN_SCENE_KEY);
-      game.registry.set(TAVERN_BUILDING_ID_REGISTRY_KEY, buildingId);
+      game.registry.set(NEXT_SCENE_KEY_REGISTRY_KEY, COWORKING_INSIDE_SCENE_KEY);
+      game.registry.set(COWORKING_BUILDING_ID_REGISTRY_KEY, buildingId);
       game.registry.set(PROGRESS_CALLBACK_REGISTRY_KEY, (progress: number) => {
         setPreloadProgress(progress);
       });
@@ -199,74 +181,47 @@ export default function GameTavern(): React.JSX.Element {
     };
   }, [fetchState, buildingId]);
 
-  const handleReturnToWorld = (): void => {
-    connectionRef.current?.send(MSG.LEAVE_BUILDING, { building: 'tavern' });
-    // 2026-04-22: go back to the tavern-outside scene (the building's front
-    // door) rather than the central square. Members can walk back west to the
-    // square from there if they want.
-    router.push('/tavern-outside');
+  const handleReturnOutside = (): void => {
+    connectionRef.current?.send(MSG.LEAVE_BUILDING, { building: 'coworking' });
+    router.push('/coworking');
   };
 
-  // Chat → scene bridge. TavernScene listens on `game.events` for
-  // TAVERN_SPEECH_EVENT and pops a bubble above the avatar matching
-  // `memberId`. Safe when gameRef hasn't populated yet — emit is a no-op
-  // until Phaser mounts.
-  const handleMessageReceived = useCallback(
-    (msg: { id: string; sender_id: string; content: string }): void => {
-      gameRef.current?.events.emit(TAVERN_SPEECH_EVENT, msg.sender_id, msg.content, msg.id);
-    },
-    [],
-  );
-
-  // Focus handoff — tell TavernScene to disable/enable its keyboard plugin
-  // when the chat input gains/loses focus, so WASD types in the input
-  // without also moving the avatar.
-  const handleChatFocusChange = useCallback((focused: boolean): void => {
-    gameRef.current?.events.emit(focused ? TAVERN_CHAT_FOCUS_EVENT : TAVERN_CHAT_BLUR_EVENT);
-  }, []);
+  if (buildingId.length === 0) {
+    return (
+      <div className="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-slate-900 text-slate-300">
+        <p className="text-lg">No tent selected.</p>
+        <p className="text-sm text-slate-500">Enter the coworking area from the camp.</p>
+        <button
+          type="button"
+          className="rounded bg-neutral-100 px-3 py-2 text-sm font-medium text-neutral-900"
+          onClick={() => router.push('/coworking')}
+        >
+          Go to the camp
+        </button>
+      </div>
+    );
+  }
 
   if (fetchState.status === 'error' || connectError) {
     const message = fetchState.status === 'error' ? fetchState.message : connectError!;
     return (
       <div className="flex h-screen w-screen flex-col items-center justify-center gap-2 bg-slate-900 text-slate-300">
-        <p className="text-lg">Couldn&rsquo;t enter the Tavern.</p>
+        <p className="text-lg">Couldn&rsquo;t enter the tent.</p>
         <p className="text-sm text-slate-500">{message}</p>
       </div>
     );
   }
-
-  const sceneReady =
-    fetchState.status === 'ready' && preloadProgress !== null && preloadProgress >= 1;
 
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <div ref={containerRef} className="absolute inset-0" />
       <button
         type="button"
-        onClick={handleReturnToWorld}
+        onClick={handleReturnOutside}
         className="absolute left-4 top-4 z-40 rounded bg-neutral-100 px-3 py-2 text-sm font-medium text-neutral-900 shadow transition hover:bg-white"
       >
-        ← Return to World
+        ← Leave tent
       </button>
-      {/* Week 8 overlays — chat bottom-right, leaderboard top-right. `fetchState`
-          carries member + realm once ready; rendered conditionally so the
-          panels don't start fetching while we're still authing. */}
-      {fetchState.status === 'ready' && (
-        <>
-          <ChatPanel
-            realmId={fetchState.member.realmId}
-            memberId={fetchState.member.memberId}
-            displayName={fetchState.member.displayName}
-            onMessageReceived={handleMessageReceived}
-            onFocusChange={handleChatFocusChange}
-          />
-          <LeaderboardPanel
-            realmId={fetchState.member.realmId}
-            memberId={fetchState.member.memberId}
-          />
-        </>
-      )}
-      <BuildingTransition building="tavern" ready={sceneReady} />
       <LevelUpBanner />
     </div>
   );

@@ -56,6 +56,20 @@ describe('decideAvatarGate', () => {
       });
       expect(decideAvatarGate({ ...baseInput, pathname: '/academy' })).toEqual({ kind: 'pass' });
     });
+
+    it('new outdoor scenes redirect to picker when avatar is missing', () => {
+      for (const pathname of [
+        '/academy-outside',
+        '/tavern-outside',
+        '/coworking',
+        '/coworking/inside',
+      ]) {
+        expect(decideAvatarGate({ ...baseInput, pathname })).toEqual({
+          kind: 'redirect',
+          to: '/onboarding/avatar',
+        });
+      }
+    });
   });
 
   describe('authed user with avatar_id already set', () => {
@@ -83,13 +97,23 @@ describe('decideAvatarGate', () => {
 });
 
 describe('pathRequiresAvatarGate', () => {
-  it('returns true for /world, /tavern, /onboarding/avatar and their sub-paths', () => {
-    expect(pathRequiresAvatarGate('/world')).toBe(true);
-    expect(pathRequiresAvatarGate('/world/foo')).toBe(true);
-    expect(pathRequiresAvatarGate('/tavern')).toBe(true);
-    expect(pathRequiresAvatarGate('/tavern/bar')).toBe(true);
-    expect(pathRequiresAvatarGate('/onboarding/avatar')).toBe(true);
-    expect(pathRequiresAvatarGate('/onboarding/avatar/baz')).toBe(true);
+  it('returns true for every avatar-rendering scene and the picker', () => {
+    for (const path of [
+      '/world',
+      '/world/foo',
+      '/tavern',
+      '/tavern/bar',
+      '/academy-outside',
+      '/academy-outside/anything',
+      '/tavern-outside',
+      '/tavern-outside/anything',
+      '/coworking',
+      '/coworking/inside',
+      '/onboarding/avatar',
+      '/onboarding/avatar/baz',
+    ]) {
+      expect(pathRequiresAvatarGate(path), path).toBe(true);
+    }
   });
 
   it('returns false for unrelated paths so middleware can skip the DB fetch', () => {
@@ -102,6 +126,7 @@ describe('pathRequiresAvatarGate', () => {
       '/api/health',
       '/onboarding',
       '/worldsomething',
+      '/coworkings',
     ]) {
       expect(pathRequiresAvatarGate(path), path).toBe(false);
     }

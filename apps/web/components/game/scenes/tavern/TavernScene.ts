@@ -15,6 +15,7 @@ import * as Phaser from 'phaser';
 import type { ColyseusConnection, ColyseusRoom } from '../../net/colyseus-client';
 import { BOOT_ASSETS } from '../boot/asset-manifest';
 import { isAvatarId } from '../shared/avatar-palette';
+import { createCapacityHud, type CapacityHud } from '../shared/capacity-hud';
 import { spawnColliders } from '../shared/colliders';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
@@ -38,7 +39,23 @@ import { tavernSpritesConfig } from './sprites.config';
 
 export const TAVERN_SCENE_KEY = 'TavernScene' as const;
 
+/**
+ * Registry key the page component writes so the HUD can label the building
+ * in human-readable form. Set from the `?b=` query param on /tavern
+ * (2026-04-22 — pairs with Colyseus `filterBy(['building'])`).
+ */
+export const TAVERN_BUILDING_ID_REGISTRY_KEY = 'tavern-building-id';
+
 const MOVE_INTERVAL_MS = 50;
+const HUD_MAX_CLIENTS = 20;
+
+/** "tavern-a" → "Tavern A". Fallback to the raw id for anything unexpected. */
+function labelFromBuildingId(id: string | null): string {
+  if (!id) return 'Tavern';
+  const match = /^tavern-([a-z0-9]+)$/i.exec(id);
+  if (match && match[1]) return `Tavern ${match[1].toUpperCase()}`;
+  return id;
+}
 
 /**
  * Event emitted on `game.events` by the React chat layer when a new message
@@ -129,6 +146,8 @@ export class TavernScene extends Phaser.Scene {
   private readonly remoteAvatars = new Map<string, RemoteAvatar>();
   private unsubscribeConnected: (() => void) | null = null;
 
+  private capacityHud?: CapacityHud;
+
   // Speech bubbles above speakers — keyed by memberId so a new message from
   // the same member replaces any active bubble.
   private readonly speechBubbles = new Map<string, Phaser.GameObjects.Container>();
@@ -162,6 +181,12 @@ export class TavernScene extends Phaser.Scene {
     // keyboard plugin is on by default so WASD works immediately even if
     // that initial event was dropped.
     if (this.input.keyboard) this.input.keyboard.enabled = true;
+
+    const buildingId = this.registry.get(TAVERN_BUILDING_ID_REGISTRY_KEY) as string | null;
+    this.capacityHud = createCapacityHud(this, {
+      label: labelFromBuildingId(buildingId),
+      max: HUD_MAX_CLIENTS,
+    });
 
     this.colyseus = this.registry.get(COLYSEUS_CONNECTION_REGISTRY_KEY) as
       | ColyseusConnection
@@ -354,11 +379,21 @@ export class TavernScene extends Phaser.Scene {
 
     avatarsProxy.onAdd((state: AvatarState, sessionId: string) => {
       this.addRemoteAvatar(sessionId, state, room.sessionId, $);
+      this.refreshHud(room);
     }, true);
 
     avatarsProxy.onRemove((_state: AvatarState, sessionId: string) => {
       this.removeRemoteAvatar(sessionId);
+      this.refreshHud(room);
     });
+
+    this.refreshHud(room);
+  }
+
+  private refreshHud(room: ColyseusRoom): void {
+    if (!this.capacityHud) return;
+    const count = (room.state.avatars as unknown as { size: number }).size;
+    this.capacityHud.setCount(count);
   }
 
   private addRemoteAvatar(
@@ -398,6 +433,9 @@ export class TavernScene extends Phaser.Scene {
       this.unsubscribeConnected();
       this.unsubscribeConnected = null;
     }
+
+    this.capacityHud?.destroy();
+    this.capacityHud = undefined;
   }
 
   private sendMoveIfChanged(now: number): void {

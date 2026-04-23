@@ -17,8 +17,12 @@ Interior room. Image-backed background (1536×1024 pixel art, user-supplied 2026
 
 ## Synced with
 
-- Colyseus room `tavern-realm1` (separate from `world-realm1`). Connection is a fresh `ColyseusConnection` owned by `GameTavern` (mirrors `GameWorld`).
+- Colyseus room type `tavern-realm1` with `filterBy(['building'])` *(2026-04-22)*. The client passes `{ building: '<id>' }` (from `?b=` on the URL) — Colyseus groups clients with the same building into the same room. `RealmRoom.maxClients = 20`; a 21st arrival for the same building spawns a fresh room transparently. Legacy `/tavern` links with no `?b=` default to `building = 'tavern-a'` (see `GameTavern.tsx` → `DEFAULT_BUILDING_ID`).
 - Supabase: reads `memberships.avatar_id` + `display_name` + `realm_id` via the shared registry handshake, same as WorldScene.
+
+## Capacity HUD
+
+Pinned to the top-right, reads `"Tavern <letter> · <count> / 20"`. `<letter>` comes from the `buildingId` registry (e.g. `tavern-a` → `"Tavern A"`). Updates live via `room.state.avatars.size` on each `onAdd`/`onRemove`.
 
 ## React ↔ scene events (on `game.events`)
 
