@@ -6,9 +6,9 @@ export const academySpritesConfig = {
   avatar: {
     // Bottom-centre of the interior, same treatment as the Tavern.
     spawnPixel: { x: 768, y: 880 },
-    size: { width: 90, height: 90 },
+    size: { width: 135, height: 135 },
     bodyOffset: { x: 22, y: 62, width: 45, height: 22 },
-    walkSpeed: 160,
+    walkSpeed: 200,
     clickArrivalThreshold: 2,
   },
   podium: {

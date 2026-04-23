@@ -25,12 +25,19 @@ export type ColyseusRoom = {
 
 export type { AvatarState, RealmRoomState };
 
-export type RoomName = 'world-realm1' | 'tavern-realm1';
+export type RoomName = 'world-realm1' | 'tavern-realm1' | 'coworking-realm1';
 
 export type ConnectOptions = {
   readonly endpoint: string;
   readonly roomName: RoomName;
   readonly accessToken: string;
+  /**
+   * Per-building sharding key. Passed to Colyseus `joinOrCreate` as an option
+   * so rooms defined with `.filterBy(['building'])` group clients with the
+   * same value. Required for `tavern-realm1` + `coworking-realm1`; omit (or
+   * ignored) for `world-realm1` which isn't filtered.
+   */
+  readonly building?: string;
   /** Fires after `maxReconnectAttempts` consecutive reconnect failures. */
   readonly onReconnectFailed?: (lastError: Error) => void;
   /** Fires each time the socket drops (before any reconnect attempt). */
@@ -100,9 +107,9 @@ export async function connectToRoom(opts: ConnectOptions): Promise<ColyseusConne
   }
 
   async function join(): Promise<ColyseusRoom> {
-    const room = (await client.joinOrCreate(opts.roomName, {
-      accessToken: opts.accessToken,
-    })) as unknown as ColyseusRoom;
+    const joinOptions: Record<string, string> = { accessToken: opts.accessToken };
+    if (opts.building != null) joinOptions.building = opts.building;
+    const room = (await client.joinOrCreate(opts.roomName, joinOptions)) as unknown as ColyseusRoom;
 
     room.onLeave((code) => {
       if (room !== currentRoom) return;

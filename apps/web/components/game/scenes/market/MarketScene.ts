@@ -11,6 +11,7 @@ import * as Phaser from 'phaser';
 import { BOOT_ASSETS } from '../boot/asset-manifest';
 import { isAvatarId } from '../shared/avatar-palette';
 import { spawnColliders } from '../shared/colliders';
+import { createEdgeTriggerManager, type EdgeTriggerManager } from '../shared/edge-triggers';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -98,6 +99,7 @@ export class MarketScene extends Phaser.Scene {
 
   private memberId: string | null = null;
   private lastPositionSaveAt = 0;
+  private edgeTriggers?: EdgeTriggerManager;
 
   constructor() {
     super({ key: MARKET_SCENE_KEY });
@@ -121,10 +123,21 @@ export class MarketScene extends Phaser.Scene {
 
     this.renderStalls();
 
+    // Walk off the top edge to return to /world (2026-04-22 — replaces
+    // the browser back button as the exit affordance).
+    this.edgeTriggers = createEdgeTriggerManager(
+      this,
+      bounds.width,
+      bounds.height,
+      marketLayersConfig.returnEdge,
+    );
+
     // HUD search → hide non-matching stalls.
     this.game.events.on(MARKET_FILTER_EVENT, this.applyFilter, this);
     const onShutdown = (): void => {
       this.game.events.off(MARKET_FILTER_EVENT, this.applyFilter, this);
+      this.edgeTriggers?.destroy();
+      this.edgeTriggers = undefined;
       if (this.memberId != null && this.localAvatar) {
         saveSavedPosition(this.memberId, {
           x: this.localAvatar.x,
@@ -146,10 +159,18 @@ export class MarketScene extends Phaser.Scene {
     // Prefer last-known position from localStorage so reloads don't yank
     // the member back to spawn. Clamp inside world bounds just in case
     // the image size has changed since the last save.
+    //
+    // 2026-04-23: also discard saved-position that would immediately
+    // fire the top-edge return trigger (`y < 400`). Otherwise members
+    // whose last session ended near the top wall get bounced straight
+    // back to /world on re-entry — which is exactly what happened when
+    // the top-edge exit landed earlier today.
     const saved = loadSavedPosition(member.memberId);
     const defaults = marketSpritesConfig.avatar.spawnPixel;
     const bounds = marketCameraConfig.bounds;
-    const spawnPixel = saved
+    const TOP_EXIT_SAFETY_Y = 400;
+    const useSaved = saved && saved.y >= TOP_EXIT_SAFETY_Y;
+    const spawnPixel = useSaved
       ? {
           x: Math.min(Math.max(saved.x, 0), bounds.width),
           y: Math.min(Math.max(saved.y, 0), bounds.height),
@@ -354,6 +375,8 @@ export class MarketScene extends Phaser.Scene {
     for (const obj of this.ySortables) {
       obj.setDepth(calculateYSortDepth(obj, { depthBase, yAnchorRatio }));
     }
+
+    this.edgeTriggers?.update(this.localAvatar.x, this.localAvatar.y);
 
     // Persist position to localStorage every POSITION_SAVE_INTERVAL_MS
     // so page reloads pick up where the member left off. Skipped when

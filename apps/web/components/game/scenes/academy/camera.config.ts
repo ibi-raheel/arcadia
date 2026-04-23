@@ -16,7 +16,7 @@ const ACADEMY_CAM_BOUNDS: PixelRect = {
 
 export const academyCameraConfig = {
   // Same zoom as the new Tavern — feels consistent building-to-building.
-  zoom: 1.365,
+  zoom: 1.0,
   followLerp: 0.12,
   deadzone: { width: 120, height: 80 },
   bounds: ACADEMY_CAM_BOUNDS,

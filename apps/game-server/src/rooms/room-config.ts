@@ -31,6 +31,13 @@ export const ROOM_CONFIGS: Record<string, RoomConfig> = {
     // Interior room — tightened once tavern.tmj lands.
     bounds: { minX: -600, maxX: 600, minY: -100, maxY: 600 },
   },
+  // 2026-04-22: coworking tent interior. `tavern-realm1` and this share the
+  // same RealmRoom class; per-building sharding is done via filterBy in
+  // `index.ts`, not here. Bounds sized for the 2508×2508 image.
+  'coworking-realm1': {
+    spawn: { x: 1254, y: 1254 },
+    bounds: { minX: 0, maxX: 2508, minY: 0, maxY: 2508 },
+  },
 };
 
 export const DEFAULT_ROOM_CONFIG: RoomConfig = ROOM_CONFIGS['world-realm1']!;
