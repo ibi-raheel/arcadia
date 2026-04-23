@@ -159,11 +159,12 @@ export class TavernScene extends Phaser.Scene {
     bg.setOrigin(0, 0);
     bg.setDepth(tavernLayersConfig.depth.ground);
 
-    // 2026-04-23: in-world "↓ Exit ↓" label at the bottom centre — gives
-    // members an unambiguous cue for where to walk to leave after three
-    // rounds of "can't find the exit" feedback.
+    // 2026-04-23: in-world "← Exit" label on the LEFT side of the
+    // interior, pointing at the doorway the user flagged in their
+    // screenshot. Anchored to the middle of the left wall so it reads
+    // no matter where the camera is looking.
     const exitHint = this.add
-      .text(bg.displayWidth / 2, bg.displayHeight - 24, '↓ Exit ↓', {
+      .text(24, bg.displayHeight / 2, '← Exit', {
         fontFamily: '"Georgia", "Cambria", serif',
         fontSize: '32px',
         fontStyle: 'bold',
@@ -171,7 +172,7 @@ export class TavernScene extends Phaser.Scene {
         stroke: '#1c1917',
         strokeThickness: 5,
       })
-      .setOrigin(0.5, 1);
+      .setOrigin(0, 0.5);
     exitHint.setDepth(tavernLayersConfig.depth.dynamic + 100);
     this.tweens.add({
       targets: exitHint,
