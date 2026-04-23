@@ -4,10 +4,11 @@
 
 export const tavernSpritesConfig = {
   avatar: {
-    // Upper spawn. Exit is a walk-off on the bottom edge (trigger
-    // threshold 600 → fires at y>=424). Spawn at y=350 is safely
-    // above the band, with ~74 px between spawn and trigger.
-    spawnPixel: { x: 768, y: 350 },
+    // Right-centre spawn. Exit is the LEFT wall (trigger threshold
+    // 500 → fires at x<=500). Spawning at x=1200 puts the member
+    // safely away from the exit on first load; they walk west through
+    // the room to leave.
+    spawnPixel: { x: 1200, y: 512 },
     // 90×90 display — 128 × 0.7 (user request, 2026-04-20). Source sheets
     // stay 64×64; setDisplaySize upscales ~1.4× (pixelArt keeps nearest-
     // neighbour crisp).
