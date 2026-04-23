@@ -15,12 +15,22 @@ Every Phaser scene owns a folder under `scenes/<scene>/` containing:
 
 Art (PNGs, atlases, tilemaps) stays central in `apps/web/public/{avatars,tilesets,maps}/`. Per-scene folders hold only TypeScript + CLAUDE.md.
 
-## World rendering model (current — ADR 0007, shipped 2026-04-22)
+## World rendering model (current — image-backed, 2026-04-22 evening)
 
-- **Tilemap** — 26×26 orthogonal map (`public/maps/arcadia-square-v3.tmj`), 64×64 grid. Terrain (grass / cobblestone / mossycobble) on tile layers inside a Tiled group; oversized decor (trees, lamps, fountain, merchant, bridges) on object layers. Rendered in `app/world-square-v3/GameWorldSquareV3.tsx` (imported by `/world`).
-- **Tileset loading** — every tileset as `load.spritesheet` with `frameWidth` / `frameHeight` from the TMJ; object sprites picked by `gid − tileset.firstgid` per the seven-rule pattern in ADR 0007. Do NOT use `load.image` + `createFromObjects` — see ADR for why.
-- **Bridges as portals** — any tileset whose name contains `bridge` becomes a walk-onto portal. Classification by quadrant (north/south/east) wires: north → `/academy`, south → `/tavern`, east → `/market`. Each mapped bridge gets a pulsing neon sign; entering fades the camera + `window.location.href` to the route.
-- **Avatar** — 128×128 display size, feet-box body 64×32, depth pinned to `1_000_000` so it always draws above props. Single-player; Colyseus presence lives inside the per-scene rooms now, not the world itself.
+- **Central scene** — `SquareScene` at `/world` renders `public/worlds/square-2508x2508.png` as a flat image background (no Tiled). Colyseus on `world-realm1` (re-added 2026-04-22). 2508×2508 bounds; avatar 90×90; zoom 1.0. Four walk-onto edge triggers wire cardinal exits:
+  - N → `/academy-outside` (image-backed single-player)
+  - E → `/tavern-outside` (image-backed single-player, 3 SPACE-prompt tavern doors)
+  - S → `/market` (unchanged interior)
+  - W → `/coworking` (image-backed single-player, 5 SPACE-prompt tents)
+- **Outdoor scenes** — `AcademyOutsideScene`, `TavernOutsideScene`, `CoworkingOutsideScene` all extend `scenes/shared/outdoor-scene-base.ts`. Each has empty colliders + entry triggers + one return edge. No Colyseus (single-player).
+- **New interiors** — `CoworkingInsideScene` mirrors TavernScene shape (image background, LocalAvatar + RemoteAvatars, move-throttle) but joins `coworking-realm1` with `filterBy(['building'])` so each tent is its own social space.
+- **Per-building Colyseus sharding** — `RealmRoom.maxClients = 20`. Both `tavern-realm1` and `coworking-realm1` are `filterBy(['building'])`; the client passes `{ building: '<id>' }` as a join option (derived from `?b=` in the URL). Once a (room, building) pair hits 20 clients, Colyseus transparently spawns a fresh room for the same filter. See `docs/changelog/2026-04-22_image-backed-world.md`.
+- **Capacity HUD** — top-right pill on every Colyseus-backed scene: `<label> · <count> / 20`. Invisible until the first state callback so it doesn't flash during room join.
+
+## Legacy Tiled square (pre-2026-04-22 evening)
+
+- `app/world-square-v3/GameWorldSquareV3.tsx` + `public/maps/arcadia-square-v3.tmj` + `public/tilesets/*.png` rendered the morning's orthogonal Tiled square. No longer imported at runtime — kept on disk for reference. Delete candidate once the image-backed world is verified on prod.
+- Pattern to preserve if we ever revive Tiled: the "seven-rule" wiring (load.spritesheet + explicit gid-firstgid frame picking + y-shift + origin(0,1) + setDepth(y)). See ADR 0007.
 
 ## Legacy iso world (pre-2026-04-22)
 

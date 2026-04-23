@@ -13,8 +13,12 @@ Each community (**Realm**) gives members an avatar, a space to gather (**Tavern*
 **What's live at `arcadia-web-swart.vercel.app`:**
 
 - **`/`** — role-aware hub (World / Market / Dashboard).
-- **`/world`** — Phaser orthogonal town square (ADR 0007, shipped 2026-04-22); walk onto a bridge to enter `/academy` (north), `/market` (east), or `/tavern` (south); merchant NPC with proximity tip bubbles.
-- **`/tavern`** — image-backed bar, Tab-to-chat with speech bubbles, live XP leaderboard.
+- **`/world`** — image-backed town square, Colyseus-synced on `world-realm1` (auto-shards at 20 clients). Walk off any edge to the neighbour: N→`/academy-outside`, E→`/tavern-outside`, S→`/market`, W→`/coworking`. Capacity HUD top-right. *(2026-04-22: replaced the ADR-0007 Tiled square with this image-backed scene.)*
+- **`/academy-outside`** — single-player outdoor area. Walk up to the gate, press SPACE → `/academy`.
+- **`/tavern-outside`** — single-player outdoor area. Three distinct tavern doors; SPACE opens the matching tavern (`?b=tavern-a/b/c`).
+- **`/coworking`** — single-player outdoor area. Five tents; SPACE enters the matching tent (`?b=tent-1..5`).
+- **`/coworking/inside?b=<id>`** — tent interior, multiplayer. Colyseus `coworking-realm1` with `filterBy(['building'])` — members in different tents never meet even with same interior art. Auto-shards at 20 clients.
+- **`/tavern?b=<id>`** — image-backed bar, Tab-to-chat with speech bubbles, live XP leaderboard. Same interior visuals across all three tavern buildings; `filterBy(['building'])` keeps the social spaces distinct.
 - **`/academy`** — Phaser course hall with walkable podiums.
 - **`/academy/[courseId]`** — YouTube IFrame Player (resume + 80% completion) + `react-markdown` lessons (scroll-to-complete).
 - **`/market`** — Phaser stall hall with search HUD; click a stall → modal with blurred backdrop, inline previews, one-click enrol, real enrolment counts.
@@ -25,7 +29,10 @@ Each community (**Realm**) gives members an avatar, a space to gather (**Tavern*
 
 **Video host is YouTube unlisted** (ADR 0006, demo-only scope — swap to a real host required before paying creators).
 
-**Beyond the MVP plan:** world swap to orthogonal top-down **shipped 2026-04-22** (ADR 0007 implemented; see [changelog](docs/changelog/2026-04-22_world-swap-orthogonal-square.md)), collider rect coords, 60 FPS / demo-cut passes, production hardening. All tracked in [`phases/phase-02_polish_backlog.md`](phases/phase-02_polish_backlog.md) + [`phases/phase-05_status.md`](phases/phase-05_status.md).
+**Beyond the MVP plan:**
+- 2026-04-22 (morning): world swap to orthogonal top-down Tiled square (ADR 0007 implemented; see [changelog](docs/changelog/2026-04-22_world-swap-orthogonal-square.md)).
+- 2026-04-22 (evening): image-backed world + 3 outdoor neighbour scenes + per-building Colyseus sharding + capacity HUD (see [changelog](docs/changelog/2026-04-22_image-backed-world.md)).
+- Polish (collider rects, 60 FPS / demo-cut passes, production hardening) tracked in [`phases/phase-02_polish_backlog.md`](phases/phase-02_polish_backlog.md) + [`phases/phase-05_status.md`](phases/phase-05_status.md).
 
 **Phase exit logs:** [Phase 3](docs/changelog/2026-04-20_phase-03-exit.md) · [Phase 4](docs/changelog/2026-04-21_phase-04-exit.md) · [Phase 5](docs/changelog/2026-04-21_phase-05-exit.md). Creator-flow setup walkthrough in [`docs/guides/phase-03-setup.md`](docs/guides/phase-03-setup.md); workspace scoping cheat sheet in [`docs/claude-scoping.md`](docs/claude-scoping.md).
 
