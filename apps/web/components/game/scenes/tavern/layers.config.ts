@@ -17,14 +17,13 @@ export const TAVERN_COLLIDERS: readonly PixelRect[] = [];
  * `?from=<buildingId>` param so the outdoor scene can spawn the member
  * near the correct tavern's door.
  */
-// 2026-04-23: exit re-pointed to the LEFT wall per the user screenshot
-// showing the visible doorway + stairs on the left side of the
-// 1536×1024 interior PNG. Threshold 500 fires at x ≤ 500 so the
-// member just needs to walk toward the doorway from anywhere east
-// of the middle of the room. TavernScene draws the "↓ Exit ↓" marker
-// on the same side to match.
+// 2026-04-23 (v3): the archway is at bottom-CENTRE of the 1536×1024
+// interior PNG (confirmed from the user's wider screenshot). Threshold
+// 400 fires once the avatar is in the bottom 40% of the scene; the
+// visible "↓ Exit ↓" marker anchors directly above the archway so
+// there's no ambiguity about which way to walk.
 export const TAVERN_RETURN_EDGE: EdgeTriggers = {
-  left: { route: '/tavern-outside', threshold: 500 },
+  bottom: { route: '/tavern-outside', threshold: 400 },
 };
 
 export const tavernLayersConfig = {
