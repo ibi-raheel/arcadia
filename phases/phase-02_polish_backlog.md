@@ -60,11 +60,13 @@ Full shipping details in [`docs/changelog/2026-04-22_world-swap-orthogonal-squar
 
 **Open follow-ups** (not blocking):
 - ~~Re-add Colyseus presence on `/world`~~ — **DONE 2026-04-22 evening** (image-backed swap, see [changelog](../docs/changelog/2026-04-22_image-backed-world.md)).
-- Delete legacy iso code: `components/game/GameWorld.tsx`, `components/game/scenes/world/**`, `public/maps/world.tmj`, `public/tilesets/world.png`. All still compile + tests pass but nothing imports them at runtime.
-- Delete legacy Tiled square: `app/world-square-v3/`, `public/maps/arcadia-square-v3.tmj`, `public/tilesets-square-v3/`. Superseded by the image-backed `SquareScene` at `/world`.
+- ~~Per-building Colyseus sharding for tavern + coworking~~ — **DONE 2026-04-23** (PR #10 merged, see [changelog](../docs/changelog/2026-04-23_image-backed-world-complete.md)).
 - ~~Wire the west bridge~~ — obsolete; image-backed world uses edge-rect triggers instead of bridge sprites.
-- Large image sizes: the 2508×2508 / 2806×2242 PNGs are ~9 MB each. Before merging to main, either swap to the 1× variants (1254×1254) or add a build-time `squoosh` pass.
+- Delete legacy iso code: `components/game/GameWorld.tsx`, `components/game/scenes/world/**`, `public/maps/world.tmj`, `public/tilesets/world.png`. All still compile + tests pass but nothing imports them at runtime.
+- Delete legacy Tiled square: `app/world-square-v3/`, `public/maps/arcadia-square-v3.tmj`, `public/tilesets-square-v3/`. Superseded by the image-backed `SquareScene` at `/world`. Safe to drop once image-backed world is stable on prod for ~a week.
+- Large image sizes: the 2508×2508 / 2806×2242 PNGs are ~9 MB each. Post-merge item — either swap to the 1× variants (1254×1254) or add a build-time `squoosh` pass.
 - Author collider rects across the new scenes (square, 3 outdoors, coworking-inside). All ship with `colliders: []`; activate per Phase-5 Step 15 pattern.
+- Extend `/rooms/:name/count` to accept a `building` query filter so the capacity HUD can reflect the specific shard, not the whole room type.
 
 ---
 
