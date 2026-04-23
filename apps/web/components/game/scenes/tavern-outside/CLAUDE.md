@@ -1,6 +1,6 @@
 # TavernOutsideScene
 
-Single-player outdoor area east of the square. Three tavern buildings stacked vertically; each door is a distinct Colyseus "building" (`tavern-a`, `tavern-b`, `tavern-c`). All three doors lead to the same interior image, but members in different buildings are in different `tavern-realm1` rooms thanks to `filterBy(['building'])` on the game server.
+Single-player outdoor area east of the square. Three tavern buildings stacked vertically — the user-facing names are **The Three Ravens** (top / `tavern-a`), **The Iron Chalice** (middle / `tavern-b`), **The Sleeping Hollow** (bottom / `tavern-c`). Each door is a distinct Colyseus "building"; all three doors lead to the same interior image, but members in different buildings are in different `tavern-realm1` rooms thanks to `filterBy(['building'])` on the game server.
 
 ## Files
 
@@ -12,7 +12,7 @@ Single-player outdoor area east of the square. Three tavern buildings stacked ve
 
 ## Controls
 
-Same as academy-outside. SPACE inside any gate radius enters that specific tavern. Outside prompts, SPACE jumps.
+Same as academy-outside. SPACE always jumps; ENTER inside any gate radius opens that specific tavern.
 
 ## Invariants
 

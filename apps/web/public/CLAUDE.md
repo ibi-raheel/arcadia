@@ -30,7 +30,7 @@ public/
 │   │                   Uses 4 tilesets chained via firstgid — 1, 122, 243, 364.)
 │   └── tavern.tmj      (retained but unused in-scene — see tavern-interior.png below;
 │                        still preloaded by BootScene for potential rollback)
-├── tavern-interior.png (1376×768 cyberpunk bar interior — rendered as TavernScene's
+├── tavern-interior.png (1536×1024 bar interior — rendered as TavernScene's
 │                        static background since 2026-04-19; replaces the tilemap path)
 └── transitions/        (1×1 transparent placeholder PNGs shown during building-entry
     ├── tavern.png       fade-ins; swap each file for real art any time, no code change)

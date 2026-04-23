@@ -12,7 +12,7 @@ Single-player outdoor area west of the square. Five tent entrances arranged arou
 
 ## Controls
 
-Same as the other outdoor scenes. SPACE inside any tent radius enters that tent's Colyseus room; outside prompts, SPACE jumps.
+Same as the other outdoor scenes. SPACE always jumps; ENTER inside any tent radius opens that tent's Colyseus room.
 
 ## Invariants
 

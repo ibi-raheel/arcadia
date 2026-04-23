@@ -6,7 +6,7 @@ Phase 4 course catalogue. Member walks a 1536×1024 interior and clicks a **stal
 
 - `MarketScene.ts` — scene class. Loads interior image, mounts `LocalAvatar`, renders one clickable stall per course passed via registry.
 - `camera.config.ts` — zoom `1.365×` (matches Tavern + Academy), rect-shaped bounds = `MARKET_INTERIOR_SIZE` (1536×1024).
-- `sprites.config.ts` — avatar `90×90` (mirrors Tavern + Academy). Stall geometry: size, spacing, row layout.
+- `sprites.config.ts` — avatar `135×135` (consistent with every other image-backed interior). Stall geometry: size, spacing, row layout.
 - `layers.config.ts` — depth bands (ground / stalls / dynamic / overlay).
 - `__tests__/configs.test.ts` — shape assertions.
 

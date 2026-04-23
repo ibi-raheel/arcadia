@@ -6,7 +6,7 @@ Outdoor town square. Image-backed Phaser scene mounted at `/world` (replaces the
 
 - `SquareScene.ts` — scene class. Renders `public/worlds/square-2508x2508.png` at origin (0, 0); Colyseus-synced local + remote avatars on top; four walk-onto edge triggers at the cardinal exits; capacity HUD top-right.
 - `camera.config.ts` — zoom `1.0×`, 2508×2508 rect bounds, 200×150 deadzone, 400ms fade-in.
-- `sprites.config.ts` — 90×90 avatar, spawn just south of the centre portal, 45×22 feet body, walk speed 260.
+- `sprites.config.ts` — 202×202 avatar (50% bigger than every other scene so the square reads as the focal hub), spawn just south of the centre portal, 45×22 frame-space feet body (Phaser auto-scales — see ADR 0008), walk speed 325.
 - `layers.config.ts` — empty collider array, y-sort depth bands, and `SQUARE_EDGE_TRIGGERS` mapping top→/academy-outside, right→/tavern-outside, bottom→/market, left→/coworking.
 - `__tests__/configs.test.ts` — shape assertions per ADR 0004 + edge-trigger wiring.
 
