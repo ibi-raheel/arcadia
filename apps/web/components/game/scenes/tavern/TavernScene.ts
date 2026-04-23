@@ -159,6 +159,28 @@ export class TavernScene extends Phaser.Scene {
     bg.setOrigin(0, 0);
     bg.setDepth(tavernLayersConfig.depth.ground);
 
+    // 2026-04-23: in-world "↓ Exit ↓" label at the bottom centre — gives
+    // members an unambiguous cue for where to walk to leave after three
+    // rounds of "can't find the exit" feedback.
+    const exitHint = this.add
+      .text(bg.displayWidth / 2, bg.displayHeight - 24, '↓ Exit ↓', {
+        fontFamily: '"Georgia", "Cambria", serif',
+        fontSize: '32px',
+        fontStyle: 'bold',
+        color: '#fef3c7',
+        stroke: '#1c1917',
+        strokeThickness: 5,
+      })
+      .setOrigin(0.5, 1);
+    exitHint.setDepth(tavernLayersConfig.depth.dynamic + 100);
+    this.tweens.add({
+      targets: exitHint,
+      alpha: { from: 0.7, to: 1 },
+      duration: 900,
+      yoyo: true,
+      repeat: -1,
+    });
+
     const { bounds, zoom, fadeInMs } = tavernCameraConfig;
     this.cameras.main.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
     this.cameras.main.setZoom(zoom);
