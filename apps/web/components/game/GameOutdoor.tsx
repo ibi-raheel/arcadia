@@ -15,6 +15,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
+import { BuildingTransition } from './BuildingTransition';
 import { LevelUpBanner } from './LevelUpBanner';
 import { BootScene } from './scenes/boot/BootScene';
 import {
@@ -47,6 +48,8 @@ type VariantSpec = {
   readonly sceneClass: new () => Phaser.Scene;
   readonly sceneKey: string;
   readonly bounds: { readonly width: number; readonly height: number };
+  readonly transitionName: string;
+  readonly transitionImage: string;
 };
 
 const VARIANT_MAP: Record<OutdoorVariant, VariantSpec> = {
@@ -54,16 +57,22 @@ const VARIANT_MAP: Record<OutdoorVariant, VariantSpec> = {
     sceneClass: AcademyOutsideScene,
     sceneKey: ACADEMY_OUTSIDE_SCENE_KEY,
     bounds: academyOutsideCameraConfig.bounds,
+    transitionName: 'Academy Grounds',
+    transitionImage: '/worlds/academy-2508x2508.png',
   },
   'tavern-outside': {
     sceneClass: TavernOutsideScene,
     sceneKey: TAVERN_OUTSIDE_SCENE_KEY,
     bounds: tavernOutsideCameraConfig.bounds,
+    transitionName: 'Tavern Grounds',
+    transitionImage: '/worlds/tavernoutside-2508x2508.png',
   },
   'coworking-outside': {
     sceneClass: CoworkingOutsideScene,
     sceneKey: COWORKING_OUTSIDE_SCENE_KEY,
     bounds: coworkingOutsideCameraConfig.bounds,
+    transitionName: 'Coworking Grounds',
+    transitionImage: '/worlds/coworkingoutside-2806x2242.png',
   },
 };
 
@@ -126,7 +135,7 @@ export default function GameOutdoor({
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const [fetchState, setFetchState] = useState<SessionFetch>({ status: 'loading' });
-  const [, setPreloadProgress] = useState<number | null>(null);
+  const [preloadProgress, setPreloadProgress] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -182,9 +191,17 @@ export default function GameOutdoor({
     );
   }
 
+  const sceneReady =
+    fetchState.status === 'ready' && preloadProgress !== null && preloadProgress >= 1;
+
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-[#0b1220]">
       <div ref={containerRef} className="absolute inset-0" />
+      <BuildingTransition
+        ready={sceneReady}
+        displayName={spec.transitionName}
+        backgroundImage={spec.transitionImage}
+      />
       <LevelUpBanner />
     </div>
   );

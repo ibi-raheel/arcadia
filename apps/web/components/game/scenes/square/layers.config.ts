@@ -21,11 +21,14 @@ export const SQUARE_COLLIDERS: readonly PixelRect[] = [];
  * Market retains its existing interior at /market (south), so the bottom
  * edge links directly there rather than to a market-outside scene.
  */
+// 2026-04-22 bump 150 → 250 after "cannot go from square to market at
+// the bottom" — the avatar's feet-box + world-bounds clamp meant only a
+// narrow ~10px band actually fired. 250 gives a clean walk-onto feel.
 export const SQUARE_EDGE_TRIGGERS: EdgeTriggers = {
-  top: { route: '/academy-outside', threshold: 150 },
-  right: { route: '/tavern-outside', threshold: 150 },
-  bottom: { route: '/market', threshold: 150 },
-  left: { route: '/coworking', threshold: 150 },
+  top: { route: '/academy-outside', threshold: 250 },
+  right: { route: '/tavern-outside', threshold: 250 },
+  bottom: { route: '/market', threshold: 250 },
+  left: { route: '/coworking', threshold: 250 },
 };
 
 /**
@@ -37,8 +40,12 @@ export const SQUARE_EDGE_TRIGGERS: EdgeTriggers = {
  */
 export const SQUARE_NPC = {
   position: { x: 320, y: 320 },
-  /** Approximate head-of-NPC y in the image — bubble anchors above this. */
-  headY: 230,
+  /**
+   * Approximate head-of-NPC y in the image — bubble anchors above this
+   * so the tail points down at his head. User feedback 2026-04-22:
+   * "bubble is way too high, reduce gap" → moved down from 230 to 285.
+   */
+  headY: 285,
   proximityPx: 380,
   tips: [
     'Welcome to Arcadia, traveller!',
