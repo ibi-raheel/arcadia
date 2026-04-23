@@ -17,7 +17,11 @@ import {
 // Step 3; until then this class relies on onAuth returning AuthInfo-shaped
 // data (tests construct the AuthInfo directly).
 export class RealmRoom extends Room<RealmRoomState> {
-  override maxClients = 50;
+  // 20-cap auto-shard (decided 2026-04-22): once a room hits 20 occupants,
+  // Colyseus's matchmaker routes new joiners to the next room with the same
+  // filter (or creates a fresh one). Applies to world / tavern / coworking.
+  // See `docs/changelog/2026-04-22_image-backed-world.md` for the reasoning.
+  override maxClients = 20;
 
   override onCreate(_options: unknown): void {
     this.setState(new RealmRoomState());
