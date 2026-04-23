@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  findNearestActiveTrigger,
-  type EntryTrigger,
-} from '../enter-prompt';
+import { findNearestActiveTrigger, type EntryTrigger } from '../enter-prompt';
 
 const TRIGGERS: readonly EntryTrigger[] = [
   { buildingId: 'a', centerX: 100, centerY: 100, radius: 50, label: 'A', route: '/a' },

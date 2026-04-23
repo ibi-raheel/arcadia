@@ -159,12 +159,7 @@ export abstract class OutdoorSceneBase extends Phaser.Scene {
       this.physics.add.collider(avatar.body, group);
     }
 
-    this.cameras.main.startFollow(
-      avatar.rect,
-      true,
-      cfg.camera.followLerp,
-      cfg.camera.followLerp,
-    );
+    this.cameras.main.startFollow(avatar.rect, true, cfg.camera.followLerp, cfg.camera.followLerp);
     this.cameras.main.setDeadzone(cfg.camera.deadzone.width, cfg.camera.deadzone.height);
   }
 
@@ -247,17 +242,9 @@ export abstract class OutdoorSceneBase extends Phaser.Scene {
     // SPACE → jump. ENTER → enter-prompt. No coordination needed: the
     // prompt helper only navigates when ENTER is pressed; SPACE is always
     // available for jump even inside a prompt's proximity radius.
-    const spaceJustDown = this.spaceKey
-      ? Phaser.Input.Keyboard.JustDown(this.spaceKey)
-      : false;
-    const enterJustDown = this.enterKey
-      ? Phaser.Input.Keyboard.JustDown(this.enterKey)
-      : false;
-    this.enterPrompt?.update(
-      this.localAvatar.x,
-      this.localAvatar.y,
-      enterJustDown,
-    );
+    const spaceJustDown = this.spaceKey ? Phaser.Input.Keyboard.JustDown(this.spaceKey) : false;
+    const enterJustDown = this.enterKey ? Phaser.Input.Keyboard.JustDown(this.enterKey) : false;
+    this.enterPrompt?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown);
     if (spaceJustDown && !this.localAvatar.isJumping) {
       this.localAvatar.triggerJump(this.localAvatar.direction);
     }

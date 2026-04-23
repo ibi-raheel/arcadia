@@ -109,10 +109,7 @@ export async function connectToRoom(opts: ConnectOptions): Promise<ColyseusConne
   async function join(): Promise<ColyseusRoom> {
     const joinOptions: Record<string, string> = { accessToken: opts.accessToken };
     if (opts.building != null) joinOptions.building = opts.building;
-    const room = (await client.joinOrCreate(
-      opts.roomName,
-      joinOptions,
-    )) as unknown as ColyseusRoom;
+    const room = (await client.joinOrCreate(opts.roomName, joinOptions)) as unknown as ColyseusRoom;
 
     room.onLeave((code) => {
       if (room !== currentRoom) return;

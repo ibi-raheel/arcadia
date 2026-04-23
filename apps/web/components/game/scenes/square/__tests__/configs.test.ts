@@ -5,11 +5,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { SQUARE_IMAGE_SIZE, squareCameraConfig } from '../camera.config';
-import {
-  SQUARE_COLLIDERS,
-  SQUARE_EDGE_TRIGGERS,
-  squareLayersConfig,
-} from '../layers.config';
+import { SQUARE_COLLIDERS, SQUARE_EDGE_TRIGGERS, squareLayersConfig } from '../layers.config';
 import { squareSpritesConfig } from '../sprites.config';
 
 describe('square camera config', () => {

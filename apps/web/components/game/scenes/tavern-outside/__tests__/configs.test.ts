@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  TAVERN_OUTSIDE_IMAGE_SIZE,
-  tavernOutsideCameraConfig,
-} from '../camera.config';
+import { TAVERN_OUTSIDE_IMAGE_SIZE, tavernOutsideCameraConfig } from '../camera.config';
 import {
   TAVERN_OUTSIDE_COLLIDERS,
   TAVERN_OUTSIDE_ENTRY_TRIGGERS,

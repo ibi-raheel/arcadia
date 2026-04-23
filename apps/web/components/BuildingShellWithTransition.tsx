@@ -15,10 +15,13 @@ import { BuildingTransition } from './game/BuildingTransition';
 
 const TRANSITION_MIN_DURATION_MS = 500;
 
-const TRANSITION_META: Record<BuildingShellProps['name'], {
-  readonly displayName: string;
-  readonly backgroundImage: string;
-}> = {
+const TRANSITION_META: Record<
+  BuildingShellProps['name'],
+  {
+    readonly displayName: string;
+    readonly backgroundImage: string;
+  }
+> = {
   tavern: { displayName: 'The Tavern', backgroundImage: '/tavern-interior.png' },
   academy: { displayName: 'The Academy', backgroundImage: '/academy-interior.png' },
   market: { displayName: 'The Market', backgroundImage: '/market-interior.png' },

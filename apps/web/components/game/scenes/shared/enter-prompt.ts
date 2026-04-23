@@ -35,11 +35,7 @@ export type EnterPromptUpdateResult = {
 };
 
 export type EnterPromptManager = {
-  update(
-    avatarX: number,
-    avatarY: number,
-    enterJustDown: boolean,
-  ): EnterPromptUpdateResult;
+  update(avatarX: number, avatarY: number, enterJustDown: boolean): EnterPromptUpdateResult;
   destroy(): void;
 };
 
@@ -88,11 +84,7 @@ export function createEnterPromptManager(
 
   let navigating = false;
 
-  function update(
-    ax: number,
-    ay: number,
-    enterJustDown: boolean,
-  ): EnterPromptUpdateResult {
+  function update(ax: number, ay: number, enterJustDown: boolean): EnterPromptUpdateResult {
     if (navigating) {
       return { active: true, navigated: false };
     }
