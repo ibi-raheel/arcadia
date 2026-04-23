@@ -22,10 +22,10 @@ export const SQUARE_COLLIDERS: readonly PixelRect[] = [];
  * edge links directly there rather than to a market-outside scene.
  */
 export const SQUARE_EDGE_TRIGGERS: EdgeTriggers = {
-  top: { route: '/academy-outside', threshold: 56 },
-  right: { route: '/tavern-outside', threshold: 56 },
-  bottom: { route: '/market', threshold: 56 },
-  left: { route: '/coworking', threshold: 56 },
+  top: { route: '/academy-outside', threshold: 150 },
+  right: { route: '/tavern-outside', threshold: 150 },
+  bottom: { route: '/market', threshold: 150 },
+  left: { route: '/coworking', threshold: 150 },
 };
 
 export const squareLayersConfig = {

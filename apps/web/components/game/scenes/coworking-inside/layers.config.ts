@@ -12,7 +12,7 @@ export const COWORKING_INSIDE_COLLIDERS: readonly PixelRect[] = [];
  * threshold lands cleanly once the avatar steps onto that doorway.
  */
 export const COWORKING_INSIDE_RETURN_EDGE: EdgeTriggers = {
-  bottom: { route: '/coworking', threshold: 56 },
+  bottom: { route: '/coworking', threshold: 150 },
 };
 
 export const coworkingInsideLayersConfig = {

@@ -7,24 +7,28 @@ import type { PixelRect } from '../shared/types';
 export const ACADEMY_OUTSIDE_COLLIDERS: readonly PixelRect[] = [];
 
 /**
- * Entry trigger at the outer gate (flags + pillars at the bottom of the
- * path, just before the drawbridge leading up to the castle). Eyeballed
- * from the source image; fine-tune in browser if needed.
+ * Single huge trigger covering the academy premises (castle + outer
+ * courtyard). User feedback 2026-04-22: "The triggers for entering
+ * academy should not just reside with the gate, but extend topwards so
+ * anyone within the academy premises can enter." Centre sits in the
+ * castle's plaza; radius 1200 covers roughly y=0..2150 — everything
+ * above the fence line. Avatar spawn at y=2200 starts just below the
+ * radius so the prompt doesn't flash on arrival.
  */
 export const ACADEMY_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
   {
     buildingId: 'academy-main',
     centerX: 1254,
-    centerY: 2130,
-    radius: 160,
-    label: 'Press SPACE to Enter Academy',
+    centerY: 950,
+    radius: 1200,
+    label: 'Press ENTER to visit Academy',
     route: '/academy',
   },
 ];
 
 /** Bottom edge returns the member to the central square. */
 export const ACADEMY_OUTSIDE_RETURN_EDGE: EdgeTriggers = {
-  bottom: { route: '/world', threshold: 56 },
+  bottom: { route: '/world', threshold: 150 },
 };
 
 export const academyOutsideLayersConfig = {

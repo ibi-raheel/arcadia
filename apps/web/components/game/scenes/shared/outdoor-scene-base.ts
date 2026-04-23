@@ -82,6 +82,7 @@ export abstract class OutdoorSceneBase extends Phaser.Scene {
     D: Phaser.Input.Keyboard.Key;
   };
   private spaceKey?: Phaser.Input.Keyboard.Key;
+  private enterKey?: Phaser.Input.Keyboard.Key;
   private clickTarget: { x: number; y: number } | null = null;
 
   private enterPrompt?: EnterPromptManager;
@@ -164,8 +165,12 @@ export abstract class OutdoorSceneBase extends Phaser.Scene {
       S: Phaser.Input.Keyboard.Key;
       D: Phaser.Input.Keyboard.Key;
     };
-    this.input.keyboard.addCapture('SPACE');
+    // SPACE is jump (unchanged). ENTER is the enter-prompt trigger
+    // (2026-04-22 feedback: SPACE-vs-jump conflict made jump feel broken
+    // inside any prompt radius; moving the prompt to ENTER decouples them).
+    this.input.keyboard.addCapture('SPACE,ENTER');
     this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.enterKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
   }
 
   private wirePointerInput(): void {
@@ -227,23 +232,21 @@ export abstract class OutdoorSceneBase extends Phaser.Scene {
     this.localAvatar.isMoving = moving;
     this.localAvatar.direction = velocityToFacingDirection(vx, vy, this.localAvatar.direction);
 
-    // SPACE coordination — prompt wins over jump. If a prompt is active, the
-    // enter-prompt manager consumes SPACE (fades + navigates). Otherwise
-    // SPACE triggers the jump animation, same as inside interiors.
+    // SPACE → jump. ENTER → enter-prompt. No coordination needed: the
+    // prompt helper only navigates when ENTER is pressed; SPACE is always
+    // available for jump even inside a prompt's proximity radius.
     const spaceJustDown = this.spaceKey
       ? Phaser.Input.Keyboard.JustDown(this.spaceKey)
       : false;
-    const promptResult = this.enterPrompt?.update(
+    const enterJustDown = this.enterKey
+      ? Phaser.Input.Keyboard.JustDown(this.enterKey)
+      : false;
+    this.enterPrompt?.update(
       this.localAvatar.x,
       this.localAvatar.y,
-      spaceJustDown,
+      enterJustDown,
     );
-    const promptConsumedSpace = promptResult?.navigated === true;
-    if (
-      !promptConsumedSpace &&
-      spaceJustDown &&
-      !this.localAvatar.isJumping
-    ) {
+    if (spaceJustDown && !this.localAvatar.isJumping) {
       this.localAvatar.triggerJump(this.localAvatar.direction);
     }
 
