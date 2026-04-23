@@ -13,7 +13,7 @@ export const MARKET_COLLIDERS: readonly PixelRect[] = [];
  * back button.)
  */
 export const MARKET_RETURN_EDGE: EdgeTriggers = {
-  top: { route: '/world', threshold: 150 },
+  top: { route: '/world', threshold: 300 },
 };
 
 export const marketLayersConfig = {

@@ -21,14 +21,19 @@ export const SQUARE_COLLIDERS: readonly PixelRect[] = [];
  * Market retains its existing interior at /market (south), so the bottom
  * edge links directly there rather than to a market-outside scene.
  */
-// 2026-04-22 bump 150 → 250 after "cannot go from square to market at
-// the bottom" — the avatar's feet-box + world-bounds clamp meant only a
-// narrow ~10px band actually fired. 250 gives a clean walk-onto feel.
+// 2026-04-22 bumps 150 → 250 → 300. Root cause of the "cannot exit from
+// the bottom" reports was a double-scaled physics body (sprite was
+// scaled +50% for visibility AND the bodyOffset was pre-scaled in
+// config). Phaser Arcade scales the body automatically with
+// sprite.scale, so the net body ended up so large it clamped the
+// avatar well above the trigger band. Fixed by reverting bodyOffset
+// to its original frame-space values; 300 threshold gives an extra
+// safety margin.
 export const SQUARE_EDGE_TRIGGERS: EdgeTriggers = {
-  top: { route: '/academy-outside', threshold: 250 },
-  right: { route: '/tavern-outside', threshold: 250 },
-  bottom: { route: '/market', threshold: 250 },
-  left: { route: '/coworking', threshold: 250 },
+  top: { route: '/academy-outside', threshold: 300 },
+  right: { route: '/tavern-outside', threshold: 300 },
+  bottom: { route: '/market', threshold: 300 },
+  left: { route: '/coworking', threshold: 300 },
 };
 
 /**
@@ -39,13 +44,16 @@ export const SQUARE_EDGE_TRIGGERS: EdgeTriggers = {
  * "NPC not giving tip bubbles now").
  */
 export const SQUARE_NPC = {
-  position: { x: 320, y: 320 },
+  // NPC figure sits on the rug in the upper-left of the 2508² source.
+  // Body centre ≈ (355, 620); head top ≈ 540.
+  position: { x: 355, y: 620 },
   /**
-   * Approximate head-of-NPC y in the image — bubble anchors above this
-   * so the tail points down at his head. User feedback 2026-04-22:
-   * "bubble is way too high, reduce gap" → moved down from 230 to 285.
+   * Bubble tail tip lands at `headY + 10`, so setting headY = 530 puts
+   * the tail ~10 px above the NPC's head top. User 2026-04-22 screenshot:
+   * earlier coords (320, 285) pointed at empty grass to the upper-left,
+   * the bubble floated far from the NPC.
    */
-  headY: 285,
+  headY: 530,
   proximityPx: 380,
   tips: [
     'Welcome to Arcadia, traveller!',
