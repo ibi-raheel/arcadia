@@ -5,10 +5,7 @@
 // Walking off the right (bridge) edge returns to /world.
 
 import { BOOT_ASSETS } from '../boot/asset-manifest';
-import {
-  OutdoorSceneBase,
-  type OutdoorSceneConfig,
-} from '../shared/outdoor-scene-base';
+import { OutdoorSceneBase, type OutdoorSceneConfig } from '../shared/outdoor-scene-base';
 import { coworkingOutsideCameraConfig } from './camera.config';
 import { coworkingOutsideLayersConfig } from './layers.config';
 import { coworkingOutsideSpritesConfig } from './sprites.config';

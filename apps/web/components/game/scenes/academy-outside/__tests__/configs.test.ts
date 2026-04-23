@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  ACADEMY_OUTSIDE_IMAGE_SIZE,
-  academyOutsideCameraConfig,
-} from '../camera.config';
+import { ACADEMY_OUTSIDE_IMAGE_SIZE, academyOutsideCameraConfig } from '../camera.config';
 import {
   ACADEMY_OUTSIDE_COLLIDERS,
   ACADEMY_OUTSIDE_ENTRY_TRIGGERS,

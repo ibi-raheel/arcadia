@@ -22,10 +22,7 @@ import { BOOT_ASSETS } from '../boot/asset-manifest';
 import { isAvatarId } from '../shared/avatar-palette';
 import { createCapacityHud, type CapacityHud } from '../shared/capacity-hud';
 import { spawnColliders } from '../shared/colliders';
-import {
-  createEdgeTriggerManager,
-  type EdgeTriggerManager,
-} from '../shared/edge-triggers';
+import { createEdgeTriggerManager, type EdgeTriggerManager } from '../shared/edge-triggers';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {

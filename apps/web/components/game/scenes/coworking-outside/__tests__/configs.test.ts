@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  COWORKING_OUTSIDE_IMAGE_SIZE,
-  coworkingOutsideCameraConfig,
-} from '../camera.config';
+import { COWORKING_OUTSIDE_IMAGE_SIZE, coworkingOutsideCameraConfig } from '../camera.config';
 import {
   COWORKING_OUTSIDE_COLLIDERS,
   COWORKING_OUTSIDE_ENTRY_TRIGGERS,

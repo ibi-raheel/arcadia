@@ -91,10 +91,7 @@ const DEFAULT_BUILDING_ID = 'tavern-a';
 
 export default function GameTavern(): React.JSX.Element {
   const searchParams = useSearchParams();
-  const buildingId = useMemo(
-    () => searchParams.get('b') || DEFAULT_BUILDING_ID,
-    [searchParams],
-  );
+  const buildingId = useMemo(() => searchParams.get('b') || DEFAULT_BUILDING_ID, [searchParams]);
   const tavernName = useMemo(() => tavernDisplayName(buildingId), [buildingId]);
 
   const containerRef = useRef<HTMLDivElement>(null);

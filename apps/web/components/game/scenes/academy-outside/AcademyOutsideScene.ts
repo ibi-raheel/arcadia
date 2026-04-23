@@ -4,10 +4,7 @@
 // Walking off the bottom edge returns to /world.
 
 import { BOOT_ASSETS } from '../boot/asset-manifest';
-import {
-  OutdoorSceneBase,
-  type OutdoorSceneConfig,
-} from '../shared/outdoor-scene-base';
+import { OutdoorSceneBase, type OutdoorSceneConfig } from '../shared/outdoor-scene-base';
 import { academyOutsideCameraConfig } from './camera.config';
 import { academyOutsideLayersConfig } from './layers.config';
 import { academyOutsideSpritesConfig } from './sprites.config';

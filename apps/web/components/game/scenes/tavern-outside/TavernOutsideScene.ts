@@ -5,10 +5,7 @@
 // Walking off the left (bridge) edge returns to /world.
 
 import { BOOT_ASSETS } from '../boot/asset-manifest';
-import {
-  OutdoorSceneBase,
-  type OutdoorSceneConfig,
-} from '../shared/outdoor-scene-base';
+import { OutdoorSceneBase, type OutdoorSceneConfig } from '../shared/outdoor-scene-base';
 import { tavernOutsideCameraConfig } from './camera.config';
 import { tavernOutsideLayersConfig } from './layers.config';
 import { tavernOutsideSpritesConfig } from './sprites.config';
