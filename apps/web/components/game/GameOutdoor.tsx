@@ -10,7 +10,8 @@
 'use client';
 
 import * as Phaser from 'phaser';
-import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
@@ -30,12 +31,14 @@ import {
   COWORKING_OUTSIDE_SCENE_KEY,
 } from './scenes/coworking-outside/CoworkingOutsideScene';
 import { coworkingOutsideCameraConfig } from './scenes/coworking-outside/camera.config';
+import { OUTDOOR_SPAWN_OVERRIDE_REGISTRY_KEY } from './scenes/shared/outdoor-scene-base';
 import { isAvatarId, type AvatarId } from './scenes/shared/avatar-palette';
 import {
   TavernOutsideScene,
   TAVERN_OUTSIDE_SCENE_KEY,
 } from './scenes/tavern-outside/TavernOutsideScene';
 import { tavernOutsideCameraConfig } from './scenes/tavern-outside/camera.config';
+import { TAVERN_OUTSIDE_DOOR_SPAWNS } from './scenes/tavern-outside/layers.config';
 import { MEMBER_REGISTRY_KEY, type SceneMember } from './scenes/world/WorldScene';
 
 export type OutdoorVariant = 'academy-outside' | 'tavern-outside' | 'coworking-outside';
@@ -109,6 +112,17 @@ export default function GameOutdoor({
   readonly variant: OutdoorVariant;
 }): React.JSX.Element {
   const spec = VARIANT_MAP[variant];
+  const searchParams = useSearchParams();
+  // `?from=<buildingId>` drops the avatar next to a specific door instead
+  // of the default spawn. Today only tavern-outside uses this — coworking
+  // stays at its default centre-east spawn.
+  const spawnOverride = useMemo(() => {
+    if (variant !== 'tavern-outside') return undefined;
+    const from = searchParams.get('from');
+    if (!from) return undefined;
+    return TAVERN_OUTSIDE_DOOR_SPAWNS[from];
+  }, [variant, searchParams]);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const [fetchState, setFetchState] = useState<SessionFetch>({ status: 'loading' });
@@ -143,6 +157,9 @@ export default function GameOutdoor({
 
     game.registry.set(MEMBER_REGISTRY_KEY, fetchState.member);
     game.registry.set(NEXT_SCENE_KEY_REGISTRY_KEY, spec.sceneKey);
+    if (spawnOverride) {
+      game.registry.set(OUTDOOR_SPAWN_OVERRIDE_REGISTRY_KEY, spawnOverride);
+    }
     game.registry.set(PROGRESS_CALLBACK_REGISTRY_KEY, (progress: number) => {
       setPreloadProgress(progress);
     });
@@ -154,7 +171,7 @@ export default function GameOutdoor({
       gameRef.current = null;
       if (g) g.destroy(true);
     };
-  }, [fetchState, spec]);
+  }, [fetchState, spec, spawnOverride]);
 
   if (fetchState.status === 'error') {
     return (

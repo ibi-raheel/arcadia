@@ -1,5 +1,6 @@
 // Tavern tilemap layer names + depth ordering. Mirrors the world layout.
 
+import type { EdgeTriggers } from '../shared/edge-triggers';
 import type { PixelRect } from '../shared/types';
 
 /**
@@ -9,6 +10,16 @@ import type { PixelRect } from '../shared/types';
  * and the helper bundles them into a StaticGroup for avatar collision.
  */
 export const TAVERN_COLLIDERS: readonly PixelRect[] = [];
+
+/**
+ * Walk off the bottom edge to leave the tavern (2026-04-22 — replaces
+ * the "← Return to World" button). Lands on /tavern-outside with a
+ * `?from=<buildingId>` param so the outdoor scene can spawn the member
+ * near the correct tavern's door.
+ */
+export const TAVERN_RETURN_EDGE: EdgeTriggers = {
+  bottom: { route: '/tavern-outside', threshold: 120 },
+};
 
 export const tavernLayersConfig = {
   tilemapLayers: {
@@ -26,4 +37,5 @@ export const tavernLayersConfig = {
     yAnchorRatio: 0.5,
   },
   colliders: TAVERN_COLLIDERS,
+  returnEdge: TAVERN_RETURN_EDGE,
 } as const;

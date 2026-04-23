@@ -11,6 +11,10 @@ import * as Phaser from 'phaser';
 import { BOOT_ASSETS } from '../boot/asset-manifest';
 import { isAvatarId } from '../shared/avatar-palette';
 import { spawnColliders } from '../shared/colliders';
+import {
+  createEdgeTriggerManager,
+  type EdgeTriggerManager,
+} from '../shared/edge-triggers';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -98,6 +102,7 @@ export class MarketScene extends Phaser.Scene {
 
   private memberId: string | null = null;
   private lastPositionSaveAt = 0;
+  private edgeTriggers?: EdgeTriggerManager;
 
   constructor() {
     super({ key: MARKET_SCENE_KEY });
@@ -121,10 +126,21 @@ export class MarketScene extends Phaser.Scene {
 
     this.renderStalls();
 
+    // Walk off the top edge to return to /world (2026-04-22 — replaces
+    // the browser back button as the exit affordance).
+    this.edgeTriggers = createEdgeTriggerManager(
+      this,
+      bounds.width,
+      bounds.height,
+      marketLayersConfig.returnEdge,
+    );
+
     // HUD search → hide non-matching stalls.
     this.game.events.on(MARKET_FILTER_EVENT, this.applyFilter, this);
     const onShutdown = (): void => {
       this.game.events.off(MARKET_FILTER_EVENT, this.applyFilter, this);
+      this.edgeTriggers?.destroy();
+      this.edgeTriggers = undefined;
       if (this.memberId != null && this.localAvatar) {
         saveSavedPosition(this.memberId, {
           x: this.localAvatar.x,
@@ -354,6 +370,8 @@ export class MarketScene extends Phaser.Scene {
     for (const obj of this.ySortables) {
       obj.setDepth(calculateYSortDepth(obj, { depthBase, yAnchorRatio }));
     }
+
+    this.edgeTriggers?.update(this.localAvatar.x, this.localAvatar.y);
 
     // Persist position to localStorage every POSITION_SAVE_INTERVAL_MS
     // so page reloads pick up where the member left off. Skipped when

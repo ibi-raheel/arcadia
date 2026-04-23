@@ -28,6 +28,32 @@ export const SQUARE_EDGE_TRIGGERS: EdgeTriggers = {
   left: { route: '/coworking', threshold: 150 },
 };
 
+/**
+ * NPC tip-bubble config. The merchant figure is baked into the square PNG
+ * (upper-left — bearded man on a rug). Coords point at his visible head;
+ * proximityPx is the radius in world pixels at which the tip bubble
+ * appears. Ported from the ADR-0007 Tiled square (2026-04-22 feedback —
+ * "NPC not giving tip bubbles now").
+ */
+export const SQUARE_NPC = {
+  position: { x: 320, y: 320 },
+  /** Approximate head-of-NPC y in the image — bubble anchors above this. */
+  headY: 230,
+  proximityPx: 380,
+  tips: [
+    'Welcome to Arcadia, traveller!',
+    'Psst — the fountain drops a coin at midnight.',
+    'WASD gets you places. Arrow keys too.',
+    'Watch the shrubs. They move sometimes.',
+    'Careful crossing the bridge after rain.',
+    "If you see fireflies, you're close to something good.",
+    'The tavern brews a mean ale. Trust me.',
+    'Spacebar makes you jump. Try it.',
+    'The market opens past the cobblestones.',
+    'Lamps light up at dusk. Mostly.',
+  ],
+} as const;
+
 export const squareLayersConfig = {
   depth: {
     ground: 0,
@@ -39,4 +65,5 @@ export const squareLayersConfig = {
   },
   colliders: SQUARE_COLLIDERS,
   edgeTriggers: SQUARE_EDGE_TRIGGERS,
+  npc: SQUARE_NPC,
 } as const;

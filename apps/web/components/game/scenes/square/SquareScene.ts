@@ -77,6 +77,11 @@ export class SquareScene extends Phaser.Scene {
   private edgeTriggers?: EdgeTriggerManager;
   private capacityHud?: CapacityHud;
 
+  private npcBubble?: Phaser.GameObjects.Container;
+  private npcBubbleText?: Phaser.GameObjects.Text;
+  private npcBubbleBg?: Phaser.GameObjects.Graphics;
+  private npcWasNear = false;
+
   constructor() {
     super({ key: SQUARE_SCENE_KEY });
   }
@@ -106,6 +111,8 @@ export class SquareScene extends Phaser.Scene {
     );
 
     this.capacityHud = createCapacityHud(this, { label: 'Square', max: HUD_MAX_CLIENTS });
+
+    this.createNpcBubble();
 
     this.colyseus = this.registry.get(COLYSEUS_CONNECTION_REGISTRY_KEY) as
       | ColyseusConnection
@@ -270,8 +277,59 @@ export class SquareScene extends Phaser.Scene {
     this.teardownRemoteAvatars();
     this.edgeTriggers?.destroy();
     this.capacityHud?.destroy();
+    this.npcBubble?.destroy();
     this.edgeTriggers = undefined;
     this.capacityHud = undefined;
+    this.npcBubble = undefined;
+    this.npcBubbleText = undefined;
+    this.npcBubbleBg = undefined;
+  }
+
+  private createNpcBubble(): void {
+    const text = this.add
+      .text(0, 0, '', {
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        fontSize: '16px',
+        color: '#0f172a',
+        wordWrap: { width: 240 },
+        align: 'center',
+      })
+      .setOrigin(0.5, 1)
+      .setPadding(10, 6, 10, 6);
+    const bg = this.add.graphics();
+    this.npcBubble = this.add.container(0, 0, [bg, text]).setDepth(2_000_000).setVisible(false);
+    this.npcBubbleText = text;
+    this.npcBubbleBg = bg;
+  }
+
+  private showRandomNpcTip(): void {
+    if (!this.npcBubble || !this.npcBubbleText || !this.npcBubbleBg) return;
+    const tips = squareLayersConfig.npc.tips;
+    const tip = tips[Math.floor(Math.random() * tips.length)] ?? '';
+    this.npcBubbleText.setText(tip);
+    const w = this.npcBubbleText.width;
+    const h = this.npcBubbleText.height;
+    this.npcBubbleBg.clear();
+    this.npcBubbleBg.fillStyle(0xffffff, 0.95);
+    this.npcBubbleBg.lineStyle(2, 0x1e293b, 1);
+    this.npcBubbleBg.fillRoundedRect(-w / 2, -h, w, h, 10);
+    this.npcBubbleBg.strokeRoundedRect(-w / 2, -h, w, h, 10);
+    // Tail pointing down at the NPC's head.
+    this.npcBubbleBg.fillTriangle(-8, 0, 8, 0, 0, 10);
+    this.npcBubbleBg.strokeTriangle(-8, 0, 8, 0, 0, 10);
+    this.npcBubble.setVisible(true);
+  }
+
+  private updateNpcBubble(ax: number, ay: number): void {
+    if (!this.npcBubble) return;
+    const cfg = squareLayersConfig.npc;
+    this.npcBubble.setPosition(cfg.position.x, cfg.headY);
+    const dx = ax - cfg.position.x;
+    const dy = ay - cfg.position.y;
+    const near = Math.hypot(dx, dy) < cfg.proximityPx;
+    if (near && !this.npcWasNear) this.showRandomNpcTip();
+    if (!near && this.npcWasNear) this.npcBubble.setVisible(false);
+    this.npcWasNear = near;
   }
 
   private sendMoveIfChanged(now: number): void {
@@ -353,6 +411,7 @@ export class SquareScene extends Phaser.Scene {
       obj.setDepth(calculateYSortDepth(obj, { depthBase, yAnchorRatio }));
     }
 
+    this.updateNpcBubble(this.localAvatar.x, this.localAvatar.y);
     this.edgeTriggers?.update(this.localAvatar.x, this.localAvatar.y);
   }
 }

@@ -22,7 +22,7 @@ export const TAVERN_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
     centerX: 1180,
     centerY: 560,
     radius: 220,
-    label: 'Press ENTER to visit Tavern',
+    label: 'Press ENTER to visit The Three Ravens',
     route: '/tavern?b=tavern-a',
   },
   {
@@ -30,7 +30,7 @@ export const TAVERN_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
     centerX: 1200,
     centerY: 1260,
     radius: 220,
-    label: 'Press ENTER to visit Tavern',
+    label: 'Press ENTER to visit The Iron Chalice',
     route: '/tavern?b=tavern-b',
   },
   {
@@ -38,10 +38,29 @@ export const TAVERN_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
     centerX: 1220,
     centerY: 1960,
     radius: 220,
-    label: 'Press ENTER to visit Tavern',
+    label: 'Press ENTER to visit The Sleeping Hollow',
     route: '/tavern?b=tavern-c',
   },
 ];
+
+/**
+ * Spawn-pixel overrides when the page was loaded with `?from=<buildingId>`
+ * — e.g. the member just walked out of The Three Ravens and lands next
+ * to that tavern's door in the outdoor scene. GameOutdoor reads `?from=`,
+ * picks the value here, and writes it into the
+ * OUTDOOR_SPAWN_OVERRIDE_REGISTRY_KEY before Phaser boots.
+ *
+ * Each entry sits ~200 px west of the door so the member doesn't
+ * immediately re-trigger the enter prompt they just dismissed.
+ */
+export const TAVERN_OUTSIDE_DOOR_SPAWNS: Record<
+  string,
+  { readonly x: number; readonly y: number } | undefined
+> = {
+  'tavern-a': { x: 980, y: 560 },
+  'tavern-b': { x: 1000, y: 1260 },
+  'tavern-c': { x: 1020, y: 1960 },
+};
 
 /** West (bridge) edge returns the member to the square. */
 export const TAVERN_OUTSIDE_RETURN_EDGE: EdgeTriggers = {

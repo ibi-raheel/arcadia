@@ -1,23 +1,22 @@
 // Mirrors GameWorld for /tavern. Fetches session + member, opens the
 // `tavern-realm1` Colyseus room, mounts Phaser with [BootScene, TavernScene].
-// Emits MSG.LEAVE_BUILDING before routing back to /world so the game-server
-// gets a clean transition log.
+// The tavern exit (walk off the bottom edge) + its LEAVE_BUILDING emit
+// live in TavernScene via createEdgeTriggerManager's onFire hook, not here.
 
 'use client';
 
 import * as Phaser from 'phaser';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
-
-import { MSG } from '@arcadia/shared';
 
 import { ChatPanel } from '@/components/tavern/ChatPanel';
 import { LeaderboardPanel } from '@/components/tavern/LeaderboardPanel';
 
 import { BuildingTransition } from './BuildingTransition';
 import { LevelUpBanner } from './LevelUpBanner';
+import { tavernDisplayName } from './scenes/shared/building-names';
 import { useLevelSync } from './net/use-level-sync';
 import { connectToRoom, type ColyseusConnection } from './net/colyseus-client';
 import {
@@ -91,12 +90,12 @@ async function fetchSession(): Promise<SessionFetch> {
 const DEFAULT_BUILDING_ID = 'tavern-a';
 
 export default function GameTavern(): React.JSX.Element {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const buildingId = useMemo(
     () => searchParams.get('b') || DEFAULT_BUILDING_ID,
     [searchParams],
   );
+  const tavernName = useMemo(() => tavernDisplayName(buildingId), [buildingId]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
@@ -199,13 +198,9 @@ export default function GameTavern(): React.JSX.Element {
     };
   }, [fetchState, buildingId]);
 
-  const handleReturnToWorld = (): void => {
-    connectionRef.current?.send(MSG.LEAVE_BUILDING, { building: 'tavern' });
-    // 2026-04-22: go back to the tavern-outside scene (the building's front
-    // door) rather than the central square. Members can walk back west to the
-    // square from there if they want.
-    router.push('/tavern-outside');
-  };
+  // 2026-04-22: exit moved from a React button to an in-scene
+  // walk-off-the-bottom edge trigger in TavernScene. LEAVE_BUILDING is
+  // sent there via `createEdgeTriggerManager(..., onFire)`.
 
   // Chat → scene bridge. TavernScene listens on `game.events` for
   // TAVERN_SPEECH_EVENT and pops a bubble above the avatar matching
@@ -241,13 +236,6 @@ export default function GameTavern(): React.JSX.Element {
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <div ref={containerRef} className="absolute inset-0" />
-      <button
-        type="button"
-        onClick={handleReturnToWorld}
-        className="absolute left-4 top-4 z-40 rounded bg-neutral-100 px-3 py-2 text-sm font-medium text-neutral-900 shadow transition hover:bg-white"
-      >
-        ← Return to World
-      </button>
       {/* Week 8 overlays — chat bottom-right, leaderboard top-right. `fetchState`
           carries member + realm once ready; rendered conditionally so the
           panels don't start fetching while we're still authing. */}
@@ -266,7 +254,12 @@ export default function GameTavern(): React.JSX.Element {
           />
         </>
       )}
-      <BuildingTransition building="tavern" ready={sceneReady} />
+      <BuildingTransition
+        building="tavern"
+        ready={sceneReady}
+        displayName={tavernName}
+        backgroundImage="/tavern-interior.png"
+      />
       <LevelUpBanner />
     </div>
   );
