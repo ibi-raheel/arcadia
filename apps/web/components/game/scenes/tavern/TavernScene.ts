@@ -143,6 +143,12 @@ export class TavernScene extends Phaser.Scene {
   private capacityHud?: CapacityHud;
   private edgeTriggers?: EdgeTriggerManager;
 
+  // 2026-04-23: archway-proximity exit state. exitReturnRoute is built
+  // per-session from the `?b=` query param so the outdoor scene can
+  // spawn the member next to the correct tavern door.
+  private exitReturnRoute = '/tavern-outside';
+  private exitFired = false;
+
   // Speech bubbles above speakers — keyed by memberId so a new message from
   // the same member replaces any active bubble.
   private readonly speechBubbles = new Map<string, Phaser.GameObjects.Container>();
@@ -205,24 +211,17 @@ export class TavernScene extends Phaser.Scene {
       max: HUD_MAX_CLIENTS,
     });
 
-    // Walk off the bottom edge to leave. Sends LEAVE_BUILDING through
-    // Colyseus before the fade so the server logs the transition (the
-    // old button-based flow did the same — moved into the scene now).
-    // `?from=<buildingId>` carries forward so /tavern-outside spawns the
-    // member next to the door they walked out of.
-    const baseEdge = tavernLayersConfig.returnEdge.bottom;
-    const returnRoute = buildingId
-      ? `${baseEdge?.route ?? '/tavern-outside'}?from=${encodeURIComponent(buildingId)}`
-      : (baseEdge?.route ?? '/tavern-outside');
-    this.edgeTriggers = createEdgeTriggerManager(
-      this,
-      bounds.width,
-      bounds.height,
-      { bottom: { route: returnRoute, threshold: baseEdge?.threshold ?? 120 } },
-      () => {
-        this.colyseus?.send(MSG.LEAVE_BUILDING, { building: 'tavern' });
-      },
-    );
+    // 2026-04-23 (v4): exit fires when the avatar is within the
+    // archway's radius — the "portal" sits at the visible door in the
+    // bottom-centre of the PNG, not on an edge band. `?from=<id>` is
+    // carried to /tavern-outside so the outdoor scene can spawn the
+    // member next to the door they used. LEAVE_BUILDING is emitted on
+    // fire to keep server-side transition logs consistent with the old
+    // button-based flow.
+    const archway = tavernLayersConfig.exitArchway;
+    this.exitReturnRoute = buildingId
+      ? `${archway.route}?from=${encodeURIComponent(buildingId)}`
+      : archway.route;
 
     this.colyseus = this.registry.get(COLYSEUS_CONNECTION_REGISTRY_KEY) as
       | ColyseusConnection
@@ -405,6 +404,28 @@ export class TavernScene extends Phaser.Scene {
     if (idx >= 0) this.ySortables.splice(idx, 1);
   }
 
+  /**
+   * Fires the tavern → /tavern-outside transition once the avatar is
+   * within the archway's proximity radius. Replaces the earlier
+   * bottom-edge-threshold approach, which tripped halfway across the
+   * room instead of at the visible door (user 2026-04-23: "have the
+   * portal to go back there" pointing at the archway).
+   */
+  private checkArchwayExit(): void {
+    if (this.exitFired || !this.localAvatar) return;
+    const archway = tavernLayersConfig.exitArchway;
+    const dx = this.localAvatar.x - archway.centerX;
+    const dy = this.localAvatar.y - archway.centerY;
+    if (Math.hypot(dx, dy) > archway.radius) return;
+    this.exitFired = true;
+    this.colyseus?.send(MSG.LEAVE_BUILDING, { building: 'tavern' });
+    this.cameras.main.fadeOut(300, 0, 0, 0);
+    const route = this.exitReturnRoute;
+    this.cameras.main.once('camerafadeoutcomplete', () => {
+      if (typeof window !== 'undefined') window.location.href = route;
+    });
+  }
+
   private async wireRemoteAvatars(room: ColyseusRoom): Promise<void> {
     this.teardownRemoteAvatars();
 
@@ -575,7 +596,7 @@ export class TavernScene extends Phaser.Scene {
 
       this.sendMoveIfChanged(this.time.now);
 
-      this.edgeTriggers?.update(this.localAvatar.x, this.localAvatar.y);
+      this.checkArchwayExit();
     }
 
     const depthBase = tavernLayersConfig.depth.dynamic;
