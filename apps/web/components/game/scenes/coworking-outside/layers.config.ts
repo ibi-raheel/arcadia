@@ -17,52 +17,54 @@ export const COWORKING_OUTSIDE_COLLIDERS: readonly PixelRect[] = [];
  * Coordinates eyeballed from the 1× preview (1403×1121 → doubled to the
  * 2806×2242 runtime image). Nudge in browser if needed.
  */
+// Door/entrance coordinates refined 2026-04-22 to sit on the visible tent
+// openings. Radius 200 covers the entrance flap + immediate approach.
 export const COWORKING_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
   {
     buildingId: 'tent-1',
-    centerX: 580,
-    centerY: 420,
-    radius: 140,
-    label: 'Press SPACE to Enter Tent',
+    centerX: 500,
+    centerY: 460,
+    radius: 200,
+    label: 'Press ENTER to visit Tent',
     route: '/coworking/inside?b=tent-1',
   },
   {
     buildingId: 'tent-2',
-    centerX: 1760,
-    centerY: 440,
-    radius: 140,
-    label: 'Press SPACE to Enter Tent',
+    centerX: 1780,
+    centerY: 460,
+    radius: 200,
+    label: 'Press ENTER to visit Tent',
     route: '/coworking/inside?b=tent-2',
   },
   {
     buildingId: 'tent-3',
     centerX: 440,
-    centerY: 1020,
-    radius: 140,
-    label: 'Press SPACE to Enter Tent',
+    centerY: 1060,
+    radius: 200,
+    label: 'Press ENTER to visit Tent',
     route: '/coworking/inside?b=tent-3',
   },
   {
     buildingId: 'tent-4',
-    centerX: 1740,
-    centerY: 1020,
-    radius: 140,
-    label: 'Press SPACE to Enter Tent',
+    centerX: 1720,
+    centerY: 1060,
+    radius: 200,
+    label: 'Press ENTER to visit Tent',
     route: '/coworking/inside?b=tent-4',
   },
   {
     buildingId: 'tent-5',
-    centerX: 1080,
-    centerY: 1720,
-    radius: 140,
-    label: 'Press SPACE to Enter Tent',
+    centerX: 1060,
+    centerY: 1520,
+    radius: 200,
+    label: 'Press ENTER to visit Tent',
     route: '/coworking/inside?b=tent-5',
   },
 ];
 
 /** East (bridge) edge returns the member to the square. */
 export const COWORKING_OUTSIDE_RETURN_EDGE: EdgeTriggers = {
-  right: { route: '/world', threshold: 56 },
+  right: { route: '/world', threshold: 150 },
 };
 
 export const coworkingOutsideLayersConfig = {

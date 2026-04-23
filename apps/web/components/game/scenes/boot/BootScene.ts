@@ -41,14 +41,24 @@ export class BootScene extends Phaser.Scene {
     this.load.image(BOOT_ASSETS.tavernInterior.key, BOOT_ASSETS.tavernInterior.path);
     this.load.image(BOOT_ASSETS.academyInterior.key, BOOT_ASSETS.academyInterior.path);
     this.load.image(BOOT_ASSETS.marketInterior.key, BOOT_ASSETS.marketInterior.path);
-    // 2026-04-22 image-backed outdoor set (replaces ADR-0007 Tiled square
-    // at /world; used by SquareScene + the three outdoor neighbour scenes +
-    // the coworking tent interior).
-    this.load.image(BOOT_ASSETS.squareOutside.key, BOOT_ASSETS.squareOutside.path);
-    this.load.image(BOOT_ASSETS.academyOutside.key, BOOT_ASSETS.academyOutside.path);
-    this.load.image(BOOT_ASSETS.tavernOutside.key, BOOT_ASSETS.tavernOutside.path);
-    this.load.image(BOOT_ASSETS.coworkingOutside.key, BOOT_ASSETS.coworkingOutside.path);
-    this.load.image(BOOT_ASSETS.coworkingInside.key, BOOT_ASSETS.coworkingInside.path);
+    // 2026-04-22 image-backed outdoor set — each PNG is ~9 MB, so only
+    // load the one the active scene actually uses. Without this gate,
+    // every /academy / /tavern / /market navigation sat on a ~45 MB
+    // preload even though those scenes don't touch the outdoor images.
+    const nextScene =
+      (this.game.registry.get(NEXT_SCENE_KEY_REGISTRY_KEY) as string | undefined) ??
+      NEXT_SCENE_KEY_AFTER_BOOT;
+    const outdoorAsset: { readonly key: string; readonly path: string } | undefined = (
+      {
+        SquareScene: BOOT_ASSETS.squareOutside,
+        AcademyOutsideScene: BOOT_ASSETS.academyOutside,
+        TavernOutsideScene: BOOT_ASSETS.tavernOutside,
+        CoworkingOutsideScene: BOOT_ASSETS.coworkingOutside,
+        CoworkingInsideScene: BOOT_ASSETS.coworkingInside,
+      } as Record<string, { readonly key: string; readonly path: string } | undefined>
+    )[nextScene];
+    if (outdoorAsset) this.load.image(outdoorAsset.key, outdoorAsset.path);
+
     this.load.tilemapTiledJSON(BOOT_ASSETS.tilemap.key, BOOT_ASSETS.tilemap.path);
     this.load.tilemapTiledJSON(BOOT_ASSETS.tavernTilemap.key, BOOT_ASSETS.tavernTilemap.path);
 

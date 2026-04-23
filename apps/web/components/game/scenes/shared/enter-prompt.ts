@@ -1,12 +1,12 @@
-// Proximity-based "Press SPACE to Enter X" prompts used by the outdoor scenes
+// Proximity-based "Press ENTER to visit X" prompts used by the outdoor scenes
 // (academy-outside, tavern-outside, coworking-outside). Each scene declares a
 // list of EntryTriggers; the manager tracks which (if any) is closest to the
-// avatar, renders a floating pill above it, and — when SPACE is pressed while
+// avatar, renders a floating pill above it, and — when ENTER is pressed while
 // a trigger is active — fades the camera and navigates to the trigger's route.
 //
-// Space handling: pass `spaceJustDown` (from Phaser.Input.Keyboard.JustDown)
-// into `update()`. If the method returns `consumed: true` the caller should
-// skip its normal SPACE handler (e.g. jump) for this frame.
+// 2026-04-22 — switched from SPACE to ENTER so jump (SPACE) works unhindered
+// inside a prompt radius. Caller passes `enterJustDown` from
+// Phaser.Input.Keyboard.JustDown(enterKey).
 //
 // Shared across scenes per `scenes/shared/CLAUDE.md` — the prompt shape is
 // identical for every outdoor scene, so the helper lives here, not per-scene.
@@ -38,7 +38,7 @@ export type EnterPromptManager = {
   update(
     avatarX: number,
     avatarY: number,
-    spaceJustDown: boolean,
+    enterJustDown: boolean,
   ): EnterPromptUpdateResult;
   destroy(): void;
 };
@@ -91,7 +91,7 @@ export function createEnterPromptManager(
   function update(
     ax: number,
     ay: number,
-    spaceJustDown: boolean,
+    enterJustDown: boolean,
   ): EnterPromptUpdateResult {
     if (navigating) {
       return { active: true, navigated: false };
@@ -112,10 +112,14 @@ export function createEnterPromptManager(
     bg.lineStyle(2, 0xfacc15, 1);
     bg.strokeRoundedRect(-w / 2, -h, w, h, 10);
     text.setPosition(0, -7);
-    container.setPosition(nearest.centerX, nearest.centerY - nearest.radius - 40);
+    // Anchor the prompt above the avatar's head so it's visible even when
+    // the trigger radius is large (e.g. academy's 1200px premises zone).
+    // Previously positioned at the trigger center + offset, which pushed
+    // the prompt off-screen for big radii.
+    container.setPosition(ax, ay - 90);
     container.setVisible(true);
 
-    if (spaceJustDown) {
+    if (enterJustDown) {
       navigating = true;
       scene.cameras.main.fadeOut(300, 0, 0, 0);
       scene.cameras.main.once('camerafadeoutcomplete', () => {

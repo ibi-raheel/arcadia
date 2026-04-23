@@ -19,33 +19,33 @@ export const TAVERN_OUTSIDE_COLLIDERS: readonly PixelRect[] = [];
 export const TAVERN_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
   {
     buildingId: 'tavern-a',
-    centerX: 1080,
-    centerY: 600,
-    radius: 150,
-    label: 'Press SPACE to Enter Tavern',
+    centerX: 1180,
+    centerY: 560,
+    radius: 220,
+    label: 'Press ENTER to visit Tavern',
     route: '/tavern?b=tavern-a',
   },
   {
     buildingId: 'tavern-b',
-    centerX: 1080,
-    centerY: 1280,
-    radius: 150,
-    label: 'Press SPACE to Enter Tavern',
+    centerX: 1200,
+    centerY: 1260,
+    radius: 220,
+    label: 'Press ENTER to visit Tavern',
     route: '/tavern?b=tavern-b',
   },
   {
     buildingId: 'tavern-c',
-    centerX: 1080,
-    centerY: 1980,
-    radius: 150,
-    label: 'Press SPACE to Enter Tavern',
+    centerX: 1220,
+    centerY: 1960,
+    radius: 220,
+    label: 'Press ENTER to visit Tavern',
     route: '/tavern?b=tavern-c',
   },
 ];
 
 /** West (bridge) edge returns the member to the square. */
 export const TAVERN_OUTSIDE_RETURN_EDGE: EdgeTriggers = {
-  left: { route: '/world', threshold: 56 },
+  left: { route: '/world', threshold: 150 },
 };
 
 export const tavernOutsideLayersConfig = {
