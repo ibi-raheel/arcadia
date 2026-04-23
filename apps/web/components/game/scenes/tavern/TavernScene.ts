@@ -18,7 +18,9 @@ import { isAvatarId } from '../shared/avatar-palette';
 import { tavernDisplayName } from '../shared/building-names';
 import { createCapacityHud, type CapacityHud } from '../shared/capacity-hud';
 import { spawnColliders } from '../shared/colliders';
-import { createEdgeTriggerManager, type EdgeTriggerManager } from '../shared/edge-triggers';
+// Edge-trigger manager removed 2026-04-23 in favour of the archway
+// proximity check (see checkArchwayExit). The import stays out rather
+// than being left dangling — TAVERN_RETURN_EDGE is now empty too.
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -141,7 +143,6 @@ export class TavernScene extends Phaser.Scene {
   private unsubscribeConnected: (() => void) | null = null;
 
   private capacityHud?: CapacityHud;
-  private edgeTriggers?: EdgeTriggerManager;
 
   // 2026-04-23: archway-proximity exit state. exitReturnRoute is built
   // per-session from the `?b=` query param so the outdoor scene can
@@ -493,9 +494,6 @@ export class TavernScene extends Phaser.Scene {
 
     this.capacityHud?.destroy();
     this.capacityHud = undefined;
-
-    this.edgeTriggers?.destroy();
-    this.edgeTriggers = undefined;
   }
 
   private sendMoveIfChanged(now: number): void {
