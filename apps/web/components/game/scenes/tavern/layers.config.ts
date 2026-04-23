@@ -22,7 +22,7 @@ export const TAVERN_COLLIDERS: readonly PixelRect[] = [];
 // "leaving" well before the wall clamp. User feedback 2026-04-22:
 // "cannot exit tavern interior" with a 120 threshold.
 export const TAVERN_RETURN_EDGE: EdgeTriggers = {
-  bottom: { route: '/tavern-outside', threshold: 250 },
+  bottom: { route: '/tavern-outside', threshold: 300 },
 };
 
 export const tavernLayersConfig = {

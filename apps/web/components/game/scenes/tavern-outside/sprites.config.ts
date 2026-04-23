@@ -5,7 +5,7 @@ export const tavernOutsideSpritesConfig = {
   avatar: {
     spawnPixel: { x: 350, y: 1254 },
     size: { width: 135, height: 135 },
-    bodyOffset: { x: 33, y: 93, width: 68, height: 33 },
+    bodyOffset: { x: 22, y: 62, width: 45, height: 22 },
     walkSpeed: 260,
     clickArrivalThreshold: 4,
   },
