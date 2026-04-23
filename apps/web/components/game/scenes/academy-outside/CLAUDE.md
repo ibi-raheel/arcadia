@@ -1,6 +1,6 @@
 # AcademyOutsideScene
 
-Single-player outdoor area north of the square. Image-backed. One SPACE-prompt gate trigger at the main entrance → `/academy`. One walk-onto return edge at the bottom → `/world`.
+Single-player outdoor area north of the square. Image-backed. One ENTER-prompt gate trigger at the main entrance → `/academy`. One walk-onto return edge at the bottom → `/world`.
 
 ## Files
 
@@ -14,11 +14,12 @@ Single-player outdoor area north of the square. Image-backed. One SPACE-prompt g
 
 - **W / A / S / D** or arrows — move.
 - **Click on floor** — click-to-move.
-- **Space** — one-shot jump *unless* the "Press SPACE to Enter Academy" prompt is visible (within the gate trigger's radius), in which case SPACE fades the camera and navigates to `/academy`.
+- **Space** — one-shot jump (always, regardless of prompt visibility).
+- **Enter** — when the "Press ENTER to visit Academy" prompt is visible (within the gate trigger's radius), fades the camera and navigates to `/academy`. Otherwise a no-op.
 - Walking within 56px of the bottom edge — fade + back to `/world`.
 
 ## Invariants
 
 - No Colyseus — single-player.
-- SPACE is coordinated between jump and enter-prompt by the base class: prompt wins when active.
+- SPACE and ENTER are bound independently in the base class — SPACE always triggers jump, ENTER fires the prompt only when a trigger is active.
 - Entry coordinates are eyeballed from the source 1× preview; adjust `entryTriggers[0].centerX/Y` in `layers.config.ts` if they need nudging.

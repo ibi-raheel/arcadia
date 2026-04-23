@@ -5,13 +5,13 @@ Interior room. Image-backed background (1536×1024 pixel art, user-supplied 2026
 ## Files
 
 - `TavernScene.ts` — scene class. Renders `tavern-interior.png` as a depth-0 Image at origin (0, 0); reuses `LocalAvatar`, `RemoteAvatar`, `avatar-animations`, input resolvers, `move-throttle` from `scenes/world/`. Owns the speech-bubble machinery (see events below).
-- `camera.config.ts` — zoom `1.365×` (2026-04-20, +30% to counterweight the avatar downscale); rect-shaped `bounds` matching `TAVERN_INTERIOR_SIZE` (1536×1024).
-- `sprites.config.ts` — avatar `spawnPixel: { 768, 826 }` (bottom-centre of the new interior), `size = 90×90` (−30% from the 128×128 phase on 2026-04-20), feet-body `45×22` at `(22, 62)`, walk speed.
-- `layers.config.ts` — depth bands only (ground/dynamic/decor); tilemap layer names retained but unused since the image-backed swap.
+- `camera.config.ts` — zoom `1.0×` (bumped down from 1.365 on 2026-04-23 to show more of the room); rect-shaped `bounds` matching `TAVERN_INTERIOR_SIZE` (1536×1024).
+- `sprites.config.ts` — avatar `spawnPixel: { 768, 300 }` (top-centre — member walks south through the room to the archway exit), `size = 135×135` (bumped from 90×90 on 2026-04-22 for readability), feet-body `45×22` at `(22, 62)` in **frame units** — Phaser Arcade scales it to match `sprite.scale` automatically (see ADR 0008), walk speed 200.
+- `layers.config.ts` — depth bands, y-sort config, empty colliders scaffold, and `TAVERN_EXIT_ARCHWAY` — a proximity exit zone at `(768, 960)` radius `150` that fires the portal back to `/tavern-outside` when the avatar walks into it (replaces the old bottom-edge threshold that tripped halfway across the room).
 
 ## Assets loaded
 
-- `public/tavern-interior.png` — 1376×768 cyberpunk bar interior, user-supplied 2026-04-19. Declared via `BOOT_ASSETS.tavernInterior`.
+- `public/tavern-interior.png` — 1536×1024 bar interior, user-supplied 2026-04-20 (prior 1376×768 cyberpunk version retired). Declared via `BOOT_ASSETS.tavernInterior`.
 - Reuses every avatar spritesheet preloaded by BootScene.
 - `public/maps/tavern.tmj` is still preloaded but unused in-scene — harmless; enables a one-line rollback if we ever want the procedural iso tavern back. Delete when we're confident the image is permanent.
 
@@ -36,11 +36,15 @@ Pinned to the top-right, reads `"Tavern <letter> · <count> / 20"`. `<letter>` c
 - **Space** — one-shot jump animation (same as WorldScene).
 - **Click** on floor — click-to-move.
 - **Tab** — open chat bar + focus it (the bar is otherwise hidden). While focused, WASD types; Escape or Send closes.
+- **Walk into the bottom-centre archway** — fades + routes to `/tavern-outside?from=<buildingId>`. The pulsing "↓ Exit ↓" marker is drawn in the scene directly above the archway.
+
+## Exit
+
+The exit is an archway-proximity zone (not a bottom-edge threshold). `TavernScene.checkArchwayExit()` fires once per frame while `!exitFired`, comparing the avatar's `(x, y)` against `TAVERN_EXIT_ARCHWAY`. On fire: sends `MSG.LEAVE_BUILDING { building: 'tavern' }` via Colyseus, fades the camera, navigates to `/tavern-outside?from=<buildingId>` so the outdoor scene spawns the member at the same tavern's door. The old React "Return to World" button was removed 2026-04-22.
 
 ## Not owned here
 
 - `ChatPanel` + `LeaderboardPanel` — React overlays mounted by `app/tavern/page.tsx` / `GameTavern`.
-- "Return to World" floating button — React overlay. Must fire `MSG.LEAVE_BUILDING { building: 'tavern' }` before routing (handled in `GameTavern`).
 - Reactions UI — removed 2026-04-19 per user. Backend `toggle_reaction` RPC + RLS suite tests remain intact for a future re-introduction.
 
 ## Invariants

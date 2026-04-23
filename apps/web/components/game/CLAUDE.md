@@ -17,7 +17,7 @@ Art (PNGs, atlases, tilemaps) stays central in `apps/web/public/{avatars,tileset
 
 ## World rendering model (current — image-backed, 2026-04-22 evening)
 
-- **Central scene** — `SquareScene` at `/world` renders `public/worlds/square-2508x2508.png` as a flat image background (no Tiled). Colyseus on `world-realm1` (re-added 2026-04-22). 2508×2508 bounds; avatar 90×90; zoom 1.0. Four walk-onto edge triggers wire cardinal exits:
+- **Central scene** — `SquareScene` at `/world` renders `public/worlds/square-2508x2508.png` as a flat image background (no Tiled). Colyseus on `world-realm1` (re-added 2026-04-22). 2508×2508 bounds; avatar **202×202** (the square is the one "focal" scene — every other image-backed scene runs the avatar at **135×135**); zoom 0.6. Four walk-onto edge triggers wire cardinal exits:
   - N → `/academy-outside` (image-backed single-player)
   - E → `/tavern-outside` (image-backed single-player, 3 SPACE-prompt tavern doors)
   - S → `/market` (unchanged interior)
