@@ -67,6 +67,31 @@ export const BOOT_ASSETS = {
     key: 'market-interior',
     path: '/market-interior.png',
   },
+  // 2026-04-22: image-backed outdoor world set. Replaces the Tiled-authored
+  // orthogonal square at /world (ADR 0007 world is retained on disk but no
+  // longer routed). All five images are user-supplied. Colliders ship empty
+  // per the Phase-5 Step-15 scaffold — scenes work today, collision lands
+  // whenever rects are dropped into each scene's layers.config.ts.
+  squareOutside: {
+    key: 'square-outside',
+    path: '/worlds/square-2508x2508.png',
+  },
+  academyOutside: {
+    key: 'academy-outside',
+    path: '/worlds/academy-2508x2508.png',
+  },
+  tavernOutside: {
+    key: 'tavern-outside',
+    path: '/worlds/tavernoutside-2508x2508.png',
+  },
+  coworkingOutside: {
+    key: 'coworking-outside',
+    path: '/worlds/coworkingoutside-2806x2242.png',
+  },
+  coworkingInside: {
+    key: 'coworking-inside',
+    path: '/worlds/coworkinginside-2508x2508.png',
+  },
 } as const;
 
 export type BootAssetKey = keyof typeof BOOT_ASSETS;

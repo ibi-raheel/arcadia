@@ -12,11 +12,12 @@ Preload scene. Moves bytes over the wire before WorldScene needs them, then hand
 
 No camera/sprites/layers configs (ADR 0004 canonical three) — BootScene has no such values. `asset-manifest.ts` is the scene's only data module; it is intentionally not named `*.config.ts` because it lists assets to preload, not runtime-tweakable knobs.
 
-## Assets loaded (Phase 1)
+## Assets loaded
 
-- `public/tilesets/world.png` — 704×704 iso tileset (11×11 grid of 64×64 tiles, 115 filled). Full tile-index semantics in `scripts/generate-world-tmj.mjs`.
-- `public/maps/world.tmj` — Tiled isometric tilemap JSON (30×30, 64×32 tiles).
-- Every avatar spritesheet declared in `AVATAR_SHEETS` (see `asset-manifest.ts`). Today: `avatar-01` (Knight — Aseprite export) + `avatar-02` (LPC-standard female — cropped from the 13-column generator output) idle / walk / jump. Missing sheets are skipped — the corresponding avatar renders as a `Rectangle` placeholder in LocalAvatar.
+- **Legacy iso tileset + map** (`public/tilesets/world.png`, `public/maps/world.tmj`) — still preloaded for the untouched legacy `WorldScene`; no longer routed at `/world` since 2026-04-22.
+- **Image-backed interiors**: `tavern-interior.png` (1536×1024), `academy-interior.png`, `market-interior.png`, plus the Phase-1 tavern `tavern.tmj` (preloaded but unused in-scene since the image swap).
+- **Image-backed outdoor set** *(2026-04-22)*: `public/worlds/square-2508x2508.png` + the four neighbour images (academy / tavern-outside / coworking-outside / coworking-inside). Declared as `BOOT_ASSETS.squareOutside`, `academyOutside`, `tavernOutside`, `coworkingOutside`, `coworkingInside`.
+- Every avatar spritesheet declared in `AVATAR_SHEETS`. Today: `avatar-01` (Knight — Aseprite export) + `avatar-02` (LPC-standard female — cropped from the 13-column generator output) idle / walk / jump. Missing sheets are skipped — the corresponding avatar renders as a `Rectangle` placeholder in LocalAvatar.
 
 ## Synced with
 
