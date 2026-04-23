@@ -4,18 +4,18 @@
 
 export const tavernSpritesConfig = {
   avatar: {
-    // Top-middle spawn (2026-04-22). Exit is now a walk-off on the
-    // bottom edge — member needs room to walk south, so spawn near the
-    // top rather than the "bottom-centre" spot we used before the
-    // "Return to World" button was removed.
-    spawnPixel: { x: 768, y: 300 },
+    // Upper-middle spawn. Exit is a walk-off on the bottom edge —
+    // spawning at y=500 puts the member at the midpoint of the 1024
+    // image, so the visible door is a short deliberate walk south
+    // rather than a marathon.
+    spawnPixel: { x: 768, y: 500 },
     // 90×90 display — 128 × 0.7 (user request, 2026-04-20). Source sheets
     // stay 64×64; setDisplaySize upscales ~1.4× (pixelArt keeps nearest-
     // neighbour crisp).
     size: { width: 135, height: 135 },
     // Feet-only body offset scaled in lockstep with `size` (×0.7 vs 128×128).
     bodyOffset: { x: 22, y: 62, width: 45, height: 22 },
-    walkSpeed: 160,
+    walkSpeed: 200,
     clickArrivalThreshold: 2,
   },
 } as const;

@@ -16,7 +16,7 @@ const SQUARE_CAM_BOUNDS: PixelRect = {
 };
 
 export const squareCameraConfig = {
-  zoom: 1.0,
+  zoom: 0.6,
   followLerp: 0.12,
   deadzone: { width: 200, height: 150 },
   bounds: SQUARE_CAM_BOUNDS,

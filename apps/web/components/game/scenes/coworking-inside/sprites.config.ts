@@ -7,7 +7,7 @@ export const coworkingInsideSpritesConfig = {
     spawnPixel: { x: 1254, y: 1500 },
     size: { width: 135, height: 135 },
     bodyOffset: { x: 22, y: 62, width: 45, height: 22 },
-    walkSpeed: 220,
+    walkSpeed: 270,
     clickArrivalThreshold: 4,
   },
 } as const;

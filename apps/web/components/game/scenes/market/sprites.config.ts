@@ -9,7 +9,7 @@ export const marketSpritesConfig = {
     spawnPixel: { x: 768, y: 880 },
     size: { width: 135, height: 135 },
     bodyOffset: { x: 22, y: 62, width: 45, height: 22 },
-    walkSpeed: 160,
+    walkSpeed: 200,
     clickArrivalThreshold: 2,
   },
   stall: {

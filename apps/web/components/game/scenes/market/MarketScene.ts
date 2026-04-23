@@ -159,10 +159,18 @@ export class MarketScene extends Phaser.Scene {
     // Prefer last-known position from localStorage so reloads don't yank
     // the member back to spawn. Clamp inside world bounds just in case
     // the image size has changed since the last save.
+    //
+    // 2026-04-23: also discard saved-position that would immediately
+    // fire the top-edge return trigger (`y < 400`). Otherwise members
+    // whose last session ended near the top wall get bounced straight
+    // back to /world on re-entry — which is exactly what happened when
+    // the top-edge exit landed earlier today.
     const saved = loadSavedPosition(member.memberId);
     const defaults = marketSpritesConfig.avatar.spawnPixel;
     const bounds = marketCameraConfig.bounds;
-    const spawnPixel = saved
+    const TOP_EXIT_SAFETY_Y = 400;
+    const useSaved = saved && saved.y >= TOP_EXIT_SAFETY_Y;
+    const spawnPixel = useSaved
       ? {
           x: Math.min(Math.max(saved.x, 0), bounds.width),
           y: Math.min(Math.max(saved.y, 0), bounds.height),
