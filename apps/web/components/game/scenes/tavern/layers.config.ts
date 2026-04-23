@@ -17,13 +17,13 @@ export const TAVERN_COLLIDERS: readonly PixelRect[] = [];
  * `?from=<buildingId>` param so the outdoor scene can spawn the member
  * near the correct tavern's door.
  */
-// Threshold 400 — fires once the avatar is in the bottom 40% of the
-// 1024-tall interior, so the visible door (bottom-centre of the PNG)
-// maps comfortably to the trigger band. User feedback 2026-04-23:
-// "I can't find the exit of the tavern" at threshold 300 — bumping
-// makes the exit forgiving without needing a visible marker.
+// Threshold 600 — fires once the avatar is in the bottom ~58% of the
+// 1024-tall interior. Combined with the visible "↓ Exit ↓" marker
+// TavernScene draws at the bottom, the member can't miss where to walk.
+// User fed back "I can't find the exit of the tavern" three rounds
+// running at thresholds 120 / 250 / 400, hence the belt-and-braces fix.
 export const TAVERN_RETURN_EDGE: EdgeTriggers = {
-  bottom: { route: '/tavern-outside', threshold: 400 },
+  bottom: { route: '/tavern-outside', threshold: 600 },
 };
 
 export const tavernLayersConfig = {

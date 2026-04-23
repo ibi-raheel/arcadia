@@ -82,7 +82,11 @@ export default function GameAcademy({ member, courses }: Props): React.JSX.Eleme
   }, [member, courses, router]);
 
   const handleReturnToWorld = useCallback((): void => {
-    router.push('/world?from=academy');
+    // 2026-04-23: leaves the academy to the academy-outside scene
+    // rather than bouncing all the way back to /world — symmetrical
+    // with tavern → tavern-outside. Members can walk south from
+    // academy-outside to return to the square if they want.
+    router.push('/academy-outside');
   }, [router]);
 
   const ready = preloadProgress !== null && preloadProgress >= 1;
