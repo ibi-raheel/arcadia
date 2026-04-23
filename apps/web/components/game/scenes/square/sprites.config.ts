@@ -18,7 +18,7 @@ export const squareSpritesConfig = {
     spawnPixel: { x: 1254, y: 1380 },
     size: { width: 202, height: 202 },
     bodyOffset: { x: 22, y: 62, width: 45, height: 22 },
-    walkSpeed: 260,
+    walkSpeed: 325,
     clickArrivalThreshold: 4,
   },
 } as const;

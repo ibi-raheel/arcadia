@@ -19,7 +19,7 @@ export const tavernCameraConfig = {
   // 1.365× — 1.05 × 1.3 (user bumped +30% 2026-04-20 alongside the avatar
   // downscale to 90×90). Characters stay readable; more interior detail
   // at the cost of on-screen breadth.
-  zoom: 1.365,
+  zoom: 1.0,
   followLerp: 0.12,
   deadzone: { width: 120, height: 80 },
   bounds: TAVERN_CAM_BOUNDS,
