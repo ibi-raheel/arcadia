@@ -36,7 +36,7 @@ app.get('/health', (_req, res) => {
 // Phase 2 Step 13 — occupancy poll endpoint for the world's member-count
 // badge. Unauthenticated; returns only a scalar client count per room name.
 // Known rooms allow-listed so random names don't trigger matchMaker work.
-const ROOM_NAMES = new Set(['world-realm1', 'tavern-realm1']);
+const ROOM_NAMES = new Set(['world-realm1', 'tavern-realm1', 'coworking-realm1']);
 app.get('/rooms/:name/count', async (req: Request, res: Response) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   const name = req.params.name;
@@ -75,9 +75,17 @@ const gameServer = new Server({
   driver: USE_REDIS && REDIS_URL ? new RedisDriver(REDIS_URL) : undefined,
 });
 
-// Two rooms defined in TAD §5.1 — both use the same RealmRoom class for MVP.
+// Three rooms defined for MVP — all use the same RealmRoom class.
+// - world-realm1: single outdoor square, auto-shards at maxClients=20.
+// - tavern-realm1 / coworking-realm1: per-building sharding via
+//   filterBy(['building']). The client passes { building: 'tavern-a' } (or
+//   'tent-3', etc.) and Colyseus groups clients with the same building into
+//   the same room. Once a building's room hits 20, a fresh room spawns for
+//   the same building. Exterior doors/tents on the outdoor scenes are the
+//   source of distinct building IDs — see /tavern-outside, /coworking.
 gameServer.define('world-realm1', RealmRoom);
-gameServer.define('tavern-realm1', RealmRoom);
+gameServer.define('tavern-realm1', RealmRoom).filterBy(['building']);
+gameServer.define('coworking-realm1', RealmRoom).filterBy(['building']);
 
 // Bind explicitly to 0.0.0.0 so container platforms (Railway, Fly) can route
 // to the service. Node's default is all interfaces, but being explicit avoids
