@@ -97,7 +97,11 @@ export default function GameAcademy({ member, courses }: Props): React.JSX.Eleme
       >
         ← Return to World
       </button>
-      <BuildingTransition building="academy" ready={ready} />
+      <BuildingTransition
+        ready={ready}
+        displayName="The Academy"
+        backgroundImage="/academy-interior.png"
+      />
       <LevelUpBanner />
     </div>
   );

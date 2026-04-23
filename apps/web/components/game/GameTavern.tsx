@@ -255,7 +255,6 @@ export default function GameTavern(): React.JSX.Element {
         </>
       )}
       <BuildingTransition
-        building="tavern"
         ready={sceneReady}
         displayName={tavernName}
         backgroundImage="/tavern-interior.png"

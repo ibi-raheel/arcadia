@@ -13,6 +13,7 @@ import { MSG } from '@arcadia/shared';
 
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
+import { BuildingTransition } from './BuildingTransition';
 import { LevelUpBanner } from './LevelUpBanner';
 import { useLevelSync } from './net/use-level-sync';
 import { connectToRoom, type ColyseusConnection } from './net/colyseus-client';
@@ -84,7 +85,7 @@ export default function GameCoworkingInside(): React.JSX.Element {
   const connectionRef = useRef<ColyseusConnection | null>(null);
   const [fetchState, setFetchState] = useState<SessionFetch>({ status: 'loading' });
   const [connectError, setConnectError] = useState<string | null>(null);
-  const [, setPreloadProgress] = useState<number | null>(null);
+  const [preloadProgress, setPreloadProgress] = useState<number | null>(null);
   const [colyseusConn, setColyseusConn] = useState<ColyseusConnection | null>(null);
 
   useLevelSync({
@@ -212,6 +213,9 @@ export default function GameCoworkingInside(): React.JSX.Element {
     );
   }
 
+  const sceneReady =
+    fetchState.status === 'ready' && preloadProgress !== null && preloadProgress >= 1;
+
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <div ref={containerRef} className="absolute inset-0" />
@@ -222,6 +226,11 @@ export default function GameCoworkingInside(): React.JSX.Element {
       >
         ← Leave tent
       </button>
+      <BuildingTransition
+        ready={sceneReady}
+        displayName="Coworking Tent"
+        backgroundImage="/worlds/coworkinginside-2508x2508.png"
+      />
       <LevelUpBanner />
     </div>
   );

@@ -17,8 +17,12 @@ export const TAVERN_COLLIDERS: readonly PixelRect[] = [];
  * `?from=<buildingId>` param so the outdoor scene can spawn the member
  * near the correct tavern's door.
  */
+// Threshold is generous (250 px) because the image's visible doorway
+// doesn't hug the very bottom pixel of the PNG — the avatar reads as
+// "leaving" well before the wall clamp. User feedback 2026-04-22:
+// "cannot exit tavern interior" with a 120 threshold.
 export const TAVERN_RETURN_EDGE: EdgeTriggers = {
-  bottom: { route: '/tavern-outside', threshold: 120 },
+  bottom: { route: '/tavern-outside', threshold: 250 },
 };
 
 export const tavernLayersConfig = {

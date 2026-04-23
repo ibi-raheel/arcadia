@@ -11,6 +11,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
+import { BuildingTransition } from './BuildingTransition';
 import { LevelUpBanner } from './LevelUpBanner';
 import { useLevelSync } from './net/use-level-sync';
 import { connectToRoom, type ColyseusConnection } from './net/colyseus-client';
@@ -77,7 +78,7 @@ export default function GameSquare(): React.JSX.Element {
   const connectionRef = useRef<ColyseusConnection | null>(null);
   const [fetchState, setFetchState] = useState<SessionFetch>({ status: 'loading' });
   const [connectError, setConnectError] = useState<string | null>(null);
-  const [_preloadProgress, setPreloadProgress] = useState<number | null>(null);
+  const [preloadProgress, setPreloadProgress] = useState<number | null>(null);
   const [colyseusConn, setColyseusConn] = useState<ColyseusConnection | null>(null);
 
   useLevelSync({
@@ -181,9 +182,17 @@ export default function GameSquare(): React.JSX.Element {
     );
   }
 
+  const sceneReady =
+    fetchState.status === 'ready' && preloadProgress !== null && preloadProgress >= 1;
+
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-[#0b1220]">
       <div ref={containerRef} className="absolute inset-0" />
+      <BuildingTransition
+        ready={sceneReady}
+        displayName="The Square"
+        backgroundImage="/worlds/square-2508x2508.png"
+      />
       <LevelUpBanner />
     </div>
   );
