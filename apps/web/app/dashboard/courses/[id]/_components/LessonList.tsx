@@ -270,7 +270,7 @@ function AddLessonButton({
           cursor: 'pointer',
           fontFamily: 'var(--font-hand)',
           fontSize: 15,
-          color: 'var(--gilt-deep)',
+          color: 'var(--bronze-deep)',
           padding: 0,
           textAlign: 'left',
         }}

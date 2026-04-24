@@ -212,7 +212,7 @@ function MembersTable({ members }: { readonly members: readonly FolkMember[] }):
               ) : (
                 <span
                   className="mono"
-                  style={{ color: 'var(--gilt-deep)' }}
+                  style={{ color: 'var(--oxblood)', fontWeight: 500 }}
                 >{`${m.streakDays}d`}</span>
               )}
             </Td>
@@ -239,8 +239,8 @@ function Th({ children }: { readonly children: React.ReactNode }): React.JSX.Ele
         fontSize: 11,
         letterSpacing: 2,
         textTransform: 'uppercase',
-        color: 'var(--gilt)',
-        fontWeight: 400,
+        color: 'var(--bronze-deep)',
+        fontWeight: 500,
       }}
     >
       {children}

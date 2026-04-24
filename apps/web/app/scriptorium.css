@@ -145,9 +145,28 @@
   outline: none;
 }
 .field:focus { border-bottom-color: var(--lantern); }
+/* Chrome / Safari / Edge fill autocompleted inputs with a hard yellow
+   box that clashes with both vellum and night surfaces. Pin the
+   autofill colors back to our palette so the field reads as ours even
+   when the browser has taken over. */
+.field:-webkit-autofill,
+.field:-webkit-autofill:hover,
+.field:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink);
+  caret-color: var(--ink);
+  box-shadow: 0 0 0 30px var(--vellum) inset !important;
+  transition: background-color 100000s ease-in-out 0s;
+}
 .field-dark {
   color: var(--vellum);
   border-bottom-color: var(--bronze);
+}
+.field-dark:-webkit-autofill,
+.field-dark:-webkit-autofill:hover,
+.field-dark:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--vellum);
+  caret-color: var(--vellum);
+  box-shadow: 0 0 0 30px var(--night) inset !important;
 }
 .field-label {
   display: block;
@@ -248,13 +267,15 @@
 .medallion.locked { background: radial-gradient(circle at 32% 28%, #3a3a3a, #1e1e1e); color: rgba(150,140,120,0.5); opacity: 0.6; }
 .medallion.locked .emblem { color: rgba(150,140,120,0.45); }
 
-/* Kicker label */
+/* Kicker label. --bronze-deep reads cleanly on vellum (~7:1); the
+   earlier --ink-quiet was ~2.4:1 and below WCAG AA. on-dark variant
+   keeps its warmer cue against oak. */
 .kicker {
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--ink-quiet);
+  color: var(--bronze-deep);
 }
 .kicker.on-dark { color: var(--vellum-shadow); }
 .kicker::before { content: "·  "; color: var(--lantern); }

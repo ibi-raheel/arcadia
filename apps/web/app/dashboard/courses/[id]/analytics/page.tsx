@@ -243,8 +243,8 @@ function Th({ children }: { readonly children: React.ReactNode }): React.JSX.Ele
         fontSize: 11,
         letterSpacing: 2,
         textTransform: 'uppercase',
-        color: 'var(--gilt)',
-        fontWeight: 400,
+        color: 'var(--bronze-deep)',
+        fontWeight: 500,
       }}
     >
       {children}
