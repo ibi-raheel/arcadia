@@ -13,13 +13,13 @@
 
 import { useState } from 'react';
 
-import { Hand, Kicker, LedgerCard } from '@/components/scriptorium';
 import type { CourseDraft, DraftSource } from '@/lib/types/course-drafts';
 
 import { ImagesStage } from './ImagesStage';
 import { LessonsStage } from './LessonsStage';
 import { OutlineStage } from './OutlineStage';
 import { Satchel } from './Satchel';
+import { SealStage } from './SealStage';
 import { StageRibbon } from './StageRibbon';
 
 type Props = {
@@ -62,16 +62,7 @@ export function ConjureWorkbench({ initialDraft }: Props): React.JSX.Element {
 
       {showImages && <ImagesStage draft={draft} onDraftChanged={setDraft} />}
 
-      {draft.stage === 'ready' && (
-        <LedgerCard>
-          <Kicker>stage 4 · seal</Kicker>
-          <p className="body-italic" style={{ fontSize: 16, color: 'var(--ink)' }}>
-            everything&rsquo;s approved. the seal step lands in 10.7 — then the course materializes
-            into real rows in the kiln.
-          </p>
-          <Hand>~ nearly there ~</Hand>
-        </LedgerCard>
-      )}
+      {draft.stage === 'ready' && <SealStage draft={draft} />}
     </div>
   );
 }
