@@ -29,6 +29,7 @@ import {
   canAdvance,
   totalSourceChars,
 } from '@/lib/types/course-drafts';
+import { getSupabaseAdminClient } from '@/lib/supabase/admin';
 import { isSupportedMime, parseSourceBuffer } from '@/lib/scribe/parse';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -443,6 +444,131 @@ export async function deleteDraftImage(
   }
   revalidatePath('/dashboard/courses/conjure');
   return { ok: true, value: { id: imageId } };
+}
+
+/**
+ * Materialize a draft into real courses / sections / lessons rows.
+ * The user gets dropped on /dashboard/courses/[newCourseId] where the
+ * manual builder takes over for polish.
+ *
+ * Uses the admin client for the multi-row writes so RLS doesn't
+ * interfere with the transactional-ish insert sequence. Ownership
+ * + stage gate are both checked first via the regular server client.
+ */
+export async function sealDraft(draftId: string): Promise<Result<{ readonly courseId: string }>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const supabase = getSupabaseServerClient();
+  const { data: draftRow, error: readErr } = await supabase
+    .from('course_drafts')
+    .select('*')
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId)
+    .maybeSingle();
+  if (readErr) return { ok: false, error: readErr.message };
+  if (!draftRow) return { ok: false, error: 'draft not found' };
+
+  const draft = rowToDraft(draftRow);
+  if (draft.stage !== 'ready' && draft.stage !== 'images') {
+    return {
+      ok: false,
+      error: `cannot seal from stage "${draft.stage}" — every lesson and image must be approved first`,
+    };
+  }
+  if (!draft.title) return { ok: false, error: 'course needs a title before sealing' };
+  if (draft.outline.length === 0) return { ok: false, error: 'outline is empty' };
+  if (!allLessonsApproved(draft.outline, draft.lessons)) {
+    return { ok: false, error: 'every lesson must be approved before sealing' };
+  }
+
+  const admin = getSupabaseAdminClient();
+
+  const thumbnailImage = draft.images.find((i) => i.target === 'thumbnail');
+  const description = draft.user_prompt.trim().slice(0, 500) || null;
+
+  // 1. Create the courses row.
+  const { data: courseRow, error: courseErr } = await admin
+    .from('courses')
+    .insert({
+      realm_id: draft.realm_id,
+      creator_id: draft.creator_id,
+      title: draft.title,
+      description,
+      thumbnail_url: thumbnailImage?.url ?? null,
+      price_cents: 0,
+      published: false,
+    })
+    .select('id')
+    .single();
+  if (courseErr || !courseRow) {
+    return { ok: false, error: courseErr?.message ?? 'course insert failed' };
+  }
+  const courseId = courseRow.id as string;
+
+  // 2. Insert sections + lessons. One section row per outline section,
+  //    one lesson row per outline lesson with body_markdown in `content`.
+  //    If the lesson has an approved image, prepend an image markdown
+  //    line so the academy viewer shows it above the text.
+  for (let si = 0; si < draft.outline.length; si++) {
+    const outlineSection = draft.outline[si];
+    if (!outlineSection) continue;
+
+    const { data: sectionRow, error: sectionErr } = await admin
+      .from('sections')
+      .insert({
+        course_id: courseId,
+        title: outlineSection.title,
+        sort_order: si,
+      })
+      .select('id')
+      .single();
+    if (sectionErr || !sectionRow) {
+      return { ok: false, error: sectionErr?.message ?? 'section insert failed' };
+    }
+    const sectionId = sectionRow.id as string;
+
+    for (let li = 0; li < outlineSection.lessons.length; li++) {
+      const outlineLesson = outlineSection.lessons[li];
+      if (!outlineLesson) continue;
+
+      const body = draft.lessons.find(
+        (l) => l.section_id === outlineSection.id && l.lesson_id === outlineLesson.id,
+      );
+      const image = draft.images.find(
+        (i) => typeof i.target === 'object' && i.target.lesson_id === outlineLesson.id,
+      );
+
+      const contentPrefix = image?.url
+        ? `![${outlineLesson.title.replace(/[\]\\]/g, '')}](${image.url})\n\n`
+        : '';
+      const content = `${contentPrefix}${body?.body_markdown ?? ''}`;
+
+      const { error: lessonErr } = await admin.from('lessons').insert({
+        course_id: courseId,
+        section_id: sectionId,
+        title: outlineLesson.title,
+        type: 'written',
+        content,
+        sort_order: li,
+        is_preview: li === 0 && si === 0,
+      });
+      if (lessonErr) return { ok: false, error: lessonErr.message };
+    }
+  }
+
+  // 3. Mark the draft sealed + link to the new course.
+  const { error: sealErr } = await supabase
+    .from('course_drafts')
+    .update({ stage: 'sealed', sealed_course_id: courseId })
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId);
+  if (sealErr) return { ok: false, error: sealErr.message };
+
+  revalidatePath('/dashboard/courses');
+  revalidatePath('/dashboard/courses/conjure');
+  revalidatePath(`/dashboard/courses/${courseId}`);
+  return { ok: true, value: { courseId } };
 }
 
 /** Overwrites the outline (used when the client hand-edits section
