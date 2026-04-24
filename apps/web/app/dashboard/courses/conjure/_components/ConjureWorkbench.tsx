@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { Hand, Kicker, LedgerCard } from '@/components/scriptorium';
 import type { CourseDraft, DraftSource } from '@/lib/types/course-drafts';
 
+import { LessonsStage } from './LessonsStage';
 import { OutlineStage } from './OutlineStage';
 import { Satchel } from './Satchel';
 import { StageRibbon } from './StageRibbon';
@@ -54,15 +55,8 @@ export function ConjureWorkbench({ initialDraft }: Props): React.JSX.Element {
 
       {showOutline && <OutlineStage draft={draft} onDraftChanged={setDraft} />}
 
-      {draft.stage === 'lessons' && (
-        <LedgerCard>
-          <Kicker>stage 2 · lessons</Kicker>
-          <p className="body-italic" style={{ fontSize: 16, color: 'var(--ink)' }}>
-            outline approved. the scribe is ready to compose each lesson body — that UI lands in
-            sub-phase 10.5.
-          </p>
-          <Hand>~ one lesson at a time, streamed, approvable ~</Hand>
-        </LedgerCard>
+      {(draft.stage === 'lessons' || draft.stage === 'images' || draft.stage === 'ready') && (
+        <LessonsStage draft={draft} onDraftChanged={setDraft} />
       )}
 
       {beyondOutline && (
