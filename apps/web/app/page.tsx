@@ -17,6 +17,7 @@ import {
   WaxButton,
   WaxSeal,
 } from '@/components/scriptorium';
+import { UpcomingEventPill } from '@/components/events/UpcomingEventPill';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -94,13 +95,15 @@ export default async function Home(): Promise<React.JSX.Element> {
             </div>
           </header>
 
+          <UpcomingEventPill onDark />
+
           <div
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
               gap: 22,
               width: '100%',
-              marginTop: 12,
+              marginTop: 4,
             }}
           >
             <DoorwayCard

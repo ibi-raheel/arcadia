@@ -22,6 +22,7 @@ import {
   VellumCard,
 } from '@/components/scriptorium';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
+import { UpcomingEventPill } from '@/components/events/UpcomingEventPill';
 import { buildSparkline } from '@/lib/charts/sparkline';
 import {
   STUDIO_FIXTURE,
@@ -820,9 +821,12 @@ export default function StudioPage(): React.JSX.Element {
       }
       tagline="~ flip the toggle above to simulate a busy evening ~"
       actions={
-        <Link href="/dashboard/courses" style={{ textDecoration: 'none' }}>
-          <BronzeButton>+ new course</BronzeButton>
-        </Link>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <UpcomingEventPill onDark />
+          <Link href="/dashboard/courses" style={{ textDecoration: 'none' }}>
+            <BronzeButton>+ new course</BronzeButton>
+          </Link>
+        </div>
       }
     >
       <DropCapHero />
