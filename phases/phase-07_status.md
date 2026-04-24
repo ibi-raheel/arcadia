@@ -148,3 +148,78 @@ Recommend a visual-verify pause here before 7.1 so user can confirm 7.0 on a liv
 - Avatar name + NPC bubble + chat bubble + ENTER prompts look crisp on Retina.
 - On Square, walking toward any edge shows the ENTER prompt instead of instantly warping.
 - SPACE triggers jump in Academy + Market.
+
+---
+
+## 2026-04-23 — 7.1 / 7.2 / 7.3 iterated in real-time on preview
+
+16 commits on `phase-07_gameplay-polish` after the 7.0 baseline. Summary by surface, not by chronological commit — the preview-test-fix loop produced several coord-tuning commits per scene that are consolidated here.
+
+### Market (7.2 + 7.3)
+
+- **Spawn moved** from bottom (y=880) to under the top archway (y=140). Member now enters facing the stalls.
+- **Return-to-World button removed** from `GameMarket.tsx`. Edge-exit covers the same affordance.
+- **Search-stall input removed** from `GameMarket.tsx` (UI + state + `MARKET_FILTER_EVENT` emit effect). The scene's `applyFilter` listener was left dormant; harmless cleanup opportunity.
+- **Exit is ENTER-gated** at the top-edge archway (route `/world?from=market`). Walking into the top band shows `Press ENTER to return to the Square`; only ENTER navigates.
+- **Archway-only span** (`span: { min: 500, max: 1036 }`) on the exit edge so walking the full top wall doesn't fire — only the archway does. Required extending `EdgeTriggerConfig` with an optional `span` field (see below).
+- **StallView enrol persistence (M6)**: lifted session-local `locallyEnrolledIds` from `StallView` up to `GameMarket`, merged with server `stall.enrolled` when constructing `activeStall`. Reopening a stall after enrolling in the same session now shows "Open in Academy" instead of Enrol. Removed the redundant "you're enrolled" banner (footer swap is the confirmation). `StallView` exposes an `onEnrolled(courseId)` callback.
+
+### Square
+
+- **East edge prompt confined to the Tavern bridge** via `span: { min: 1050, max: 1500 }` on the right edge. Prompt only fires when the member is on the bridge, not anywhere along the right wall.
+- **Return-spawn continuity** — new `SQUARE_RETURN_SPAWNS` map + new `SQUARE_SPAWN_OVERRIDE_REGISTRY_KEY`. `GameSquare` reads `?from=<origin>` from the URL (`market`, `academy`, `tavern`, `coworking`), looks up the matching bridge-spawn, and writes it to the registry. `SquareScene.createLocalAvatar` prefers the override over `squareSpritesConfig.avatar.spawnPixel`. All four sub-scene return edges now emit `?from=<origin>` (`/world?from=market` etc.).
+  - market → south bridge `(1254, 2250)`
+  - academy → north gate `(1254, 260)`
+  - tavern → east gate `(2250, 1254)`
+  - coworking → west bridge `(260, 1254)`
+  - Each spawn sits inside the Square's 300 px ENTER-gated trigger band — member arrives and immediately sees "Press ENTER to visit X" for the door they just used; not auto-navigated because the triggers are ENTER-gated (7.0 step 4).
+
+### Tavern interior (7.2)
+
+- **Spawn moved to the archway** at `(768, 960)`. Member lands at the exit door, sees `Press ENTER to leave the Tavern` immediately.
+- **`↓ Exit ↓` in-world text removed** along with its pulsing tween.
+- **Exit re-implemented via `createEnterPromptManager`** with a single EntryTrigger built from `TAVERN_EXIT_ARCHWAY`. Replaces the `checkArchwayExit` auto-fire with ENTER gating. `exitReturnRoute` + `exitFired` fields removed; the manager owns both.
+- **`LEAVE_BUILDING` still fires before the camera fade** — plumbed through the new `onFire` callback on `createEnterPromptManager` so pre-navigate signals keep their ordering.
+
+### Tavern outside (7.1 + 7.2)
+
+- **Door triggers moved to actual door positions**, reading from a dev grid overlay the user had me enable temporarily.
+  - Tavern A (Three Ravens, blue top): centre `(1100, 600)`, radius `180`.
+  - Tavern B (Iron Chalice, red middle): centre `(1250, 1350)`, radius `140`.
+  - Tavern C (Sleeping Hollow, green bottom): centre `(1200, 2200)`, radius `180`.
+  - Radii tuned bigger for A + C than B per user after preview testing ("increase size to the right").
+- **`TAVERN_OUTSIDE_DOOR_SPAWNS` matches each trigger centre** exactly — exit from any tavern drops the member AT the door they came from (continuity).
+- **Return edge carries `?from=tavern`** so the Square spawns the member at the east gate on return.
+
+### Academy (7.2)
+
+- **`← Return to World` button removed** from `GameAcademy.tsx`.
+- **ENTER-gated archway exit added**: `ACADEMY_EXIT_ARCHWAY` at `(768, 960)` radius `120` with label `Press ENTER to leave the Academy`, route `/academy-outside`. Wired via `createEnterPromptManager` alongside the existing jump binding. `createJumpBinding` + `useCallback` import cleanup in `GameAcademy.tsx`.
+- Academy-outside's bottom-edge return already carries `?from=academy` (shipped with the continuity pass), so exiting all the way back lands on the Square's north gate.
+
+### Shared plumbing added this pass
+
+- **`EdgeTriggerConfig.span`** — optional `{ min, max }` on any edge to restrict firing to a range along the edge's length. Covers archway/bridge confinement on Market (top) and Square (right — Tavern bridge). Preserves full-edge default for every other edge.
+- **`EnterPromptFiredCallback`** — optional third arg to `createEnterPromptManager`. Fires synchronously before camera fade, used by Tavern for `LEAVE_BUILDING`.
+- **`applyFillZoom` extended to `OutdoorSceneBase`** — all three outdoor islands (tavern-outside, academy-outside, coworking-outside) now auto-fit the viewport + re-fit on window resize, matching the interior + square behaviour.
+- **`scenes/shared/debug-grid.ts`** — temporary dev grid helper used to lock tavern-outside door coords, then stripped. Still available in git history (commits `dcab0d9` and `75e1579`) for future layout passes.
+
+### Verification
+
+- **Typecheck:** clean across every commit in this pass.
+- **Vitest:** 191 passed · 23 skipped · 0 failed (stable throughout).
+- **Manual:** iterated on the Vercel preview after every commit; user walked the flows and called out offsets / coord-reads. Each coord-tuning commit was a targeted fix for a specific screenshot.
+
+### Scope guardrail
+
+Entire pass was client-side TypeScript in `apps/web`. No migrations, no RLS changes, no new server actions. The only non-TS file touched was `phase-07_status.md` (this file, now).
+
+### Items carried forward to follow-up sub-phases
+
+- **Square occupancy UI polish (S4)** — got a font bump via the 7.0 crisp-text pass; full visual polish (vellum chip / Caveat marginalia) is still on the list.
+- **Coworking scenes** (S2 spawn-from-square, CW1 tent occupancy + avatar size, CW2 tent-exit spawn, CW3 tent trigger position) — not yet touched.
+- **Academy progress + tick reliability (AC3 / AC6)** — sub-phase 7.4 not started.
+- **Market StallView diegetic restyle (M7)** — sub-phase 7.3 step 2 not started.
+- **Bridge-only spans on the Square's top / bottom / left edges** — only east is confined so far. User has opted for per-side nudging rather than bulk span add.
+- Academy-outside default spawn on return from interior — currently the scene's default; could add a door-adjacent override.
+- Dev grid stripped from all scenes; restore from git history if more coord tuning is needed.
