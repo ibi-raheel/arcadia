@@ -16,6 +16,7 @@ import * as Phaser from 'phaser';
 
 import { isAvatarId } from './avatar-palette';
 import { spawnColliders } from './colliders';
+import { applyFillZoom } from './fill-zoom';
 import {
   createEdgeTriggerManager,
   type EdgeTriggerManager,
@@ -104,7 +105,14 @@ export abstract class OutdoorSceneBase extends Phaser.Scene {
     bg.setDepth(cfg.depth.ground);
 
     this.cameras.main.setBounds(0, 0, cfg.bounds.width, cfg.bounds.height);
-    this.cameras.main.setZoom(cfg.camera.zoom);
+    // Fill-zoom: match the interior-scene pattern so every outdoor island
+    // resizes to the browser viewport instead of showing black bars on
+    // large displays. Re-fits on window resize. Design zoom is preserved
+    // as a floor for small viewports.
+    applyFillZoom(this, cfg.bounds.width, cfg.bounds.height, cfg.camera.zoom);
+    this.scale.on('resize', () =>
+      applyFillZoom(this, cfg.bounds.width, cfg.bounds.height, cfg.camera.zoom),
+    );
     this.physics.world.setBounds(0, 0, cfg.bounds.width, cfg.bounds.height);
     this.cameras.main.fadeIn(cfg.camera.fadeInMs, 0, 0, 0);
 
