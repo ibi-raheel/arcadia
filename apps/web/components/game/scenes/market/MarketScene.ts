@@ -100,6 +100,7 @@ export class MarketScene extends Phaser.Scene {
   };
   private clickTarget: { x: number; y: number } | null = null;
   private jumpBinding?: JumpBinding;
+  private enterKey?: Phaser.Input.Keyboard.Key;
 
   private memberId: string | null = null;
   private lastPositionSaveAt = 0;
@@ -217,6 +218,8 @@ export class MarketScene extends Phaser.Scene {
       D: Phaser.Input.Keyboard.Key;
     };
     this.jumpBinding = createJumpBinding(this);
+    this.input.keyboard.addCapture('ENTER');
+    this.enterKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
   }
 
   private wirePointerInput(): void {
@@ -380,7 +383,10 @@ export class MarketScene extends Phaser.Scene {
       obj.setDepth(calculateYSortDepth(obj, { depthBase, yAnchorRatio }));
     }
 
-    this.edgeTriggers?.update(this.localAvatar.x, this.localAvatar.y);
+    const enterJustDown = this.enterKey
+      ? Phaser.Input.Keyboard.JustDown(this.enterKey)
+      : false;
+    this.edgeTriggers?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown);
 
     // Persist position to localStorage every POSITION_SAVE_INTERVAL_MS
     // so page reloads pick up where the member left off. Skipped when

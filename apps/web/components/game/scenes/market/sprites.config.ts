@@ -4,10 +4,11 @@
 
 export const marketSpritesConfig = {
   avatar: {
-    // Top-centre of the interior — member enters from the top (2026-04-23
-    // Phase 7 item M1). Previously y=880 (bottom) which put the member far
-    // from the stalls and facing away from them on arrival.
-    spawnPixel: { x: 768, y: 140 },
+    // Upper area of the interior — member enters above the stalls and
+    // walks south to browse (2026-04-23 Phase 7 item M1). Previously
+    // y=880 (bottom). y=380 sits just above the first stall row (y=460)
+    // and clear of the 300 px top-edge return-trigger band.
+    spawnPixel: { x: 768, y: 380 },
     size: { width: 135, height: 135 },
     bodyOffset: { x: 22, y: 62, width: 45, height: 22 },
     walkSpeed: 200,
