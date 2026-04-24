@@ -69,6 +69,22 @@ export const COWORKING_OUTSIDE_RETURN_EDGE: EdgeTriggers = {
   right: { route: '/world?from=coworking', threshold: 300 },
 };
 
+/**
+ * Spawn-pixel overrides when the scene loads with `?from=<buildingId>` —
+ * the member just walked out of that tent interior and should land AT
+ * the tent's door (entry/exit continuity). Mirrors TAVERN_OUTSIDE_DOOR_
+ * SPAWNS. Coords match each tent's entry-trigger centre exactly.
+ */
+export const COWORKING_OUTSIDE_DOOR_SPAWNS: Record<
+  string,
+  { readonly x: number; readonly y: number } | undefined
+> = {
+  'tent-1': { x: 900, y: 764 },
+  'tent-3': { x: 674, y: 1472 },
+  'tent-4': { x: 1690, y: 820 },
+  'tent-5': { x: 1718, y: 1604 },
+};
+
 export const coworkingOutsideLayersConfig = {
   depth: { ground: 0, dynamic: 1000, overlay: 500 },
   ySort: { yAnchorRatio: 0.5 },
