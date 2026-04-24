@@ -17,7 +17,6 @@ import * as Phaser from 'phaser';
 import { BOOT_ASSETS } from '../boot/asset-manifest';
 import { isAvatarId } from '../shared/avatar-palette';
 import { spawnColliders } from '../shared/colliders';
-import { addCrispText } from '../shared/crisp-text';
 import { createEdgeTriggerManager, type EdgeTriggerManager } from '../shared/edge-triggers';
 import { applyFillZoom } from '../shared/fill-zoom';
 import { createJumpBinding, type JumpBinding } from '../shared/jump-binding';
@@ -222,36 +221,25 @@ export class MarketScene extends Phaser.Scene {
   }
 
   /**
-   * Draws a centre-of-room pedestal with a floating blue crystal and a
-   * soft glow. Walking close triggers the "Press ENTER to browse the
-   * catalog" prompt; ENTER pops the React catalog scroll.
+   * Draws a floating blue crystal at the centre of the room with a soft
+   * glow. No pedestal, no caption — the pedestal was stripped
+   * 2026-04-24 so the affordance is just the crystal + proximity
+   * prompt, matching the academy lectern treatment.
    */
   private renderCrystal(): void {
     const cfg = marketSpritesConfig.crystal;
     const depthBase = marketLayersConfig.depth.stalls;
 
-    // Blue halo behind the crystal.
+    // Blue halo so the crystal reads as "there's something here".
     const halo = this.add.graphics();
-    halo.fillStyle(0x6aa3d4, 0.14);
-    halo.fillCircle(cfg.centerX, cfg.centerY - 10, 150);
+    halo.fillStyle(0x6aa3d4, 0.16);
+    halo.fillCircle(cfg.centerX, cfg.centerY, 130);
     halo.setDepth(depthBase - 1);
 
-    // Stone pedestal — two stacked rectangles.
-    const pedestalBase = this.add
-      .rectangle(cfg.centerX, cfg.centerY + 48, cfg.pedestalWidth, 60, 0x3b3a44)
-      .setStrokeStyle(2, 0x1c1917, 1);
-    pedestalBase.setDepth(depthBase);
-
-    const pedestalTop = this.add
-      .rectangle(cfg.centerX, cfg.centerY + 14, cfg.pedestalWidth + 20, 16, 0x5a5968)
-      .setStrokeStyle(2, 0x1c1917, 1);
-    pedestalTop.setDepth(depthBase);
-
-    // Crystal — an octagonal blue polygon, floating a few pixels above
-    // the pedestal top.
+    // Crystal — octagonal blue polygon centred on the lectern point.
     const cx = cfg.centerX;
-    const cy = cfg.centerY - 32;
-    const r = 28;
+    const cy = cfg.centerY;
+    const r = 32;
     const crystalPoints: number[] = [
       cx,
       cy - r, // top
@@ -270,7 +258,7 @@ export class MarketScene extends Phaser.Scene {
       cx - r * 0.7,
       cy - r * 0.4,
     ];
-    const crystal = this.add.polygon(0, 0, crystalPoints, 0x5b8fc7, 0.82);
+    const crystal = this.add.polygon(0, 0, crystalPoints, 0x5b8fc7, 0.85);
     crystal.setOrigin(0, 0);
     crystal.setStrokeStyle(1.5, 0x9cc3e8, 1);
     crystal.setDepth(depthBase + 2);
@@ -299,18 +287,7 @@ export class MarketScene extends Phaser.Scene {
     highlight.setOrigin(0, 0);
     highlight.setDepth(depthBase + 3);
 
-    // Caption below the pedestal.
-    const caption = addCrispText(this, cfg.centerX, cfg.centerY + 92, 'The Market Catalog', {
-      fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
-      fontSize: '15px',
-      fontStyle: 'italic',
-      color: '#fef3c7',
-      stroke: '#1c1917',
-      strokeThickness: 3,
-    }).setOrigin(0.5, 0);
-    caption.setDepth(depthBase + 1);
-
-    // Crystal float + halo pulse so the pedestal reads as interactable.
+    // Crystal float + halo pulse so it reads as interactable.
     this.tweens.add({
       targets: [crystal, highlight],
       y: { from: -6, to: 6 },

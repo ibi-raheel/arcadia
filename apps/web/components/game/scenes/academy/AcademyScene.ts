@@ -156,52 +156,40 @@ export class AcademyScene extends Phaser.Scene {
   }
 
   /**
-   * Draws a centre-of-room wooden lectern with a bound book resting on
-   * top and a soft gilt halo behind. Walking close triggers the
-   * "Press ENTER to open the Scribe's Ledger" prompt. Geometry is
-   * derived from `academySpritesConfig.lectern` so positions can be
-   * tuned without touching the scene class.
+   * Draws a floating red-bound book at the centre of the hall with a
+   * soft gilt halo behind it. No pedestal, no caption — the pedestal
+   * read as a "folder" in 2026-04-24 review. Proximity prompt is the
+   * only affordance telling the member the book is interactable.
    */
   private renderLectern(): void {
     const cfg = academySpritesConfig.lectern;
     const depthBase = academyLayersConfig.depth.podiums;
 
-    // Soft warm halo behind the lectern.
+    // Soft warm halo so the book reads as "there's something here".
     const halo = this.add.graphics();
-    halo.fillStyle(0xffb23a, 0.12);
-    halo.fillCircle(cfg.centerX, cfg.centerY - 10, 140);
+    halo.fillStyle(0xffb23a, 0.14);
+    halo.fillCircle(cfg.centerX, cfg.centerY, 120);
     halo.setDepth(depthBase - 1);
 
-    // Stone / wood pedestal — two-tone rectangle.
-    const pedestalBase = this.add
-      .rectangle(cfg.centerX, cfg.centerY + 36, cfg.pedestalWidth, 60, 0x5a3f22)
-      .setStrokeStyle(2, 0x3b2712, 1);
-    pedestalBase.setDepth(depthBase);
-
-    const pedestalTop = this.add
-      .rectangle(cfg.centerX, cfg.centerY + 2, cfg.pedestalWidth + 18, 16, 0x8a6a3a)
-      .setStrokeStyle(2, 0x3b2712, 1);
-    pedestalTop.setDepth(depthBase);
-
     // Book — a wedge of three rectangles stacked to look like a closed
-    // tome with gilt edging.
+    // tome with gilt edging. Floats at the lectern centre.
     const bookBody = this.add
-      .rectangle(cfg.centerX, cfg.centerY - 22, 110, 38, 0x8f2530)
+      .rectangle(cfg.centerX, cfg.centerY, 110, 38, 0x8f2530)
       .setStrokeStyle(1, 0x5a1620, 1);
     bookBody.setDepth(depthBase + 1);
 
     const bookSpine = this.add
-      .rectangle(cfg.centerX, cfg.centerY - 22, 110, 6, 0xc9a863)
+      .rectangle(cfg.centerX, cfg.centerY, 110, 6, 0xc9a863)
       .setStrokeStyle(1, 0x8a6a3a, 1);
     bookSpine.setDepth(depthBase + 2);
 
     const bookPages = this.add
-      .rectangle(cfg.centerX, cfg.centerY - 30, 104, 6, 0xe8d5a5)
+      .rectangle(cfg.centerX, cfg.centerY - 8, 104, 6, 0xe8d5a5)
       .setStrokeStyle(1, 0x8a6a3a, 1);
     bookPages.setDepth(depthBase + 2);
 
     // Gilt sigil on the cover.
-    const sigil = addCrispText(this, cfg.centerX, cfg.centerY - 22, '✦', {
+    const sigil = addCrispText(this, cfg.centerX, cfg.centerY, '✦', {
       fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
       fontSize: '22px',
       color: '#d4a868',
@@ -210,19 +198,17 @@ export class AcademyScene extends Phaser.Scene {
     }).setOrigin(0.5, 0.5);
     sigil.setDepth(depthBase + 3);
 
-    // "The Scribe's Ledger" caption below the pedestal.
-    const caption = addCrispText(this, cfg.centerX, cfg.centerY + 80, "The Scribe's Ledger", {
-      fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
-      fontSize: '15px',
-      fontStyle: 'italic',
-      color: '#fef3c7',
-      stroke: '#1c1917',
-      strokeThickness: 3,
-    }).setOrigin(0.5, 0);
-    caption.setDepth(depthBase + 1);
+    // Float the book + sigil on a slow sine bob.
+    this.tweens.add({
+      targets: [bookBody, bookSpine, bookPages, sigil],
+      y: '+=8',
+      duration: 2400,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.inOut',
+    });
 
-    // Breathe the halo with a slow alpha pulse so the lectern reads as
-    // interactable rather than decorative.
+    // Breathe the halo with a slow alpha pulse.
     this.tweens.add({
       targets: halo,
       alpha: { from: 0.6, to: 1 },
