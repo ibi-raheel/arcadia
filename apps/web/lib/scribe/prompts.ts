@@ -8,6 +8,7 @@
 // builder), no emojis (out of scriptorium voice).
 
 import type { DraftOutlineSection, DraftSource } from '@/lib/types/course-drafts';
+import type { ScribePreferences } from '@/lib/scribe/preferences';
 
 /** Hard cap from ADR 0012. Used to truncate source context so the
  *  prompt fits comfortably inside Claude's 1M window with room for
@@ -65,6 +66,23 @@ type PromptParts = {
   readonly prompt: string;
 };
 
+/** Builds an optional "the creator's memory" block — the scribe's
+ *  per-creator preferences (voice, audience). Injected into text
+ *  prompts when any of the fields are set. Image style is handled
+ *  separately in `imagePrompt`. */
+function preferencesBlock(prefs: ScribePreferences | undefined): string | null {
+  if (!prefs) return null;
+  const parts: string[] = [];
+  if (prefs.voice_guide) {
+    parts.push(`Teaching voice (how the scribe writes for this creator):\n${prefs.voice_guide}`);
+  }
+  if (prefs.audience) {
+    parts.push(`Audience (who the creator is writing for):\n${prefs.audience}`);
+  }
+  if (parts.length === 0) return null;
+  return `The creator has set these standing preferences — follow them for every stage:\n\n${parts.join('\n\n')}`;
+}
+
 /**
  * Stage 1 — outline. Asks for a short section/lesson tree grounded
  * in the creator's brief + sources. Output is JSON so the caller
@@ -73,12 +91,16 @@ type PromptParts = {
 export function outlinePrompt(input: {
   readonly userPrompt: string;
   readonly sources: readonly DraftSource[];
+  readonly preferences?: ScribePreferences;
   readonly revisionFeedback?: string;
 }): PromptParts {
   const sourceBlock = buildSourceContext(input.sources);
   const brief = input.userPrompt.trim() || '(no written brief — infer from the sources)';
 
-  const parts: string[] = [`The creator's brief:\n"""\n${brief}\n"""`];
+  const parts: string[] = [];
+  const prefsBlock = preferencesBlock(input.preferences);
+  if (prefsBlock) parts.push(prefsBlock);
+  parts.push(`The creator's brief:\n"""\n${brief}\n"""`);
 
   if (sourceBlock) {
     parts.push(
@@ -131,6 +153,7 @@ export function lessonPrompt(input: {
   readonly peerLessonTitles: readonly string[];
   readonly userPrompt: string;
   readonly sources: readonly DraftSource[];
+  readonly preferences?: ScribePreferences;
   readonly revisionFeedback?: string;
 }): PromptParts {
   const sourceBlock = buildSourceContext(input.sources);
@@ -140,12 +163,15 @@ export function lessonPrompt(input: {
       ? `Other lessons in this section (for context — do not re-teach them here):\n- ${input.peerLessonTitles.join('\n- ')}`
       : '';
 
-  const parts: string[] = [
+  const parts: string[] = [];
+  const prefsBlock = preferencesBlock(input.preferences);
+  if (prefsBlock) parts.push(prefsBlock);
+  parts.push(
     `You are drafting a single lesson inside a larger course.`,
     `Course: ${input.courseTitle}`,
     `Section: ${input.sectionTitle}`,
     `This lesson: ${input.lessonTitle}`,
-  ];
+  );
 
   if (peers) parts.push(peers);
 
@@ -198,6 +224,7 @@ export function imagePrompt(input: {
   readonly courseTitle: string;
   readonly subjectTitle: string;
   readonly subjectSummary: string;
+  readonly preferences?: ScribePreferences;
   readonly revisionFeedback?: string;
 }): string {
   const framing =
@@ -207,11 +234,18 @@ export function imagePrompt(input: {
 
   const subject = input.subjectSummary.trim().slice(0, 320);
 
+  // Creator's standing image-style preference — appended to the
+  // locked preamble so the scribe's aesthetic stays Arcadia-wide
+  // while the creator can nudge within it.
+  const personalStyle = input.preferences?.image_style
+    ? ` ${input.preferences.image_style.trim()}.`
+    : '';
+
   const revision = input.revisionFeedback
     ? ` Revise per the creator's note: "${input.revisionFeedback.trim().slice(0, 200)}"`
     : '';
 
-  return `${IMAGE_STYLE_PREAMBLE}. ${framing} Subject: ${subject}.${revision}`;
+  return `${IMAGE_STYLE_PREAMBLE}.${personalStyle} ${framing} Subject: ${subject}.${revision}`;
 }
 
 // ---------- outline parsing ----------

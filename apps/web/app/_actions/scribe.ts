@@ -29,6 +29,8 @@ import {
   canAdvance,
   totalSourceChars,
 } from '@/lib/types/course-drafts';
+import type { CreatorPreferencesInput } from '@/lib/types/creator-preferences';
+import { AUDIENCE_MAX, IMAGE_STYLE_MAX, VOICE_GUIDE_MAX } from '@/lib/types/creator-preferences';
 import { getSupabaseAdminClient } from '@/lib/supabase/admin';
 import { isSupportedMime, parseSourceBuffer } from '@/lib/scribe/parse';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
@@ -249,6 +251,69 @@ export async function removeDraftSource(
   await supabase.storage.from('course-draft-sources').remove([target.storage_path]);
   revalidatePath('/dashboard/courses/conjure');
   return { ok: true, value: { id: sourceId } };
+}
+
+// ============================================================
+// Creator preferences — the scribe's memory (10.10)
+// ============================================================
+
+/** Fetches the caller's preferences row; returns defaults if none. */
+export async function getCreatorPreferences(): Promise<
+  Result<{
+    readonly voice_guide: string | null;
+    readonly image_style: string | null;
+    readonly audience: string | null;
+  }>
+> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('creator_preferences')
+    .select('voice_guide, image_style, audience')
+    .eq('creator_id', auth.value.userId)
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+
+  return {
+    ok: true,
+    value: {
+      voice_guide: (data?.voice_guide as string | null) ?? null,
+      image_style: (data?.image_style as string | null) ?? null,
+      audience: (data?.audience as string | null) ?? null,
+    },
+  };
+}
+
+/** Upsert preferences. Clips each field to its max length, trims
+ *  whitespace, maps empty string → null. */
+export async function saveCreatorPreferences(
+  input: CreatorPreferencesInput,
+): Promise<Result<{ readonly saved: boolean }>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const clip = (value: string | null | undefined, max: number): string | null => {
+    if (value === undefined || value === null) return null;
+    const trimmed = value.trim().slice(0, max);
+    return trimmed.length === 0 ? null : trimmed;
+  };
+
+  const row = {
+    creator_id: auth.value.userId,
+    voice_guide: clip(input.voice_guide, VOICE_GUIDE_MAX),
+    image_style: clip(input.image_style, IMAGE_STYLE_MAX),
+    audience: clip(input.audience, AUDIENCE_MAX),
+  };
+
+  const supabase = getSupabaseServerClient();
+  const { error } = await supabase
+    .from('creator_preferences')
+    .upsert(row, { onConflict: 'creator_id' });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/dashboard/courses/conjure');
+  return { ok: true, value: { saved: true } };
 }
 
 /** Keep filename readable in the Storage path but strip anything

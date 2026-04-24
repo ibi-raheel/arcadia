@@ -13,6 +13,7 @@
 import { streamText } from 'ai';
 
 import { scribeConfigured, scribeLanguageModel, tokenBudget } from '@/lib/scribe/gateway';
+import { readScribePreferences } from '@/lib/scribe/preferences';
 import { outlinePrompt, parseOutlineJson } from '@/lib/scribe/prompts';
 import type { DraftSource } from '@/lib/types/course-drafts';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
@@ -53,9 +54,11 @@ export async function POST(request: Request): Promise<Response> {
     return jsonError('token budget reached for this draft', 429);
   }
 
+  const preferences = await readScribePreferences(user.id);
   const { system, prompt } = outlinePrompt({
     userPrompt: (draftRow.user_prompt as string | null) ?? '',
     sources: (draftRow.sources as DraftSource[] | null) ?? [],
+    preferences,
     revisionFeedback: body.feedback,
   });
 

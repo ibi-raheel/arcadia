@@ -19,6 +19,7 @@ import { ImagesStage } from './ImagesStage';
 import { LessonsStage } from './LessonsStage';
 import { OutlineStage } from './OutlineStage';
 import { Satchel } from './Satchel';
+import { ScribeMemory } from './ScribeMemory';
 import { SealStage } from './SealStage';
 import { StageRibbon } from './StageRibbon';
 
@@ -45,6 +46,8 @@ export function ConjureWorkbench({ initialDraft }: Props): React.JSX.Element {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <StageRibbon stage={draft.stage} />
+
+      <ScribeMemory />
 
       <Satchel
         draftId={draft.id}
