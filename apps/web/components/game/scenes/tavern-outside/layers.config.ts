@@ -62,9 +62,9 @@ export const TAVERN_OUTSIDE_DOOR_SPAWNS: Record<
   'tavern-c': { x: 1020, y: 1960 },
 };
 
-/** West (bridge) edge returns the member to the square. */
+/** West (bridge) edge returns the member to the square at the east gate. */
 export const TAVERN_OUTSIDE_RETURN_EDGE: EdgeTriggers = {
-  left: { route: '/world', threshold: 300 },
+  left: { route: '/world?from=tavern', threshold: 300 },
 };
 
 export const tavernOutsideLayersConfig = {

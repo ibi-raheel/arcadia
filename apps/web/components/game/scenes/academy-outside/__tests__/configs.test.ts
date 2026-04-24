@@ -29,8 +29,8 @@ describe('academy-outside configs', () => {
     expect(ACADEMY_OUTSIDE_ENTRY_TRIGGERS[0]?.buildingId).toBe('academy-main');
   });
 
-  it('return edge is the bottom pointing at /world', () => {
-    expect(ACADEMY_OUTSIDE_RETURN_EDGE.bottom?.route).toBe('/world');
+  it('return edge is the bottom pointing at /world?from=academy', () => {
+    expect(ACADEMY_OUTSIDE_RETURN_EDGE.bottom?.route).toBe('/world?from=academy');
     expect(ACADEMY_OUTSIDE_RETURN_EDGE.top).toBeUndefined();
     expect(ACADEMY_OUTSIDE_RETURN_EDGE.left).toBeUndefined();
     expect(ACADEMY_OUTSIDE_RETURN_EDGE.right).toBeUndefined();
