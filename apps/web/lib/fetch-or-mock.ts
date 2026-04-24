@@ -73,7 +73,9 @@ export function useFetchOrMock<T>(real: () => Promise<T>, mock: T): HookState<T>
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Intentionally omit real + mock from deps: callers usually pass
+    // inline functions / fresh fixtures on every render, which would
+    // re-fire the effect. The hook is keyed on the toggle only.
   }, [sim]);
 
   return state;
