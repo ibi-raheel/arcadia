@@ -22,3 +22,25 @@ export const squareSpritesConfig = {
     clickArrivalThreshold: 4,
   },
 } as const;
+
+/**
+ * Per-origin return spawns. When the member re-enters the Square after
+ * exiting a neighbouring scene, `GameSquare` reads `?from=<origin>` and
+ * passes the matching entry to `SquareScene` via the registry so the
+ * avatar lands at the bridge/gate they walked through rather than the
+ * default centre spawn. No `?from=` → fall back to the default.
+ *
+ * Image is 2508×2508; edge-trigger thresholds are 300 px. Coords sit
+ * visually on each bridge/gate and inside the ENTER-gated trigger band —
+ * the member arrives next to the door they came from and immediately
+ * sees the "Press ENTER to visit X" prompt for it (the triggers are
+ * ENTER-gated per Phase 7.0 step 4, so spawning inside doesn't auto-fire).
+ */
+export const SQUARE_RETURN_SPAWNS: Readonly<
+  Record<string, { readonly x: number; readonly y: number } | undefined>
+> = {
+  market: { x: 1254, y: 2250 }, // south bridge
+  academy: { x: 1254, y: 260 }, // north gate
+  tavern: { x: 2250, y: 1254 }, // east gate
+  coworking: { x: 260, y: 1254 }, // west bridge
+};

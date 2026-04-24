@@ -16,28 +16,34 @@ export const TAVERN_OUTSIDE_COLLIDERS: readonly PixelRect[] = [];
  *
  * Coordinates eyeballed from the 1× preview; nudge in browser if needed.
  */
+// 2026-04-23 grid-reads from the user:
+// - Tavern A (top, blue roof):      (1100, 550)
+// - Tavern B (middle, red roof):    (1150, 1350)   ← x best-guess; nudge if off
+// - Tavern C (bottom, green roof):  (1200, 2200)
+// Radius 80 keeps the trigger tight enough that the prompt only fires
+// when the avatar is visually at a door's stairs.
 export const TAVERN_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
   {
     buildingId: 'tavern-a',
-    centerX: 1180,
-    centerY: 560,
-    radius: 220,
+    centerX: 1100,
+    centerY: 600, // +50 y per user
+    radius: 180, // bigger than B/C per "increase further"
     label: 'Press ENTER to visit The Three Ravens',
     route: '/tavern?b=tavern-a',
   },
   {
     buildingId: 'tavern-b',
-    centerX: 1200,
-    centerY: 1260,
-    radius: 220,
+    centerX: 1250, // +100 x per user
+    centerY: 1350,
+    radius: 140,
     label: 'Press ENTER to visit The Iron Chalice',
     route: '/tavern?b=tavern-b',
   },
   {
     buildingId: 'tavern-c',
-    centerX: 1220,
-    centerY: 1960,
-    radius: 220,
+    centerX: 1200,
+    centerY: 2200,
+    radius: 180, // bumped per "just increase the size"
     label: 'Press ENTER to visit The Sleeping Hollow',
     route: '/tavern?b=tavern-c',
   },
@@ -50,21 +56,27 @@ export const TAVERN_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
  * picks the value here, and writes it into the
  * OUTDOOR_SPAWN_OVERRIDE_REGISTRY_KEY before Phaser boots.
  *
- * Each entry sits ~200 px west of the door so the member doesn't
- * immediately re-trigger the enter prompt they just dismissed.
+ * 2026-04-23 (Phase 7 user request): spawn AT each door centre (matching
+ * the entry-trigger centre) for continuity — the member steps out of the
+ * tavern and visually lands at that tavern's door. The prompt for that
+ * door is visible immediately, so re-entering is one ENTER press away.
+ * Prior behaviour spawned ~200 px west of the door.
  */
+// Spawn exactly at each trigger centre — member enters at the door,
+// exits at the same door. Keep in lockstep with the TAVERN_OUTSIDE_
+// ENTRY_TRIGGERS above.
 export const TAVERN_OUTSIDE_DOOR_SPAWNS: Record<
   string,
   { readonly x: number; readonly y: number } | undefined
 > = {
-  'tavern-a': { x: 980, y: 560 },
-  'tavern-b': { x: 1000, y: 1260 },
-  'tavern-c': { x: 1020, y: 1960 },
+  'tavern-a': { x: 1100, y: 600 },
+  'tavern-b': { x: 1250, y: 1350 },
+  'tavern-c': { x: 1200, y: 2200 },
 };
 
-/** West (bridge) edge returns the member to the square. */
+/** West (bridge) edge returns the member to the square at the east gate. */
 export const TAVERN_OUTSIDE_RETURN_EDGE: EdgeTriggers = {
-  left: { route: '/world', threshold: 300 },
+  left: { route: '/world?from=tavern', threshold: 300 },
 };
 
 export const tavernOutsideLayersConfig = {

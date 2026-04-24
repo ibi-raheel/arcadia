@@ -37,8 +37,8 @@ describe('coworking-outside configs', () => {
     }
   });
 
-  it('return edge is the right pointing at /world', () => {
-    expect(COWORKING_OUTSIDE_RETURN_EDGE.right?.route).toBe('/world');
+  it('return edge is the right pointing at /world?from=coworking', () => {
+    expect(COWORKING_OUTSIDE_RETURN_EDGE.right?.route).toBe('/world?from=coworking');
     expect(COWORKING_OUTSIDE_RETURN_EDGE.left).toBeUndefined();
     expect(COWORKING_OUTSIDE_RETURN_EDGE.top).toBeUndefined();
     expect(COWORKING_OUTSIDE_RETURN_EDGE.bottom).toBeUndefined();

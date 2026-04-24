@@ -9,6 +9,8 @@
 
 import type Phaser from 'phaser';
 
+import { addCrispText } from './crisp-text';
+
 export type CapacityHud = {
   setCount(count: number): void;
   setLabel(label: string): void;
@@ -22,11 +24,12 @@ export function createCapacityHud(
   let label = opts.label;
   const { max } = opts;
 
-  const text = scene.add.text(0, 0, '', {
-    fontFamily: 'system-ui, -apple-system, sans-serif',
-    fontSize: '13px',
-    color: '#e2e8f0',
-    padding: { left: 10, right: 10, top: 6, bottom: 6 },
+  const text = addCrispText(scene, 0, 0, '', {
+    fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
+    fontSize: '14px',
+    fontStyle: 'bold',
+    color: '#fef3c7',
+    padding: { left: 12, right: 12, top: 7, bottom: 7 },
   });
   text.setScrollFactor(0);
   text.setDepth(3_000_000);

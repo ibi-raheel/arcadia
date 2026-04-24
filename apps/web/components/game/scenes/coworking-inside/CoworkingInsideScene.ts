@@ -17,6 +17,7 @@ import { isAvatarId } from '../shared/avatar-palette';
 import { createCapacityHud, type CapacityHud } from '../shared/capacity-hud';
 import { spawnColliders } from '../shared/colliders';
 import { createEdgeTriggerManager, type EdgeTriggerManager } from '../shared/edge-triggers';
+import { applyFillZoom } from '../shared/fill-zoom';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -90,7 +91,8 @@ export class CoworkingInsideScene extends Phaser.Scene {
 
     const { bounds, zoom, fadeInMs } = coworkingInsideCameraConfig;
     this.cameras.main.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
-    this.cameras.main.setZoom(zoom);
+    applyFillZoom(this, bounds.width, bounds.height, zoom);
+    this.scale.on('resize', () => applyFillZoom(this, bounds.width, bounds.height, zoom));
     this.physics.world.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
     this.cameras.main.fadeIn(fadeInMs, 0, 0, 0);
 

@@ -22,7 +22,15 @@ Outdoor town square. Image-backed Phaser scene mounted at `/world` (replaces the
 
 ## Edges
 
-Walk-onto portals (no prompt). The edge-trigger manager (`scenes/shared/edge-triggers.ts`) compares the avatar's world pos against a 56px threshold on each edge; first hit fires a 300ms camera fade and `window.location.href = route`. Once fired, the trigger is sticky — subsequent overlaps no-op so navigation can't be cancelled mid-fade.
+**ENTER-gated portals** (2026-04-23 Phase 7 G2). Each edge carries a `promptLabel`; walking into the 300 px band shows a prompt pill, only ENTER navigates. The east edge additionally carries `span: { min: 1050, max: 1500 }` so the Tavern prompt only fires on the east bridge, not along the full right wall.
+
+**Return-spawn continuity.** Each sub-scene's return edge carries `?from=<origin>`. `GameSquare.tsx` reads the param and writes the matching entry from `SQUARE_RETURN_SPAWNS` to `SQUARE_SPAWN_OVERRIDE_REGISTRY_KEY`; `SquareScene.createLocalAvatar` uses it instead of the default centre spawn:
+- `?from=market` → south bridge `(1254, 2250)`
+- `?from=academy` → north gate `(1254, 260)`
+- `?from=tavern` → east gate `(2250, 1254)`
+- `?from=coworking` → west bridge `(260, 1254)`
+
+No `?from=` → default spawn at `(1254, 1380)`.
 
 ## Capacity HUD
 

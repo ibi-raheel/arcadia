@@ -7,7 +7,8 @@
 'use client';
 
 import * as Phaser from 'phaser';
-import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
@@ -22,7 +23,12 @@ import {
 } from './scenes/boot/asset-manifest';
 import { isAvatarId, type AvatarId } from './scenes/shared/avatar-palette';
 import { squareCameraConfig } from './scenes/square/camera.config';
-import { SquareScene, SQUARE_SCENE_KEY } from './scenes/square/SquareScene';
+import {
+  SquareScene,
+  SQUARE_SCENE_KEY,
+  SQUARE_SPAWN_OVERRIDE_REGISTRY_KEY,
+} from './scenes/square/SquareScene';
+import { SQUARE_RETURN_SPAWNS } from './scenes/square/sprites.config';
 import {
   COLYSEUS_CONNECTION_REGISTRY_KEY,
   MEMBER_REGISTRY_KEY,
@@ -80,6 +86,14 @@ export default function GameSquare(): React.JSX.Element {
   const [connectError, setConnectError] = useState<string | null>(null);
   const [preloadProgress, setPreloadProgress] = useState<number | null>(null);
   const [colyseusConn, setColyseusConn] = useState<ColyseusConnection | null>(null);
+
+  // Re-entry continuity: `?from=<origin>` spawns the avatar at the bridge
+  // they just walked through instead of the default centre spawn.
+  const searchParams = useSearchParams();
+  const spawnOverride = useMemo(() => {
+    const from = searchParams.get('from');
+    return from ? SQUARE_RETURN_SPAWNS[from] : undefined;
+  }, [searchParams]);
 
   useLevelSync({
     memberId: fetchState.status === 'ready' ? fetchState.member.memberId : null,
@@ -152,6 +166,9 @@ export default function GameSquare(): React.JSX.Element {
 
       game.registry.set(MEMBER_REGISTRY_KEY, fetchState.member);
       game.registry.set(COLYSEUS_CONNECTION_REGISTRY_KEY, connection);
+      if (spawnOverride) {
+        game.registry.set(SQUARE_SPAWN_OVERRIDE_REGISTRY_KEY, spawnOverride);
+      }
       game.registry.set(NEXT_SCENE_KEY_REGISTRY_KEY, SQUARE_SCENE_KEY);
       game.registry.set(PROGRESS_CALLBACK_REGISTRY_KEY, (progress: number) => {
         setPreloadProgress(progress);
