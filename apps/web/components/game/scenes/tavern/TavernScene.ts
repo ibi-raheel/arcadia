@@ -24,6 +24,10 @@ import {
   type EnterPromptManager,
   type EntryTrigger,
 } from '../shared/enter-prompt';
+import {
+  createProximityPromptManager,
+  type ProximityPromptManager,
+} from '../shared/proximity-prompt';
 import { applyFillZoom } from '../shared/fill-zoom';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
@@ -53,6 +57,14 @@ export const TAVERN_SCENE_KEY = 'TavernScene' as const;
  * (2026-04-22 — pairs with Colyseus `filterBy(['building'])`).
  */
 export const TAVERN_BUILDING_ID_REGISTRY_KEY = 'tavern-building-id';
+
+/**
+ * Fired when the member is standing next to the async-feed tablet
+ * (right-hand shelf, coords in `tavernSpritesConfig.tablet`) and
+ * presses ENTER. GameTavern listens and opens the `<FeedScroll>`
+ * modal — no payload needed; the React mount already has the data.
+ */
+export const TAVERN_OPEN_FEED_EVENT = 'tavern:open-feed';
 
 const MOVE_INTERVAL_MS = 50;
 const HUD_MAX_CLIENTS = 20;
@@ -158,6 +170,7 @@ export class TavernScene extends Phaser.Scene {
   // label was removed alongside this change — the prompt pill is the
   // only exit affordance.
   private enterPrompt?: EnterPromptManager;
+  private tabletPrompt?: ProximityPromptManager;
   private enterKey?: Phaser.Input.Keyboard.Key;
 
   // Speech bubbles above speakers — keyed by memberId so a new message from
@@ -224,6 +237,25 @@ export class TavernScene extends Phaser.Scene {
       this.colyseus?.send(MSG.LEAVE_BUILDING, { building: 'tavern' });
     });
 
+    // Phase 9 (2026-04-24) — async-feed tablet on the right-hand
+    // shelf. Walking close fires a local-action proximity prompt; on
+    // ENTER, emit `TAVERN_OPEN_FEED_EVENT` so the React mount can pop
+    // the FeedScroll modal. No navigation — the modal overlays the
+    // scene; the avatar stays right where it is.
+    const tablet = tavernSpritesConfig.tablet;
+    this.tabletPrompt = createProximityPromptManager(
+      this,
+      {
+        centerX: tablet.centerX,
+        centerY: tablet.centerY,
+        radius: tablet.interactRadius,
+        label: 'Press ENTER to read the feed',
+      },
+      () => {
+        this.game.events.emit(TAVERN_OPEN_FEED_EVENT);
+      },
+    );
+
     this.colyseus = this.registry.get(COLYSEUS_CONNECTION_REGISTRY_KEY) as
       | ColyseusConnection
       | undefined;
@@ -249,6 +281,8 @@ export class TavernScene extends Phaser.Scene {
       this.game.events.off(TAVERN_SPEECH_EVENT, this.showSpeechBubble, this);
       this.game.events.off(TAVERN_CHAT_FOCUS_EVENT, this.disableKeyboardInput, this);
       this.game.events.off(TAVERN_CHAT_BLUR_EVENT, this.enableKeyboardInput, this);
+      this.tabletPrompt?.destroy();
+      this.tabletPrompt = undefined;
       this.teardownSpeechBubbles();
     };
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, teardown);
@@ -576,7 +610,17 @@ export class TavernScene extends Phaser.Scene {
       this.sendMoveIfChanged(this.time.now);
 
       const enterJustDown = this.enterKey ? Phaser.Input.Keyboard.JustDown(this.enterKey) : false;
-      this.enterPrompt?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown);
+      // Tablet prompt runs first so a single ENTER at a spot where
+      // both prompts are active (can't happen today — tablet is far
+      // from the archway — but the defensive order future-proofs the
+      // addition of new in-tavern interactables).
+      const tabletFired =
+        this.tabletPrompt?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown) ?? false;
+      this.enterPrompt?.update(
+        this.localAvatar.x,
+        this.localAvatar.y,
+        tabletFired ? false : enterJustDown,
+      );
     }
 
     const depthBase = tavernLayersConfig.depth.dynamic;

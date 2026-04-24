@@ -19,4 +19,17 @@ export const tavernSpritesConfig = {
     walkSpeed: 200,
     clickArrivalThreshold: 2,
   },
+  /**
+   * Async-feed tablet — the small screen mounted on the shelf to the
+   * right of the bar in `public/tavern-interior.png`. Walking close
+   * fires a proximity prompt; ENTER opens the `FeedScroll` modal.
+   *
+   * Coords eyeballed against the 1536×1024 source image — nudge here
+   * if the tablet visual ever moves.
+   */
+  tablet: {
+    centerX: 1100,
+    centerY: 430,
+    interactRadius: 150,
+  },
 } as const;

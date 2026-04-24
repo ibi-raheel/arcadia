@@ -13,6 +13,8 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 import { ChatPanel } from '@/components/tavern/ChatPanel';
 import { LeaderboardPanel } from '@/components/tavern/LeaderboardPanel';
+import { TavernFeatures } from '@/components/tavern/TavernFeatures';
+import type { PhaserGameLike } from '@/components/tavern/types';
 
 import { BuildingTransition } from './BuildingTransition';
 import { LevelUpBanner } from './LevelUpBanner';
@@ -44,7 +46,13 @@ const COLYSEUS_ENDPOINT = process.env.NEXT_PUBLIC_COLYSEUS_URL ?? '';
 type SessionFetch =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; member: SceneMember; accessToken: string };
+  | {
+      status: 'ready';
+      member: SceneMember;
+      accessToken: string;
+      /** Role on memberships; used to decide if the feed composer shows. */
+      role: 'member' | 'creator' | 'admin';
+    };
 
 async function fetchSession(): Promise<SessionFetch> {
   const supabase = getSupabaseBrowserClient();
@@ -57,7 +65,7 @@ async function fetchSession(): Promise<SessionFetch> {
   }
   const { data, error } = await supabase
     .from('memberships')
-    .select('avatar_id, display_name, realm_id')
+    .select('avatar_id, display_name, realm_id, role')
     .eq('member_id', session.user.id)
     .maybeSingle();
   if (error) return { status: 'error', message: error.message };
@@ -70,6 +78,10 @@ async function fetchSession(): Promise<SessionFetch> {
   }
   const avatarId: AvatarId = data.avatar_id;
   const displayName = data.display_name ?? 'Player';
+  const role =
+    data.role === 'creator' || data.role === 'admin'
+      ? (data.role as 'creator' | 'admin')
+      : 'member';
   return {
     status: 'ready',
     member: {
@@ -79,6 +91,7 @@ async function fetchSession(): Promise<SessionFetch> {
       displayName,
     },
     accessToken: session.access_token,
+    role,
   };
 }
 
@@ -248,6 +261,11 @@ export default function GameTavern(): React.JSX.Element {
           <LeaderboardPanel
             realmId={fetchState.member.realmId}
             memberId={fetchState.member.memberId}
+          />
+          <TavernFeatures
+            gameRef={gameRef as unknown as React.MutableRefObject<PhaserGameLike | null>}
+            buildingId={buildingId}
+            canPost={fetchState.role === 'creator' || fetchState.role === 'admin'}
           />
         </>
       )}
