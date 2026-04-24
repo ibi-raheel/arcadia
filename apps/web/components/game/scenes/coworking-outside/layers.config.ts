@@ -62,9 +62,9 @@ export const COWORKING_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
   },
 ];
 
-/** East (bridge) edge returns the member to the square. */
+/** East (bridge) edge returns the member to the square at the west bridge. */
 export const COWORKING_OUTSIDE_RETURN_EDGE: EdgeTriggers = {
-  right: { route: '/world', threshold: 300 },
+  right: { route: '/world?from=coworking', threshold: 300 },
 };
 
 export const coworkingOutsideLayersConfig = {

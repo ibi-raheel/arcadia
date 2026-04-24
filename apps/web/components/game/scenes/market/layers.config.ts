@@ -16,7 +16,7 @@ export const MARKET_COLLIDERS: readonly PixelRect[] = [];
  */
 export const MARKET_RETURN_EDGE: EdgeTriggers = {
   top: {
-    route: '/world',
+    route: '/world?from=market',
     threshold: 300,
     promptLabel: 'Press ENTER to return to the Square',
     // Confine the trigger to the archway — the gateway at the top-centre

@@ -36,8 +36,8 @@ describe('tavern-outside configs', () => {
     }
   });
 
-  it('return edge is the left pointing at /world', () => {
-    expect(TAVERN_OUTSIDE_RETURN_EDGE.left?.route).toBe('/world');
+  it('return edge is the left pointing at /world?from=tavern', () => {
+    expect(TAVERN_OUTSIDE_RETURN_EDGE.left?.route).toBe('/world?from=tavern');
     expect(TAVERN_OUTSIDE_RETURN_EDGE.right).toBeUndefined();
     expect(TAVERN_OUTSIDE_RETURN_EDGE.top).toBeUndefined();
     expect(TAVERN_OUTSIDE_RETURN_EDGE.bottom).toBeUndefined();

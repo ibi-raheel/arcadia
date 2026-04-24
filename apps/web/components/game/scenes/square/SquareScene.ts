@@ -47,6 +47,15 @@ import { squareSpritesConfig } from './sprites.config';
 
 export const SQUARE_SCENE_KEY = 'SquareScene' as const;
 
+/**
+ * Registry key written by `GameSquare` before boot when the URL carries
+ * `?from=<origin>`. The scene reads it and uses the matching entry from
+ * `SQUARE_RETURN_SPAWNS` (see sprites.config.ts) instead of the default
+ * centre spawn, so returning from a neighbour drops the member at the
+ * correct bridge/gate.
+ */
+export const SQUARE_SPAWN_OVERRIDE_REGISTRY_KEY = 'square-spawn-override';
+
 const MOVE_INTERVAL_MS = 50;
 const HUD_MAX_CLIENTS = 20;
 
@@ -136,11 +145,16 @@ export class SquareScene extends Phaser.Scene {
       return;
     }
 
+    const spawnOverride = this.registry.get(SQUARE_SPAWN_OVERRIDE_REGISTRY_KEY) as
+      | { readonly x: number; readonly y: number }
+      | undefined;
+    const spawnPixel = spawnOverride ?? squareSpritesConfig.avatar.spawnPixel;
+
     const avatar = new LocalAvatar(this, {
       memberId: member.memberId,
       avatarId: member.avatarId,
       displayName: member.displayName,
-      spawnPixel: squareSpritesConfig.avatar.spawnPixel,
+      spawnPixel,
       size: squareSpritesConfig.avatar.size,
       bodyOffset: squareSpritesConfig.avatar.bodyOffset,
     });
