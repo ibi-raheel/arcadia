@@ -217,9 +217,55 @@ Entire pass was client-side TypeScript in `apps/web`. No migrations, no RLS chan
 ### Items carried forward to follow-up sub-phases
 
 - **Square occupancy UI polish (S4)** — got a font bump via the 7.0 crisp-text pass; full visual polish (vellum chip / Caveat marginalia) is still on the list.
-- **Coworking scenes** (S2 spawn-from-square, CW1 tent occupancy + avatar size, CW2 tent-exit spawn, CW3 tent trigger position) — not yet touched.
 - **Academy progress + tick reliability (AC3 / AC6)** — sub-phase 7.4 not started.
 - **Market StallView diegetic restyle (M7)** — sub-phase 7.3 step 2 not started.
 - **Bridge-only spans on the Square's top / bottom / left edges** — only east is confined so far. User has opted for per-side nudging rather than bulk span add.
 - Academy-outside default spawn on return from interior — currently the scene's default; could add a door-adjacent override.
 - Dev grid stripped from all scenes; restore from git history if more coord tuning is needed.
+
+---
+
+## 2026-04-24 — coworking island shipped on a follow-up branch
+
+Work continued on `phase-07.1_coworking-outside-layout` (off the phase-07.0_gameplay-polish merge). Closes CW1 / CW2 / CW3 / S2 from the original punch list, plus one new shared-plumbing add.
+
+### Coworking outside
+
+- **Spawn y tuned twice.** 1121 → 1171 (+50, user "move down by 50") → 1121 (user "lower y by 50" interpreted literally, turned out to be the wrong direction) → **1221** (final; +50 from the intended 1171, 100 south of original).
+- **Four tents locked with 200×200 square zones** at user-clicked coords. `tent-2` removed entirely per user; building IDs stay `1/3/4/5` so existing `?b=tent-N` URLs keep working.
+  - `tent-1` (900, 764) — halfWidth=100, halfHeight=100
+  - `tent-3` (674, 1472) — same
+  - `tent-4` (1690, 820) — same
+  - `tent-5` (1718, 1604) — same
+- **`COWORKING_OUTSIDE_DOOR_SPAWNS`** map added (mirrors `TAVERN_OUTSIDE_DOOR_SPAWNS`). `GameOutdoor.tsx` now handles both variants — `?from=<tentId>` on `/coworking` drops the member at that tent's door on re-entry.
+
+### Coworking interior (tent)
+
+- **Exit ENTER-gated** — `COWORKING_INSIDE_RETURN_EDGE.bottom` gains `promptLabel: 'Press ENTER to exit the Tent'`. Walk-onto → ENTER-gated, matching every other exit.
+- **Return route carries `?from=<tentId>`** — rebuilt at runtime in `CoworkingInsideScene.create()` from the `COWORKING_BUILDING_ID_REGISTRY_KEY` registry value. Continuity: enter a tent → exit → spawn at the same tent door outside.
+- **`← Leave tent` React button removed** from `GameCoworkingInside.tsx`. The in-scene ENTER prompt is the only exit affordance now. `LEAVE_BUILDING` moved into the edge-trigger's new `onFire` callback so the Colyseus room-leave still precedes the fade.
+- **`enterKey` field + ENTER capture** added in `wireKeyboardInput`; `JustDown` state passed to `edgeTriggers.update()`.
+
+### Shared plumbing (this pass)
+
+- **`EntryTrigger.halfWidth` + `halfHeight`** — when both are set, `findNearestActiveTrigger` uses an axis-aligned rectangular containment check instead of the circular `radius` check. `radius` stays as fallback + Euclidean tiebreaker. Used exclusively by the 4 coworking tents for now.
+- **`debug-grid.ts` (temporary, twice now)** — restored with an added `clickToReveal` mode that drops a yellow crosshair + `(x, y)` label at any clicked world coord and console-logs the same. Used to lock tavern-outside door coords (screenshot pass 1) then coworking tent coords (screenshot pass 2), then deleted again. Git history keeps it for the next layout pass.
+
+### Verification
+
+- **Typecheck:** clean.
+- **Vitest:** 191 passed · 23 skipped · 0 failed (stable across all coworking commits).
+- **Coworking test update:** `configs.test.ts` now asserts 4 entries + ids `['tent-1','tent-3','tent-4','tent-5']` instead of the previous 5.
+- **Manual verify:** iterated live on Vercel preview of the branch. User confirmed 4 tent prompts fire inside their 200×200 squares, spawn-at-door on exit works, no `← Leave tent` button, ENTER exit at tent bottom works.
+
+### Items now cleared (were in the "carried forward" list above)
+
+- **Coworking scenes (S2 / CW1 / CW2 / CW3)** — all addressed.
+
+### Still carried forward
+
+- Square occupancy UI polish (S4) — visual pass.
+- Academy progress + tick reliability (AC3 / AC6).
+- Market StallView diegetic restyle (M7).
+- Square top / bottom / left edge spans.
+- Coworking-outside occupancy UI polish + avatar-size tuning inside tent (if the user surfaces either after they play the flow).

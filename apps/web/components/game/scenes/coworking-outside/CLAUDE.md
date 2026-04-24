@@ -6,9 +6,9 @@ Single-player outdoor area west of the square. Five tent entrances arranged arou
 
 - `CoworkingOutsideScene.ts` — thin `OutdoorSceneBase` subclass.
 - `camera.config.ts` — bounds match `public/worlds/coworkingoutside-2806x2242.png` (note: **not** square). Zoom 1.0.
-- `sprites.config.ts` — avatar spawn at `(2606, 1121)` — 200px west of the east bridge.
-- `layers.config.ts` — empty colliders; five entry triggers (top-left / top-right / left / right / bottom-centre tents); return edge on the right.
-- `__tests__/configs.test.ts` — shape + building-ID uniqueness assertions.
+- `sprites.config.ts` — avatar spawn at `(2450, 1221)` — south of the east bridge (2026-04-24 tuning).
+- `layers.config.ts` — empty colliders; **four** entry triggers as 200×200 square zones (tent-1/3/4/5; tent-2 removed 2026-04-24); return edge on the right routed `/world?from=coworking`; `COWORKING_OUTSIDE_DOOR_SPAWNS` map for `?from=<tentId>` continuity on return from the interior.
+- `__tests__/configs.test.ts` — shape + building-ID uniqueness assertions (4 entries).
 
 ## Controls
 

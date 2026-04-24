@@ -182,11 +182,6 @@ export default function GameCoworkingInside(): React.JSX.Element {
     };
   }, [fetchState, buildingId]);
 
-  const handleReturnOutside = (): void => {
-    connectionRef.current?.send(MSG.LEAVE_BUILDING, { building: 'coworking' });
-    router.push('/coworking');
-  };
-
   if (buildingId.length === 0) {
     return (
       <div className="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-slate-900 text-slate-300">
@@ -219,13 +214,6 @@ export default function GameCoworkingInside(): React.JSX.Element {
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <div ref={containerRef} className="absolute inset-0" />
-      <button
-        type="button"
-        onClick={handleReturnOutside}
-        className="absolute left-4 top-4 z-40 rounded bg-neutral-100 px-3 py-2 text-sm font-medium text-neutral-900 shadow transition hover:bg-white"
-      >
-        ← Leave tent
-      </button>
       <BuildingTransition
         ready={sceneReady}
         displayName="Coworking Tent"
