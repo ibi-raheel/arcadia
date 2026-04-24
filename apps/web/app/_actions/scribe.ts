@@ -17,12 +17,18 @@ import { revalidatePath } from 'next/cache';
 
 import type {
   CourseDraft,
+  DraftImage,
   DraftLessonBody,
   DraftOutlineSection,
   DraftSource,
   DraftStage,
 } from '@/lib/types/course-drafts';
-import { allLessonsApproved, canAdvance, totalSourceChars } from '@/lib/types/course-drafts';
+import {
+  allImagesApproved,
+  allLessonsApproved,
+  canAdvance,
+  totalSourceChars,
+} from '@/lib/types/course-drafts';
 import { isSupportedMime, parseSourceBuffer } from '@/lib/scribe/parse';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -352,6 +358,91 @@ export async function setLessonApproved(
   if (error) return { ok: false, error: error.message };
   revalidatePath('/dashboard/courses/conjure');
   return { ok: true, value: { approved } };
+}
+
+/** Approve / un-approve an individual image. Auto-advances stage to
+ *  `ready` when thumbnail + every lesson image is approved. */
+export async function setImageApproved(
+  draftId: string,
+  imageId: string,
+  approved: boolean,
+): Promise<Result<{ readonly approved: boolean }>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const supabase = getSupabaseServerClient();
+  const { data: row, error: readErr } = await supabase
+    .from('course_drafts')
+    .select('images, outline')
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId)
+    .maybeSingle();
+  if (readErr) return { ok: false, error: readErr.message };
+  if (!row) return { ok: false, error: 'draft not found' };
+
+  const current = (row.images as DraftImage[]) ?? [];
+  const target = current.find((i) => i.id === imageId);
+  if (!target) return { ok: false, error: 'image not found' };
+
+  const next = current.map((i) => (i.id === imageId ? { ...i, approved } : i));
+
+  const patch: Record<string, unknown> = { images: next };
+  if (approved) {
+    const outline = (row.outline as DraftOutlineSection[]) ?? [];
+    if (allImagesApproved(outline, next)) patch.stage = 'ready';
+  }
+
+  const { error } = await supabase
+    .from('course_drafts')
+    .update(patch)
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/dashboard/courses/conjure');
+  return { ok: true, value: { approved } };
+}
+
+/** Delete an image (both the bucket object + the jsonb entry) so
+ *  the creator can re-roll a specific one. */
+export async function deleteDraftImage(
+  draftId: string,
+  imageId: string,
+): Promise<Result<{ readonly id: string }>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const supabase = getSupabaseServerClient();
+  const { data: row, error: readErr } = await supabase
+    .from('course_drafts')
+    .select('images')
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId)
+    .maybeSingle();
+  if (readErr) return { ok: false, error: readErr.message };
+  if (!row) return { ok: false, error: 'draft not found' };
+
+  const current = (row.images as DraftImage[]) ?? [];
+  const target = current.find((i) => i.id === imageId);
+  if (!target) return { ok: false, error: 'image not found' };
+
+  const next = current.filter((i) => i.id !== imageId);
+  const { error: updateErr } = await supabase
+    .from('course_drafts')
+    .update({ images: next })
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId);
+  if (updateErr) return { ok: false, error: updateErr.message };
+
+  // Best-effort remove from storage. Parse path from public URL.
+  // URL shape: /storage/v1/object/public/course-generated-images/<path>
+  const prefix = '/course-generated-images/';
+  const idx = target.url.indexOf(prefix);
+  if (idx !== -1) {
+    const path = target.url.substring(idx + prefix.length).split('?')[0] ?? '';
+    if (path) await supabase.storage.from('course-generated-images').remove([path]);
+  }
+  revalidatePath('/dashboard/courses/conjure');
+  return { ok: true, value: { id: imageId } };
 }
 
 /** Overwrites the outline (used when the client hand-edits section

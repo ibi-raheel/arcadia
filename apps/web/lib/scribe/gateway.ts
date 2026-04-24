@@ -6,13 +6,16 @@
 // and translates our stage semantics into model picks. Nothing else
 // in the codebase should import the `ai` package directly.
 
-export type ScribeStage = 'outline' | 'lesson';
+export type ScribeStage = 'outline' | 'lesson' | 'image';
 
 /** Model picks per stage. Encoded in code so tests can assert the
  *  pairing without mocking the whole SDK. */
 export const SCRIBE_MODEL: Record<ScribeStage, string> = {
   outline: 'anthropic/claude-opus-4-7',
   lesson: 'anthropic/claude-haiku-4-5',
+  // Flux-schnell via the Gateway — fast, cheap, consistent style.
+  // Swap to flux-1.1-pro in the ADR if quality becomes the ceiling.
+  image: 'fal-ai/flux/schnell',
 };
 
 /** Hard per-draft budget. Above this, every streaming action returns
