@@ -48,6 +48,16 @@ export type FolkRetentionCurve = {
   readonly data: readonly number[];
 };
 
+/** A single "at risk" entry — someone who's flagged for possible
+ *  churn. Drives the AtRisk envelope card. */
+export type FolkRiskUrgency = 'high' | 'medium' | 'low';
+export type FolkAtRiskEntry = {
+  readonly who: string;
+  readonly tier: string;
+  readonly reason: string;
+  readonly urgency: FolkRiskUrgency;
+};
+
 export type FolkData = {
   readonly totalPaying: number;
   readonly totalFolk: number;
@@ -56,6 +66,7 @@ export type FolkData = {
   readonly money: FolkMoney;
   readonly tiers: readonly FolkTier[];
   readonly retentionCurves: readonly FolkRetentionCurve[];
+  readonly atRisk: readonly FolkAtRiskEntry[];
   readonly members: readonly FolkMember[];
 };
 
@@ -136,6 +147,38 @@ export const FOLK_FIXTURE: FolkData = {
       label: 'hearth-keeper',
       color: '#8f2530', // --wax
       data: [100, 97, 94, 92, 90, 88, 87, 86, 86, 85, 85, 85],
+    },
+  ],
+  atRisk: [
+    {
+      who: 'Calla Wright',
+      tier: 'guildling',
+      reason: 'payment failed · 6 days',
+      urgency: 'high',
+    },
+    {
+      who: 'Nan Gorse',
+      tier: 'lantern-bearer',
+      reason: "hasn't opened a letter in 30d",
+      urgency: 'medium',
+    },
+    {
+      who: 'Pascal Vane',
+      tier: 'guildling',
+      reason: 'downgraded from bearer · Jan',
+      urgency: 'medium',
+    },
+    {
+      who: 'Iris Brack',
+      tier: 'hearth-keeper',
+      reason: 'cancelled · effective in 14d',
+      urgency: 'high',
+    },
+    {
+      who: 'Odie Snell',
+      tier: 'guildling',
+      reason: 'free-trial ends tomorrow',
+      urgency: 'low',
     },
   ],
   members: [
