@@ -29,11 +29,32 @@ export const SQUARE_COLLIDERS: readonly PixelRect[] = [];
 // avatar well above the trigger band. Fixed by reverting bodyOffset
 // to its original frame-space values; 300 threshold gives an extra
 // safety margin.
+//
+// 2026-04-23 (Phase 7 item G2) — all four edges are now ENTER-gated via
+// `promptLabel`. Walking into the band shows a prompt pill; only ENTER
+// navigates. Previously walk-onto, which felt abrupt since three of the
+// four exits lead to further outdoor zones rather than final interiors.
 export const SQUARE_EDGE_TRIGGERS: EdgeTriggers = {
-  top: { route: '/academy-outside', threshold: 300 },
-  right: { route: '/tavern-outside', threshold: 300 },
-  bottom: { route: '/market', threshold: 300 },
-  left: { route: '/coworking', threshold: 300 },
+  top: {
+    route: '/academy-outside',
+    threshold: 300,
+    promptLabel: 'Press ENTER to visit the Academy grounds',
+  },
+  right: {
+    route: '/tavern-outside',
+    threshold: 300,
+    promptLabel: 'Press ENTER to visit the Taverns',
+  },
+  bottom: {
+    route: '/market',
+    threshold: 300,
+    promptLabel: 'Press ENTER to visit the Market',
+  },
+  left: {
+    route: '/coworking',
+    threshold: 300,
+    promptLabel: 'Press ENTER to visit the Coworking tents',
+  },
 };
 
 /**

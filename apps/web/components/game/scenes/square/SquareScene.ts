@@ -22,7 +22,9 @@ import { BOOT_ASSETS } from '../boot/asset-manifest';
 import { isAvatarId } from '../shared/avatar-palette';
 import { createCapacityHud, type CapacityHud } from '../shared/capacity-hud';
 import { spawnColliders } from '../shared/colliders';
+import { addCrispText } from '../shared/crisp-text';
 import { createEdgeTriggerManager, type EdgeTriggerManager } from '../shared/edge-triggers';
+import { applyFillZoom } from '../shared/fill-zoom';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -62,6 +64,7 @@ export class SquareScene extends Phaser.Scene {
     D: Phaser.Input.Keyboard.Key;
   };
   private spaceKey?: Phaser.Input.Keyboard.Key;
+  private enterKey?: Phaser.Input.Keyboard.Key;
   private clickTarget: { x: number; y: number } | null = null;
 
   private colyseus?: ColyseusConnection;
@@ -90,7 +93,8 @@ export class SquareScene extends Phaser.Scene {
 
     const { bounds, zoom, fadeInMs } = squareCameraConfig;
     this.cameras.main.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
-    this.cameras.main.setZoom(zoom);
+    applyFillZoom(this, bounds.width, bounds.height, zoom);
+    this.scale.on('resize', () => applyFillZoom(this, bounds.width, bounds.height, zoom));
     this.physics.world.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
     this.cameras.main.fadeIn(fadeInMs, 0, 0, 0);
 
@@ -172,6 +176,8 @@ export class SquareScene extends Phaser.Scene {
     };
     this.input.keyboard.addCapture('SPACE');
     this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.input.keyboard.addCapture('ENTER');
+    this.enterKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
   }
 
   private wirePointerInput(): void {
@@ -283,16 +289,15 @@ export class SquareScene extends Phaser.Scene {
   }
 
   private createNpcBubble(): void {
-    const text = this.add
-      .text(0, 0, '', {
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        fontSize: '16px',
-        color: '#0f172a',
-        wordWrap: { width: 240 },
-        align: 'center',
-      })
+    const text = addCrispText(this, 0, 0, '', {
+      fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
+      fontSize: '17px',
+      color: '#1c1917',
+      wordWrap: { width: 260 },
+      align: 'center',
+    })
       .setOrigin(0.5, 1)
-      .setPadding(10, 6, 10, 6);
+      .setPadding(12, 8, 12, 8);
     const bg = this.add.graphics();
     this.npcBubble = this.add.container(0, 0, [bg, text]).setDepth(2_000_000).setVisible(false);
     this.npcBubbleText = text;
@@ -409,6 +414,9 @@ export class SquareScene extends Phaser.Scene {
     }
 
     this.updateNpcBubble(this.localAvatar.x, this.localAvatar.y);
-    this.edgeTriggers?.update(this.localAvatar.x, this.localAvatar.y);
+    const enterJustDown = this.enterKey
+      ? Phaser.Input.Keyboard.JustDown(this.enterKey)
+      : false;
+    this.edgeTriggers?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown);
   }
 }
