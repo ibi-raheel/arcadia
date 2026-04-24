@@ -24,7 +24,7 @@ Pinned to the top-right, reads `"Tent N · <count> / 20"`. `N` is parsed from th
 - W/A/S/D or arrows — move
 - Click on floor — click-to-move
 - Space — jump
-- Walk onto the bottom-centre exit — fade + back to `/coworking`
+- **ENTER near the bottom exit** — walking into the 300 px bottom band shows `Press ENTER to exit the Tent`; only ENTER fades + navigates to `/coworking?from=<tentId>` so the outdoor scene spawns the member back at that tent's door (continuity). Shipped 2026-04-24. Replaces the walk-onto exit + the React `← Leave tent` button. `LEAVE_BUILDING` fires from the edge-trigger's `onFire` callback (pre-fade).
 
 ## Invariants
 
