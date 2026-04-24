@@ -21,7 +21,6 @@ import type { ColyseusConnection, ColyseusRoom } from '../../net/colyseus-client
 import { BOOT_ASSETS } from '../boot/asset-manifest';
 import { isAvatarId } from '../shared/avatar-palette';
 import { createCapacityHud, type CapacityHud } from '../shared/capacity-hud';
-import { drawDebugGrid } from '../shared/debug-grid';
 import { spawnColliders } from '../shared/colliders';
 import { addCrispText } from '../shared/crisp-text';
 import { createEdgeTriggerManager, type EdgeTriggerManager } from '../shared/edge-triggers';
@@ -122,16 +121,6 @@ export class SquareScene extends Phaser.Scene {
     );
 
     this.capacityHud = createCapacityHud(this, { label: 'Square', max: HUD_MAX_CLIENTS });
-
-    // 2026-04-23 (Phase 7 temp): dev grid for reading exact coords of
-    // bridges/gates on the 2508×2508 square. Strip when the trigger
-    // spans + return-spawn coords are finalised.
-    drawDebugGrid(this, {
-      width: bounds.width,
-      height: bounds.height,
-      spacing: 100,
-      labelEvery: 200,
-    });
 
     this.createNpcBubble();
 
