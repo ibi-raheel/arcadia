@@ -55,16 +55,19 @@ export const TAVERN_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
  * picks the value here, and writes it into the
  * OUTDOOR_SPAWN_OVERRIDE_REGISTRY_KEY before Phaser boots.
  *
- * Each entry sits ~200 px west of the door so the member doesn't
- * immediately re-trigger the enter prompt they just dismissed.
+ * 2026-04-23 (Phase 7 user request): spawn AT each door centre (matching
+ * the entry-trigger centre) for continuity — the member steps out of the
+ * tavern and visually lands at that tavern's door. The prompt for that
+ * door is visible immediately, so re-entering is one ENTER press away.
+ * Prior behaviour spawned ~200 px west of the door.
  */
 export const TAVERN_OUTSIDE_DOOR_SPAWNS: Record<
   string,
   { readonly x: number; readonly y: number } | undefined
 > = {
-  'tavern-a': { x: 980, y: 560 },
-  'tavern-b': { x: 1000, y: 1260 },
-  'tavern-c': { x: 1020, y: 1960 },
+  'tavern-a': { x: 1180, y: 560 },
+  'tavern-b': { x: 1200, y: 1260 },
+  'tavern-c': { x: 1220, y: 1960 },
 };
 
 /** West (bridge) edge returns the member to the square at the east gate. */
