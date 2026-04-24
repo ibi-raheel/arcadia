@@ -7,13 +7,15 @@ import type { PixelRect } from '../shared/types';
 export const MARKET_COLLIDERS: readonly PixelRect[] = [];
 
 /**
- * Top edge returns the member to the central square. Matches the rest
- * of the image-backed scenes — walk-onto, 150 px threshold, no prompt.
- * (2026-04-22: previously the only way out of /market was the browser
- * back button.)
+ * Bottom edge returns the member to the central square. 2026-04-23
+ * (Phase 7 item M1): the spawn moved from the bottom (y=880) to the
+ * top (y=140) so the member enters facing the stalls. The return edge
+ * had to move to the opposite edge — otherwise the member spawned
+ * inside the 300 px trigger band and was instantly bounced back to
+ * /world. Player walks south through the stalls to exit.
  */
 export const MARKET_RETURN_EDGE: EdgeTriggers = {
-  top: { route: '/world', threshold: 300 },
+  bottom: { route: '/world', threshold: 300 },
 };
 
 export const marketLayersConfig = {
