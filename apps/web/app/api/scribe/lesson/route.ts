@@ -8,7 +8,7 @@
 
 import { streamText } from 'ai';
 
-import { SCRIBE_MODEL, gatewayConfigured, tokenBudget } from '@/lib/scribe/gateway';
+import { scribeConfigured, scribeLanguageModel, tokenBudget } from '@/lib/scribe/gateway';
 import { lessonPrompt } from '@/lib/scribe/prompts';
 import type { DraftLessonBody, DraftOutlineSection, DraftSource } from '@/lib/types/course-drafts';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
@@ -25,7 +25,7 @@ type Body = {
 };
 
 export async function POST(request: Request): Promise<Response> {
-  if (!gatewayConfigured()) return err('AI Gateway is not configured on this deploy', 503);
+  if (!scribeConfigured()) return err('the scribe is not configured on this deploy', 503);
 
   const body = (await request.json().catch(() => null)) as Body | null;
   if (!body?.draftId || !body.sectionId || !body.lessonId) {
@@ -70,7 +70,7 @@ export async function POST(request: Request): Promise<Response> {
   });
 
   const result = streamText({
-    model: SCRIBE_MODEL.lesson,
+    model: scribeLanguageModel('lesson'),
     system,
     prompt,
     temperature: 0.6,

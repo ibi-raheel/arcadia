@@ -1,9 +1,13 @@
 // Route handler: POST /api/scribe/image
 //
-// Generates a single image via the AI Gateway, uploads it to the
-// `course-generated-images` bucket, and appends an entry to
-// `course_drafts.images` jsonb (approved=false). Non-streaming —
-// image gen returns the full binary in one shot.
+// Generates a single image via Gemini 2.5 Flash Image, uploads it to
+// the `course-generated-images` bucket, and appends an entry to
+// `course_drafts.images` jsonb (approved=false).
+//
+// Gemini image gen path: use `generateText` with the image-capable
+// model + `responseModalities: ['IMAGE']` in providerOptions.google.
+// The image comes back as a file part in result.files; we pull the
+// first image file's bytes and upload.
 //
 // Body: {
 //   draftId: string,
@@ -13,9 +17,9 @@
 
 import { randomUUID } from 'crypto';
 
-import { experimental_generateImage as generateImage } from 'ai';
+import { generateText } from 'ai';
 
-import { SCRIBE_MODEL, gatewayConfigured } from '@/lib/scribe/gateway';
+import { scribeConfigured, scribeImageModel } from '@/lib/scribe/gateway';
 import { imagePrompt } from '@/lib/scribe/prompts';
 import type {
   DraftImage,
@@ -36,7 +40,7 @@ type Body = {
 };
 
 export async function POST(request: Request): Promise<Response> {
-  if (!gatewayConfigured()) return err('AI Gateway is not configured on this deploy', 503);
+  if (!scribeConfigured()) return err('the scribe is not configured on this deploy', 503);
 
   const body = (await request.json().catch(() => null)) as Body | null;
   if (!body?.draftId || !body.target) return err('draftId and target are required', 400);
@@ -90,12 +94,15 @@ export async function POST(request: Request): Promise<Response> {
     revisionFeedback: body.feedback,
   });
 
+  // Gemini's image model returns image(s) as file parts via generateText.
   let generated;
   try {
-    generated = await generateImage({
-      model: SCRIBE_MODEL.image,
+    generated = await generateText({
+      model: scribeImageModel(),
       prompt,
-      size: body.target === 'thumbnail' ? '1024x768' : '1024x768',
+      providerOptions: {
+        google: { responseModalities: ['IMAGE'] },
+      },
     });
   } catch (generationErr) {
     return err(
@@ -106,11 +113,14 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // generateImage returns a GeneratedFile with a `.uint8Array` (or
-  // `.base64`). We upload the bytes directly to Storage.
-  const bytes = generated.image.uint8Array;
-  const mimeType = generated.image.mediaType ?? 'image/png';
+  const imageFile = generated.files.find((f) => f.mediaType?.startsWith('image/'));
+  if (!imageFile) {
+    return err('Gemini returned no image — try revising the prompt', 502);
+  }
+
+  const mimeType = imageFile.mediaType ?? 'image/png';
   const ext = mimeType.split('/')[1] ?? 'png';
+  const bytes = imageFile.uint8Array;
 
   const imageId = randomUUID();
   const storagePath = `${user.id}/${body.draftId}/${imageId}.${ext}`;
