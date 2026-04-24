@@ -6,8 +6,8 @@ Interior room. Image-backed background (1536×1024 pixel art, user-supplied 2026
 
 - `TavernScene.ts` — scene class. Renders `tavern-interior.png` as a depth-0 Image at origin (0, 0); reuses `LocalAvatar`, `RemoteAvatar`, `avatar-animations`, input resolvers, `move-throttle` from `scenes/world/`. Owns the speech-bubble machinery (see events below).
 - `camera.config.ts` — zoom `1.0×` (bumped down from 1.365 on 2026-04-23 to show more of the room); rect-shaped `bounds` matching `TAVERN_INTERIOR_SIZE` (1536×1024).
-- `sprites.config.ts` — avatar `spawnPixel: { 768, 300 }` (top-centre — member walks south through the room to the archway exit), `size = 135×135` (bumped from 90×90 on 2026-04-22 for readability), feet-body `45×22` at `(22, 62)` in **frame units** — Phaser Arcade scales it to match `sprite.scale` automatically (see ADR 0008), walk speed 200.
-- `layers.config.ts` — depth bands, y-sort config, empty colliders scaffold, and `TAVERN_EXIT_ARCHWAY` — a proximity exit zone at `(768, 960)` radius `150` that fires the portal back to `/tavern-outside` when the avatar walks into it (replaces the old bottom-edge threshold that tripped halfway across the room).
+- `sprites.config.ts` — avatar `spawnPixel: { 768, 960 }` (2026-04-23: at the archway so the "Press ENTER to leave" prompt is visible on arrival — consistent with the market/square pattern), `size = 135×135` (bumped from 90×90 on 2026-04-22 for readability), feet-body `45×22` at `(22, 62)` in **frame units** — Phaser Arcade scales it to match `sprite.scale` automatically (see ADR 0008), walk speed 200.
+- `layers.config.ts` — depth bands, y-sort config, empty colliders scaffold, and `TAVERN_EXIT_ARCHWAY` — a proximity zone at `(768, 960)` radius `150` now wired via `createEnterPromptManager` (ENTER-gated) rather than auto-fire. `TAVERN_RETURN_EDGE` is kept as an empty export for legacy import-compat.
 
 ## Assets loaded
 
@@ -36,11 +36,11 @@ Pinned to the top-right, reads `"Tavern <letter> · <count> / 20"`. `<letter>` c
 - **Space** — one-shot jump animation (same as WorldScene).
 - **Click** on floor — click-to-move.
 - **Tab** — open chat bar + focus it (the bar is otherwise hidden). While focused, WASD types; Escape or Send closes.
-- **Walk into the bottom-centre archway** — fades + routes to `/tavern-outside?from=<buildingId>`. The pulsing "↓ Exit ↓" marker is drawn in the scene directly above the archway.
+- **ENTER near the bottom-centre archway** — walking into the archway's radius shows `Press ENTER to leave the Tavern`; ENTER fades + routes to `/tavern-outside?from=<buildingId>`. The member spawns AT the archway so the prompt is visible on arrival. The pulsing `↓ Exit ↓` text was removed 2026-04-23.
 
 ## Exit
 
-The exit is an archway-proximity zone (not a bottom-edge threshold). `TavernScene.checkArchwayExit()` fires once per frame while `!exitFired`, comparing the avatar's `(x, y)` against `TAVERN_EXIT_ARCHWAY`. On fire: sends `MSG.LEAVE_BUILDING { building: 'tavern' }` via Colyseus, fades the camera, navigates to `/tavern-outside?from=<buildingId>` so the outdoor scene spawns the member at the same tavern's door. The old React "Return to World" button was removed 2026-04-22.
+The exit is an archway-proximity zone wired through `createEnterPromptManager` (ENTER-gated since 2026-04-23). The manager's `onFire` callback sends `MSG.LEAVE_BUILDING { building: 'tavern' }` before the camera fade starts, then the manager fades + navigates to `/tavern-outside?from=<buildingId>`. No more `checkArchwayExit()` method; `exitReturnRoute` / `exitFired` fields removed. The "Return to World" React button was removed 2026-04-22; the `↓ Exit ↓` in-world label was removed 2026-04-23 (the prompt pill is the only exit affordance now).
 
 ## Not owned here
 
