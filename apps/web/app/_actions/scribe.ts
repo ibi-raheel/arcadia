@@ -15,8 +15,13 @@ import { randomUUID } from 'crypto';
 
 import { revalidatePath } from 'next/cache';
 
-import type { CourseDraft, DraftSource, DraftStage } from '@/lib/types/course-drafts';
-import { totalSourceChars } from '@/lib/types/course-drafts';
+import type {
+  CourseDraft,
+  DraftOutlineSection,
+  DraftSource,
+  DraftStage,
+} from '@/lib/types/course-drafts';
+import { canAdvance, totalSourceChars } from '@/lib/types/course-drafts';
 import { isSupportedMime, parseSourceBuffer } from '@/lib/scribe/parse';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -242,4 +247,85 @@ export async function removeDraftSource(
  *  that could confuse the path parser. */
 function sanitise(filename: string): string {
   return filename.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120);
+}
+
+// ============================================================
+// Stage transitions + freshest-read helper
+// ============================================================
+
+/** Re-reads the creator's current draft. Used by client components
+ *  after a streaming route finishes so they can update local state
+ *  with the persisted outline / lessons / stage. */
+export async function reloadDraft(draftId: string): Promise<Result<CourseDraft>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('course_drafts')
+    .select('*')
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId)
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: 'draft not found' };
+  return { ok: true, value: rowToDraft(data) };
+}
+
+/** Moves a draft to a later stage (or an earlier one, for revise).
+ *  The `canAdvance` helper from lib/types/course-drafts is the one
+ *  truth. Refuses the transition if the guard fails. */
+export async function setDraftStage(
+  draftId: string,
+  to: DraftStage,
+): Promise<Result<{ readonly stage: DraftStage }>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const supabase = getSupabaseServerClient();
+  const { data: row, error: readErr } = await supabase
+    .from('course_drafts')
+    .select('stage')
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId)
+    .maybeSingle();
+  if (readErr) return { ok: false, error: readErr.message };
+  if (!row) return { ok: false, error: 'draft not found' };
+
+  const current = (row.stage as DraftStage) ?? 'satchel';
+  if (!canAdvance(current, to)) {
+    return { ok: false, error: `cannot move from ${current} to ${to}` };
+  }
+
+  const { error: updErr } = await supabase
+    .from('course_drafts')
+    .update({ stage: to })
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId);
+  if (updErr) return { ok: false, error: updErr.message };
+  revalidatePath('/dashboard/courses/conjure');
+  return { ok: true, value: { stage: to } };
+}
+
+/** Overwrites the outline (used when the client hand-edits section
+ *  or lesson titles before approving). */
+export async function updateDraftOutline(
+  draftId: string,
+  outline: readonly DraftOutlineSection[],
+  title?: string,
+): Promise<Result<{ readonly id: string }>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const supabase = getSupabaseServerClient();
+  const patch: Record<string, unknown> = { outline };
+  if (title !== undefined) patch.title = title.trim();
+  const { error } = await supabase
+    .from('course_drafts')
+    .update(patch)
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/dashboard/courses/conjure');
+  return { ok: true, value: { id: draftId } };
 }
