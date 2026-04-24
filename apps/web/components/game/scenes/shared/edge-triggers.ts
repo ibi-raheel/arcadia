@@ -60,10 +60,7 @@ export type EdgeTriggerFiredCallback = (side: EdgeSide, route: string) => void;
  * top → bottom → left → right; scenes that want to block transitions at
  * corners can rely on the predictable order.
  */
-function withinSpan(
-  coord: number,
-  span: EdgeTriggerConfig['span'],
-): boolean {
+function withinSpan(coord: number, span: EdgeTriggerConfig['span']): boolean {
   if (!span) return true;
   return coord >= span.min && coord <= span.max;
 }
@@ -75,11 +72,7 @@ export function hitEdge(
   worldHeight: number,
   edges: EdgeTriggers,
 ): EdgeTriggerConfig | null {
-  if (
-    edges.top &&
-    avatarY <= (edges.top.threshold ?? 48) &&
-    withinSpan(avatarX, edges.top.span)
-  ) {
+  if (edges.top && avatarY <= (edges.top.threshold ?? 48) && withinSpan(avatarX, edges.top.span)) {
     return edges.top;
   }
   if (
@@ -117,7 +110,11 @@ export function createEdgeTriggerManager(
 
   // Pill is created lazily — scenes that use only instant edges never
   // allocate the Container / Graphics / Text at all.
-  let pill: { container: Phaser.GameObjects.Container; bg: Phaser.GameObjects.Graphics; text: Phaser.GameObjects.Text } | null = null;
+  let pill: {
+    container: Phaser.GameObjects.Container;
+    bg: Phaser.GameObjects.Graphics;
+    text: Phaser.GameObjects.Text;
+  } | null = null;
   const ensurePill = (): typeof pill => {
     if (pill) return pill;
     const container = scene.add.container(0, 0);
@@ -198,11 +195,7 @@ function hitEdgeWithSide(
   worldHeight: number,
   edges: EdgeTriggers,
 ): { readonly side: EdgeSide; readonly cfg: EdgeTriggerConfig } | null {
-  if (
-    edges.top &&
-    avatarY <= (edges.top.threshold ?? 48) &&
-    withinSpan(avatarX, edges.top.span)
-  ) {
+  if (edges.top && avatarY <= (edges.top.threshold ?? 48) && withinSpan(avatarX, edges.top.span)) {
     return { side: 'top', cfg: edges.top };
   }
   if (

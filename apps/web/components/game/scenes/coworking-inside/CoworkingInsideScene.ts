@@ -110,14 +110,15 @@ export class CoworkingInsideScene extends Phaser.Scene {
     // (continuity). Falls back to the static config route when no
     // buildingId is present.
     const baseEdge = coworkingInsideLayersConfig.returnEdge.bottom;
-    const returnEdge = buildingId && baseEdge
-      ? {
-          bottom: {
-            ...baseEdge,
-            route: `${baseEdge.route}?from=${encodeURIComponent(buildingId)}`,
-          },
-        }
-      : coworkingInsideLayersConfig.returnEdge;
+    const returnEdge =
+      buildingId && baseEdge
+        ? {
+            bottom: {
+              ...baseEdge,
+              route: `${baseEdge.route}?from=${encodeURIComponent(buildingId)}`,
+            },
+          }
+        : coworkingInsideLayersConfig.returnEdge;
 
     this.edgeTriggers = createEdgeTriggerManager(
       this,
@@ -383,9 +384,7 @@ export class CoworkingInsideScene extends Phaser.Scene {
       obj.setDepth(calculateYSortDepth(obj, { depthBase, yAnchorRatio }));
     }
 
-    const enterJustDown = this.enterKey
-      ? Phaser.Input.Keyboard.JustDown(this.enterKey)
-      : false;
+    const enterJustDown = this.enterKey ? Phaser.Input.Keyboard.JustDown(this.enterKey) : false;
     this.edgeTriggers?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown);
   }
 }

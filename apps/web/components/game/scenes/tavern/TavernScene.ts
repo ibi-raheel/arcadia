@@ -408,7 +408,6 @@ export class TavernScene extends Phaser.Scene {
     if (idx >= 0) this.ySortables.splice(idx, 1);
   }
 
-
   private async wireRemoteAvatars(room: ColyseusRoom): Promise<void> {
     this.teardownRemoteAvatars();
 
@@ -576,9 +575,7 @@ export class TavernScene extends Phaser.Scene {
 
       this.sendMoveIfChanged(this.time.now);
 
-      const enterJustDown = this.enterKey
-        ? Phaser.Input.Keyboard.JustDown(this.enterKey)
-        : false;
+      const enterJustDown = this.enterKey ? Phaser.Input.Keyboard.JustDown(this.enterKey) : false;
       this.enterPrompt?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown);
     }
 
