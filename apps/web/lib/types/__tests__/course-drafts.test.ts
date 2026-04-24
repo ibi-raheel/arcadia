@@ -12,17 +12,12 @@ import {
 } from '../course-drafts';
 
 describe('canAdvance', () => {
-  it('allows forward by one step', () => {
+  it('allows forward moves by any distance', () => {
     expect(canAdvance('satchel', 'outline')).toBe(true);
-    expect(canAdvance('outline', 'lessons')).toBe(true);
-    expect(canAdvance('lessons', 'images')).toBe(true);
-    expect(canAdvance('images', 'ready')).toBe(true);
+    expect(canAdvance('satchel', 'lessons')).toBe(true); // skip 'outline' intermediate
+    expect(canAdvance('outline', 'images')).toBe(true);
+    expect(canAdvance('lessons', 'ready')).toBe(true);
     expect(canAdvance('ready', 'sealed')).toBe(true);
-  });
-
-  it('rejects skipping stages forward', () => {
-    expect(canAdvance('satchel', 'lessons')).toBe(false);
-    expect(canAdvance('outline', 'images')).toBe(false);
   });
 
   it('allows going back to any earlier stage (for revise)', () => {
@@ -30,8 +25,9 @@ describe('canAdvance', () => {
     expect(canAdvance('ready', 'satchel')).toBe(true);
   });
 
-  it('rejects staying in place', () => {
+  it('rejects staying in place — would trigger spurious DB writes', () => {
     expect(canAdvance('outline', 'outline')).toBe(false);
+    expect(canAdvance('lessons', 'lessons')).toBe(false);
   });
 });
 

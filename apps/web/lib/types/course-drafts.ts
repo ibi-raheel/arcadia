@@ -92,15 +92,21 @@ const STAGE_ORDER: readonly DraftStage[] = [
   'sealed',
 ];
 
-/** Allowed forward transitions. A creator can revise an earlier
- *  stage by going back to it (e.g. back from `lessons` to `outline`
- *  when they ask for a different section list). */
+/** Allowed transitions. In practice the client drives the state
+ *  machine and legitimate transitions are either forward (one or
+ *  more steps) or backward (for revise). Any move that changes the
+ *  stage is fine; staying on the same stage is a no-op we reject so
+ *  typos don't trigger spurious DB writes.
+ *
+ *  Note: we deliberately allow skipping `outline` when coming from
+ *  `satchel` — the outline route itself writes stage='lessons' on
+ *  success, so the intermediate `outline` stage is never a stable
+ *  checkpoint the client can land on. */
 export function canAdvance(from: DraftStage, to: DraftStage): boolean {
   const fromIdx = STAGE_ORDER.indexOf(from);
   const toIdx = STAGE_ORDER.indexOf(to);
   if (fromIdx === -1 || toIdx === -1) return false;
-  // Allow moving forward one step, or going back to any earlier stage.
-  return toIdx === fromIdx + 1 || toIdx < fromIdx;
+  return fromIdx !== toIdx;
 }
 
 /** Aggregate size of parsed source texts. Budget check (ADR 0012:

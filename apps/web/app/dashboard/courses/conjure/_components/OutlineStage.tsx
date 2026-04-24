@@ -161,10 +161,21 @@ export function OutlineStage({ draft, onDraftChanged }: Props): React.JSX.Elemen
   const approved = draft.stage !== 'satchel' && draft.stage !== 'outline';
 
   const onApprove = (): void => {
+    setError(null);
     startTransition(async () => {
-      await setDraftStage(draft.id, 'lessons');
+      // If the outline stream already set stage='lessons', setDraftStage
+      // is a no-op we silently skip so the user still gets the happy
+      // reload path + the stage-2 card appearing.
+      if (draft.stage === 'satchel' || draft.stage === 'outline') {
+        const advance = await setDraftStage(draft.id, 'lessons');
+        if (!advance.ok) {
+          setError(advance.error);
+          return;
+        }
+      }
       const refreshed = await reloadDraft(draft.id);
       if (refreshed.ok) onDraftChanged(refreshed.value);
+      else setError(refreshed.error);
     });
   };
 
