@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+  <defs>
+    <radialGradient id="medalGrad" cx="32%" cy="28%">
+      <stop offset="0%" stop-color="#d4a868"></stop>
+      <stop offset="50%" stop-color="#8a6a3a"></stop>
+      <stop offset="100%" stop-color="#3e2a14"></stop>
+    </radialGradient>
+  </defs>
+  <circle cx="60" cy="60" r="54" fill="url(#medalGrad)"></circle>
+  <circle cx="60" cy="60" r="48" fill="none" stroke="rgba(30,10,0,0.35)" stroke-width="2"></circle>
+  <circle cx="60" cy="60" r="42" fill="none" stroke="rgba(30,10,0,0.3)" stroke-width="1" stroke-dasharray="3 3"></circle>
+  <text x="60" y="58" font-family="IM Fell English, serif" font-size="30" text-anchor="middle" fill="rgba(20,8,0,0.55)">✦</text>
+  <text x="60" y="80" font-family="IM Fell English, serif" font-style="italic" font-size="13" text-anchor="middle" fill="#140a05">medallion</text>
+</svg>

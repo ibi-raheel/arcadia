@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+  <defs>
+    <radialGradient id="waxGrad" cx="35%" cy="30%">
+      <stop offset="0%" stop-color="#c13340"></stop>
+      <stop offset="55%" stop-color="#8f2530"></stop>
+      <stop offset="100%" stop-color="#5a1820"></stop>
+    </radialGradient>
+  </defs>
+  <g transform="rotate(-8 40 40)">
+    <circle cx="40" cy="40" r="30" fill="url(#waxGrad)"></circle>
+    <circle cx="40" cy="40" r="25" fill="none" stroke="rgba(30,0,0,0.3)" stroke-width="1.3" stroke-dasharray="3 3"></circle>
+    <text x="40" y="52" font-family="IM Fell English, serif" font-style="italic" font-size="28" text-anchor="middle" fill="rgba(30,0,0,0.6)">A</text>
+  </g>
+</svg>
