@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 
+import { GhostButton, Kicker } from '@/components/scriptorium';
+
 import { renameLesson, updateLessonType, updateLessonYouTubeId } from '../actions';
 import { LESSON_TITLE_MAX, parseYouTubeId } from '../validation';
 
@@ -102,44 +104,80 @@ export function VideoLessonEditor({ courseId, lesson }: Props): React.JSX.Elemen
   const previewId = videoId ?? parseYouTubeId(urlInput);
 
   return (
-    <section className="flex h-full flex-col gap-4">
-      <header className="flex items-center justify-between gap-4">
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value.slice(0, LESSON_TITLE_MAX))}
-          onBlur={commitTitle}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              (e.target as HTMLInputElement).blur();
-            }
-          }}
-          disabled={titlePending}
-          className="flex-1 rounded-lg border border-transparent bg-transparent px-2 py-1 text-xl font-semibold text-slate-100 hover:border-slate-800 focus:border-emerald-500 focus:bg-slate-950 focus:outline-none"
-        />
-        <button
-          type="button"
-          onClick={convertToWritten}
-          disabled={typePending}
-          className="rounded-md border border-slate-700 px-3 py-1 text-xs font-medium text-slate-300 transition hover:border-slate-500 hover:text-white disabled:opacity-50"
-        >
-          Convert to written
-        </button>
+    <section style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
+      <header
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 16,
+          paddingBottom: 10,
+          borderBottom: '1px dashed rgba(90, 63, 34, 0.3)',
+        }}
+      >
+        <div style={{ flex: 1 }}>
+          <Kicker>video lesson</Kicker>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value.slice(0, LESSON_TITLE_MAX))}
+            onBlur={commitTitle}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                (e.target as HTMLInputElement).blur();
+              }
+            }}
+            disabled={titlePending}
+            style={{
+              width: '100%',
+              marginTop: 4,
+              padding: '2px 0',
+              border: 'none',
+              borderBottom: '1.5px solid transparent',
+              background: 'transparent',
+              fontFamily: 'var(--font-display)',
+              fontStyle: 'italic',
+              fontSize: 28,
+              color: 'var(--ink)',
+              outline: 'none',
+            }}
+            onFocus={(e) => (e.currentTarget.style.borderBottomColor = 'var(--lantern)')}
+          />
+        </div>
+        <GhostButton onClick={convertToWritten} disabled={typePending} size="sm">
+          convert to written
+        </GhostButton>
       </header>
 
       {typeError && (
-        <p className="rounded-md bg-red-950/50 px-3 py-2 text-xs text-red-300">{typeError}</p>
+        <p
+          style={{
+            padding: '8px 10px',
+            background: 'rgba(143, 37, 48, 0.14)',
+            border: '1px dashed var(--wax-deep)',
+            borderRadius: 3,
+            color: 'var(--oxblood)',
+            fontSize: 13,
+          }}
+        >
+          {typeError}
+        </p>
       )}
 
-      <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-4">
-        <label className="block text-xs font-medium uppercase tracking-wide text-slate-400">
-          YouTube URL
-        </label>
-        <p className="mt-1 text-xs text-slate-500">
+      <div
+        style={{
+          background: 'rgba(232, 213, 165, 0.5)',
+          border: '1px dashed rgba(138, 106, 58, 0.4)',
+          borderRadius: 3,
+          padding: 16,
+        }}
+      >
+        <Kicker>youtube url</Kicker>
+        <p className="body-italic" style={{ marginTop: 6, color: 'var(--ink-soft)', fontSize: 13 }}>
           Paste any YouTube share URL (unlisted is fine). We only store the 11-character video id.
         </p>
-        <div className="mt-3 flex gap-2">
+        <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
           <input
             type="text"
             value={urlInput}
@@ -152,37 +190,59 @@ export function VideoLessonEditor({ courseId, lesson }: Props): React.JSX.Elemen
                 saveUrl();
               }
             }}
-            className="flex-1 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+            className="field"
+            style={{ flex: 1, fontSize: 14 }}
           />
           <button
             type="button"
             onClick={saveUrl}
             disabled={urlPending}
-            className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
+            style={{
+              padding: '6px 16px',
+              borderRadius: 20,
+              border: 'none',
+              cursor: 'pointer',
+              background:
+                'linear-gradient(135deg, var(--bronze-bright) 0%, var(--bronze) 45%, var(--bronze-deep) 100%)',
+              color: 'var(--night)',
+              fontFamily: 'var(--font-display)',
+              fontStyle: 'italic',
+              fontSize: 14,
+              opacity: urlPending ? 0.5 : 1,
+            }}
           >
-            {urlPending ? 'Saving…' : 'Save'}
+            {urlPending ? 'sealing…' : 'seal it'}
           </button>
           {videoId && (
-            <button
-              type="button"
-              onClick={clearUrl}
-              disabled={urlPending}
-              className="rounded-md border border-slate-700 px-3 py-2 text-sm font-medium text-slate-300 transition hover:border-red-500 hover:text-red-300 disabled:opacity-50"
-            >
-              Clear
-            </button>
+            <GhostButton onClick={clearUrl} disabled={urlPending} size="sm">
+              clear
+            </GhostButton>
           )}
         </div>
-        {urlError && <p className="mt-2 text-xs text-red-300">{urlError}</p>}
+        {urlError && (
+          <p className="hand" style={{ marginTop: 8, color: 'var(--crimson)' }}>
+            ~ {urlError} ~
+          </p>
+        )}
         {videoId && (
-          <p className="mt-2 text-xs text-slate-500">
-            Stored video id: <span className="font-mono text-slate-300">{videoId}</span>
+          <p className="mono" style={{ marginTop: 8, color: 'var(--ink-faint)', fontSize: 11 }}>
+            stored video id: <span style={{ color: 'var(--ink)' }}>{videoId}</span>
           </p>
         )}
       </div>
 
       {previewId ? (
-        <div className="aspect-video w-full overflow-hidden rounded-lg border border-slate-800 bg-black">
+        <div
+          style={{
+            aspectRatio: '16 / 9',
+            width: '100%',
+            overflow: 'hidden',
+            borderRadius: 3,
+            border: '1px solid var(--bronze-deep)',
+            background: 'var(--night-deep)',
+            boxShadow: 'inset 0 0 0 2px rgba(90, 63, 34, 0.4)',
+          }}
+        >
           <iframe
             key={previewId}
             width="100%"
@@ -194,8 +254,18 @@ export function VideoLessonEditor({ courseId, lesson }: Props): React.JSX.Elemen
           />
         </div>
       ) : (
-        <div className="rounded-lg border border-dashed border-slate-800 bg-slate-900/40 p-8 text-center text-sm text-slate-500">
-          Paste a YouTube URL above and hit Save to preview the embed.
+        <div
+          style={{
+            padding: 32,
+            textAlign: 'center',
+            border: '1px dashed rgba(138, 106, 58, 0.4)',
+            borderRadius: 3,
+            background: 'rgba(232, 213, 165, 0.3)',
+          }}
+        >
+          <p className="body-italic" style={{ color: 'var(--ink-soft)' }}>
+            Paste a YouTube URL above and hit <em>seal it</em> to preview.
+          </p>
         </div>
       )}
     </section>
