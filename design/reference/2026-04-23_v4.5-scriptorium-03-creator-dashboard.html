@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arcadia · host's scriptorium</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --night: #050208; --night-2: #0c0612; --night-deep: #000;
+    --desk: #3a2614; --desk-warm: #4a2f18; --desk-lit: #6a421f; --desk-edge: #1e1208;
+    --vellum: #e8d5a5; --vellum-2: #d9c38a; --vellum-3: #c4a971; --vellum-shadow: #a98a52;
+    --parchment: #d9bf88; --parchment-2: #c8ac72;
+    --scroll: #e3ce98; --ledger: #d4b984; --graph: #e0c589;
+    --lantern: #ffb84a; --lantern-2: #e69a2a; --lantern-core: #ffde9b; --flame: #fff3c8;
+    --bronze: #8a6a3a; --bronze-hi: #b88c52; --bronze-bright: #d4a868;
+    --bronze-deep: #5a3f22; --bronze-dark: #3e2a14;
+    --verdigris: #5a7a5c; --verdigris-2: #3e5c44;
+    --wax: #8f2530; --wax-deep: #5a1820; --crimson: #a8364a; --oxblood: #6d1a24;
+    --ink: #140a05; --ink-soft: #3a2418; --ink-faint: #6e5544; --ink-quiet: #8f7b68;
+    --ink-blue: #1f3147; --ink-red: #8a2838;
+    --gilt: #c9a14a; --gilt-hi: #e8c876; --gilt-deep: #8e6e28;
+    --leather: #3a1c10; --leather-dark: #1a0a06; --cord: #6a4a28;
+    --font-display: 'IM Fell English', serif;
+    --font-caps: 'IM Fell English SC', serif;
+    --font-body: 'EB Garamond', serif;
+    --font-hand: 'Caveat', cursive;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--night-deep); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.55; overflow-x: hidden; }
+
+  .night {
+    min-height: 100vh;
+    background:
+      radial-gradient(1100px 700px at 50% 0%, rgba(255, 184, 74, 0.22), transparent 55%),
+      linear-gradient(180deg, #050208 0%, #000 100%);
+    padding: 20px 28px 70px;
+    position: relative;
+  }
+  .night::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 20%, transparent 40%, rgba(0,0,0,0.85) 100%);
+    z-index: 1;
+  }
+
+  /* Hanging lantern */
+  .lantern-rig {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 160px; height: 240px; z-index: 3; pointer-events: none;
+  }
+  .lantern-rig .chain {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 2px; height: 80px;
+    background: repeating-linear-gradient(180deg, var(--bronze-deep) 0 4px, var(--bronze) 4px 8px);
+    opacity: 0.75;
+  }
+  .lantern-rig svg {
+    position: absolute; top: 70px; left: 50%;
+    transform: translateX(-50%);
+    animation: sway 6s ease-in-out infinite;
+    transform-origin: 50% -80px;
+  }
+  @keyframes sway {
+    0%,100% { transform: translateX(-50%) rotate(-0.8deg); }
+    50%     { transform: translateX(-50%) rotate(0.8deg); }
+  }
+  .light-pool {
+    position: absolute; top: 0; left: 0; right: 0; height: 1200px;
+    pointer-events: none; z-index: 2;
+    background: radial-gradient(ellipse 900px 600px at 50% 220px,
+      rgba(255, 184, 74, 0.30) 0%,
+      rgba(255, 184, 74, 0.15) 35%,
+      rgba(255, 184, 74, 0.05) 60%,
+      transparent 82%);
+    mix-blend-mode: screen;
+  }
+
+  /* Desk */
+  .desk {
+    max-width: 1300px;
+    margin: 260px auto 0;
+    position: relative; z-index: 4;
+    background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' seed='5'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/></svg>"),
+      repeating-linear-gradient(92deg, transparent 0, transparent 50px, rgba(20, 8, 0, 0.22) 50px, rgba(20, 8, 0, 0.22) 52px),
+      radial-gradient(ellipse at 50% 18%, var(--desk-lit) 0%, var(--desk-warm) 28%, var(--desk) 58%, var(--desk-edge) 100%);
+    background-blend-mode: multiply, normal, normal;
+    border-radius: 10px;
+    padding: 46px 44px 70px;
+    box-shadow: 0 60px 120px rgba(0, 0, 0, 0.85), 0 0 0 2px rgba(0, 0, 0, 0.6), inset 0 0 160px rgba(0, 0, 0, 0.55);
+  }
+  .desk::before, .desk::after {
+    content: ''; position: absolute;
+    width: 32px; height: 32px;
+    background: radial-gradient(circle at 32% 28%, var(--bronze-bright), var(--bronze) 50%, var(--bronze-deep) 100%);
+    border-radius: 4px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.7), inset 0 -3px 5px rgba(0, 0, 0, 0.45), inset 0 2px 3px rgba(212, 168, 104, 0.6);
+    top: 10px;
+  }
+  .desk::before { left: 10px; }
+  .desk::after  { right: 10px; }
+
+  /* Topbar */
+  .topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 34px; position: relative; z-index: 5; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-mark {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: radial-gradient(circle at 32% 30%, var(--bronze-bright), var(--bronze) 50%, var(--bronze-deep) 100%);
+    display: grid; place-items: center;
+    color: var(--night); font-family: var(--font-display); font-style: italic; font-size: 34px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7), inset 0 -4px 8px rgba(0, 0, 0, 0.45), inset 0 3px 5px rgba(212, 168, 104, 0.6);
+    position: relative;
+  }
+  .brand-mark::before { content: ''; position: absolute; inset: 4px; border: 1.5px dashed rgba(20, 10, 0, 0.35); border-radius: 50%; }
+  .brand-text h1 { font-family: var(--font-display); font-style: italic; font-size: 32px; color: var(--vellum); line-height: 1; }
+  .brand-text p { font-family: var(--font-hand); color: var(--lantern); font-size: 19px; margin-top: 2px; }
+
+  .tag-nav { display: flex; gap: 14px; padding-top: 6px; }
+  .vtag {
+    position: relative;
+    padding: 14px 22px 14px 28px;
+    font-family: var(--font-display); font-style: italic; font-size: 18px;
+    color: var(--ink);
+    background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' seed='4'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.3'/></svg>"),
+      linear-gradient(135deg, var(--vellum) 0%, var(--vellum-2) 100%);
+    background-blend-mode: multiply, normal;
+    clip-path: polygon(14px 0, 100% 0, 100% 100%, 14px 100%, 0 50%);
+    text-decoration: none;
+    transition: transform .3s, filter .3s;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.55);
+    transform: rotate(-2deg);
+    min-width: 96px; text-align: center;
+  }
+  .vtag::before { content: ''; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 5px; height: 5px; background: var(--night); border-radius: 50%; }
+  .vtag:nth-child(2) { transform: rotate(1.5deg); }
+  .vtag:nth-child(3) { transform: rotate(-1deg); }
+  .vtag:nth-child(4) { transform: rotate(2deg); }
+  .vtag.active {
+    background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' seed='4'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.3'/></svg>"),
+      linear-gradient(135deg, var(--lantern-core) 0%, var(--lantern) 100%);
+    background-blend-mode: multiply, normal;
+    transform: rotate(0deg) translateY(-2px);
+    box-shadow: 0 10px 22px rgba(255, 184, 74, 0.35), 0 8px 16px rgba(0, 0, 0, 0.55);
+  }
+  .vtag:hover { transform: rotate(0deg) translateY(-3px); filter: brightness(1.05); }
+
+  /* Heading with drop cap */
+  .page-head { display: flex; align-items: flex-start; gap: 22px; margin-bottom: 36px; position: relative; z-index: 5; }
+  .dropcap-wrap { position: relative; flex-shrink: 0; }
+  .dropcap {
+    width: 96px; height: 96px;
+    background: radial-gradient(circle at 30% 25%, var(--ink-blue) 0%, #183049 55%, #0e1e30 100%);
+    display: grid; place-items: center;
+    font-family: var(--font-display); font-style: italic; font-size: 72px;
+    color: var(--gilt); line-height: 1;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.55), inset 0 0 0 2px var(--gilt-deep), inset 0 0 0 3px var(--night);
+    text-shadow: 0 0 6px var(--gilt-hi);
+    position: relative;
+  }
+  .dropcap::before, .dropcap::after {
+    content: ''; position: absolute;
+    width: 10px; height: 10px;
+    background: var(--ink-red); border-radius: 50%;
+    box-shadow: inset -1px -1px 2px rgba(0,0,0,0.3);
+  }
+  .dropcap::before { top: 6px; left: 6px; }
+  .dropcap::after  { bottom: 6px; right: 6px; }
+  .filigree {
+    position: absolute; top: -6px; left: -6px; right: -6px; bottom: -6px;
+    pointer-events: none;
+  }
+  .filigree svg { width: 108px; height: 108px; overflow: visible; }
+  .page-head .head-text { padding-top: 2px; flex: 1; }
+  .kicker {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 2.5px;
+    text-transform: uppercase; color: var(--ink-quiet); margin-bottom: 8px;
+  }
+  .kicker::before { content: '·  '; color: var(--lantern); }
+  .page-head h2 {
+    font-family: var(--font-display); font-style: italic; font-size: 56px;
+    color: var(--vellum); line-height: 1; letter-spacing: -0.5px;
+  }
+  .page-head h2 em { color: var(--lantern); font-style: italic; }
+  .page-head .scrawl {
+    font-family: var(--font-hand); font-size: 22px; color: var(--gilt);
+    max-width: 340px; padding-top: 14px; transform: rotate(-1deg);
+    display: inline-block;
+  }
+  .page-head .scrawl span { color: var(--oxblood); font-weight: 600; }
+
+  /* Grid */
+  .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 28px; position: relative; z-index: 5; margin-bottom: 30px; }
+
+  /* Chapter divider */
+  .chap-div {
+    grid-column: span 12;
+    display: flex; align-items: center; gap: 16px;
+    margin: 14px 0 4px;
+  }
+  .chap-div .chap {
+    font-family: var(--font-caps); font-size: 13px; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--gilt);
+  }
+  .chap-div .line { flex: 1; height: 1px; background: repeating-linear-gradient(90deg, var(--bronze-deep) 0 6px, transparent 6px 10px); }
+  .chap-div .orn { color: var(--wax); font-size: 14px; }
+
+  /* ─── KPI: rolled scroll (gathering) ─── */
+  .kpi-scroll {
+    grid-column: span 4;
+    position: relative;
+    transform: rotate(-1.2deg);
+  }
+  .scroll-body {
+    background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' seed='9'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/></svg>"),
+      radial-gradient(at 30% 15%, var(--scroll) 0%, var(--vellum) 50%, var(--vellum-2) 100%);
+    background-blend-mode: multiply, normal;
+    padding: 36px 30px 42px;
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.6), inset 0 0 60px rgba(140, 100, 40, 0.22);
+    border-radius: 2px;
+    position: relative;
+  }
+  .scroll-body::before, .scroll-body::after {
+    content: ''; position: absolute; left: -6px; right: -6px; height: 22px;
+    background: repeating-linear-gradient(90deg, var(--vellum-shadow) 0 5px, var(--vellum-3) 5px 12px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.55);
+  }
+  .scroll-body::before { top: -10px; border-radius: 50% 50% 4px 4px / 22px 22px 2px 2px; }
+  .scroll-body::after  { bottom: -10px; border-radius: 4px 4px 50% 50% / 2px 2px 22px 22px; }
+
+  .kpi-label {
+    font-family: var(--font-caps);
+    font-size: 11px; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--wax);
+    margin-bottom: 10px;
+  }
+  .kpi-number {
+    font-family: var(--font-display); font-style: italic; font-size: 72px;
+    color: var(--ink); line-height: 1; letter-spacing: -1px;
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  .kpi-number .delta {
+    font-family: var(--font-hand); font-style: normal;
+    font-size: 22px; color: var(--oxblood);
+  }
+  .tally { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .tally-group {
+    font-family: var(--font-mono); font-size: 20px;
+    letter-spacing: -2px; color: var(--ink-red); transform: rotate(-2deg);
+  }
+  .kpi-note {
+    margin-top: 14px; font-family: var(--font-hand); font-size: 17px;
+    color: var(--ink-faint); transform: rotate(-0.8deg); padding-left: 4px;
+  }
+
+  /* ─── KPI: candle in window (warmth) ─── */
+  .kpi-candle {
+    grid-column: span 4;
+    position: relative;
+    transform: rotate(1.5deg);
+    background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' seed='11'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.32'/></svg>"),
+      linear-gradient(180deg, var(--vellum) 0%, var(--vellum-2) 100%);
+    background-blend-mode: multiply, normal;
+    padding: 28px 22px 32px;
+    box-shadow: 0 20px 38px rgba(0, 0, 0, 0.6);
+    border-radius: 3px;
+  }
+  .kpi-candle::before {
+    content: ''; position: absolute; top: 14px; left: -8px; right: -8px; height: 5px;
+    background: linear-gradient(180deg, var(--leather) 0%, var(--leather-dark) 100%);
+    box-shadow: 0 2px 3px rgba(0,0,0,0.5);
+    border-radius: 2px;
+  }
+  .candle-scene {
+    background: radial-gradient(ellipse at 50% 40%, rgba(255, 184, 74, 0.75) 0%, rgba(255, 184, 74, 0.3) 35%, rgba(20, 10, 40, 0.85) 75%);
+    aspect-ratio: 1.2 / 1;
+    border-radius: 3px;
+    display: grid; place-items: center;
+    margin-top: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .candle-scene svg { width: 60%; max-width: 160px; }
+  .flame-g {
+    transform-origin: 48px 40px;
+    animation: flickr 3.2s ease-in-out infinite;
+  }
+  @keyframes flickr {
+    0%,100% { transform: scale(1) rotate(-1deg); }
+    25% { transform: scale(1.06) rotate(2deg); }
+    55% { transform: scale(0.98) rotate(-0.5deg); }
+    80% { transform: scale(1.02) rotate(1.8deg); }
+  }
+  .candle-caption {
+    margin-top: 12px;
+    font-family: var(--font-hand); font-size: 19px; color: var(--ink);
+    text-align: center;
+    display: flex; align-items: baseline; justify-content: center; gap: 10px;
+  }
+  .candle-caption .big {
+    font-family: var(--font-display); font-style: italic; font-size: 38px;
+    color: var(--oxblood); letter-spacing: -0.5px;
+  }
+
+  /* ─── KPI: wax-sealed ledger ─── */
+  .kpi-ledger {
+    grid-column: span 4;
+    transform: rotate(-0.6deg);
+    background:
+      repeating-linear-gradient(180deg, transparent 0 28px, rgba(20, 10, 0, 0.18) 28px 29px),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='2' seed='13'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.3'/></svg>"),
+      linear-gradient(180deg, var(--ledger) 0%, var(--parchment-2) 100%);
+    background-blend-mode: normal, multiply, normal;
+    padding: 32px 28px 36px;
+    box-shadow: 0 20px 38px rgba(0, 0, 0, 0.6);
+    border-left: 3px double var(--bronze-deep);
+    border-radius: 2px 8px 8px 2px;
+    position: relative;
+  }
+  .kpi-ledger::before {
+    content: ''; position: absolute;
+    top: 18px; right: 22px;
+    width: 58px; height: 58px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #c13340 0%, var(--wax) 55%, var(--wax-deep) 100%);
+    box-shadow: 0 4px 10px rgba(30, 0, 0, 0.6), inset 0 -4px 10px rgba(30, 0, 0, 0.45), inset 0 4px 8px rgba(255, 200, 200, 0.18);
+    transform: rotate(-8deg);
+  }
+  .kpi-ledger::after {
+    content: 'A'; position: absolute;
+    top: 28px; right: 32px;
+    width: 38px; height: 38px;
+    display: grid; place-items: center;
+    font-family: var(--font-display); font-style: italic; font-size: 22px;
+    color: rgba(30, 0, 0, 0.65);
+    transform: rotate(-8deg);
+    z-index: 1;
+  }
+  .ledger-head {
+    font-family: var(--font-display); font-style: italic; font-size: 28px;
+    color: var(--ink); margin-bottom: 12px; padding-right: 70px;
+  }
+  .ledger-list { list-style: none; }
+  .ledger-list li {
+    font-family: var(--font-hand); font-size: 19px;
+    color: var(--ink);
+    padding: 4px 0 4px 30px;
+    position: relative;
+    line-height: 1.5;
+  }
+  .ledger-list li::before {
+    content: ''; position: absolute;
+    left: 2px; top: 10px;
+    width: 18px; height: 18px;
+    border: 1.8px solid var(--ink-soft);
+    border-radius: 2px;
+  }
+  .ledger-list li.done::after {
+    content: '✕'; position: absolute;
+    left: 2px; top: 4px;
+    width: 18px; height: 18px;
+    display: grid; place-items: center;
+    font-family: var(--font-display); font-style: italic;
+    color: var(--oxblood); transform: rotate(-6deg);
+    font-size: 20px;
+  }
+  .ledger-list li.done { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-quiet); }
+  .ledger-list li .sub {
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 1.5px; color: var(--ink-faint);
+    text-transform: uppercase; padding-left: 8px;
+  }
+
+  /* ─── KPI: inkwell / sparks ─── */
+  .kpi-ink {
+    grid-column: span 4;
+    transform: rotate(1.2deg);
+    background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' seed='17'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/></svg>"),
+      linear-gradient(135deg, var(--leather) 0%, var(--leather-dark) 100%);
+    background-blend-mode: multiply, normal;
+    padding: 26px 24px 30px;
+    box-shadow: 0 20px 38px rgba(0, 0, 0, 0.72);
+    border-radius: 3px;
+    color: var(--vellum);
+    position: relative;
+  }
+  .ink-scene {
+    background: radial-gradient(ellipse at 50% 50%, rgba(255, 184, 74, 0.22) 0%, rgba(20, 10, 40, 0.9) 75%);
+    border-radius: 3px;
+    aspect-ratio: 4 / 3;
+    display: grid; place-items: center;
+    position: relative; overflow: hidden;
+  }
+  .ink-scene svg { width: 80%; max-width: 240px; }
+  .spark {
+    animation: drift 7s ease-in-out infinite;
+    transform-origin: center;
+  }
+  .spark:nth-child(3n) { animation-duration: 9s; animation-delay: -1.4s; }
+  .spark:nth-child(3n+1) { animation-duration: 6.4s; animation-delay: -3.2s; }
+  @keyframes drift {
+    0%,100% { transform: translate(0,0); opacity: 0.95; }
+    25% { transform: translate(6px,-4px); opacity: 0.6; }
+    50% { transform: translate(-4px,4px); opacity: 1; }
+    75% { transform: translate(4px,5px); opacity: 0.7; }
+  }
+  .ink-caption {
+    font-family: var(--font-hand); font-size: 20px;
+    color: var(--vellum); text-align: center;
+    margin-top: 14px;
+  }
+  .ink-caption .count {
+    font-family: var(--font-display); font-style: italic; font-size: 34px;
+    color: var(--lantern); margin-right: 6px;
+  }
+
+  /* ─── Journal chart ─── */
+  .journal {
+    grid-column: span 8;
+    transform: rotate(-0.4deg);
+    background:
+      repeating-linear-gradient(0deg, transparent 0 28px, rgba(30, 14, 6, 0.14) 28px 29px),
+      repeating-linear-gradient(90deg, transparent 0 28px, rgba(30, 14, 6, 0.14) 28px 29px),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' seed='19'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.3'/></svg>"),
+      linear-gradient(180deg, var(--graph) 0%, #d4b782 100%);
+    background-blend-mode: normal, normal, multiply, normal;
+    padding: 36px 38px 42px;
+    box-shadow: 0 22px 42px rgba(0, 0, 0, 0.6), inset 0 0 60px rgba(140, 100, 40, 0.15);
+    border-left: 2px solid rgba(168, 54, 74, 0.6);
+    border-radius: 2px;
+    position: relative;
+  }
+  .journal::before {
+    content: ''; position: absolute; top: 14px; left: 34px; right: 34px;
+    height: 2px; background: rgba(168, 54, 74, 0.3);
+  }
+  .journal-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; flex-wrap: wrap; gap: 14px; }
+  .journal-title { font-family: var(--font-display); font-style: italic; font-size: 36px; color: var(--ink); line-height: 1; }
+  .journal-title em { color: var(--oxblood); }
+  .journal-sub { font-family: var(--font-hand); font-size: 18px; color: var(--ink-faint); margin-top: 4px; }
+  .journal-legend { display: flex; gap: 16px; align-items: center; }
+  .legend-item { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-faint); display: flex; align-items: center; gap: 6px; }
+  .legend-swatch { width: 16px; height: 3px; border-radius: 1px; }
+
+  .journal-chart { position: relative; margin-bottom: 20px; }
+  .journal-chart svg { width: 100%; height: auto; display: block; }
+  .annotation {
+    position: absolute;
+    font-family: var(--font-hand); font-size: 17px;
+    color: var(--ink-soft); pointer-events: none;
+  }
+  .ann-1 { top: 4px; left: 30%; transform: rotate(-3deg); color: var(--oxblood); }
+  .ann-2 { top: 38%; right: 10%; transform: rotate(2deg); }
+  .ann-3 { bottom: 18%; left: 4%; transform: rotate(-1deg); color: var(--ink-faint); }
+
+  /* ─── Envelope (heavy stats) ─── */
+  .envelope {
+    grid-column: span 4;
+    transform: rotate(1.6deg);
+    background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' seed='21'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/></svg>"),
+      linear-gradient(135deg, var(--leather) 0%, var(--leather-dark) 100%);
+    background-blend-mode: multiply, normal;
+    padding: 30px 26px 34px;
+    box-shadow: 0 20px 38px rgba(0, 0, 0, 0.72);
+    border-radius: 3px;
+    color: var(--vellum);
+    position: relative;
+  }
+  .envelope h4 { font-family: var(--font-display); font-style: italic; font-size: 24px; color: var(--lantern-core); margin-bottom: 4px; }
+  .envelope .sub { font-family: var(--font-hand); font-size: 15px; color: var(--lantern); margin-bottom: 18px; }
+  .stat-row { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; border-bottom: 1px dashed rgba(232, 213, 165, 0.25); }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-row .l { font-family: var(--font-body); font-size: 14px; color: var(--vellum); letter-spacing: 0.2px; }
+  .stat-row .v { font-family: var(--font-display); font-style: italic; font-size: 26px; color: var(--lantern); }
+  .stat-row .v small { font-family: var(--font-hand); font-size: 14px; color: var(--lantern-core); margin-left: 4px; }
+
+  /* ─── Section heading with drop cap ─── */
+  .section-head {
+    grid-column: span 12;
+    display: flex; align-items: flex-start; gap: 18px;
+    margin: 16px 0 4px;
+  }
+  .section-head .dropcap-wrap {
+    transform: scale(0.8);
+    transform-origin: left top;
+  }
+  .section-head .head-text { padding-top: 2px; }
+  .section-head h3 {
+    font-family: var(--font-display); font-style: italic; font-size: 40px;
+    color: var(--vellum); line-height: 1.05;
+  }
+  .section-head h3 em { color: var(--lantern); }
+  .section-head .scrib {
+    display: inline-block;
+    font-family: var(--font-hand); font-size: 18px;
+    color: var(--gilt); transform: rotate(-1deg); margin-top: 4px;
+  }
+
+  /* ─── Map (hand-drawn world) ─── */
+  .map-card {
+    grid-column: span 8;
+    transform: rotate(-0.3deg);
+    background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='280' height='280'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='3' seed='23'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.42'/></svg>"),
+      radial-gradient(at 30% 20%, var(--scroll) 0%, var(--vellum-2) 55%, var(--vellum-3) 100%);
+    background-blend-mode: multiply, normal;
+    padding: 34px 30px 40px;
+    box-shadow: 0 26px 48px rgba(0, 0, 0, 0.62), inset 0 0 80px rgba(140, 100, 40, 0.22);
+    border-radius: 2px;
+    position: relative;
+  }
+  .map-card::before {
+    content: ''; position: absolute; top: 14px; left: 20px;
+    width: 14px; height: 14px;
+    background: radial-gradient(circle at 32% 28%, var(--bronze-bright), var(--bronze) 55%, var(--bronze-deep) 100%);
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7), inset 0 -2px 3px rgba(0, 0, 0, 0.4);
+  }
+  .map-card::after {
+    content: ''; position: absolute; top: 14px; right: 20px;
+    width: 14px; height: 14px;
+    background: radial-gradient(circle at 32% 28%, var(--bronze-bright), var(--bronze) 55%, var(--bronze-deep) 100%);
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7), inset 0 -2px 3px rgba(0, 0, 0, 0.4);
+  }
+  .map-title { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; padding: 0 22px; }
+  .map-title h4 { font-family: var(--font-display); font-style: italic; font-size: 32px; color: var(--ink); }
+  .map-title .caption { font-family: var(--font-hand); font-size: 18px; color: var(--ink-faint); }
+  .map-svg-wrap { position: relative; }
+  .map-svg-wrap svg { width: 100%; height: auto; display: block; }
+  .map-legend {
+    display: flex; gap: 22px; margin-top: 16px; flex-wrap: wrap;
+    font-family: var(--font-hand); font-size: 16px; color: var(--ink-soft);
+  }
+  .map-legend .dot {
+    display: inline-block; width: 10px; height: 10px;
+    border-radius: 50%; margin-right: 6px; vertical-align: middle;
+  }
+  .dot.wax  { background: var(--wax); box-shadow: 0 0 8px var(--crimson); }
+  .dot.lantern { background: var(--lantern-2); box-shadow: 0 0 8px var(--lantern); }
+  .dot.verdigris { background: var(--verdigris); box-shadow: 0 0 8px var(--verdigris); }
+  .dot.blue { background: var(--ink-blue); box-shadow: 0 0 8px #2a4263; }
+
+  .pulse-dot circle.outer {
+    animation: pulse 2.6s ease-in-out infinite;
+    transform-origin: center; transform-box: fill-box;
+  }
+  .pulse-dot.d2 circle.outer { animation-delay: -0.6s; }
+  .pulse-dot.d3 circle.outer { animation-delay: -1.2s; }
+  .pulse-dot.d4 circle.outer { animation-delay: -1.8s; }
+  .pulse-dot.d5 circle.outer { animation-delay: -2.2s; }
+  @keyframes pulse {
+    0%,100% { opacity: 0.55; transform: scale(1); }
+    50%     { opacity: 0.12; transform: scale(2); }
+  }
+
+  /* Who's here column */
+  .who {
+    grid-column: span 4;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .who-head {
+    font-family: var(--font-display); font-style: italic; font-size: 28px;
+    color: var(--vellum); padding-left: 6px; margin-bottom: 2px;
+  }
+  .who-head small {
+    display: block; font-family: var(--font-hand); font-size: 16px;
+    color: var(--gilt); margin-top: -2px;
+  }
+  .slip {
+    background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' seed='4'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.3'/></svg>"),
+      var(--vellum);
+    background-blend-mode: multiply, normal;
+    padding: 14px 18px 16px 30px;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.55);
+    position: relative; border-radius: 2px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .slip.s1 { transform: rotate(-1.5deg); }
+  .slip.s2 { transform: rotate(1deg); background: var(--parchment); background-blend-mode: multiply, normal; }
+  .slip.s3 { transform: rotate(-0.8deg); }
+  .slip.s4 { transform: rotate(1.6deg); background: var(--parchment); background-blend-mode: multiply, normal; }
+  .slip::before {
+    content: ''; position: absolute;
+    top: 8px; left: 10px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: radial-gradient(circle at 32% 28%, var(--bronze-bright), var(--bronze) 55%, var(--bronze-deep) 100%);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6), inset 0 -1px 2px rgba(0, 0, 0, 0.4);
+  }
+  .slip .avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-family: var(--font-display); font-style: italic; font-size: 22px;
+    color: var(--vellum); flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 0 0 2px rgba(255, 220, 180, 0.2);
+  }
+  .slip.s1 .avatar { background: radial-gradient(circle at 30% 30%, var(--crimson), var(--wax-deep)); }
+  .slip.s2 .avatar { background: radial-gradient(circle at 30% 30%, var(--bronze-bright), var(--bronze-deep)); }
+  .slip.s3 .avatar { background: radial-gradient(circle at 30% 30%, #88a080, var(--verdigris-2)); }
+  .slip.s4 .avatar { background: radial-gradient(circle at 30% 30%, #4a6c88, var(--ink-blue)); }
+  .slip .info .name { font-family: var(--font-display); font-style: italic; font-size: 20px; color: var(--ink); line-height: 1; }
+  .slip .info .where { font-family: var(--font-hand); font-size: 15px; color: var(--ink-soft); margin-top: 2px; }
+  .slip .pip {
+    margin-left: auto; width: 8px; height: 8px; border-radius: 50%;
+    box-shadow: 0 0 8px currentColor;
+    animation: pulsePip 2s ease-in-out infinite;
+  }
+  .s1 .pip { background: var(--wax); color: var(--wax); }
+  .s2 .pip { background: var(--bronze); color: var(--bronze); }
+  .s3 .pip { background: var(--verdigris); color: var(--verdigris); }
+  .s4 .pip { background: var(--ink-blue); color: var(--ink-blue); }
+  @keyframes pulsePip {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  /* Notes wall */
+  .notes-wall { grid-column: span 12; margin-top: 10px; }
+  .notes-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px;
+    margin-top: 18px;
+  }
+  .note {
+    padding: 22px 20px 22px;
+    box-shadow: 0 14px 26px rgba(0, 0, 0, 0.55);
+    position: relative; border-radius: 2px;
+    font-family: var(--font-body); font-size: 16px; color: var(--ink); line-height: 1.5;
+  }
+  .note .from { font-family: var(--font-hand); font-size: 18px; color: var(--oxblood); margin-bottom: 8px; display: block; }
+  .note p { font-style: italic; }
+  .note .when {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.5px;
+    color: var(--ink-faint); text-transform: uppercase; margin-top: 12px; display: block;
+  }
+  .note.n1 { background: var(--parchment); transform: rotate(-2.2deg); }
+  .note.n2 { background: var(--vellum); transform: rotate(1.4deg); }
+  .note.n3 { background: var(--parchment-2); transform: rotate(-0.8deg); }
+  .note.n4 { background: var(--vellum-2); transform: rotate(2deg); }
+  .note::before {
+    content: ''; position: absolute;
+    top: -8px; left: 50%; transform: translateX(-50%);
+    width: 16px; height: 16px; border-radius: 50%;
+    background: radial-gradient(circle at 32% 28%, var(--bronze-bright), var(--bronze) 55%, var(--bronze-deep) 100%);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.7), inset 0 -2px 3px rgba(0, 0, 0, 0.4), inset 0 2px 2px rgba(212, 168, 104, 0.55);
+  }
+
+  /* Todo + Draft */
+  .todo-card {
+    grid-column: span 6;
+    transform: rotate(-0.8deg);
+    background:
+      repeating-linear-gradient(0deg, transparent 0 32px, rgba(90, 120, 160, 0.25) 32px 33px),
+      linear-gradient(180deg, #f8f0db 0%, #e8dab2 100%);
+    padding: 30px 34px 36px;
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.55);
+    border-left: 3px solid rgba(168, 54, 74, 0.6);
+    border-radius: 3px;
+    position: relative;
+  }
+  .todo-card h4 { font-family: var(--font-display); font-style: italic; font-size: 28px; color: var(--ink); margin-bottom: 4px; }
+  .todo-card .small { font-family: var(--font-hand); font-size: 16px; color: var(--ink-faint); margin-bottom: 16px; }
+  .todo-list { list-style: none; margin-top: 10px; }
+  .todo-list li {
+    padding: 6px 0 6px 36px; font-family: var(--font-hand); font-size: 22px;
+    color: var(--ink); line-height: 1.6; position: relative;
+  }
+  .todo-list li::before {
+    content: ''; position: absolute;
+    left: 4px; top: 14px;
+    width: 18px; height: 18px; border: 1.8px solid var(--ink-soft); border-radius: 50%;
+  }
+  .todo-list li .when {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.2px;
+    color: var(--ink-faint); text-transform: uppercase; margin-left: 8px;
+  }
+
+  .draft {
+    grid-column: span 6;
+    transform: rotate(1.2deg);
+    background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' seed='27'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.32'/></svg>"),
+      radial-gradient(at 30% 15%, var(--scroll) 0%, var(--vellum) 55%, var(--vellum-2) 100%);
+    background-blend-mode: multiply, normal;
+    padding: 32px 34px 38px;
+    box-shadow: 0 20px 38px rgba(0, 0, 0, 0.58);
+    border-radius: 3px;
+    position: relative;
+  }
+  .draft h4 { font-family: var(--font-display); font-style: italic; font-size: 28px; color: var(--ink); margin-bottom: 6px; }
+  .draft .scribble { font-family: var(--font-hand); font-size: 18px; color: var(--oxblood); margin-bottom: 16px; display: inline-block; transform: rotate(-1deg); }
+  .draft .body {
+    font-family: var(--font-body); font-style: italic; font-size: 17px;
+    color: var(--ink-soft); line-height: 1.6;
+    padding: 10px 0 14px;
+    border-top: 1px dashed var(--bronze-deep);
+    border-bottom: 1px dashed var(--bronze-deep);
+  }
+  .draft .body .highlight {
+    background: linear-gradient(180deg, transparent 62%, rgba(255, 184, 74, 0.55) 62%, rgba(255, 184, 74, 0.55) 92%, transparent 92%);
+    font-style: normal; font-family: var(--font-hand); font-size: 19px;
+    color: var(--ink); padding: 0 4px;
+  }
+  .draft-actions { display: flex; gap: 12px; margin-top: 18px; align-items: center; flex-wrap: wrap; }
+  .btn-send {
+    font-family: var(--font-display); font-style: italic; font-size: 18px;
+    padding: 10px 22px; color: var(--night);
+    background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='29'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.22'/></svg>"),
+      linear-gradient(135deg, var(--bronze-bright) 0%, var(--bronze) 45%, var(--bronze-deep) 100%);
+    background-blend-mode: multiply, normal;
+    border: none; border-radius: 30px; cursor: pointer;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.6), inset 0 -4px 10px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(212, 168, 104, 0.55);
+  }
+  .btn-ghost {
+    font-family: var(--font-hand); font-size: 18px; color: var(--ink-soft);
+    background: none; border: none; cursor: pointer;
+    text-decoration: underline wavy var(--wax); text-underline-offset: 4px;
+  }
+  .send-note { font-family: var(--font-hand); font-size: 15px; color: var(--ink-faint); }
+
+  /* Endnote */
+  .endnote {
+    position: relative; z-index: 5;
+    margin: 52px auto 0; max-width: 580px;
+    text-align: center; padding-top: 24px;
+    border-top: 1px dashed var(--bronze);
+    font-family: var(--font-display); font-style: italic; font-size: 22px;
+    color: var(--gilt); line-height: 1.5;
+  }
+  .endnote small {
+    display: block; font-family: var(--font-hand); font-size: 17px;
+    color: var(--ink-quiet); margin-top: 6px;
+  }
+
+  @media (max-width: 1100px) {
+    .kpi-scroll, .kpi-candle, .kpi-ledger, .kpi-ink { grid-column: span 6; }
+    .journal, .map-card, .envelope, .who { grid-column: span 12; }
+    .todo-card, .draft { grid-column: span 12; }
+    .notes-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 640px) {
+    .desk { margin-top: 220px; padding: 32px 22px 56px; }
+    .page-head h2 { font-size: 40px; }
+    .kpi-scroll, .kpi-candle, .kpi-ledger, .kpi-ink { grid-column: span 12; }
+    .notes-grid { grid-template-columns: 1fr; }
+    .topbar { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="night">
+  <div class="lantern-rig">
+    <div class="chain"></div>
+    <svg width="120" height="160" viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="flameGlow" cx="50%" cy="45%" r="50%">
+          <stop offset="0%" stop-color="#fff3c8"/>
+          <stop offset="40%" stop-color="#ffb84a" stop-opacity="0.85"/>
+          <stop offset="100%" stop-color="#ffb84a" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="bronzeGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#b88c52"/>
+          <stop offset="50%" stop-color="#8a6a3a"/>
+          <stop offset="100%" stop-color="#3e2a14"/>
+        </linearGradient>
+      </defs>
+      <path d="M60 8 L60 18" stroke="url(#bronzeGrad)" stroke-width="2.5"/>
+      <circle cx="60" cy="12" r="5" fill="none" stroke="url(#bronzeGrad)" stroke-width="2"/>
+      <path d="M32 22 L88 22 L82 32 L38 32 Z" fill="url(#bronzeGrad)" stroke="#3e2a14" stroke-width="1"/>
+      <rect x="34" y="32" width="52" height="6" fill="#3e2a14"/>
+      <path d="M40 38 L40 100 Q40 110 50 112 L70 112 Q80 110 80 100 L80 38 Z" fill="rgba(255,184,74,0.18)" stroke="#8a6a3a" stroke-width="2"/>
+      <line x1="60" y1="38" x2="60" y2="112" stroke="#3e2a14" stroke-width="1.5"/>
+      <line x1="46" y1="38" x2="46" y2="112" stroke="#3e2a14" stroke-width="1.2" opacity="0.7"/>
+      <line x1="74" y1="38" x2="74" y2="112" stroke="#3e2a14" stroke-width="1.2" opacity="0.7"/>
+      <line x1="40" y1="76" x2="80" y2="76" stroke="#3e2a14" stroke-width="1.2" opacity="0.6"/>
+      <ellipse cx="60" cy="74" rx="36" ry="44" fill="url(#flameGlow)"/>
+      <rect x="54" y="68" width="12" height="34" rx="1.5" fill="#fff3c8"/>
+      <line x1="60" y1="58" x2="60" y2="68" stroke="#140a05" stroke-width="1.4"/>
+      <g>
+        <path d="M60 48 Q66 60 63 68 Q60 72 57 68 Q54 60 60 48 Z" fill="#ffb84a"/>
+        <path d="M60 54 Q63 60 62 66 Q60 70 58 66 Q57 60 60 54 Z" fill="#ff8a3a"/>
+        <ellipse cx="60" cy="62" rx="1.6" ry="3" fill="#ffffff" opacity="0.9"/>
+      </g>
+      <path d="M38 112 L82 112 L88 122 L32 122 Z" fill="url(#bronzeGrad)" stroke="#3e2a14" stroke-width="1"/>
+      <ellipse cx="60" cy="128" rx="6" ry="2" fill="#3e2a14"/>
+    </svg>
+  </div>
+  <div class="light-pool"></div>
+
+  <div class="desk">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">A</div>
+        <div class="brand-text">
+          <h1>Arcadia</h1>
+          <p>host's scriptorium · thursday eve</p>
+        </div>
+      </div>
+      <nav class="tag-nav">
+        <a href="index.html" class="vtag">hub</a>
+        <a href="04-member-dashboard.html" class="vtag">my room</a>
+        <a href="#" class="vtag active">host</a>
+        <a href="01-design-system.html" class="vtag">the kit</a>
+      </nav>
+    </div>
+
+    <!-- Page head with drop cap -->
+    <div class="page-head">
+      <div class="dropcap-wrap">
+        <div class="dropcap">W</div>
+        <div class="filigree">
+          <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+            <defs><linearGradient id="fg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e8c876"/><stop offset="100%" stop-color="#8e6e28"/></linearGradient></defs>
+            <path d="M-4 6 Q2 0 12 -4" fill="none" stroke="url(#fg1)" stroke-width="2"/>
+            <circle cx="-4" cy="6" r="3" fill="#a8364a"/>
+            <path d="M108 102 Q102 108 92 112" fill="none" stroke="url(#fg1)" stroke-width="2"/>
+            <circle cx="108" cy="102" r="3" fill="#1f3147"/>
+            <path d="M-4 102 Q2 108 12 112" fill="none" stroke="url(#fg1)" stroke-width="2"/>
+            <circle cx="-4" cy="102" r="2.5" fill="#1f3147"/>
+            <path d="M108 6 Q102 0 92 -4" fill="none" stroke="url(#fg1)" stroke-width="2"/>
+            <circle cx="108" cy="6" r="2.5" fill="#a8364a"/>
+          </svg>
+        </div>
+      </div>
+      <div class="head-text">
+        <div class="kicker">22 april · the evening watch · folio xxxi</div>
+        <h2>elcome back, <em>Iris</em>.</h2>
+        <div class="scrawl">the tavern is full — <span>thirty-one</span> came in.<br>brew the tea · they will stay a while.</div>
+      </div>
+    </div>
+
+    <div class="grid">
+
+      <div class="chap-div">
+        <span class="chap">I. tonight, by the numbers</span>
+        <span class="line"></span>
+        <span class="orn">✦</span>
+        <span class="line"></span>
+      </div>
+
+      <!-- KPI scroll -->
+      <div class="kpi-scroll">
+        <div class="scroll-body">
+          <div class="kpi-label">today's gathering</div>
+          <div class="kpi-number">31 <span class="delta">+7 from tue</span></div>
+          <div class="tally">
+            <span class="tally-group">||||</span>
+            <span class="tally-group">||||</span>
+            <span class="tally-group">||||</span>
+            <span class="tally-group">||||</span>
+            <span class="tally-group">||||</span>
+            <span class="tally-group">||||</span>
+            <span class="tally-group">|</span>
+          </div>
+          <div class="kpi-note">mostly regulars · four new faces at the door</div>
+        </div>
+      </div>
+
+      <!-- KPI candle -->
+      <div class="kpi-candle">
+        <div style="padding: 0 8px;">
+          <div class="kpi-label">the room is warm</div>
+          <div class="candle-scene">
+            <svg viewBox="0 0 96 100" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="glowC" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#fff3c8"/>
+                  <stop offset="100%" stop-color="#ffb84a" stop-opacity="0"/>
+                </radialGradient>
+              </defs>
+              <ellipse cx="48" cy="92" rx="26" ry="4" fill="#1a0a06" opacity="0.65"/>
+              <rect x="40" y="74" width="16" height="20" fill="#3e2a14"/>
+              <rect x="34" y="30" width="28" height="48" rx="2" fill="#f5e6c8"/>
+              <ellipse cx="48" cy="30" rx="14" ry="3" fill="#e6cfa0"/>
+              <path d="M34 56 Q32 64 36 70" fill="none" stroke="#e6cfa0" stroke-width="3" stroke-linecap="round"/>
+              <line x1="48" y1="18" x2="48" y2="28" stroke="#140a05" stroke-width="1.6"/>
+              <g class="flame-g">
+                <ellipse cx="48" cy="10" rx="16" ry="24" fill="url(#glowC)"/>
+                <path d="M48 -8 Q54 4 51 16 Q48 22 45 16 Q42 4 48 -8 Z" fill="#ffb84a"/>
+                <path d="M48 -2 Q52 6 50 14 Q48 18 46 14 Q44 6 48 -2 Z" fill="#ff8a3a"/>
+                <ellipse cx="48" cy="10" rx="1.8" ry="4" fill="#ffffff" opacity="0.85"/>
+              </g>
+            </svg>
+          </div>
+          <div class="candle-caption">
+            <span class="big">88</span>
+            <span>warmth · lantern-full</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI ledger -->
+      <div class="kpi-ledger">
+        <div class="ledger-head">tonight's quests</div>
+        <ul class="ledger-list">
+          <li class="done">welcome the four newcomers <span class="sub">xp 40</span></li>
+          <li class="done">pour tea in the quiet hour <span class="sub">xp 25</span></li>
+          <li>host a lantern-lit circle <span class="sub">xp 60</span></li>
+          <li>reply to three pinned notes <span class="sub">xp 30</span></li>
+          <li>close with a small kindness <span class="sub">xp 20</span></li>
+        </ul>
+      </div>
+
+      <!-- KPI inkwell · sparks -->
+      <div class="kpi-ink">
+        <div class="kpi-label" style="color: var(--lantern);">sparks in the ink</div>
+        <div class="ink-scene">
+          <svg viewBox="0 0 260 180" xmlns="http://www.w3.org/2000/svg">
+            <!-- Inkwell -->
+            <ellipse cx="130" cy="158" rx="48" ry="6" fill="#000" opacity="0.6"/>
+            <path d="M96 100 L164 100 L160 150 Q158 160 144 160 L116 160 Q102 160 100 150 Z" fill="#8a6a3a" stroke="#3e2a14" stroke-width="2"/>
+            <ellipse cx="130" cy="100" rx="34" ry="6" fill="#3e2a14"/>
+            <ellipse cx="130" cy="100" rx="22" ry="4" fill="#140a05"/>
+            <!-- Quill leaning -->
+            <path d="M160 96 Q180 60 210 20 Q196 50 190 64 Q180 86 160 96" fill="#e8d5a5" stroke="#3e2a14" stroke-width="1"/>
+            <path d="M170 78 L194 40 M166 86 L190 52" stroke="#3e2a14" stroke-width="0.5" opacity="0.5"/>
+            <!-- Sparks / fireflies coming from the ink -->
+            <g class="spark"><circle cx="110" cy="60" r="2.5" fill="#ffd998"/><circle cx="110" cy="60" r="6" fill="#ffd998" opacity="0.35"/></g>
+            <g class="spark"><circle cx="140" cy="50" r="3" fill="#ffb84a"/><circle cx="140" cy="50" r="7" fill="#ffb84a" opacity="0.3"/></g>
+            <g class="spark"><circle cx="80" cy="80" r="2" fill="#ffd998"/><circle cx="80" cy="80" r="5" fill="#ffd998" opacity="0.3"/></g>
+            <g class="spark"><circle cx="170" cy="70" r="2.5" fill="#fff3c8"/><circle cx="170" cy="70" r="6" fill="#fff3c8" opacity="0.3"/></g>
+            <g class="spark"><circle cx="60" cy="40" r="2" fill="#ffd998"/><circle cx="60" cy="40" r="5" fill="#ffd998" opacity="0.25"/></g>
+            <g class="spark"><circle cx="100" cy="30" r="2" fill="#ffb84a"/><circle cx="100" cy="30" r="5" fill="#ffb84a" opacity="0.3"/></g>
+            <g class="spark"><circle cx="200" cy="60" r="2" fill="#fff3c8"/><circle cx="200" cy="60" r="5" fill="#fff3c8" opacity="0.3"/></g>
+          </svg>
+        </div>
+        <div class="ink-caption"><span class="count">307</span> kind words tonight</div>
+      </div>
+
+      <!-- Journal chart -->
+      <div class="journal">
+        <div class="journal-header">
+          <div>
+            <div class="journal-title">who came and <em>stayed</em></div>
+            <div class="journal-sub">the last seven evenings · written in ink</div>
+          </div>
+          <div class="journal-legend">
+            <div class="legend-item"><span class="legend-swatch" style="background:var(--ink-red)"></span>arrivals</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:var(--wax); opacity:0.6"></span>lingered &gt; 20m</div>
+          </div>
+        </div>
+        <div class="journal-chart">
+          <svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+            <line x1="30" y1="240" x2="700" y2="240" stroke="rgba(20, 10, 0, 0.4)" stroke-width="1.5" stroke-dasharray="3 4"/>
+            <g font-family="JetBrains Mono, monospace" font-size="10" fill="rgba(20, 10, 0, 0.55)">
+              <text x="14" y="68">40</text>
+              <text x="14" y="128">30</text>
+              <text x="14" y="188">20</text>
+              <text x="14" y="244">10</text>
+            </g>
+            <g font-family="Caveat, cursive" font-size="18" fill="rgba(20, 10, 0, 0.7)">
+              <text x="68" y="264">fri</text>
+              <text x="160" y="264">sat</text>
+              <text x="252" y="264">sun</text>
+              <text x="344" y="264">mon</text>
+              <text x="436" y="264">tue</text>
+              <text x="528" y="264">wed</text>
+              <text x="624" y="264">thu</text>
+            </g>
+            <!-- Lingered area (wax wash) -->
+            <path d="M78 180 L172 200 L264 170 L356 155 L448 140 L540 120 L632 100 L632 240 L78 240 Z" fill="rgba(143, 37, 48, 0.12)"/>
+            <path d="M78 180 L172 200 L264 170 L356 155 L448 140 L540 120 L632 100"
+                  fill="none" stroke="rgba(143, 37, 48, 0.7)" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 6"/>
+            <!-- Main ink line -->
+            <path d="M78 160 Q120 150 172 170 T264 130 T356 100 T448 80 T540 130 T632 50"
+                  fill="none" stroke="#140a05" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Ink splatter near peak (the quill struck paper) -->
+            <circle cx="632" cy="50" r="7" fill="#140a05"/>
+            <circle cx="632" cy="50" r="13" fill="#140a05" opacity="0.22"/>
+            <circle cx="648" cy="36" r="1.6" fill="#140a05" opacity="0.6"/>
+            <circle cx="618" cy="64" r="1.4" fill="#140a05" opacity="0.5"/>
+            <circle cx="656" cy="52" r="1" fill="#140a05" opacity="0.5"/>
+            <!-- Dots on points -->
+            <circle cx="78"  cy="160" r="3.5" fill="#140a05"/>
+            <circle cx="172" cy="170" r="3.5" fill="#140a05"/>
+            <circle cx="264" cy="130" r="3.5" fill="#140a05"/>
+            <circle cx="356" cy="100" r="3.5" fill="#140a05"/>
+            <circle cx="448" cy="80"  r="3.5" fill="#140a05"/>
+            <circle cx="540" cy="130" r="3.5" fill="#140a05"/>
+            <!-- Annotation arrows -->
+            <path d="M300 60 Q340 52 360 96" fill="none" stroke="#8f2530" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <polygon points="358,98 353,92 362,88" fill="#8f2530"/>
+            <path d="M560 190 Q580 170 632 62" fill="none" stroke="rgba(20, 10, 0, 0.55)" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <polygon points="630,64 625,56 636,56" fill="rgba(20, 10, 0, 0.7)"/>
+          </svg>
+          <div class="annotation ann-1">mon bump —<br>Iris brought friends?</div>
+          <div class="annotation ann-2">tonight.<br>feels different →</div>
+          <div class="annotation ann-3">quiet friday<br>(the rain)</div>
+        </div>
+      </div>
+
+      <!-- Envelope -->
+      <div class="envelope">
+        <h4>by the numbers</h4>
+        <p class="sub">week of 16–22 apr</p>
+        <div class="stat-row"><span class="l">hours together</span><span class="v">214<small>h</small></span></div>
+        <div class="stat-row"><span class="l">returning tomorrow</span><span class="v">82<small>%</small></span></div>
+        <div class="stat-row"><span class="l">quests completed</span><span class="v">148</span></div>
+        <div class="stat-row"><span class="l">kind replies</span><span class="v">61</span></div>
+        <div class="stat-row"><span class="l">lantern circles</span><span class="v">4</span></div>
+      </div>
+
+      <!-- Section: world -->
+      <div class="chap-div">
+        <span class="chap">II. your world tonight</span>
+        <span class="line"></span>
+        <span class="orn">✦</span>
+        <span class="line"></span>
+      </div>
+
+      <!-- Map -->
+      <div class="map-card">
+        <div class="map-title">
+          <h4>the little world</h4>
+          <span class="caption">drawn by hand · lit every minute</span>
+        </div>
+        <div class="map-svg-wrap">
+          <svg viewBox="0 0 720 420" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="mapNoise">
+                <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="25"/>
+                <feColorMatrix values="0 0 0 0 0.18  0 0 0 0 0.08  0 0 0 0 0.02  0 0 0 0.22 0"/>
+              </filter>
+              <pattern id="forestHatch" width="16" height="16" patternUnits="userSpaceOnUse">
+                <path d="M4 12 L8 4 L12 12 Z M8 8 L10 12" fill="none" stroke="rgba(90, 122, 92, 0.6)" stroke-width="1"/>
+              </pattern>
+            </defs>
+
+            <rect width="100%" height="100%" fill="url(#mapNoise)" opacity="0.4"/>
+
+            <!-- Roads -->
+            <path d="M90 280 Q200 220 300 240 T520 200 T640 120" fill="none" stroke="rgba(20, 10, 0, 0.72)" stroke-width="2.4" stroke-dasharray="2 6"/>
+            <path d="M300 240 Q340 300 380 340" fill="none" stroke="rgba(20, 10, 0, 0.72)" stroke-width="2.4" stroke-dasharray="2 6"/>
+            <path d="M520 200 L520 90" fill="none" stroke="rgba(20, 10, 0, 0.72)" stroke-width="2.4" stroke-dasharray="2 6"/>
+
+            <!-- River -->
+            <path d="M10 340 Q120 360 220 330 T420 360 T710 340" fill="none" stroke="rgba(31, 49, 71, 0.35)" stroke-width="16" stroke-linecap="round"/>
+            <path d="M10 340 Q120 360 220 330 T420 360 T710 340" fill="none" stroke="rgba(31, 49, 71, 0.75)" stroke-width="6" stroke-linecap="round"/>
+
+            <!-- Forests -->
+            <path d="M40 120 Q70 90 120 100 Q160 110 160 150 Q130 180 80 175 Q40 160 40 120 Z" fill="url(#forestHatch)" stroke="rgba(20, 10, 0, 0.5)" stroke-width="1.5"/>
+            <path d="M560 330 Q590 310 640 320 Q680 335 670 380 Q630 395 590 385 Q555 370 560 330 Z" fill="url(#forestHatch)" stroke="rgba(20, 10, 0, 0.5)" stroke-width="1.5"/>
+
+            <!-- Mountains -->
+            <g stroke="rgba(20, 10, 0, 0.6)" stroke-width="1.8" fill="none">
+              <path d="M580 60 L612 20 L644 60 M604 48 L612 40 L620 48"/>
+              <path d="M630 80 L666 30 L702 80 M650 62 L666 48 L682 62"/>
+            </g>
+
+            <!-- Tavern -->
+            <g transform="translate(80 260)">
+              <rect x="-34" y="-28" width="68" height="40" fill="#c89a6a" stroke="rgba(20, 10, 0, 0.7)" stroke-width="1.5"/>
+              <polygon points="-40,-28 0,-56 40,-28" fill="#6d1a24" stroke="rgba(20, 10, 0, 0.7)" stroke-width="1.5"/>
+              <rect x="-8" y="-12" width="16" height="24" fill="#140a05" opacity="0.75"/>
+              <rect x="-26" y="-20" width="10" height="10" fill="#ffb84a" opacity="0.9"/>
+              <rect x="14" y="-20" width="10" height="10" fill="#ffb84a" opacity="0.9"/>
+              <!-- Hanging sign -->
+              <line x1="36" y1="-16" x2="56" y2="-16" stroke="rgba(20, 10, 0, 0.7)" stroke-width="1.5"/>
+              <rect x="46" y="-14" width="16" height="10" fill="#d4a868" stroke="rgba(20, 10, 0, 0.7)" stroke-width="1"/>
+              <text x="-2" y="30" font-family="IM Fell English, serif" font-size="17" font-style="italic" fill="#140a05" text-anchor="middle">the tavern</text>
+              <text x="-2" y="48" font-family="JetBrains Mono, monospace" font-size="10" fill="rgba(20, 10, 0, 0.7)" text-anchor="middle">14 HERE</text>
+            </g>
+
+            <!-- Market -->
+            <g transform="translate(290 220)">
+              <polygon points="-40,-20 -20,-40 20,-40 40,-20" fill="#e69a2a" stroke="rgba(20, 10, 0, 0.7)" stroke-width="1.5"/>
+              <polygon points="-40,-20 40,-20 40,10 -40,10" fill="#c89a6a" stroke="rgba(20, 10, 0, 0.7)" stroke-width="1.5"/>
+              <line x1="-26" y1="-20" x2="-26" y2="10" stroke="rgba(20, 10, 0, 0.5)"/>
+              <line x1="-12" y1="-20" x2="-12" y2="10" stroke="rgba(20, 10, 0, 0.5)"/>
+              <line x1="2"   y1="-20" x2="2"   y2="10" stroke="rgba(20, 10, 0, 0.5)"/>
+              <line x1="16"  y1="-20" x2="16"  y2="10" stroke="rgba(20, 10, 0, 0.5)"/>
+              <line x1="30"  y1="-20" x2="30"  y2="10" stroke="rgba(20, 10, 0, 0.5)"/>
+              <circle cx="-20" cy="-4" r="3" fill="#8f2530"/>
+              <circle cx="10"  cy="-4" r="3" fill="#5a7a5c"/>
+              <text x="0" y="32" font-family="IM Fell English, serif" font-size="17" font-style="italic" fill="#140a05" text-anchor="middle">the market</text>
+              <text x="0" y="50" font-family="JetBrains Mono, monospace" font-size="10" fill="rgba(20, 10, 0, 0.7)" text-anchor="middle">8 HERE</text>
+            </g>
+
+            <!-- Studio -->
+            <g transform="translate(500 180)">
+              <rect x="-36" y="-24" width="72" height="44" fill="#c89a6a" stroke="rgba(20, 10, 0, 0.7)" stroke-width="1.5"/>
+              <polygon points="-42,-24 0,-50 42,-24" fill="#8a6a3a" stroke="rgba(20, 10, 0, 0.7)" stroke-width="1.5"/>
+              <rect x="-18" y="-38" width="16" height="10" fill="#ffb84a" opacity="0.85" stroke="rgba(20, 10, 0, 0.5)" stroke-width="1"/>
+              <line x1="20" y1="-4" x2="26" y2="16" stroke="rgba(20, 10, 0, 0.7)" stroke-width="1.5"/>
+              <rect x="-14" y="-10" width="14" height="12" fill="#e8d5a5" stroke="rgba(20, 10, 0, 0.5)"/>
+              <text x="0" y="38" font-family="IM Fell English, serif" font-size="17" font-style="italic" fill="#140a05" text-anchor="middle">the studio</text>
+              <text x="0" y="56" font-family="JetBrains Mono, monospace" font-size="10" fill="rgba(20, 10, 0, 0.7)" text-anchor="middle">5 HERE</text>
+            </g>
+
+            <!-- Library -->
+            <g transform="translate(620 80)">
+              <rect x="-30" y="-28" width="60" height="44" fill="#2a4263" stroke="rgba(20, 10, 0, 0.7)" stroke-width="1.5"/>
+              <polygon points="-36,-28 0,-56 36,-28" fill="#1f3147" stroke="rgba(20, 10, 0, 0.7)" stroke-width="1.5"/>
+              <rect x="-8" y="-8" width="16" height="24" fill="#140a05" opacity="0.8"/>
+              <circle cx="0" cy="-40" r="4" fill="#ffb84a"/>
+              <rect x="-24" y="-16" width="10" height="10" fill="#ffb84a" opacity="0.85"/>
+              <rect x="14" y="-16" width="10" height="10" fill="#ffb84a" opacity="0.85"/>
+              <text x="0" y="36" font-family="IM Fell English, serif" font-size="17" font-style="italic" fill="#140a05" text-anchor="middle">the library</text>
+              <text x="0" y="54" font-family="JetBrains Mono, monospace" font-size="10" fill="rgba(20, 10, 0, 0.7)" text-anchor="middle">4 HERE</text>
+            </g>
+
+            <!-- Pulsing dots -->
+            <g class="pulse-dot d1" transform="translate(50 248)"><circle class="outer" r="8" fill="#8f2530" opacity="0.35"/><circle r="4" fill="#8f2530"/></g>
+            <g class="pulse-dot d2" transform="translate(108 252)"><circle class="outer" r="8" fill="#8f2530" opacity="0.35"/><circle r="4" fill="#8f2530"/></g>
+            <g class="pulse-dot d3" transform="translate(78 274)"><circle class="outer" r="8" fill="#8f2530" opacity="0.35"/><circle r="4" fill="#8f2530"/></g>
+            <g class="pulse-dot d4" transform="translate(280 232)"><circle class="outer" r="8" fill="#e69a2a" opacity="0.35"/><circle r="4" fill="#e69a2a"/></g>
+            <g class="pulse-dot d5" transform="translate(316 212)"><circle class="outer" r="8" fill="#e69a2a" opacity="0.35"/><circle r="4" fill="#e69a2a"/></g>
+            <g class="pulse-dot d1" transform="translate(486 172)"><circle class="outer" r="8" fill="#5a7a5c" opacity="0.35"/><circle r="4" fill="#5a7a5c"/></g>
+            <g class="pulse-dot d3" transform="translate(520 200)"><circle class="outer" r="8" fill="#5a7a5c" opacity="0.35"/><circle r="4" fill="#5a7a5c"/></g>
+            <g class="pulse-dot d2" transform="translate(608 96)"><circle class="outer" r="8" fill="#1f3147" opacity="0.35"/><circle r="4" fill="#1f3147"/></g>
+            <g class="pulse-dot d5" transform="translate(638 80)"><circle class="outer" r="8" fill="#1f3147" opacity="0.35"/><circle r="4" fill="#1f3147"/></g>
+
+            <!-- Compass rose -->
+            <g transform="translate(56 50)" opacity="0.75">
+              <circle r="22" fill="none" stroke="rgba(20, 10, 0, 0.5)" stroke-width="1"/>
+              <polygon points="0,-20 3,0 0,20 -3,0" fill="rgba(20, 10, 0, 0.6)"/>
+              <polygon points="-20,0 0,-3 20,0 0,3" fill="rgba(20, 10, 0, 0.4)"/>
+              <text x="0" y="-26" font-family="IM Fell English, serif" font-size="10" fill="rgba(20, 10, 0, 0.75)" text-anchor="middle" font-style="italic">N</text>
+            </g>
+
+            <!-- Scale bar -->
+            <g transform="translate(530 400)">
+              <line x1="0" y1="0" x2="80" y2="0" stroke="rgba(20, 10, 0, 0.6)" stroke-width="1.5"/>
+              <line x1="0" y1="-4" x2="0" y2="4" stroke="rgba(20, 10, 0, 0.6)" stroke-width="1.5"/>
+              <line x1="80" y1="-4" x2="80" y2="4" stroke="rgba(20, 10, 0, 0.6)" stroke-width="1.5"/>
+              <text x="40" y="-8" font-family="Caveat, cursive" font-size="13" fill="rgba(20, 10, 0, 0.72)" text-anchor="middle">a short walk</text>
+            </g>
+          </svg>
+        </div>
+        <div class="map-legend" style="padding: 0 22px;">
+          <span><span class="dot wax"></span>tavern (14)</span>
+          <span><span class="dot lantern"></span>market (8)</span>
+          <span><span class="dot verdigris"></span>studio (5)</span>
+          <span><span class="dot blue"></span>library (4)</span>
+        </div>
+      </div>
+
+      <!-- Who's here -->
+      <div class="who">
+        <div class="who-head">who's here now<br><small>tap to greet them</small></div>
+        <div class="slip s1"><div class="avatar">I</div><div class="info"><div class="name">Iris Holloway</div><div class="where">in the tavern · 42m</div></div><span class="pip"></span></div>
+        <div class="slip s2"><div class="avatar">M</div><div class="info"><div class="name">Matteo Cen</div><div class="where">at the market · 18m</div></div><span class="pip"></span></div>
+        <div class="slip s3"><div class="avatar">S</div><div class="info"><div class="name">Soraya Pike</div><div class="where">at the studio · 1h 4m</div></div><span class="pip"></span></div>
+        <div class="slip s4"><div class="avatar">J</div><div class="info"><div class="name">Jonah Blake</div><div class="where">in the library · 22m</div></div><span class="pip"></span></div>
+      </div>
+
+      <!-- Section: notes -->
+      <div class="chap-div">
+        <span class="chap">III. notes left on the wall</span>
+        <span class="line"></span>
+        <span class="orn">✦</span>
+        <span class="line"></span>
+      </div>
+
+      <!-- Notes wall -->
+      <div class="notes-wall">
+        <div class="notes-grid">
+          <div class="note n1">
+            <span class="from">from Linnea —</span>
+            <p>"thank you for the tea tonight. the rain was bad on the walk over — it felt worth it."</p>
+            <span class="when">today · 7:14 pm</span>
+          </div>
+          <div class="note n2">
+            <span class="from">from Theo —</span>
+            <p>"your voice memo about the map unlocked something in me. i'm going to try it."</p>
+            <span class="when">today · 5:02 pm</span>
+          </div>
+          <div class="note n3">
+            <span class="from">from Mirabel —</span>
+            <p>"brought three friends. they didn't leave until the candle went out. i think that's a good sign."</p>
+            <span class="when">yesterday · 10:38 pm</span>
+          </div>
+          <div class="note n4">
+            <span class="from">from Kestrel —</span>
+            <p>"a question for next lantern circle: how do you know when to rest? i don't, any more. help."</p>
+            <span class="when">yesterday · 9:12 pm</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: tonight -->
+      <div class="chap-div">
+        <span class="chap">IV. small things before bed</span>
+        <span class="line"></span>
+        <span class="orn">✦</span>
+        <span class="line"></span>
+      </div>
+
+      <div class="todo-card">
+        <h4>to-do, before the candle goes out</h4>
+        <p class="small">no pressure. write them down, forget them.</p>
+        <ul class="todo-list">
+          <li>reply to Kestrel's question <span class="when">2 min</span></li>
+          <li>light the lantern at 9pm <span class="when">tonight</span></li>
+          <li>post the map update for the studio crew <span class="when">tomorrow am</span></li>
+          <li>invite Soraya to host tuesday <span class="when">when it feels right</span></li>
+        </ul>
+      </div>
+
+      <div class="draft">
+        <h4>a word for the room</h4>
+        <span class="scribble">~ a draft, in ink ~</span>
+        <div class="body">
+          <span class="highlight">evening, everyone.</span> a lot of you showed up tonight, and i don't want that to pass by without being named. if you brought a friend — thank you. if you stayed late — thank you. we'll do lanterns again at nine. come warm your hands.
+        </div>
+        <div class="draft-actions">
+          <button class="btn-send">seal &amp; send →</button>
+          <button class="btn-ghost">tuck aside</button>
+          <span class="send-note">reaches <strong>31</strong> folk · gently, by candlelight</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="endnote">
+      a good evening is when someone stays a little longer than they meant to.<br>
+      <small>— scribed in the margin of folio xxxi</small>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
