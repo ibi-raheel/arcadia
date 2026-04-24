@@ -38,18 +38,20 @@ export type StallData = {
 type Props = {
   readonly stall: StallData;
   readonly onClose: () => void;
+  /**
+   * Called after a successful enrolment. The parent tracks session-local
+   * enrolment so re-opening the modal still reads as enrolled (Phase 7
+   * item M6). `stall.enrolled` only updates on a full page reload.
+   */
+  readonly onEnrolled?: (courseId: string) => void;
 };
 
-export function StallView({ stall, onClose }: Props): React.JSX.Element {
+export function StallView({ stall, onClose, onEnrolled }: Props): React.JSX.Element {
   const router = useRouter();
   const [activePreviewId, setActivePreviewId] = useState<string | null>(null);
   const [enrolError, setEnrolError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  // Local "just enrolled this session" flag so the modal can flip UI
-  // instantly without a server refresh (which would tear down Phaser
-  // and reset the avatar position). Merges with the server `enrolled`.
-  const [locallyEnrolled, setLocallyEnrolled] = useState(false);
-  const isEnrolled = stall.enrolled || locallyEnrolled;
+  const isEnrolled = stall.enrolled;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -73,10 +75,9 @@ export function StallView({ stall, onClose }: Props): React.JSX.Element {
       if (!result.ok) {
         setEnrolError(result.error);
       } else {
-        // Stay in the Market — don't redirect or refresh. Flip the local
-        // flag so the footer swaps to "Open in Academy" + show a success
-        // banner. Stall border will update on next full /market load.
-        setLocallyEnrolled(true);
+        // Stay in the Market — don't redirect or refresh. The parent's
+        // session-local enrolled set flips the prop on subsequent opens.
+        onEnrolled?.(stall.id);
       }
     });
   };
@@ -170,12 +171,6 @@ export function StallView({ stall, onClose }: Props): React.JSX.Element {
               <p className="text-sm text-slate-500">Nothing to show yet.</p>
             )}
           </section>
-        )}
-
-        {locallyEnrolled && (
-          <p className="mt-4 rounded-lg border border-emerald-700/60 bg-emerald-950/40 px-4 py-2 text-sm text-emerald-200">
-            ✓ You&rsquo;re enrolled. Keep browsing or open the course in the Academy.
-          </p>
         )}
 
         <footer className="mt-6 flex items-center justify-between border-t border-slate-800 pt-4">

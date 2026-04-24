@@ -1,8 +1,14 @@
-// Phase 4 market mount. Mirrors GameAcademy's single-player shape +
-// adds a React HUD (search) on top of the Phaser canvas and a full-screen
-// StallView modal that opens when the scene emits MARKET_OPEN_STALL_EVENT.
-// URL carries ?course=<id>; the URL is the sole source of truth for
-// which stall (if any) is open — avoids state/URL races.
+// Phase 4 market mount. Mirrors GameAcademy's single-player shape + a
+// full-screen StallView modal that opens when the scene emits
+// MARKET_OPEN_STALL_EVENT. URL carries ?course=<id>; the URL is the sole
+// source of truth for which stall (if any) is open — avoids state/URL races.
+//
+// 2026-04-23 (Phase 7):
+//   - M4: removed the "← Return to World" button (edge-exit covers it).
+//   - M5: removed the "Search stalls…" input (no one used it).
+//   - M6: `locallyEnrolledIds` moved here from StallView so reopening a
+//     stall after enrolling in the same session still shows "Open in
+//     Academy" instead of the Enrol button.
 
 'use client';
 
@@ -19,7 +25,6 @@ import {
   PROGRESS_CALLBACK_REGISTRY_KEY,
 } from './scenes/boot/asset-manifest';
 import {
-  MARKET_FILTER_EVENT,
   MARKET_OPEN_STALL_EVENT,
   MARKET_SCENE_KEY,
   MARKET_STALLS_REGISTRY_KEY,
@@ -46,7 +51,21 @@ export default function GameMarket({ member, stalls, stallDetails }: Props): Rea
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const [preloadProgress, setPreloadProgress] = useState<number | null>(null);
-  const [search, setSearch] = useState('');
+
+  // Course ids the member enrolled in during this session. Merged with
+  // `stall.enrolled` so reopening the modal after enrolling still shows
+  // "Open in Academy" instead of the Enrol button (Phase 7 item M6).
+  const [locallyEnrolledIds, setLocallyEnrolledIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const markEnrolled = useCallback((courseId: string): void => {
+    setLocallyEnrolledIds((prev) => {
+      if (prev.has(courseId)) return prev;
+      const next = new Set(prev);
+      next.add(courseId);
+      return next;
+    });
+  }, []);
 
   // URL is the single source of truth for the open stall id.
   const openCourseId = searchParams.get('course');
@@ -101,14 +120,6 @@ export default function GameMarket({ member, stalls, stallDetails }: Props): Rea
     };
   }, [member, stalls]);
 
-  // Push search changes down into the scene so stall game-objects can
-  // hide / show without a React re-render.
-  useEffect(() => {
-    const g = gameRef.current;
-    if (!g) return;
-    g.events.emit(MARKET_FILTER_EVENT, search);
-  }, [search]);
-
   const closeStall = useCallback(() => {
     // Drop ?course= — the derived `openCourseId` then flips null and
     // the modal unmounts.
@@ -118,35 +129,25 @@ export default function GameMarket({ member, stalls, stallDetails }: Props): Rea
     router.replace(qs ? `/market?${qs}` : '/market', { scroll: false });
   }, [router, searchParams]);
 
-  const handleReturnToWorld = (): void => router.push('/world?from=market');
-
-  const activeStall = useMemo(
-    () => (openCourseId ? (stallDetails[openCourseId] ?? null) : null),
-    [openCourseId, stallDetails],
-  );
+  const activeStall = useMemo(() => {
+    if (!openCourseId) return null;
+    const base = stallDetails[openCourseId];
+    if (!base) return null;
+    // Merge the server-fetched `enrolled` with the session-local set so
+    // re-opening the modal after enrolling still reads as enrolled.
+    return base.enrolled || !locallyEnrolledIds.has(openCourseId)
+      ? base
+      : { ...base, enrolled: true };
+  }, [openCourseId, stallDetails, locallyEnrolledIds]);
 
   const ready = preloadProgress !== null && preloadProgress >= 1;
 
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <div ref={containerRef} className="absolute inset-0" />
-      <button
-        type="button"
-        onClick={handleReturnToWorld}
-        className="absolute left-4 top-4 z-30 rounded bg-neutral-100 px-3 py-2 text-sm font-medium text-neutral-900 shadow transition hover:bg-white"
-      >
-        ← Return to World
-      </button>
-      <div className="absolute right-4 top-4 z-30 flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-2 backdrop-blur">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search stalls…"
-          className="w-56 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
-        />
-      </div>
-      {activeStall && <StallView stall={activeStall} onClose={closeStall} />}
+      {activeStall && (
+        <StallView stall={activeStall} onClose={closeStall} onEnrolled={markEnrolled} />
+      )}
       <BuildingTransition
         ready={ready}
         displayName="The Market"

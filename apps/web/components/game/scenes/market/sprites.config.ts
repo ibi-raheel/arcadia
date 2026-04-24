@@ -4,9 +4,10 @@
 
 export const marketSpritesConfig = {
   avatar: {
-    // Bottom-centre of the interior — member walks into the hall from
-    // the bottom edge, consistent with Tavern + Academy.
-    spawnPixel: { x: 768, y: 880 },
+    // Top-centre of the interior — member enters from the top (2026-04-23
+    // Phase 7 item M1). Previously y=880 (bottom) which put the member far
+    // from the stalls and facing away from them on arrival.
+    spawnPixel: { x: 768, y: 140 },
     size: { width: 135, height: 135 },
     bodyOffset: { x: 22, y: 62, width: 45, height: 22 },
     walkSpeed: 200,
