@@ -33,9 +33,10 @@ Each community (**Realm**) gives members an avatar, a space to gather (**Tavern*
 - 2026-04-22 (morning): world swap to orthogonal top-down Tiled square (ADR 0007 implemented; see [changelog](docs/changelog/2026-04-22_world-swap-orthogonal-square.md)).
 - 2026-04-22 (evening): image-backed world + 3 outdoor neighbour scenes + per-building Colyseus sharding + capacity HUD (see [changelog](docs/changelog/2026-04-22_image-backed-world.md)).
 - 2026-04-23: shipped to prod with extensive polish — ENTER-key gates, archway-proximity exits, Georgia-serif nameplate, door-aware returns, zoom/walk-speed tuning, Phaser physics-body fix (ADR 0008). Full write-up in [changelog](docs/changelog/2026-04-23_image-backed-world-complete.md).
+- 2026-04-24: **Phase 8 · UI wire-up** — every React surface rebuilt on the midnight-scriptorium design system (tokens + primitives + simulation toggle + 26-item kit-backfill pass across dashboard / academy / market / login / landing). See [changelog](docs/changelog/2026-04-24_phase-08-ui-wireup.md). Public `/kit` renders the live design system; `/preview/*` routes render every dashboard tab against fixtures for design review without a session.
 - Polish (collider rects, 60 FPS / demo-cut passes, production hardening) tracked in [`phases/phase-02_polish_backlog.md`](phases/phase-02_polish_backlog.md) + [`phases/phase-05_status.md`](phases/phase-05_status.md).
 
-**Phase exit logs:** [Phase 3](docs/changelog/2026-04-20_phase-03-exit.md) · [Phase 4](docs/changelog/2026-04-21_phase-04-exit.md) · [Phase 5](docs/changelog/2026-04-21_phase-05-exit.md). Creator-flow setup walkthrough in [`docs/guides/phase-03-setup.md`](docs/guides/phase-03-setup.md); workspace scoping cheat sheet in [`docs/claude-scoping.md`](docs/claude-scoping.md).
+**Phase exit logs:** [Phase 3](docs/changelog/2026-04-20_phase-03-exit.md) · [Phase 4](docs/changelog/2026-04-21_phase-04-exit.md) · [Phase 5](docs/changelog/2026-04-21_phase-05-exit.md) · [Phase 8](docs/changelog/2026-04-24_phase-08-ui-wireup.md). Creator-flow setup walkthrough in [`docs/guides/phase-03-setup.md`](docs/guides/phase-03-setup.md); workspace scoping cheat sheet in [`docs/claude-scoping.md`](docs/claude-scoping.md).
 
 ### Live services
 
