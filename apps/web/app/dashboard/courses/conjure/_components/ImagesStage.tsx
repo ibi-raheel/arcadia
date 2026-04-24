@@ -119,14 +119,13 @@ export function ImagesStage({ draft, onDraftChanged }: Props): React.JSX.Element
           pending={generatingFor === 'thumbnail'}
           disabledWhileOthers={generatingFor !== null && generatingFor !== 'thumbnail'}
           onGenerate={(feedback) => runGenerate(null, null, feedback)}
-          onApproveChanged={(ok, approved) => {
+          onApproveChanged={async (ok) => {
             if (!ok) return;
-            const target = imageFor(null);
-            if (!target) return;
-            onDraftChanged({
-              ...draft,
-              images: draft.images.map((i) => (i.id === target.id ? { ...i, approved } : i)),
-            });
+            // Server auto-advances stage to 'ready' when every image
+            // is approved — pull the fresh draft so SealStage can
+            // take the floor.
+            const refreshed = await reloadDraft(draft.id);
+            if (refreshed.ok) onDraftChanged(refreshed.value);
           }}
           onDelete={async () => {
             const target = imageFor(null);
@@ -167,16 +166,10 @@ export function ImagesStage({ draft, onDraftChanged }: Props): React.JSX.Element
                   pending={generatingFor === lesson.id}
                   disabledWhileOthers={generatingFor !== null && generatingFor !== lesson.id}
                   onGenerate={(feedback) => runGenerate(lesson.id, section.id, feedback)}
-                  onApproveChanged={(ok, approved) => {
+                  onApproveChanged={async (ok) => {
                     if (!ok) return;
-                    const target = imageFor(lesson.id);
-                    if (!target) return;
-                    onDraftChanged({
-                      ...draft,
-                      images: draft.images.map((i) =>
-                        i.id === target.id ? { ...i, approved } : i,
-                      ),
-                    });
+                    const refreshed = await reloadDraft(draft.id);
+                    if (refreshed.ok) onDraftChanged(refreshed.value);
                   }}
                   onDelete={async () => {
                     const target = imageFor(lesson.id);
@@ -213,7 +206,7 @@ function ImageCard({
   readonly pending: boolean;
   readonly disabledWhileOthers: boolean;
   readonly onGenerate: (feedback?: string) => Promise<void>;
-  readonly onApproveChanged: (ok: boolean, approved: boolean) => void;
+  readonly onApproveChanged: (ok: boolean) => void | Promise<void>;
   readonly onDelete: () => Promise<void>;
 }): React.JSX.Element {
   const [approving, startApprove] = useTransition();
@@ -223,7 +216,7 @@ function ImageCard({
     if (!image) return;
     startApprove(async () => {
       const r = await setImageApproved(draftId, image.id, !approved);
-      onApproveChanged(r.ok, !approved);
+      await onApproveChanged(r.ok);
     });
   };
 
@@ -317,7 +310,7 @@ function LessonImageCard({
   readonly pending: boolean;
   readonly disabledWhileOthers: boolean;
   readonly onGenerate: (feedback?: string) => Promise<void>;
-  readonly onApproveChanged: (ok: boolean, approved: boolean) => void;
+  readonly onApproveChanged: (ok: boolean) => void | Promise<void>;
   readonly onDelete: () => Promise<void>;
 }): React.JSX.Element {
   const [approving, startApprove] = useTransition();
@@ -327,7 +320,7 @@ function LessonImageCard({
     if (!image) return;
     startApprove(async () => {
       const r = await setImageApproved(draftId, image.id, !approved);
-      onApproveChanged(r.ok, !approved);
+      await onApproveChanged(r.ok);
     });
   };
 
