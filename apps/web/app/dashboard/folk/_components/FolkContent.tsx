@@ -12,6 +12,7 @@ import {
   Avatar,
   Chip,
   EnvelopeCard,
+  GhostButton,
   Hand,
   Kicker,
   LedgerCard,
@@ -44,6 +45,25 @@ export function FolkContent({ data }: { readonly data: FolkData }): React.JSX.El
 
       <MRRBlock money={data.money} tiers={data.tiers} />
 
+      {data.tiers.length > 0 && (
+        <section style={{ marginTop: 26 }}>
+          <div style={{ marginBottom: 10 }}>
+            <Kicker onDark>your tiers · five doors, one hearth</Kicker>
+          </div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${data.tiers.length}, minmax(0, 1fr))`,
+              gap: 12,
+            }}
+          >
+            {data.tiers.map((t) => (
+              <TierCard key={t.key} tier={t} />
+            ))}
+          </div>
+        </section>
+      )}
+
       <LedgerCard style={{ marginTop: 22 }}>
         <div
           style={{
@@ -67,6 +87,176 @@ export function FolkContent({ data }: { readonly data: FolkData }): React.JSX.El
         </p>
       </VellumCard>
     </>
+  );
+}
+
+function TierCard({ tier }: { readonly tier: FolkTier }): React.JSX.Element {
+  const isFree = tier.rate === 0;
+  return (
+    <VellumCard
+      style={{
+        padding: '22px 24px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 14,
+        position: 'relative',
+      }}
+    >
+      {/* Color-coded corner marker so the card signals which slice of
+          the MRR composition bar it owns. */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: 14,
+          right: 18,
+          width: 10,
+          height: 10,
+          background: tier.color,
+          borderRadius: 2,
+        }}
+      />
+      <div style={{ minHeight: 76, paddingRight: 20 }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontStyle: 'italic',
+            fontSize: 21,
+            color: 'var(--ink)',
+            lineHeight: 1.1,
+            marginBottom: 6,
+          }}
+        >
+          {tier.name}
+        </div>
+        <div className="hand" style={{ fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.3 }}>
+          ~ {tier.desc} ~
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+        {isFree ? (
+          <span
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontStyle: 'italic',
+              fontSize: 42,
+              color: 'var(--ink-soft)',
+              lineHeight: 1,
+            }}
+          >
+            free
+          </span>
+        ) : (
+          <>
+            <span
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontStyle: 'italic',
+                fontSize: 18,
+                color: 'var(--ink-faint)',
+              }}
+            >
+              $
+            </span>
+            <span
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontStyle: 'italic',
+                fontSize: 42,
+                color: 'var(--oxblood)',
+                lineHeight: 1,
+                fontVariantNumeric: 'oldstyle-nums',
+              }}
+            >
+              {tier.rate}
+            </span>
+            <span
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontStyle: 'italic',
+                fontSize: 15,
+                color: 'var(--ink-faint)',
+              }}
+            >
+              /mo
+            </span>
+          </>
+        )}
+      </div>
+      <ul
+        style={{
+          listStyle: 'none',
+          padding: 0,
+          margin: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+        }}
+      >
+        {tier.benefits.map((b) => (
+          <li
+            key={b}
+            style={{
+              display: 'flex',
+              gap: 8,
+              fontFamily: 'var(--font-body)',
+              fontStyle: 'italic',
+              fontSize: 14,
+              color: 'var(--ink)',
+              lineHeight: 1.35,
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{ color: 'var(--verdigris-2)', fontFamily: 'var(--font-display)' }}
+            >
+              ✓
+            </span>
+            {b}
+          </li>
+        ))}
+      </ul>
+      <div
+        style={{
+          marginTop: 'auto',
+          paddingTop: 10,
+          borderTop: '1px dashed rgba(90, 63, 34, 0.25)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontStyle: 'italic',
+              fontSize: 22,
+              color: 'var(--ink)',
+              lineHeight: 1,
+              fontVariantNumeric: 'oldstyle-nums',
+            }}
+          >
+            {tier.count.toLocaleString()}
+          </div>
+          <div
+            className="mono"
+            style={{
+              fontSize: 9,
+              letterSpacing: 1.3,
+              color: 'var(--ink-faint)',
+              textTransform: 'uppercase',
+              marginTop: 2,
+            }}
+          >
+            subscribers
+          </div>
+        </div>
+        <GhostButton size="sm" disabled title="Tier editor lands in the next chapter">
+          edit
+        </GhostButton>
+      </div>
+    </VellumCard>
   );
 }
 
