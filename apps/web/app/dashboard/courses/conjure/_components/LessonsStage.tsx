@@ -205,16 +205,14 @@ export function LessonsStage({ draft, onDraftChanged }: Props): React.JSX.Elemen
                     streamingKey !== null && streamingKey !== key(section.id, lesson.id)
                   }
                   onCompose={(feedback) => runLessonStream(section.id, lesson.id, feedback)}
-                  onApproveChanged={(ok, approved) => {
+                  onApproveChanged={async (ok) => {
                     if (!ok) return;
-                    onDraftChanged({
-                      ...draft,
-                      lessons: draft.lessons.map((l) =>
-                        l.section_id === section.id && l.lesson_id === lesson.id
-                          ? { ...l, approved }
-                          : l,
-                      ),
-                    });
+                    // Server auto-advances stage to 'images' when every
+                    // lesson is approved — pull the fresh draft so the
+                    // client picks up the stage bump and ImagesStage
+                    // takes the floor.
+                    const refreshed = await reloadDraft(draft.id);
+                    if (refreshed.ok) onDraftChanged(refreshed.value);
                   }}
                 />
               ))}
@@ -245,7 +243,7 @@ function LessonCard({
   readonly liveText: string;
   readonly otherStreaming: boolean;
   readonly onCompose: (feedback?: string) => Promise<boolean>;
-  readonly onApproveChanged: (ok: boolean, approved: boolean) => void;
+  readonly onApproveChanged: (ok: boolean) => void | Promise<void>;
 }): React.JSX.Element {
   const [revising, setRevising] = useState(false);
   const [feedback, setFeedback] = useState('');
@@ -260,7 +258,7 @@ function LessonCard({
     startApprove(async () => {
       const result = await setLessonApproved(draft.id, section.id, lesson.id, !approved);
       if (!result.ok) setCardError(result.error);
-      onApproveChanged(result.ok, !approved);
+      await onApproveChanged(result.ok);
     });
   };
 
