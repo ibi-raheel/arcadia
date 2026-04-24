@@ -39,9 +39,19 @@
 
 ---
 
-### Locked decisions (Phase 8) — filled once user confirms A-I
+### Locked decisions (Phase 8) — approved 2026-04-24
 
-*Populate this table after user approves A–I.*
+| # | Decision | Locked value |
+|---|----------|--------------|
+| A | Downloads folder → repo strategy | `design/kit/` holds `colors_and_type.css`, `assets/*.svg`, the 5 `ui_kits/*/index.html`, the 20 `preview/*.html`, `README.md`, `SKILL.md`. Full Downloads folder stays on the build owner's disk as source of truth. JSX prototypes NOT committed; rewritten as TSX from scratch. |
+| B | Token wiring technique | All three — CSS custom properties in `globals.css` + `next/font` in `layout.tsx` + palette/fontFamily extension in `tailwind.config.ts` |
+| C | Charts | Hand-roll SVG in `lib/charts/*.ts` (`line` / `bar` / `sparkline`). No Recharts / Chart.js / Nivo |
+| D | Simulation persistence | Hybrid: localStorage source of truth + `?sim=1` URL param override. Visible lantern-yellow pill indicator whenever sim mode is on |
+| E | Simulation coverage | Every data-fetching surface: creator dashboard + tabs + analytics, member hub, academy viewer, market catalogue + StallView, tavern leaderboard |
+| F | Dashboard tab structure | Full 6-tab set (studio / courses / memberships / audience / payouts / settings). `memberships`, `audience`, `payouts`, `settings` land as shell-only in Phase 8 — data wire-up deferred to a post-Phase-8 ADR because the required Supabase schema isn't there yet |
+| G | Member Hub route | New route at `/hub`. Post-login redirects to it; middleware extends protected matcher. Authenticated `/` redirects to `/hub` |
+| H | Other-session WIP | Discarded in preamble (`c829554`). `/doorway`, `/host`, `/hub`, `/kit` rebuilt from scratch against the downloaded kit |
+| I | Fixture layout | `apps/web/lib/fixtures/<surface>.ts` — strictly typed against production data shapes. Wrapped by `useFetchOrMock(real, mock)` hook for client + `fetchOrMock(real, mock)` helper for server components |
 
 ---
 

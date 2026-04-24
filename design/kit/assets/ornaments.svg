@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="80" viewBox="0 0 400 80">
+  
+  <text class="orn" x="20" y="56" fill="#c9a14a">✦</text>
+  <text class="orn" x="70" y="56" fill="#c9a14a">✧</text>
+  <text class="orn" x="120" y="56" fill="#8a2838">❦</text>
+  <text class="orn" x="170" y="56" fill="#1f3147">◈</text>
+  <text class="orn" x="220" y="56" fill="#c9a14a">❂</text>
+  <text class="orn" x="270" y="56" fill="#ffb84a">☉</text>
+  <text class="orn" x="320" y="56" fill="#8a2838">†</text>
+  <text class="orn" x="360" y="56" fill="#5a7a5c">✥</text>
+</svg>

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="240" viewBox="0 0 120 240">
+  <defs>
+    <radialGradient id="flameGlow" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#fff3c8" stop-opacity="1"></stop>
+      <stop offset="40%" stop-color="#ffb84a" stop-opacity="0.85"></stop>
+      <stop offset="100%" stop-color="#ffb84a" stop-opacity="0"></stop>
+    </radialGradient>
+    <linearGradient id="bronzeGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#b88c52"></stop>
+      <stop offset="50%" stop-color="#8a6a3a"></stop>
+      <stop offset="100%" stop-color="#3e2a14"></stop>
+    </linearGradient>
+  </defs>
+  
+  <line x1="60" y1="0" x2="60" y2="80" stroke="#3e2a14" stroke-width="2" stroke-dasharray="4 4"></line>
+  
+  <path d="M60 80 L60 90" stroke="url(#bronzeGrad)" stroke-width="2.5"></path>
+  <circle cx="60" cy="84" r="5" fill="none" stroke="url(#bronzeGrad)" stroke-width="2"></circle>
+  
+  <path d="M32 94 L88 94 L82 104 L38 104 Z" fill="url(#bronzeGrad)" stroke="#3e2a14" stroke-width="1"></path>
+  <rect x="34" y="104" width="52" height="6" fill="#3e2a14"></rect>
+  
+  <path d="M40 110 L40 172 Q40 182 50 184 L70 184 Q80 182 80 172 L80 110 Z" fill="rgba(255, 184, 74, 0.18)" stroke="#8a6a3a" stroke-width="2"></path>
+  <line x1="60" y1="110" x2="60" y2="184" stroke="#3e2a14" stroke-width="1.5"></line>
+  <line x1="46" y1="110" x2="46" y2="184" stroke="#3e2a14" stroke-width="1.2" opacity="0.7"></line>
+  <line x1="74" y1="110" x2="74" y2="184" stroke="#3e2a14" stroke-width="1.2" opacity="0.7"></line>
+  <line x1="40" y1="148" x2="80" y2="148" stroke="#3e2a14" stroke-width="1.2" opacity="0.6"></line>
+  
+  <ellipse cx="60" cy="146" rx="36" ry="44" fill="url(#flameGlow)"></ellipse>
+  
+  <rect x="54" y="140" width="12" height="34" rx="1.5" fill="#fff3c8"></rect>
+  <line x1="60" y1="130" x2="60" y2="140" stroke="#140a05" stroke-width="1.4"></line>
+  
+  <g>
+    <path d="M60 120 Q66 132 63 140 Q60 144 57 140 Q54 132 60 120 Z" fill="#ffb84a"></path>
+    <path d="M60 126 Q63 132 62 138 Q60 142 58 138 Q57 132 60 126 Z" fill="#ff8a3a"></path>
+    <ellipse cx="60" cy="134" rx="1.6" ry="3" fill="#ffffff" opacity="0.9"></ellipse>
+  </g>
+  
+  <path d="M38 184 L82 184 L88 194 L32 194 Z" fill="url(#bronzeGrad)" stroke="#3e2a14" stroke-width="1"></path>
+  <ellipse cx="60" cy="200" rx="6" ry="2" fill="#3e2a14"></ellipse>
+</svg>
