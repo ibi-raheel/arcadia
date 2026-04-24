@@ -18,6 +18,8 @@ import { isAvatarId } from '../shared/avatar-palette';
 import { tavernDisplayName } from '../shared/building-names';
 import { createCapacityHud, type CapacityHud } from '../shared/capacity-hud';
 import { spawnColliders } from '../shared/colliders';
+import { addCrispText } from '../shared/crisp-text';
+import { applyFillZoom } from '../shared/fill-zoom';
 // Edge-trigger manager removed 2026-04-23 in favour of the archway
 // proximity check (see checkArchwayExit). The import stays out rather
 // than being left dangling — TAVERN_RETURN_EDGE is now empty too.
@@ -70,7 +72,12 @@ export const TAVERN_CHAT_BLUR_EVENT = 'tavern:chat-blur';
 
 const SPEECH_BUBBLE_DURATION_MS = 5000;
 const SPEECH_BUBBLE_DEPTH = 10_000;
-const SPEECH_BUBBLE_Y_OFFSET = 64; // pixels above the avatar's origin
+// Speech bubbles anchor this far above the avatar's y-origin. Must clear
+// the name tag (anchored at avatar-top minus 6, extending ~24px upward)
+// plus the bubble's own height/tail. 2026-04-23: bumped from 64 → 110 to
+// stop the bubble bg overlapping the name label on 135px avatars (Phase 7
+// item T3).
+const SPEECH_BUBBLE_Y_OFFSET = 110;
 const SPEECH_BUBBLE_MAX_WIDTH = 200;
 const SPEECH_BUBBLE_PAD_X = 10;
 const SPEECH_BUBBLE_PAD_Y = 6;
@@ -81,14 +88,12 @@ const SPEECH_BUBBLE_PAD_Y = 6;
  * avatar's head by setting (x, y) to the avatar's top-of-head coord.
  */
 function createSpeechBubble(scene: Phaser.Scene, text: string): Phaser.GameObjects.Container {
-  const textObj = scene.add
-    .text(0, 0, text, {
-      fontFamily: 'system-ui, sans-serif',
-      fontSize: '12px',
-      color: '#ffffff',
-      wordWrap: { width: SPEECH_BUBBLE_MAX_WIDTH, useAdvancedWrap: true },
-    })
-    .setOrigin(0.5, 0.5);
+  const textObj = addCrispText(scene, 0, 0, text, {
+    fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
+    fontSize: '14px',
+    color: '#fef3c7',
+    wordWrap: { width: SPEECH_BUBBLE_MAX_WIDTH, useAdvancedWrap: true },
+  }).setOrigin(0.5, 0.5);
 
   const w = textObj.width + SPEECH_BUBBLE_PAD_X * 2;
   const h = textObj.height + SPEECH_BUBBLE_PAD_Y * 2;
@@ -169,16 +174,14 @@ export class TavernScene extends Phaser.Scene {
     // 2026-04-23 (v3): in-world "↓ Exit ↓" label anchored to the
     // bottom-centre of the interior, directly above the archway the
     // user identified in their follow-up screenshot.
-    const exitHint = this.add
-      .text(bg.displayWidth / 2, bg.displayHeight - 24, '↓ Exit ↓', {
-        fontFamily: '"Georgia", "Cambria", serif',
-        fontSize: '32px',
-        fontStyle: 'bold',
-        color: '#fef3c7',
-        stroke: '#1c1917',
-        strokeThickness: 5,
-      })
-      .setOrigin(0.5, 1);
+    const exitHint = addCrispText(this, bg.displayWidth / 2, bg.displayHeight - 24, '↓ Exit ↓', {
+      fontFamily: '"Georgia", "Cambria", serif',
+      fontSize: '32px',
+      fontStyle: 'bold',
+      color: '#fef3c7',
+      stroke: '#1c1917',
+      strokeThickness: 5,
+    }).setOrigin(0.5, 1);
     exitHint.setDepth(tavernLayersConfig.depth.dynamic + 100);
     this.tweens.add({
       targets: exitHint,
@@ -190,7 +193,8 @@ export class TavernScene extends Phaser.Scene {
 
     const { bounds, zoom, fadeInMs } = tavernCameraConfig;
     this.cameras.main.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
-    this.cameras.main.setZoom(zoom);
+    applyFillZoom(this, bounds.width, bounds.height, zoom);
+    this.scale.on('resize', () => applyFillZoom(this, bounds.width, bounds.height, zoom));
     this.physics.world.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
     this.cameras.main.fadeIn(fadeInMs, 0, 0, 0);
 

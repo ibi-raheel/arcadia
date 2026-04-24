@@ -7,6 +7,7 @@
 import type Phaser from 'phaser';
 
 import { AVATAR_COLORS, AVATAR_NAMES, type AvatarId } from '../shared/avatar-palette';
+import { addCrispText } from '../shared/crisp-text';
 import { avatarHasSprite, primaryAvatarTextureKey } from './avatar-animations';
 import { worldSpritesConfig } from './sprites.config';
 
@@ -71,18 +72,16 @@ export function createAvatarVisuals(
     displayNameRaw.trim().length > 0 ? displayNameRaw.trim() : AVATAR_NAMES[avatarId];
   const displayName = cleanName.slice(0, DISPLAY_NAME_MAX);
 
-  const nameText = scene.add
-    .text(x, y - size.height / 2 - 6, `${displayName} · Lv ${level}`, {
-      // Warm serif face reads as an RPG nameplate and scales well
-      // without getting pixel-fuzzy at the new larger size.
-      fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
-      fontSize: '20px',
-      fontStyle: 'bold',
-      color: '#fef3c7',
-      stroke: '#1c1917',
-      strokeThickness: 4,
-    })
-    .setOrigin(0.5, 1);
+  const nameText = addCrispText(scene, x, y - size.height / 2 - 6, `${displayName} · Lv ${level}`, {
+    // Warm serif face reads as an RPG nameplate and scales well
+    // without getting pixel-fuzzy at the new larger size.
+    fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
+    fontSize: '20px',
+    fontStyle: 'bold',
+    color: '#fef3c7',
+    stroke: '#1c1917',
+    strokeThickness: 4,
+  }).setOrigin(0.5, 1);
 
   return { gameObject, sprite, nameText, size, displayName, level };
 }
