@@ -9,6 +9,7 @@ This project workspace is strictly for the **technical build**. Strategy, positi
 - **Work in phases, step by step.** Never jump ahead.
 - **Before starting any phase or sub-phase, write a small plan.** Outline what you are about to do and how, then wait for confirmation before proceeding.
 - **Test thoroughly after every step or feature.** Do not move on until the current step is verified working.
+- **Run the full CI pipeline locally before any push to a PR-tracked branch.** That means all four stages the GitHub Actions workflow runs: `npm run format:check`, `npm run lint`, `npm run typecheck`, `npx vitest run` (from `apps/web`). Typecheck + vitest alone are not enough — prettier + eslint failures only surface in CI otherwise, and every commit after the miss stacks a red run (see 2026-04-24 hotfix `#13`).
 - **Identify bugs immediately.** If something is broken, flag it clearly before continuing.
 - **Identify wrong fundamental approaches.** If the current approach is architecturally or technically flawed, say so directly — do not patch over a bad foundation.
 - **Research before acting.** If a technical decision requires knowledge of libraries, APIs, browser behavior, or platform constraints, verify it first. Never guess.
