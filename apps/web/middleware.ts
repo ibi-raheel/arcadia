@@ -17,7 +17,7 @@ type CookieToSet = { name: string; value: string; options: CookieOptions };
 //   /api/stream/webhook — Cloudflare Stream webhook (verified by signature, Phase 3)
 //   /_next/*, static assets — handled by the matcher config below
 
-const EXACT_PUBLIC_PATHS = new Set(['/', '/login', '/signup']);
+const EXACT_PUBLIC_PATHS = new Set(['/', '/login', '/signup', '/kit']);
 const PUBLIC_PREFIXES = ['/api/health', '/api/stream/webhook'];
 
 function isPublicPath(pathname: string): boolean {

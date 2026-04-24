@@ -10,3 +10,4 @@ export * from './buttons';
 export * from './fields';
 export * from './chips';
 export * from './simulation';
+export * from './charts';
