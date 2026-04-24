@@ -1,24 +1,22 @@
-// `/kit` — live design-system browser. Shows every primitive + token that
-// the Phase-8 sub-phases (dashboard / academy / market / tavern / tent)
-// compose from, so a builder or reviewer can see all of them on one
-// scroll. Mirrors the 21 design/kit/preview/*.html files but rendered
-// through the production TSX components under
-// `apps/web/components/scriptorium/`.
+// `/kit` — live design-system browser. Shows every primitive + token
+// that the Phase-8 sub-phases compose from, so a builder or reviewer
+// can see all of them on one scroll. Mirrors the 21
+// design/kit/preview/*.html files but rendered through the production
+// TSX components under `apps/web/components/scriptorium/`.
 //
-// Server component with a Supabase session check so the page lives
-// behind the signed-in surface (same gate as /dashboard).
-
-import { redirect } from 'next/navigation';
-
-import { getSupabaseServerClient } from '@/lib/supabase/server';
+// Public route (2026-04-24). The kit is a design reference — same
+// status as /login or /. It contains no member-scoped data, so the
+// auth gate was removed from both middleware.ts and this page.
 
 import {
   Avatar,
+  BarProgress,
   BrandMark,
   BronzeButton,
   ChapterDivider,
   Chip,
   Desk,
+  Donut,
   DropCap,
   EnvelopeCard,
   GhostButton,
@@ -32,6 +30,8 @@ import {
   ScrollCard,
   SimulationBadge,
   SimulationToggle,
+  StackedBar,
+  Stat,
   Stud,
   TagNav,
   VellumCard,
@@ -118,13 +118,7 @@ function SwatchGrid({ swatches }: { readonly swatches: readonly ColorSwatch[] })
 
 const ORNAMENT_GLYPHS = ['✦', '✧', '☉', '❦', '◈', '❂', '†', '✝', '✥'];
 
-export default async function KitPage(): Promise<React.JSX.Element> {
-  const supabase = getSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect('/login?next=/kit');
-
+export default function KitPage(): React.JSX.Element {
   const navItems = [
     { key: 'hub', label: 'hub', href: '/' },
     { key: 'doorway', label: 'doorway', href: '/login' },
@@ -413,6 +407,195 @@ export default async function KitPage(): Promise<React.JSX.Element> {
             {ORNAMENT_GLYPHS.map((g) => (
               <span key={g}>{g}</span>
             ))}
+          </div>
+        </VellumCard>
+
+        <ChapterDivider chapter="IX. charts" />
+        <VellumCard style={{ marginBottom: 22 }}>
+          <Kicker>stat · big ledger number</Kicker>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 28,
+              marginTop: 14,
+            }}
+          >
+            <Stat label="revenue · 30d" value="$12,430" delta={6.4} />
+            <Stat label="active subscribers" value={184} delta={3.2} />
+            <Stat label="return on spend" value="4.2×" delta={-1.3} />
+          </div>
+        </VellumCard>
+
+        <VellumCard style={{ marginBottom: 22 }}>
+          <Kicker>bar progress · fill + glow</Kicker>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 14,
+              marginTop: 14,
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginBottom: 4,
+                  fontFamily: 'var(--font-display)',
+                  fontStyle: 'italic',
+                  color: 'var(--ink)',
+                }}
+              >
+                <span>the coin of venice</span>
+                <span className="mono" style={{ color: 'var(--ink-faint)' }}>
+                  68%
+                </span>
+              </div>
+              <BarProgress pct={68} color="var(--lantern)" />
+            </div>
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginBottom: 4,
+                  fontFamily: 'var(--font-display)',
+                  fontStyle: 'italic',
+                  color: 'var(--ink)',
+                }}
+              >
+                <span>sealing wax · by lantern</span>
+                <span className="mono" style={{ color: 'var(--ink-faint)' }}>
+                  42%
+                </span>
+              </div>
+              <BarProgress pct={42} color="var(--oxblood)" height={4} />
+            </div>
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginBottom: 4,
+                  fontFamily: 'var(--font-display)',
+                  fontStyle: 'italic',
+                  color: 'var(--ink)',
+                }}
+              >
+                <span>the lantern's trim</span>
+                <span className="mono" style={{ color: 'var(--ink-faint)' }}>
+                  92%
+                </span>
+              </div>
+              <BarProgress pct={92} color="var(--verdigris)" height={8} />
+            </div>
+          </div>
+        </VellumCard>
+
+        <VellumCard style={{ marginBottom: 22 }}>
+          <Kicker>donut · proportional ring</Kicker>
+          <div
+            style={{
+              display: 'flex',
+              gap: 24,
+              alignItems: 'center',
+              marginTop: 14,
+            }}
+          >
+            <Donut
+              size={150}
+              thickness={22}
+              segments={[
+                { share: 42, color: 'var(--lantern)', label: 'courses' },
+                { share: 28, color: 'var(--bronze)', label: 'memberships' },
+                { share: 18, color: 'var(--oxblood)', label: 'workshops' },
+                { share: 12, color: 'var(--verdigris)', label: 'tips' },
+              ]}
+              label={
+                <div style={{ textAlign: 'center' }}>
+                  <div className="mono" style={{ fontSize: 9, color: 'var(--ink-faint)' }}>
+                    30D
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontStyle: 'italic',
+                      fontSize: 22,
+                      color: 'var(--ink)',
+                      fontVariantNumeric: 'oldstyle-nums',
+                    }}
+                  >
+                    $12,430
+                  </div>
+                </div>
+              }
+            />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[
+                { label: 'courses', color: 'var(--lantern)', share: 42, amount: 5220 },
+                { label: 'memberships', color: 'var(--bronze)', share: 28, amount: 3480 },
+                { label: 'workshops', color: 'var(--oxblood)', share: 18, amount: 2237 },
+                { label: 'tips', color: 'var(--verdigris)', share: 12, amount: 1493 },
+              ].map((s) => (
+                <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span
+                    style={{
+                      width: 10,
+                      height: 10,
+                      background: s.color,
+                      borderRadius: 2,
+                    }}
+                  />
+                  <span
+                    style={{
+                      flex: 1,
+                      fontFamily: 'var(--font-display)',
+                      fontStyle: 'italic',
+                      fontSize: 16,
+                      color: 'var(--ink)',
+                    }}
+                  >
+                    {s.label}
+                  </span>
+                  <span className="mono" style={{ fontSize: 10, color: 'var(--ink-faint)' }}>
+                    {s.share}%
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontStyle: 'italic',
+                      fontSize: 16,
+                      color: 'var(--ink)',
+                      minWidth: 60,
+                      textAlign: 'right',
+                      fontVariantNumeric: 'oldstyle-nums',
+                    }}
+                  >
+                    ${s.amount.toLocaleString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </VellumCard>
+
+        <VellumCard style={{ marginBottom: 22 }}>
+          <Kicker>stacked bar · composition</Kicker>
+          <div style={{ marginTop: 14 }}>
+            <StackedBar
+              height={18}
+              segments={[
+                { value: 48, color: 'var(--bronze)', label: 'guildling' },
+                { value: 96, color: 'var(--lantern)', label: 'lantern-bearer' },
+                { value: 24, color: 'var(--wax)', label: 'hearth-keeper' },
+                { value: 6, color: 'var(--oxblood)', label: 'patron' },
+              ]}
+            />
+            <div className="hand" style={{ marginTop: 10, color: 'var(--ink-soft)' }}>
+              ~ hover any slice to see its tally ~
+            </div>
           </div>
         </VellumCard>
 
