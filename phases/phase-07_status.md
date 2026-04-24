@@ -269,3 +269,24 @@ Work continued on `phase-07.1_coworking-outside-layout` (off the phase-07.0_game
 - Market StallView diegetic restyle (M7).
 - Square top / bottom / left edge spans.
 - Coworking-outside occupancy UI polish + avatar-size tuning inside tent (if the user surfaces either after they play the flow).
+
+---
+
+## 2026-04-24 — CI hotfix after merge (#13)
+
+CI turned red on every commit after `#12` merged (and retroactively on `#11`'s check). Two small issues missed because local verification was only `tsc --noEmit` + `vitest run`, not the full `format:check` + `lint` + `typecheck` + `test` the GitHub Actions workflow runs.
+
+### What broke
+
+1. **Prettier** — six Phase-7 scene files were hand-edited without a `prettier --write` pass: `scenes/academy/AcademyScene.ts`, `coworking-inside/CoworkingInsideScene.ts`, `market/MarketScene.ts`, `shared/edge-triggers.ts`, `square/SquareScene.ts`, `tavern/TavernScene.ts`. CI's `format:check` stage failed on commit `#1d87d92` and every commit on the coworking branch too.
+2. **ESLint `no-unused-vars`** — `GameCoworkingInside.tsx` kept `import { MSG } from '@arcadia/shared'` after the Leave-tent React handler (the only MSG consumer) was removed in the coworking pass. TypeScript's strict mode doesn't flag unused imports; ESLint does. CI's `lint` stage failed.
+
+### Fix shipped
+
+- Hotfix branch `phase-08.hotfix_prettier` off main. One commit (`8ccab8c`): prettier reformat of the six files + drop the `MSG` import. No behavioural change.
+- PR `#13` merged to main as `c552e60`; CI ran green.
+- `phase-08_ui-wireup` rebased on the updated main (force-pushed) so its future PR opens clean.
+
+### Process note (for future turns)
+
+Local verification for Phase-7 was `typecheck + vitest`. Missing: `format:check` (prettier) + `lint` (ESLint). The workflow runs 4 stages; pushing with only 2 verified means 50% of the gates are evaluated in the wrong environment (CI, post-push). Going forward the pre-push check is all four stages — added to root `CLAUDE.md` so it's a first-class rule, not a foot-gun.
