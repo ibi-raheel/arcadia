@@ -7,12 +7,14 @@
 
 'use client';
 
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import {
   BrandMark,
   Desk,
+  GhostButton,
   Hand,
   Kicker,
   NightRoom,
@@ -87,6 +89,18 @@ export function DashboardShell({ title, kicker, tagline, actions, children }: Pr
           <div
             style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-end' }}
           >
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <Link href="/world" style={{ textDecoration: 'none' }}>
+                <GhostButton size="sm" onDark>
+                  ← return to the world
+                </GhostButton>
+              </Link>
+              <Link href="/" style={{ textDecoration: 'none' }}>
+                <GhostButton size="sm" onDark>
+                  exit
+                </GhostButton>
+              </Link>
+            </div>
             <TagNav items={[...TABS]} active={active} />
             <SimulationToggle />
           </div>
