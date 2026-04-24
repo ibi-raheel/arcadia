@@ -6,7 +6,7 @@
 
 import * as Phaser from 'phaser';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { BuildingTransition } from './BuildingTransition';
 import { LevelUpBanner } from './LevelUpBanner';
@@ -81,26 +81,11 @@ export default function GameAcademy({ member, courses }: Props): React.JSX.Eleme
     };
   }, [member, courses, router]);
 
-  const handleReturnToWorld = useCallback((): void => {
-    // 2026-04-23: leaves the academy to the academy-outside scene
-    // rather than bouncing all the way back to /world — symmetrical
-    // with tavern → tavern-outside. Members can walk south from
-    // academy-outside to return to the square if they want.
-    router.push('/academy-outside');
-  }, [router]);
-
   const ready = preloadProgress !== null && preloadProgress >= 1;
 
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <div ref={containerRef} className="absolute inset-0" />
-      <button
-        type="button"
-        onClick={handleReturnToWorld}
-        className="absolute left-4 top-4 z-40 rounded bg-neutral-100 px-3 py-2 text-sm font-medium text-neutral-900 shadow transition hover:bg-white"
-      >
-        ← Return to World
-      </button>
       <BuildingTransition
         ready={ready}
         displayName="The Academy"
