@@ -58,6 +58,19 @@ export type FolkAtRiskEntry = {
   readonly urgency: FolkRiskUrgency;
 };
 
+/** Audience growth hero numbers — feeds the 30-day sparkline card that
+ *  sits at the very top of /folk. When `series` is empty the card
+ *  still renders numbers but suppresses the sparkline. */
+export type FolkGrowth = {
+  readonly totalPeople: number;
+  readonly new30d: number;
+  readonly growthDelta: number; // percent vs previous 30 days
+  readonly newsletter: number;
+  readonly followers: number;
+  /** Daily total-people count for the last 30 days, oldest → newest. */
+  readonly series: readonly number[];
+};
+
 export type FolkData = {
   readonly totalPaying: number;
   readonly totalFolk: number;
@@ -67,6 +80,7 @@ export type FolkData = {
   readonly tiers: readonly FolkTier[];
   readonly retentionCurves: readonly FolkRetentionCurve[];
   readonly atRisk: readonly FolkAtRiskEntry[];
+  readonly growth: FolkGrowth;
   readonly members: readonly FolkMember[];
 };
 
@@ -149,6 +163,20 @@ export const FOLK_FIXTURE: FolkData = {
       data: [100, 97, 94, 92, 90, 88, 87, 86, 86, 85, 85, 85],
     },
   ],
+  growth: {
+    totalPeople: 312,
+    new30d: 48,
+    growthDelta: 12.4,
+    newsletter: 186,
+    followers: 265,
+    // Rising-ish 30-day daily totalPeople counts. Ends at 312 to match
+    // `totalPeople` above; the shape is gently upward with a small dip
+    // to look organic under the oxblood sparkline.
+    series: [
+      264, 266, 269, 270, 273, 275, 278, 279, 282, 284, 285, 288, 290, 289, 290, 293, 296, 297, 300,
+      301, 301, 303, 305, 306, 307, 309, 308, 310, 311, 312,
+    ],
+  },
   atRisk: [
     {
       who: 'Calla Wright',
