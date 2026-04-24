@@ -26,6 +26,7 @@ import {
 const TABS = [
   { key: 'studio', label: 'studio', href: '/dashboard' },
   { key: 'courses', label: 'courses', href: '/dashboard/courses' },
+  { key: 'events', label: 'events', href: '/dashboard/events' },
   { key: 'folk', label: 'folk', href: '/dashboard/folk' },
   { key: 'payouts', label: 'payouts', href: '/dashboard/payouts' },
   { key: 'settings', label: 'settings', href: '/dashboard/settings' },
@@ -36,8 +37,10 @@ type TabKey = (typeof TABS)[number]['key'];
 function activeTabFromPath(pathname: string): TabKey {
   // /dashboard → studio · /dashboard/courses... → courses · etc.
   // 2026-04-24: `memberships` + `audience` merged into a single `folk` tab.
+  // 2026-04-24 (Phase 9): `events` tab added between courses and folk.
   if (pathname === '/dashboard') return 'studio';
   if (pathname.startsWith('/dashboard/courses')) return 'courses';
+  if (pathname.startsWith('/dashboard/events')) return 'events';
   if (pathname.startsWith('/dashboard/folk')) return 'folk';
   if (pathname.startsWith('/dashboard/payouts')) return 'payouts';
   if (pathname.startsWith('/dashboard/settings')) return 'settings';

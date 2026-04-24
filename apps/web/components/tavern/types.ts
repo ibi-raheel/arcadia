@@ -20,3 +20,13 @@ export type LeaderboardEntry = {
 /** Emoji palette offered in the reaction picker. Six covers the common set. */
 export const REACTION_EMOJI = ['🔥', '❤️', '😂', '👀', '🎉', '💯'] as const;
 export type ReactionEmoji = (typeof REACTION_EMOJI)[number];
+
+/** Structural subset of Phaser.Game that TavernFeatures bridges into
+ *  via the game-events bus. Typed here so TavernFeatures doesn't have
+ *  to import Phaser (and drag it into the client bundle). */
+export type PhaserGameLike = {
+  readonly events: {
+    on: (event: string, listener: (...args: unknown[]) => void) => unknown;
+    off: (event: string, listener: (...args: unknown[]) => void) => unknown;
+  };
+};
