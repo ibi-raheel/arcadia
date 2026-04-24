@@ -101,22 +101,44 @@ Shipped two community-memory features:
 - `feat(feed+events): migration + async feed + tavern integration`
 - `feat(events): dashboard events tab + upcoming pill on studio + landing`
 - `docs(phase-09): plan + status + changelog`
+- `fix(events): refetch events after mutations + surface real load errors` (post-merge hotfix)
 
-## Before this PR merges
+## Migration applied
 
-The Supabase MCP is read-only (ADR 0002), so the migration file has
-**not** been applied yet. The dev needs to run:
+`20260424000001_phase9_feed_and_events.sql` was pushed to prod Supabase
+(`eqbzltiasmuckgsapkye`) on 2026-04-24 via `supabase db push`. Before
+push, six prior phase-3/4/5 migrations had to be marked as applied via
+`supabase migration repair --status applied <version>` because they
+were originally applied through the dashboard SQL editor and never
+recorded in `supabase_migrations.schema_migrations`. Phase-3 policies
+and the phase-5 trigger are not idempotent — skipping repair would have
+caused `db push` to fail mid-way on a `policy already exists` error.
 
-```bash
-cd apps/web
-supabase db push
-```
+Verified post-push: `public.posts` + `public.events` live, RLS enabled,
+8 policies total (4 per table).
 
-Or paste the SQL from the migration file into the Supabase dashboard's
-SQL editor for the `eqbzltiasmuckgsapkye` project. Until then, both
-new tabs render fixture data (the app falls back to fixtures when the
-real reads fail). Writes will 404 at the RLS layer until the migration
-lands.
+## Post-merge hotfix — client refresh after mutations
+
+First creator write on `/dashboard/events` surfaced two bugs:
+
+1. `useFetchOrMock` was keyed only on `[sim]`. `revalidatePath` in the
+   server action invalidates the Next cache but does not re-run client
+   hooks, so successful create / update / delete kept showing stale
+   state until full reload.
+2. `loadEventsReal` in `app/dashboard/events/page.tsx` mapped every
+   failure to `{events: []}`, hiding auth / membership errors as the
+   empty-state card.
+
+**Fixed:**
+
+- `lib/fetch-or-mock.ts` — return shape now includes `refetch()` (keyed
+  off an internal tick). No existing consumers break — they only
+  destructure `{data, loading, error}`.
+- `app/dashboard/events/page.tsx` — `loadEventsReal` now throws on
+  failure so the real error hits the red error card.
+- `app/dashboard/events/_components/EventsContent.tsx` — threads an
+  `onChanged` callback through `CreateEventForm` / `EditEventForm` /
+  `EventCard` → every mutation calls `refetch` on success.
 
 ## Deferred
 

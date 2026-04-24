@@ -8,7 +8,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useSimulationMode } from './simulation-mode';
 
@@ -16,6 +16,7 @@ type HookState<T> = {
   readonly data: T | null;
   readonly loading: boolean;
   readonly error: Error | null;
+  readonly refetch: () => void;
 };
 
 /**
@@ -24,10 +25,16 @@ type HookState<T> = {
  * the moment they turn sim off. Suspense-free on purpose — fetcher
  * errors surface on the `error` field so surfaces can show a scribe's
  * note.
+ *
+ * Returns a `refetch` function callers can invoke after a mutation —
+ * `revalidatePath` in a server action only clears the Next cache, so
+ * client-held state needs an explicit re-fetch to pick up writes.
  */
 export function useFetchOrMock<T>(real: () => Promise<T>, mock: T): HookState<T> {
   const [sim] = useSimulationMode();
-  const [state, setState] = useState<HookState<T>>(() => ({
+  const [tick, setTick] = useState(0);
+  const refetch = useCallback(() => setTick((n) => n + 1), []);
+  const [state, setState] = useState<Omit<HookState<T>, 'refetch'>>(() => ({
     data: sim ? mock : null,
     loading: !sim,
     error: null,
@@ -59,8 +66,8 @@ export function useFetchOrMock<T>(real: () => Promise<T>, mock: T): HookState<T>
     };
     // Intentionally omit real + mock from deps: callers typically pass
     // inline functions / fresh fixtures on every render, which would
-    // re-fire the effect. The hook is keyed on the toggle only.
-  }, [sim]);
+    // re-fire the effect. The hook is keyed on the toggle + refetch tick.
+  }, [sim, tick]);
 
-  return state;
+  return { ...state, refetch };
 }

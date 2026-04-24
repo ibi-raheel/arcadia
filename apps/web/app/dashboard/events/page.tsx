@@ -16,12 +16,15 @@ import { EventsContent } from './_components/EventsContent';
 
 async function loadEventsReal(): Promise<EventsData> {
   const result = await loadEvents();
-  if (!result.ok) return { events: [] };
+  if (!result.ok) throw new Error(result.error);
   return { events: result.value.events };
 }
 
 export default function EventsPage(): React.JSX.Element {
-  const { data, loading, error } = useFetchOrMock<EventsData>(loadEventsReal, EVENTS_FIXTURE);
+  const { data, loading, error, refetch } = useFetchOrMock<EventsData>(
+    loadEventsReal,
+    EVENTS_FIXTURE,
+  );
 
   return (
     <DashboardShell
@@ -39,7 +42,7 @@ export default function EventsPage(): React.JSX.Element {
           <p style={{ color: 'var(--crimson)' }}>Couldn&rsquo;t load: {error.message}</p>
         </LedgerCard>
       )}
-      {data && <EventsContent data={data} />}
+      {data && <EventsContent data={data} onChanged={refetch} />}
     </DashboardShell>
   );
 }
