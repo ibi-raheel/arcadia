@@ -5,7 +5,6 @@
 // Walking off the right (bridge) edge returns to /world.
 
 import { BOOT_ASSETS } from '../boot/asset-manifest';
-import { drawDebugGrid } from '../shared/debug-grid';
 import { OutdoorSceneBase, type OutdoorSceneConfig } from '../shared/outdoor-scene-base';
 import { coworkingOutsideCameraConfig } from './camera.config';
 import { coworkingOutsideLayersConfig } from './layers.config';
@@ -39,21 +38,5 @@ export class CoworkingOutsideScene extends OutdoorSceneBase {
 
   constructor() {
     super({ key: COWORKING_OUTSIDE_SCENE_KEY });
-  }
-
-  // 2026-04-24 (Phase 7 layout-tuning, temporary): dev grid + click
-  // coord picker. Walk the island, click any point to drop a crosshair
-  // with the exact world (x, y) label + a console log. Remove this
-  // override and delete scenes/shared/debug-grid.ts when the coworking
-  // trigger coords are locked.
-  override create(): void {
-    super.create();
-    drawDebugGrid(this, {
-      width: this.sceneConfig.bounds.width,
-      height: this.sceneConfig.bounds.height,
-      spacing: 100,
-      labelEvery: 200,
-      clickToReveal: true,
-    });
   }
 }

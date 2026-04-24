@@ -21,9 +21,17 @@ export type EntryTrigger = {
   /** World-pixel coordinates of the trigger's centre. */
   readonly centerX: number;
   readonly centerY: number;
-  /** Activation radius — the prompt appears inside this distance. */
+  /** Circular activation radius — used when halfWidth/halfHeight are absent. */
   readonly radius: number;
-  /** Prompt text. Typically "Press SPACE to Enter <name>". */
+  /**
+   * Rectangular zone half-extents (overrides `radius` when set). Trigger
+   * fires when the avatar is within `[centerX - halfWidth, centerX + halfWidth]`
+   * and `[centerY - halfHeight, centerY + halfHeight]`. Use when a door or
+   * bridge is better represented by an axis-aligned box than a circle.
+   */
+  readonly halfWidth?: number;
+  readonly halfHeight?: number;
+  /** Prompt text. Typically "Press ENTER to visit <name>". */
   readonly label: string;
   /** Destination route. The `buildingId` should already be baked in as `?b=`. */
   readonly route: string;
@@ -63,8 +71,14 @@ export function findNearestActiveTrigger(
   for (const t of triggers) {
     const dx = avatarX - t.centerX;
     const dy = avatarY - t.centerY;
+    const inside =
+      t.halfWidth !== undefined && t.halfHeight !== undefined
+        ? Math.abs(dx) <= t.halfWidth && Math.abs(dy) <= t.halfHeight
+        : Math.hypot(dx, dy) <= t.radius;
+    if (!inside) continue;
+    // Euclidean distance is a reasonable tiebreaker regardless of zone shape.
     const d = Math.hypot(dx, dy);
-    if (d <= t.radius && d < nearestDist) {
+    if (d < nearestDist) {
       nearest = t;
       nearestDist = d;
     }
