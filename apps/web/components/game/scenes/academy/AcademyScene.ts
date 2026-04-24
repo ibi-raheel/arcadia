@@ -11,6 +11,10 @@ import { BOOT_ASSETS } from '../boot/asset-manifest';
 import { isAvatarId } from '../shared/avatar-palette';
 import { spawnColliders } from '../shared/colliders';
 import { addCrispText } from '../shared/crisp-text';
+import {
+  createEnterPromptManager,
+  type EnterPromptManager,
+} from '../shared/enter-prompt';
 import { applyFillZoom } from '../shared/fill-zoom';
 import { createJumpBinding, type JumpBinding } from '../shared/jump-binding';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
@@ -58,6 +62,8 @@ export class AcademyScene extends Phaser.Scene {
   };
   private clickTarget: { x: number; y: number } | null = null;
   private jumpBinding?: JumpBinding;
+  private enterKey?: Phaser.Input.Keyboard.Key;
+  private enterPrompt?: EnterPromptManager;
 
   constructor() {
     super({ key: ACADEMY_SCENE_KEY });
@@ -81,6 +87,9 @@ export class AcademyScene extends Phaser.Scene {
     this.wirePointerInput();
 
     this.renderPodiums();
+
+    // ENTER-gated exit at the bottom-centre archway (Phase 7 item AC10).
+    this.enterPrompt = createEnterPromptManager(this, [academyLayersConfig.exitArchway]);
   }
 
   private createLocalAvatar(): void {
@@ -121,6 +130,8 @@ export class AcademyScene extends Phaser.Scene {
       D: Phaser.Input.Keyboard.Key;
     };
     this.jumpBinding = createJumpBinding(this);
+    this.input.keyboard.addCapture('ENTER');
+    this.enterKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
   }
 
   private wirePointerInput(): void {
@@ -213,6 +224,11 @@ export class AcademyScene extends Phaser.Scene {
     if (!this.localAvatar) return;
 
     this.jumpBinding?.tryJump(this.localAvatar);
+
+    const enterJustDown = this.enterKey
+      ? Phaser.Input.Keyboard.JustDown(this.enterKey)
+      : false;
+    this.enterPrompt?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown);
 
     const input = this.readInputState();
     const kbd = resolveInputVelocity(input, academySpritesConfig.avatar.walkSpeed);
