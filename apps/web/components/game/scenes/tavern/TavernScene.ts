@@ -19,10 +19,12 @@ import { tavernDisplayName } from '../shared/building-names';
 import { createCapacityHud, type CapacityHud } from '../shared/capacity-hud';
 import { spawnColliders } from '../shared/colliders';
 import { addCrispText } from '../shared/crisp-text';
+import {
+  createEnterPromptManager,
+  type EnterPromptManager,
+  type EntryTrigger,
+} from '../shared/enter-prompt';
 import { applyFillZoom } from '../shared/fill-zoom';
-// Edge-trigger manager removed 2026-04-23 in favour of the archway
-// proximity check (see checkArchwayExit). The import stays out rather
-// than being left dangling — TAVERN_RETURN_EDGE is now empty too.
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -149,11 +151,14 @@ export class TavernScene extends Phaser.Scene {
 
   private capacityHud?: CapacityHud;
 
-  // 2026-04-23: archway-proximity exit state. exitReturnRoute is built
-  // per-session from the `?b=` query param so the outdoor scene can
-  // spawn the member next to the correct tavern door.
-  private exitReturnRoute = '/tavern-outside';
-  private exitFired = false;
+  // 2026-04-23 (Phase 7): ENTER-gated archway exit. Proximity prompt +
+  // ENTER fires LEAVE_BUILDING and navigates to /tavern-outside
+  // (optionally with `?from=<buildingId>` so the outdoor scene can spawn
+  // the member next to the correct tavern door). The "↓ Exit ↓" in-world
+  // label was removed alongside this change — the prompt pill is the
+  // only exit affordance.
+  private enterPrompt?: EnterPromptManager;
+  private enterKey?: Phaser.Input.Keyboard.Key;
 
   // Speech bubbles above speakers — keyed by memberId so a new message from
   // the same member replaces any active bubble.
@@ -170,26 +175,6 @@ export class TavernScene extends Phaser.Scene {
     const bg = this.add.image(0, 0, BOOT_ASSETS.tavernInterior.key);
     bg.setOrigin(0, 0);
     bg.setDepth(tavernLayersConfig.depth.ground);
-
-    // 2026-04-23 (v3): in-world "↓ Exit ↓" label anchored to the
-    // bottom-centre of the interior, directly above the archway the
-    // user identified in their follow-up screenshot.
-    const exitHint = addCrispText(this, bg.displayWidth / 2, bg.displayHeight - 24, '↓ Exit ↓', {
-      fontFamily: '"Georgia", "Cambria", serif',
-      fontSize: '32px',
-      fontStyle: 'bold',
-      color: '#fef3c7',
-      stroke: '#1c1917',
-      strokeThickness: 5,
-    }).setOrigin(0.5, 1);
-    exitHint.setDepth(tavernLayersConfig.depth.dynamic + 100);
-    this.tweens.add({
-      targets: exitHint,
-      alpha: { from: 0.7, to: 1 },
-      duration: 900,
-      yoyo: true,
-      repeat: -1,
-    });
 
     const { bounds, zoom, fadeInMs } = tavernCameraConfig;
     this.cameras.main.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
@@ -216,17 +201,28 @@ export class TavernScene extends Phaser.Scene {
       max: HUD_MAX_CLIENTS,
     });
 
-    // 2026-04-23 (v4): exit fires when the avatar is within the
-    // archway's radius — the "portal" sits at the visible door in the
-    // bottom-centre of the PNG, not on an edge band. `?from=<id>` is
+    // 2026-04-23 (Phase 7): ENTER-gated archway exit. Walking into the
+    // archway radius shows "Press ENTER to leave the tavern"; ENTER
+    // fires LEAVE_BUILDING + fades + navigates. `?from=<buildingId>` is
     // carried to /tavern-outside so the outdoor scene can spawn the
-    // member next to the door they used. LEAVE_BUILDING is emitted on
-    // fire to keep server-side transition logs consistent with the old
-    // button-based flow.
+    // member next to the door they used.
     const archway = tavernLayersConfig.exitArchway;
-    this.exitReturnRoute = buildingId
+    const archwayRoute = buildingId
       ? `${archway.route}?from=${encodeURIComponent(buildingId)}`
       : archway.route;
+    const archwayTrigger: EntryTrigger = {
+      buildingId: 'tavern-archway',
+      centerX: archway.centerX,
+      centerY: archway.centerY,
+      radius: archway.radius,
+      label: 'Press ENTER to leave the Tavern',
+      route: archwayRoute,
+    };
+    this.enterPrompt = createEnterPromptManager(this, [archwayTrigger], () => {
+      // Pre-navigate hook — send LEAVE_BUILDING before the camera fade
+      // begins so the server-side room leave is not racing the redirect.
+      this.colyseus?.send(MSG.LEAVE_BUILDING, { building: 'tavern' });
+    });
 
     this.colyseus = this.registry.get(COLYSEUS_CONNECTION_REGISTRY_KEY) as
       | ColyseusConnection
@@ -349,6 +345,9 @@ export class TavernScene extends Phaser.Scene {
     // stops the browser from page-scrolling when the canvas is active.
     this.input.keyboard.addCapture('SPACE');
     this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    // ENTER → fires the ENTER-gated archway exit (Phase 7).
+    this.input.keyboard.addCapture('ENTER');
+    this.enterKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
   }
 
   private readInputState(): InputState {
@@ -409,27 +408,6 @@ export class TavernScene extends Phaser.Scene {
     if (idx >= 0) this.ySortables.splice(idx, 1);
   }
 
-  /**
-   * Fires the tavern → /tavern-outside transition once the avatar is
-   * within the archway's proximity radius. Replaces the earlier
-   * bottom-edge-threshold approach, which tripped halfway across the
-   * room instead of at the visible door (user 2026-04-23: "have the
-   * portal to go back there" pointing at the archway).
-   */
-  private checkArchwayExit(): void {
-    if (this.exitFired || !this.localAvatar) return;
-    const archway = tavernLayersConfig.exitArchway;
-    const dx = this.localAvatar.x - archway.centerX;
-    const dy = this.localAvatar.y - archway.centerY;
-    if (Math.hypot(dx, dy) > archway.radius) return;
-    this.exitFired = true;
-    this.colyseus?.send(MSG.LEAVE_BUILDING, { building: 'tavern' });
-    this.cameras.main.fadeOut(300, 0, 0, 0);
-    const route = this.exitReturnRoute;
-    this.cameras.main.once('camerafadeoutcomplete', () => {
-      if (typeof window !== 'undefined') window.location.href = route;
-    });
-  }
 
   private async wireRemoteAvatars(room: ColyseusRoom): Promise<void> {
     this.teardownRemoteAvatars();
@@ -598,7 +576,10 @@ export class TavernScene extends Phaser.Scene {
 
       this.sendMoveIfChanged(this.time.now);
 
-      this.checkArchwayExit();
+      const enterJustDown = this.enterKey
+        ? Phaser.Input.Keyboard.JustDown(this.enterKey)
+        : false;
+      this.enterPrompt?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown);
     }
 
     const depthBase = tavernLayersConfig.depth.dynamic;

@@ -42,6 +42,14 @@ export type EnterPromptManager = {
 };
 
 /**
+ * Fired synchronously the instant ENTER is pressed inside a trigger's
+ * radius, BEFORE the camera fade begins. Scenes that need to send a
+ * Colyseus LEAVE_BUILDING (or similar pre-navigate signal) use this —
+ * firing after the fade would race the room leave.
+ */
+export type EnterPromptFiredCallback = (trigger: EntryTrigger) => void;
+
+/**
  * Find the nearest trigger whose circle contains the avatar. Pure — lifted
  * out so it's unit-testable without Phaser.
  */
@@ -67,6 +75,7 @@ export function findNearestActiveTrigger(
 export function createEnterPromptManager(
   scene: Phaser.Scene,
   triggers: readonly EntryTrigger[],
+  onFire?: EnterPromptFiredCallback,
 ): EnterPromptManager {
   const container = scene.add.container(0, 0);
   const bg = scene.add.graphics();
@@ -113,6 +122,13 @@ export function createEnterPromptManager(
 
     if (enterJustDown) {
       navigating = true;
+      if (onFire) {
+        try {
+          onFire(nearest);
+        } catch (err) {
+          console.error('enter-prompt onFire callback threw:', err);
+        }
+      }
       scene.cameras.main.fadeOut(300, 0, 0, 0);
       scene.cameras.main.once('camerafadeoutcomplete', () => {
         if (typeof window !== 'undefined') window.location.href = nearest.route;
