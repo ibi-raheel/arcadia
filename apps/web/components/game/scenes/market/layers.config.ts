@@ -19,6 +19,13 @@ export const MARKET_RETURN_EDGE: EdgeTriggers = {
     route: '/world',
     threshold: 300,
     promptLabel: 'Press ENTER to return to the Square',
+    // Confine the trigger to the archway — the gateway at the top-centre
+    // of the image, roughly x=500..1036 on the 1536-wide market interior.
+    // Walking into the top band outside this range doesn't fire; only
+    // the archway is the real "bridge" back to the Square.
+    // 2026-04-23 — nudge these if the archway is actually wider/narrower
+    // in the source art than the initial eyeball estimate.
+    span: { min: 500, max: 1036 },
   },
 };
 

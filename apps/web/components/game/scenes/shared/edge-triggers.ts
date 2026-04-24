@@ -27,6 +27,13 @@ export type EdgeTriggerConfig = {
    * walk-onto behaviour.
    */
   readonly promptLabel?: string;
+  /**
+   * Restrict the trigger to a range along the edge's length. For `top` /
+   * `bottom` edges this is an x-range; for `left` / `right` edges, a
+   * y-range. Omit to fire along the full edge. Use when a narrow
+   * archway / bridge / gate is the actual portal, not the whole edge.
+   */
+  readonly span?: { readonly min: number; readonly max: number };
 };
 
 export type EdgeTriggers = Partial<Record<EdgeSide, EdgeTriggerConfig>>;
@@ -53,6 +60,14 @@ export type EdgeTriggerFiredCallback = (side: EdgeSide, route: string) => void;
  * top → bottom → left → right; scenes that want to block transitions at
  * corners can rely on the predictable order.
  */
+function withinSpan(
+  coord: number,
+  span: EdgeTriggerConfig['span'],
+): boolean {
+  if (!span) return true;
+  return coord >= span.min && coord <= span.max;
+}
+
 export function hitEdge(
   avatarX: number,
   avatarY: number,
@@ -60,12 +75,32 @@ export function hitEdge(
   worldHeight: number,
   edges: EdgeTriggers,
 ): EdgeTriggerConfig | null {
-  if (edges.top && avatarY <= (edges.top.threshold ?? 48)) return edges.top;
-  if (edges.bottom && avatarY >= worldHeight - (edges.bottom.threshold ?? 48)) {
+  if (
+    edges.top &&
+    avatarY <= (edges.top.threshold ?? 48) &&
+    withinSpan(avatarX, edges.top.span)
+  ) {
+    return edges.top;
+  }
+  if (
+    edges.bottom &&
+    avatarY >= worldHeight - (edges.bottom.threshold ?? 48) &&
+    withinSpan(avatarX, edges.bottom.span)
+  ) {
     return edges.bottom;
   }
-  if (edges.left && avatarX <= (edges.left.threshold ?? 48)) return edges.left;
-  if (edges.right && avatarX >= worldWidth - (edges.right.threshold ?? 48)) {
+  if (
+    edges.left &&
+    avatarX <= (edges.left.threshold ?? 48) &&
+    withinSpan(avatarY, edges.left.span)
+  ) {
+    return edges.left;
+  }
+  if (
+    edges.right &&
+    avatarX >= worldWidth - (edges.right.threshold ?? 48) &&
+    withinSpan(avatarY, edges.right.span)
+  ) {
     return edges.right;
   }
   return null;
@@ -163,16 +198,32 @@ function hitEdgeWithSide(
   worldHeight: number,
   edges: EdgeTriggers,
 ): { readonly side: EdgeSide; readonly cfg: EdgeTriggerConfig } | null {
-  if (edges.top && avatarY <= (edges.top.threshold ?? 48)) {
+  if (
+    edges.top &&
+    avatarY <= (edges.top.threshold ?? 48) &&
+    withinSpan(avatarX, edges.top.span)
+  ) {
     return { side: 'top', cfg: edges.top };
   }
-  if (edges.bottom && avatarY >= worldHeight - (edges.bottom.threshold ?? 48)) {
+  if (
+    edges.bottom &&
+    avatarY >= worldHeight - (edges.bottom.threshold ?? 48) &&
+    withinSpan(avatarX, edges.bottom.span)
+  ) {
     return { side: 'bottom', cfg: edges.bottom };
   }
-  if (edges.left && avatarX <= (edges.left.threshold ?? 48)) {
+  if (
+    edges.left &&
+    avatarX <= (edges.left.threshold ?? 48) &&
+    withinSpan(avatarY, edges.left.span)
+  ) {
     return { side: 'left', cfg: edges.left };
   }
-  if (edges.right && avatarX >= worldWidth - (edges.right.threshold ?? 48)) {
+  if (
+    edges.right &&
+    avatarX >= worldWidth - (edges.right.threshold ?? 48) &&
+    withinSpan(avatarY, edges.right.span)
+  ) {
     return { side: 'right', cfg: edges.right };
   }
   return null;
