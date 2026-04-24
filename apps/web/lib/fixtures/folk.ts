@@ -1,6 +1,8 @@
 // Merged memberships + audience fixture. A folk roll — everyone in the
 // realm, paying or not, plus the headline counts a keeper reads before
-// opening the list.
+// opening the list. Also carries the tier / MRR / growth / retention
+// shape the V4.5 kit's Memberships + Audience tabs rendered, so the
+// merged `folk` page can surface all of it without an extra fetch.
 
 export type FolkRole = 'scribe' | 'keeper' | 'wanderer';
 
@@ -17,11 +19,33 @@ export type FolkMember = {
   readonly note?: string; // Caveat-hand aside rendered next to the row
 };
 
+/** A subscription tier the keeper offers. `rate === 0` means the tier is
+ *  free (wanderer). Colors pick from the scriptorium palette so the
+ *  MRRBlock composition bar + TierCard badge can tint consistently. */
+export type FolkTier = {
+  readonly key: 'wanderer' | 'guildling' | 'lantern-bearer' | 'hearth-keeper' | 'patron';
+  readonly name: string;
+  readonly desc: string;
+  readonly color: string; // CSS color value (hex or var())
+  readonly rate: number; // $/mo, 0 for free
+  readonly count: number; // number of subscribers
+  readonly benefits: readonly string[];
+};
+
+/** Total MRR + comparisons. Kept separate from `totalPaying` so the
+ *  block can show the "$X,XXX · ▲6.4% vs prev" composite. */
+export type FolkMoney = {
+  readonly mrr: number;
+  readonly mrrDelta: number; // percent
+};
+
 export type FolkData = {
   readonly totalPaying: number;
   readonly totalFolk: number;
   readonly newThisWeek: number;
   readonly churnRisk: number; // count of folk unseen > 14 days
+  readonly money: FolkMoney;
+  readonly tiers: readonly FolkTier[];
   readonly members: readonly FolkMember[];
 };
 
@@ -30,6 +54,58 @@ export const FOLK_FIXTURE: FolkData = {
   totalFolk: 312,
   newThisWeek: 9,
   churnRisk: 4,
+  money: {
+    // Exact sum of tier (count × rate): 28·8 + 14·24 + 4·60 + 1·180 = 980.
+    mrr: 980,
+    mrrDelta: 6.4,
+  },
+  tiers: [
+    {
+      key: 'wanderer',
+      name: 'wanderer',
+      desc: 'browsing the realm, free of charge',
+      color: 'var(--ink-faint)',
+      rate: 0,
+      count: 265,
+      benefits: ['browse the realm', 'read free letters', 'one course on the house'],
+    },
+    {
+      key: 'guildling',
+      name: 'guildling',
+      desc: 'a first promise, modest ink',
+      color: 'var(--bronze)',
+      rate: 8,
+      count: 28,
+      benefits: ['chat · the hearth', 'weekly letter', '10% off keepsakes'],
+    },
+    {
+      key: 'lantern-bearer',
+      name: 'lantern-bearer',
+      desc: 'full shelf, steady candle',
+      color: 'var(--lantern)',
+      rate: 24,
+      count: 14,
+      benefits: ['all published courses', 'office hours · monthly', 'early drafts to read'],
+    },
+    {
+      key: 'hearth-keeper',
+      name: 'hearth-keeper',
+      desc: 'a seat near the fire, a name on the door',
+      color: 'var(--wax)',
+      rate: 60,
+      count: 4,
+      benefits: ['1:1 letters · quarterly', 'private channel', 'your name in the colophon'],
+    },
+    {
+      key: 'patron',
+      name: 'patron',
+      desc: 'the wall has your mark',
+      color: 'var(--oxblood)',
+      rate: 180,
+      count: 1,
+      benefits: ['name on the wall', 'every new scroll free', 'dinner when I pass through'],
+    },
+  ],
   members: [
     {
       id: 'f1',

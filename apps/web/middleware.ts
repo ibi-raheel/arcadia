@@ -18,7 +18,10 @@ type CookieToSet = { name: string; value: string; options: CookieOptions };
 //   /_next/*, static assets — handled by the matcher config below
 
 const EXACT_PUBLIC_PATHS = new Set(['/', '/login', '/signup', '/kit']);
-const PUBLIC_PREFIXES = ['/api/health', '/api/stream/webhook'];
+// `/preview/*` renders dashboard surfaces against fixture data for
+// visual review (no Supabase session required). Useful for design
+// iteration and sharing work-in-progress screenshots with reviewers.
+const PUBLIC_PREFIXES = ['/api/health', '/api/stream/webhook', '/preview'];
 
 function isPublicPath(pathname: string): boolean {
   if (EXACT_PUBLIC_PATHS.has(pathname)) return true;
