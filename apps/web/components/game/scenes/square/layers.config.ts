@@ -44,6 +44,12 @@ export const SQUARE_EDGE_TRIGGERS: EdgeTriggers = {
     route: '/tavern-outside',
     threshold: 300,
     promptLabel: 'Press ENTER to visit the Taverns',
+    // Bridge-only span (2026-04-23 screenshot feedback) — the prompt
+    // should only fire when the member is on the east bridge, not
+    // anywhere along the right edge. y-range is narrow around the
+    // bridge centre (~y=1250). Nudge min/max if the bridge on the
+    // source image sits higher or lower.
+    span: { min: 1050, max: 1500 },
   },
   bottom: {
     route: '/market',
