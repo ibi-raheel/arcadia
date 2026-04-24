@@ -39,7 +39,7 @@ export function PublishToggle({ courseId, published }: Props): React.JSX.Element
         </Hand>
       )}
       {published ? (
-        <GhostButton onClick={toggle} disabled={pending} size="sm">
+        <GhostButton onClick={toggle} disabled={pending} size="sm" onDark>
           {pending ? '…' : 'unpublish'}
         </GhostButton>
       ) : (

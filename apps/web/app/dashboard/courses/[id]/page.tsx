@@ -86,7 +86,7 @@ export default async function CourseEditorPage({
             href={`/dashboard/courses/${course.id}/analytics`}
             style={{ textDecoration: 'none' }}
           >
-            <GhostButton>analytics →</GhostButton>
+            <GhostButton onDark>analytics →</GhostButton>
           </Link>
           <PublishToggle courseId={course.id} published={course.published} />
         </div>

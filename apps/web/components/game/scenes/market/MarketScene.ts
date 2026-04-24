@@ -1,8 +1,14 @@
-// Phase 4 market scene. Member walks a 1536×1024 interior and clicks a
-// course "stall" to open the React stall-view modal. Single-player —
-// no Colyseus. Mirrors AcademyScene's image-backed shape; stalls store
-// their course id in getData('courseId') so the React HUD can also toggle
-// visibility by id (search filtering).
+// Phase 4 market scene. Member walks a 1536×1024 interior and steps up
+// to a central crystal — press ENTER to open the catalog scroll (a React
+// modal listing every published stall in the realm). Clicking a stall
+// inside the scroll opens the existing StallView modal via ?course=<id>.
+// Single-player; no Colyseus.
+//
+// 2026-04-24 — replaced the floating stall-card pattern (rendered as
+// Phaser Rectangle + Text objects per-course) with a single centre-of-
+// room crystal + scroll modal. The old HUD search input and
+// `MARKET_FILTER_EVENT` were already removed upstream; the scene no
+// longer needs per-stall geometry or filter state.
 //
 // ADR 0004: no hardcoded tweakable values. See *.config.ts siblings.
 
@@ -15,6 +21,10 @@ import { addCrispText } from '../shared/crisp-text';
 import { createEdgeTriggerManager, type EdgeTriggerManager } from '../shared/edge-triggers';
 import { applyFillZoom } from '../shared/fill-zoom';
 import { createJumpBinding, type JumpBinding } from '../shared/jump-binding';
+import {
+  createProximityPromptManager,
+  type ProximityPromptManager,
+} from '../shared/proximity-prompt';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -59,8 +69,10 @@ function saveSavedPosition(memberId: string, pos: SavedPosition): void {
 }
 
 /**
- * Shape of stall data the page passes in via the registry. One stall
- * rendered per entry.
+ * Shape of stall data the page passes in via the registry. One entry
+ * per published course in the realm; the scene doesn't render a sprite
+ * per-stall anymore, but the list is forwarded to React so the catalog
+ * scroll can render it.
  */
 export type MarketStall = {
   readonly id: string;
@@ -72,23 +84,12 @@ export type MarketStall = {
 };
 
 export const MARKET_STALLS_REGISTRY_KEY = 'market-stalls';
-export const MARKET_OPEN_STALL_EVENT = 'market:open-stall';
-/** React HUD → scene. Payload: string (search term, lowercased). */
-export const MARKET_FILTER_EVENT = 'market:filter';
+export const MARKET_OPEN_CATALOG_EVENT = 'market:open-catalog';
 
 type YSortableGameObject = YSortable & { setDepth: (depth: number) => unknown };
 
-type StallVisuals = {
-  readonly courseId: string;
-  readonly title: string;
-  readonly rect: Phaser.GameObjects.Rectangle;
-  readonly objects: Phaser.GameObjects.GameObject[];
-  haystack: string;
-};
-
 export class MarketScene extends Phaser.Scene {
   private readonly ySortables: YSortableGameObject[] = [];
-  private readonly stalls: StallVisuals[] = [];
   private localAvatar?: LocalAvatar;
 
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -105,6 +106,7 @@ export class MarketScene extends Phaser.Scene {
   private memberId: string | null = null;
   private lastPositionSaveAt = 0;
   private edgeTriggers?: EdgeTriggerManager;
+  private catalogPrompt?: ProximityPromptManager;
 
   constructor() {
     super({ key: MARKET_SCENE_KEY });
@@ -127,10 +129,9 @@ export class MarketScene extends Phaser.Scene {
     this.wireKeyboardInput();
     this.wirePointerInput();
 
-    this.renderStalls();
+    this.renderCrystal();
 
-    // Walk off the top edge to return to /world (2026-04-22 — replaces
-    // the browser back button as the exit affordance).
+    // Walk off the top edge to return to /world (2026-04-22).
     this.edgeTriggers = createEdgeTriggerManager(
       this,
       bounds.width,
@@ -138,12 +139,11 @@ export class MarketScene extends Phaser.Scene {
       marketLayersConfig.returnEdge,
     );
 
-    // HUD search → hide non-matching stalls.
-    this.game.events.on(MARKET_FILTER_EVENT, this.applyFilter, this);
     const onShutdown = (): void => {
-      this.game.events.off(MARKET_FILTER_EVENT, this.applyFilter, this);
       this.edgeTriggers?.destroy();
       this.edgeTriggers = undefined;
+      this.catalogPrompt?.destroy();
+      this.catalogPrompt = undefined;
       if (this.memberId != null && this.localAvatar) {
         saveSavedPosition(this.memberId, {
           x: this.localAvatar.x,
@@ -162,15 +162,6 @@ export class MarketScene extends Phaser.Scene {
       return;
     }
     this.memberId = member.memberId;
-    // Prefer last-known position from localStorage so reloads don't yank
-    // the member back to spawn. Clamp inside world bounds just in case
-    // the image size has changed since the last save.
-    //
-    // 2026-04-23: also discard saved-position that would immediately
-    // fire the top-edge return trigger (`y < 400`). Otherwise members
-    // whose last session ended near the top wall get bounced straight
-    // back to /world on re-entry — which is exactly what happened when
-    // the top-edge exit landed earlier today.
     const saved = loadSavedPosition(member.memberId);
     const defaults = marketSpritesConfig.avatar.spawnPixel;
     const bounds = marketCameraConfig.bounds;
@@ -199,9 +190,6 @@ export class MarketScene extends Phaser.Scene {
       marketCameraConfig.deadzone.height,
     );
 
-    // Static colliders scaffold — no-op when the config's array is
-    // empty. User fills in layers.config.ts → MARKET_COLLIDERS with
-    // rectangles to block the avatar without any code change.
     if (marketLayersConfig.colliders.length > 0) {
       const group = spawnColliders(this, marketLayersConfig.colliders);
       this.physics.add.collider(avatar.body, group);
@@ -233,94 +221,125 @@ export class MarketScene extends Phaser.Scene {
     );
   }
 
-  private renderStalls(): void {
-    const stalls =
-      (this.registry.get(MARKET_STALLS_REGISTRY_KEY) as readonly MarketStall[] | undefined) ?? [];
-    if (stalls.length === 0) return;
+  /**
+   * Draws a centre-of-room pedestal with a floating blue crystal and a
+   * soft glow. Walking close triggers the "Press ENTER to browse the
+   * catalog" prompt; ENTER pops the React catalog scroll.
+   */
+  private renderCrystal(): void {
+    const cfg = marketSpritesConfig.crystal;
+    const depthBase = marketLayersConfig.depth.stalls;
 
-    const cfg = marketSpritesConfig.stall;
-    const { width: canvasW } = marketCameraConfig.bounds;
+    // Blue halo behind the crystal.
+    const halo = this.add.graphics();
+    halo.fillStyle(0x6aa3d4, 0.14);
+    halo.fillCircle(cfg.centerX, cfg.centerY - 10, 150);
+    halo.setDepth(depthBase - 1);
 
-    stalls.forEach((stall, index) => {
-      const row = Math.floor(index / cfg.maxPerRow);
-      const colsThisRow = Math.min(cfg.maxPerRow, stalls.length - row * cfg.maxPerRow);
-      const col = index % cfg.maxPerRow;
-      const rowWidth = (colsThisRow - 1) * cfg.spacingX;
-      const x = canvasW / 2 - rowWidth / 2 + col * cfg.spacingX;
-      const y = cfg.firstRowCenterY + row * cfg.spacingY;
+    // Stone pedestal — two stacked rectangles.
+    const pedestalBase = this.add
+      .rectangle(cfg.centerX, cfg.centerY + 48, cfg.pedestalWidth, 60, 0x3b3a44)
+      .setStrokeStyle(2, 0x1c1917, 1);
+    pedestalBase.setDepth(depthBase);
 
-      const fillColor = stall.enrolled ? 0x064e3b : 0x1a1f2a;
-      const rect = this.add
-        .rectangle(x, y, cfg.size.width, cfg.size.height, fillColor, 0.85)
-        .setStrokeStyle(2, stall.enrolled ? 0x34d399 : 0xa855f7, 0.9);
-      rect.setDepth(marketLayersConfig.depth.stalls);
-      rect.setInteractive({ useHandCursor: true });
-      rect.setData('courseId', stall.id);
+    const pedestalTop = this.add
+      .rectangle(cfg.centerX, cfg.centerY + 14, cfg.pedestalWidth + 20, 16, 0x5a5968)
+      .setStrokeStyle(2, 0x1c1917, 1);
+    pedestalTop.setDepth(depthBase);
 
-      const title = addCrispText(this, x, y + cfg.labelOffsetY, stall.title, {
-        fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
-        fontSize: '17px',
-        fontStyle: 'bold',
-        color: '#fef3c7',
-        stroke: '#1c1917',
-        strokeThickness: 4,
-        align: 'center',
-        wordWrap: { width: cfg.size.width + 80 },
-      }).setOrigin(0.5, 1);
-      title.setDepth(marketLayersConfig.depth.stalls + 1);
+    // Crystal — an octagonal blue polygon, floating a few pixels above
+    // the pedestal top.
+    const cx = cfg.centerX;
+    const cy = cfg.centerY - 32;
+    const r = 28;
+    const crystalPoints: number[] = [
+      cx,
+      cy - r, // top
+      cx + r * 0.7,
+      cy - r * 0.4,
+      cx + r * 0.9,
+      cy + r * 0.2,
+      cx + r * 0.5,
+      cy + r * 0.8,
+      cx,
+      cy + r, // bottom
+      cx - r * 0.5,
+      cy + r * 0.8,
+      cx - r * 0.9,
+      cy + r * 0.2,
+      cx - r * 0.7,
+      cy - r * 0.4,
+    ];
+    const crystal = this.add.polygon(0, 0, crystalPoints, 0x5b8fc7, 0.82);
+    crystal.setOrigin(0, 0);
+    crystal.setStrokeStyle(1.5, 0x9cc3e8, 1);
+    crystal.setDepth(depthBase + 2);
 
-      const creator = addCrispText(this, x, y + cfg.creatorOffsetY, `by ${stall.creatorName}`, {
-        fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
-        fontSize: '12px',
-        fontStyle: 'italic',
-        color: '#cbd5e1',
-        stroke: '#1c1917',
-        strokeThickness: 3,
-        align: 'center',
-      }).setOrigin(0.5, 0);
-      creator.setDepth(marketLayersConfig.depth.stalls + 1);
+    // Highlight — smaller inner polygon with a brighter blue.
+    const highlight = this.add.polygon(
+      0,
+      0,
+      [
+        cx - 6,
+        cy - 18,
+        cx + 2,
+        cy - 16,
+        cx + 6,
+        cy - 6,
+        cx + 2,
+        cy,
+        cx - 6,
+        cy - 2,
+        cx - 10,
+        cy - 12,
+      ],
+      0xcfe2f8,
+      0.55,
+    );
+    highlight.setOrigin(0, 0);
+    highlight.setDepth(depthBase + 3);
 
-      const footerText = stall.enrolled
-        ? `${stall.lessonCount} lessons · Enrolled`
-        : `${stall.lessonCount} lessons · ${stall.enrolmentCount} enrolled`;
-      const footer = addCrispText(this, x, y + cfg.priceOffsetY, footerText, {
-        fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
-        fontSize: '13px',
-        color: stall.enrolled ? '#a7f3d0' : '#e9d5ff',
-        stroke: '#1c1917',
-        strokeThickness: 3,
-        align: 'center',
-      }).setOrigin(0.5, 0);
-      footer.setDepth(marketLayersConfig.depth.stalls + 1);
+    // Caption below the pedestal.
+    const caption = addCrispText(this, cfg.centerX, cfg.centerY + 92, 'The Market Catalog', {
+      fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
+      fontSize: '15px',
+      fontStyle: 'italic',
+      color: '#fef3c7',
+      stroke: '#1c1917',
+      strokeThickness: 3,
+    }).setOrigin(0.5, 0);
+    caption.setDepth(depthBase + 1);
 
-      rect.on('pointerover', () => rect.setFillStyle(0x0f172a, 1));
-      rect.on('pointerout', () => rect.setFillStyle(fillColor, 0.85));
-      rect.on('pointerup', () => {
-        this.game.events.emit(MARKET_OPEN_STALL_EVENT, stall.id);
-      });
-
-      this.stalls.push({
-        courseId: stall.id,
-        title: stall.title,
-        rect,
-        objects: [rect, title, creator, footer],
-        haystack: `${stall.title} ${stall.creatorName}`.toLowerCase(),
-      });
+    // Crystal float + halo pulse so the pedestal reads as interactable.
+    this.tweens.add({
+      targets: [crystal, highlight],
+      y: { from: -6, to: 6 },
+      duration: 2400,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.inOut',
     });
-  }
+    this.tweens.add({
+      targets: halo,
+      alpha: { from: 0.55, to: 1 },
+      duration: 2000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.inOut',
+    });
 
-  private applyFilter(search: string): void {
-    const needle = search.trim().toLowerCase();
-    for (const s of this.stalls) {
-      const visible = needle.length === 0 || s.haystack.includes(needle);
-      for (const obj of s.objects) {
-        // GameObject base type doesn't declare setVisible, but every
-        // concrete object we construct here (Rectangle, Text) implements
-        // the Visible component.
-        const v = obj as unknown as Phaser.GameObjects.Components.Visible;
-        v.setVisible(visible);
-      }
-    }
+    this.catalogPrompt = createProximityPromptManager(
+      this,
+      {
+        centerX: cfg.centerX,
+        centerY: cfg.centerY,
+        radius: cfg.interactRadius,
+        label: 'Press ENTER to browse the catalog',
+      },
+      () => {
+        this.game.events.emit(MARKET_OPEN_CATALOG_EVENT);
+      },
+    );
   }
 
   private readInputState(): InputState {
@@ -384,11 +403,14 @@ export class MarketScene extends Phaser.Scene {
     }
 
     const enterJustDown = this.enterKey ? Phaser.Input.Keyboard.JustDown(this.enterKey) : false;
-    this.edgeTriggers?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown);
+    const catalogFired =
+      this.catalogPrompt?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown) ?? false;
+    this.edgeTriggers?.update(
+      this.localAvatar.x,
+      this.localAvatar.y,
+      catalogFired ? false : enterJustDown,
+    );
 
-    // Persist position to localStorage every POSITION_SAVE_INTERVAL_MS
-    // so page reloads pick up where the member left off. Skipped when
-    // the avatar isn't actually moving — no point burning IO for nothing.
     if (
       this.memberId != null &&
       moving &&
