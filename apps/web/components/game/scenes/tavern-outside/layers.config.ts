@@ -26,14 +26,14 @@ export const TAVERN_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
   {
     buildingId: 'tavern-a',
     centerX: 1100,
-    centerY: 550,
-    radius: 140,
+    centerY: 600, // +50 y per user
+    radius: 180, // bigger than B/C per "increase further"
     label: 'Press ENTER to visit The Three Ravens',
     route: '/tavern?b=tavern-a',
   },
   {
     buildingId: 'tavern-b',
-    centerX: 1150,
+    centerX: 1250, // +100 x per user
     centerY: 1350,
     radius: 140,
     label: 'Press ENTER to visit The Iron Chalice',
@@ -43,7 +43,7 @@ export const TAVERN_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
     buildingId: 'tavern-c',
     centerX: 1200,
     centerY: 2200,
-    radius: 140,
+    radius: 180, // bumped per "just increase the size"
     label: 'Press ENTER to visit The Sleeping Hollow',
     route: '/tavern?b=tavern-c',
   },
@@ -62,12 +62,15 @@ export const TAVERN_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
  * door is visible immediately, so re-entering is one ENTER press away.
  * Prior behaviour spawned ~200 px west of the door.
  */
+// Spawn exactly at each trigger centre — member enters at the door,
+// exits at the same door. Keep in lockstep with the TAVERN_OUTSIDE_
+// ENTRY_TRIGGERS above.
 export const TAVERN_OUTSIDE_DOOR_SPAWNS: Record<
   string,
   { readonly x: number; readonly y: number } | undefined
 > = {
-  'tavern-a': { x: 1100, y: 550 },
-  'tavern-b': { x: 1150, y: 1350 },
+  'tavern-a': { x: 1100, y: 600 },
+  'tavern-b': { x: 1250, y: 1350 },
   'tavern-c': { x: 1200, y: 2200 },
 };
 
