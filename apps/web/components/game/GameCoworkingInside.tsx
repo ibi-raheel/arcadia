@@ -9,8 +9,6 @@ import * as Phaser from 'phaser';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { MSG } from '@arcadia/shared';
-
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 import { BuildingTransition } from './BuildingTransition';
