@@ -12,7 +12,7 @@
 
 import { streamText } from 'ai';
 
-import { SCRIBE_MODEL, gatewayConfigured, tokenBudget } from '@/lib/scribe/gateway';
+import { scribeConfigured, scribeLanguageModel, tokenBudget } from '@/lib/scribe/gateway';
 import { outlinePrompt, parseOutlineJson } from '@/lib/scribe/prompts';
 import type { DraftSource } from '@/lib/types/course-drafts';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
@@ -27,8 +27,8 @@ type Body = {
 };
 
 export async function POST(request: Request): Promise<Response> {
-  if (!gatewayConfigured()) {
-    return jsonError('AI Gateway is not configured on this deploy', 503);
+  if (!scribeConfigured()) {
+    return jsonError('the scribe is not configured on this deploy', 503);
   }
 
   const body = (await request.json().catch(() => null)) as Body | null;
@@ -63,7 +63,7 @@ export async function POST(request: Request): Promise<Response> {
   // iterable of string chunks. We tap it for two things: (a) pipe to
   // the client, (b) accumulate for post-stream parse + save.
   const result = streamText({
-    model: SCRIBE_MODEL.outline,
+    model: scribeLanguageModel('outline'),
     system,
     prompt,
     temperature: 0.5,
