@@ -56,9 +56,19 @@ Drop a new sheet file, add an entry to `AVATAR_SHEETS`, and the animations regis
 
 ## Future scenes (expansion path — do not build in Phase 1)
 
-- **Phase 2 Week 7** → `scenes/tavern/` — interior tilemap, Colyseus-synced remote avatars, chat is a React overlay (not a scene object).
-- **Academy and Market** — never get a Phaser scene. Pure React pages (`app/academy`, `app/market`) per TAD §4.2.
+- **Phase 2 Week 7** → `scenes/tavern/` — interior tilemap, Colyseus-synced remote avatars, chat is a React overlay (not a scene object). Shipped.
+- ~~**Academy and Market** — never get a Phaser scene.~~ Superseded: both DO have Phaser scenes now (`scenes/academy/` and `scenes/market/`) — see the 2026-04-22 inline TAD amendment in their `CLAUDE.md` files. Phase 8 simplified them: each has a single central interactable (book / crystal) with a proximity prompt that opens a React scroll modal (`LedgerScroll` / `CatalogScroll`). No more per-course/per-stall floating cards in-scene.
 - **V2 customisable worlds** — per-creator scenes follow the same folder convention. Config-driven appearance already aligns.
+
+## Phase 8 · UI wire-up touches (2026-04-24)
+
+Non-aesthetic scene changes landed with the React-surface rebuild:
+
+- **AcademyScene** — `renderPodiums()` removed. `renderLectern()` draws a floating red-bound book with gilt halo at scene centre; proximity prompt `ACADEMY_OPEN_LEDGER_EVENT` opens the React `LedgerScroll` modal.
+- **MarketScene** — `renderStalls()` + `applyFilter` + `StallVisuals` + `MARKET_FILTER_EVENT` all removed. `renderCrystal()` draws a floating blue crystal; proximity prompt `MARKET_OPEN_CATALOG_EVENT` opens the React `CatalogScroll` modal. Stall picks write `?course=<id>` so the existing `StallView` opens.
+- **SquareScene** — new `SQUARE_LODGE_ENTRY` proximity trigger at the cabin in the top-right routes to `/` on ENTER.
+- **`shared/proximity-prompt.ts`** — new helper. Same visual pill as `enter-prompt` but the ENTER handler is a callback, not a navigation.
+- **Prompt pill visual** — restyled in scriptorium voice (IM Fell English italic + vellum on night + bronze double border). Applies to both `enter-prompt` and `proximity-prompt` pills.
 
 ## Scoping `claude` into a scene folder
 
