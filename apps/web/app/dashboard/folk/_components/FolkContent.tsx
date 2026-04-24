@@ -10,6 +10,7 @@
 
 import {
   Avatar,
+  BarProgress,
   Chip,
   EnvelopeCard,
   GhostButton,
@@ -21,8 +22,10 @@ import {
 } from '@/components/scriptorium';
 import { buildSparkline } from '@/lib/charts/sparkline';
 import type {
+  FolkAcquisitionSource,
   FolkAtRiskEntry,
   FolkData,
+  FolkGeoEntry,
   FolkGrowth,
   FolkMember,
   FolkRetentionCurve,
@@ -76,6 +79,22 @@ export function FolkContent({ data }: { readonly data: FolkData }): React.JSX.El
               <TierCard key={t.key} tier={t} />
             ))}
           </div>
+        </section>
+      )}
+
+      {(data.acquisition.length > 0 || data.geography.length > 0) && (
+        <section
+          style={{
+            marginTop: 22,
+            display: 'grid',
+            // Kit pairs these 1.2fr/1fr: acquisition gets the extra column
+            // because the source labels vary more in length.
+            gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)',
+            gap: 20,
+          }}
+        >
+          {data.acquisition.length > 0 ? <AcquisitionCard sources={data.acquisition} /> : <div />}
+          {data.geography.length > 0 ? <GeographyCard entries={data.geography} /> : <div />}
         </section>
       )}
 
@@ -300,6 +319,160 @@ function GrowthHero({
             <span>today</span>
           </div>
         </div>
+      </div>
+    </VellumCard>
+  );
+}
+
+function AcquisitionCard({
+  sources,
+}: {
+  readonly sources: readonly FolkAcquisitionSource[];
+}): React.JSX.Element {
+  const max = Math.max(1, ...sources.map((s) => s.count));
+  return (
+    <VellumCard style={{ padding: '22px 26px' }} rotate={0.2}>
+      <Kicker>how they found you · 30d</Kicker>
+      <h3
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontStyle: 'italic',
+          fontSize: 22,
+          color: 'var(--ink)',
+          margin: '4px 0 0',
+          lineHeight: 1.1,
+        }}
+      >
+        the road in
+      </h3>
+      <div
+        style={{
+          marginTop: 14,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 14,
+        }}
+      >
+        {sources.map((s) => (
+          <div key={s.source}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'baseline',
+                marginBottom: 4,
+                gap: 10,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontStyle: 'italic',
+                  fontSize: 16,
+                  color: 'var(--ink)',
+                }}
+              >
+                {s.source}
+              </span>
+              <span style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
+                <span className="mono" style={{ fontSize: 10, color: 'var(--ink-faint)' }}>
+                  {s.share}%
+                </span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontStyle: 'italic',
+                    fontSize: 18,
+                    color: 'var(--ink)',
+                    minWidth: 46,
+                    textAlign: 'right',
+                    fontVariantNumeric: 'oldstyle-nums',
+                  }}
+                >
+                  {s.count}
+                </span>
+              </span>
+            </div>
+            <BarProgress pct={(s.count / max) * 100} color={s.color} height={6} />
+          </div>
+        ))}
+      </div>
+    </VellumCard>
+  );
+}
+
+function GeographyCard({
+  entries,
+}: {
+  readonly entries: readonly FolkGeoEntry[];
+}): React.JSX.Element {
+  const max = Math.max(1, ...entries.map((e) => e.count));
+  return (
+    <VellumCard style={{ padding: '22px 26px' }} rotate={-0.2}>
+      <Kicker>they live in</Kicker>
+      <h3
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontStyle: 'italic',
+          fontSize: 22,
+          color: 'var(--ink)',
+          margin: '4px 0 0',
+          lineHeight: 1.1,
+        }}
+      >
+        across the map
+      </h3>
+      <div
+        style={{
+          marginTop: 14,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+        }}
+      >
+        {entries.map((e) => (
+          <div key={e.place}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'baseline',
+                marginBottom: 4,
+                gap: 10,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontStyle: 'italic',
+                  fontSize: 15,
+                  color: 'var(--ink)',
+                }}
+              >
+                {e.place}
+              </span>
+              <span style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
+                <span className="mono" style={{ fontSize: 10, color: 'var(--ink-faint)' }}>
+                  {e.share}%
+                </span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontStyle: 'italic',
+                    fontSize: 17,
+                    color: 'var(--ink)',
+                    minWidth: 42,
+                    textAlign: 'right',
+                    fontVariantNumeric: 'oldstyle-nums',
+                  }}
+                >
+                  {e.count}
+                </span>
+              </span>
+            </div>
+            <BarProgress pct={(e.count / max) * 100} color="var(--bronze)" height={5} />
+          </div>
+        ))}
       </div>
     </VellumCard>
   );
