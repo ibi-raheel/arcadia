@@ -19,9 +19,11 @@ import {
   StackedBar,
   VellumCard,
 } from '@/components/scriptorium';
+import { buildSparkline } from '@/lib/charts/sparkline';
 import type {
   FolkAtRiskEntry,
   FolkData,
+  FolkGrowth,
   FolkMember,
   FolkRetentionCurve,
   FolkRiskUrgency,
@@ -31,6 +33,12 @@ import type {
 export function FolkContent({ data }: { readonly data: FolkData }): React.JSX.Element {
   return (
     <>
+      {data.growth.totalPeople > 0 && (
+        <div style={{ marginBottom: 22 }}>
+          <GrowthHero growth={data.growth} paying={data.totalPaying} />
+        </div>
+      )}
+
       <div
         style={{
           display: 'grid',
@@ -115,6 +123,185 @@ export function FolkContent({ data }: { readonly data: FolkData }): React.JSX.El
         </p>
       </VellumCard>
     </>
+  );
+}
+
+function GrowthHero({
+  growth,
+  paying,
+}: {
+  readonly growth: FolkGrowth;
+  readonly paying: number;
+}): React.JSX.Element {
+  const hasSeries = growth.series.length >= 2;
+  const sparkline = hasSeries
+    ? buildSparkline(growth.series as readonly number[], { width: 560, height: 150 })
+    : null;
+  return (
+    <VellumCard style={{ padding: '24px 28px' }} rotate={-0.3}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+          gap: 30,
+          alignItems: 'center',
+        }}
+      >
+        <div>
+          <Kicker>every soul in the realm</Kicker>
+          <div
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontStyle: 'italic',
+              fontSize: 64,
+              color: 'var(--ink)',
+              lineHeight: 1,
+              fontVariantNumeric: 'oldstyle-nums',
+              marginTop: 4,
+            }}
+          >
+            {growth.totalPeople.toLocaleString()}
+          </div>
+          <Hand>
+            ~ {growth.followers} free · {paying} paying · some just passing ~
+          </Hand>
+          <div style={{ display: 'flex', gap: 28, marginTop: 18, flexWrap: 'wrap' }}>
+            <div>
+              <Kicker>new · 30d</Kicker>
+              <div
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontStyle: 'italic',
+                  fontSize: 28,
+                  color: 'var(--oxblood)',
+                  fontVariantNumeric: 'oldstyle-nums',
+                  lineHeight: 1,
+                  marginTop: 4,
+                }}
+              >
+                +{growth.new30d.toLocaleString()}
+              </div>
+              <div
+                className="mono"
+                style={{
+                  fontSize: 10,
+                  letterSpacing: 1.3,
+                  color: growth.growthDelta >= 0 ? 'var(--verdigris)' : 'var(--wax)',
+                  marginTop: 4,
+                }}
+              >
+                {growth.growthDelta >= 0 ? '▲' : '▼'} {Math.abs(growth.growthDelta).toFixed(1)}%
+              </div>
+            </div>
+            <div>
+              <Kicker>on the letter</Kicker>
+              <div
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontStyle: 'italic',
+                  fontSize: 28,
+                  color: 'var(--ink)',
+                  fontVariantNumeric: 'oldstyle-nums',
+                  lineHeight: 1,
+                  marginTop: 4,
+                }}
+              >
+                {growth.newsletter.toLocaleString()}
+              </div>
+              <div
+                className="mono"
+                style={{
+                  fontSize: 10,
+                  letterSpacing: 1.3,
+                  color: 'var(--ink-faint)',
+                  marginTop: 4,
+                  textTransform: 'uppercase',
+                }}
+              >
+                subscribed
+              </div>
+            </div>
+            <div>
+              <Kicker>followers · free</Kicker>
+              <div
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontStyle: 'italic',
+                  fontSize: 28,
+                  color: 'var(--ink)',
+                  fontVariantNumeric: 'oldstyle-nums',
+                  lineHeight: 1,
+                  marginTop: 4,
+                }}
+              >
+                {growth.followers.toLocaleString()}
+              </div>
+              <div
+                className="mono"
+                style={{
+                  fontSize: 10,
+                  letterSpacing: 1.3,
+                  color: 'var(--ink-faint)',
+                  marginTop: 4,
+                  textTransform: 'uppercase',
+                }}
+              >
+                wanderers
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '10px 4px' }}>
+          {sparkline ? (
+            <svg
+              viewBox={sparkline.viewBox}
+              width="100%"
+              height={160}
+              preserveAspectRatio="none"
+              role="img"
+              aria-label="30-day total-people trend"
+              style={{ display: 'block' }}
+            >
+              <path d={sparkline.area} fill="#8f2530" opacity="0.14" />
+              <path
+                d={sparkline.line}
+                fill="none"
+                style={{
+                  // Hex inline instead of var() — SVG stroke doesn't
+                  // resolve CSS variables reliably in Chromium.
+                  stroke: '#8f2530',
+                  strokeWidth: 2.2,
+                  strokeLinecap: 'round',
+                  strokeLinejoin: 'round',
+                  filter: 'drop-shadow(0 0 6px #8f2530)',
+                }}
+              />
+              <circle cx={sparkline.last.x} cy={sparkline.last.y} r={4} fill="#8f2530" />
+            </svg>
+          ) : (
+            <div className="body-italic" style={{ color: 'var(--ink-quiet)', textAlign: 'center' }}>
+              ~ thirty days of tallies will bloom here once the counters start ~
+            </div>
+          )}
+          <div
+            className="mono"
+            style={{
+              fontSize: 10,
+              letterSpacing: 1.3,
+              color: 'var(--ink-faint)',
+              textTransform: 'uppercase',
+              marginTop: 8,
+              display: 'flex',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span>30 days ago</span>
+            <span>today</span>
+          </div>
+        </div>
+      </div>
+    </VellumCard>
   );
 }
 

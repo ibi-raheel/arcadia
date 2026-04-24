@@ -57,6 +57,14 @@ async function loadFolk(): Promise<FolkData> {
     tiers: [],
     retentionCurves: [],
     atRisk: [],
+    growth: {
+      totalPeople: members.length,
+      new30d: 0,
+      growthDelta: 0,
+      newsletter: 0,
+      followers: members.filter((m) => m.role === 'wanderer').length,
+      series: [],
+    },
     members,
   };
 }
