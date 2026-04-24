@@ -7,12 +7,17 @@ import type { PixelRect } from '../shared/types';
 export const COWORKING_INSIDE_COLLIDERS: readonly PixelRect[] = [];
 
 /**
- * Bottom edge returns the member to the coworking outdoor camp. The tent
- * image has a clear exit framed by two lanterns at the bottom — the 56px
- * threshold lands cleanly once the avatar steps onto that doorway.
+ * Bottom edge returns the member to the coworking outdoor camp. 2026-04-24:
+ * ENTER-gated to match the market / square / tavern / academy exit pattern
+ * — walking into the 300 px band shows "Press ENTER to exit the Tent",
+ * only ENTER navigates.
  */
 export const COWORKING_INSIDE_RETURN_EDGE: EdgeTriggers = {
-  bottom: { route: '/coworking', threshold: 300 },
+  bottom: {
+    route: '/coworking',
+    threshold: 300,
+    promptLabel: 'Press ENTER to exit the Tent',
+  },
 };
 
 export const coworkingInsideLayersConfig = {
