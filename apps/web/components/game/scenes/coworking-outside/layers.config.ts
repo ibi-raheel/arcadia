@@ -17,46 +17,48 @@ export const COWORKING_OUTSIDE_COLLIDERS: readonly PixelRect[] = [];
  * Coordinates eyeballed from the 1× preview (1403×1121 → doubled to the
  * 2806×2242 runtime image). Nudge in browser if needed.
  */
-// Door/entrance coordinates refined 2026-04-22 to sit on the visible tent
-// openings. Radius 200 covers the entrance flap + immediate approach.
+// 2026-04-24 coords user-clicked off the dev grid: 4 tents locked with
+// 200×200 square zones (halfWidth/halfHeight = 100). tent-2 removed per
+// user ("remove any other tent entrance"). buildingIds left at 1/3/4/5
+// so the tent URLs in existing links keep working.
 export const COWORKING_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
   {
     buildingId: 'tent-1',
-    centerX: 500,
-    centerY: 460,
-    radius: 200,
+    centerX: 900,
+    centerY: 764,
+    radius: 100,
+    halfWidth: 100,
+    halfHeight: 100,
     label: 'Press ENTER to visit Tent',
     route: '/coworking/inside?b=tent-1',
   },
   {
-    buildingId: 'tent-2',
-    centerX: 1780,
-    centerY: 460,
-    radius: 200,
-    label: 'Press ENTER to visit Tent',
-    route: '/coworking/inside?b=tent-2',
-  },
-  {
     buildingId: 'tent-3',
-    centerX: 440,
-    centerY: 1060,
-    radius: 200,
+    centerX: 674,
+    centerY: 1472,
+    radius: 100,
+    halfWidth: 100,
+    halfHeight: 100,
     label: 'Press ENTER to visit Tent',
     route: '/coworking/inside?b=tent-3',
   },
   {
     buildingId: 'tent-4',
-    centerX: 1720,
-    centerY: 1060,
-    radius: 200,
+    centerX: 1690,
+    centerY: 820,
+    radius: 100,
+    halfWidth: 100,
+    halfHeight: 100,
     label: 'Press ENTER to visit Tent',
     route: '/coworking/inside?b=tent-4',
   },
   {
     buildingId: 'tent-5',
-    centerX: 1060,
-    centerY: 1520,
-    radius: 200,
+    centerX: 1718,
+    centerY: 1604,
+    radius: 100,
+    halfWidth: 100,
+    halfHeight: 100,
     label: 'Press ENTER to visit Tent',
     route: '/coworking/inside?b=tent-5',
   },
