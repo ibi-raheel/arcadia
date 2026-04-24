@@ -1,15 +1,19 @@
-// `/dashboard/courses` — creator's course list. The existing
-// `/dashboard` route's course CRUD moved here as the `courses` tab of
-// the new Keeper's Studio shell. Server component; data read matches
-// the pre-Phase-8 query exactly.
-
-import Link from 'next/link';
+// `/dashboard/courses` — creator's course list (the kiln). Server
+// component; real Supabase reads the courses table and shapes the rows
+// into CoursesData so the shared CoursesContent renders.
+//
+// Extra analytics (revenue, sales, finish rate, lesson perf, reviews)
+// aren't in the DB yet — those fields default to 0 / empty and the
+// sections hide. Puts the full V4.5 kit surface behind a single page
+// without having to wait for Stripe / analytics to land.
 
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
-import { Chip, LedgerCard, Hand, Kicker, WaxSeal } from '@/components/scriptorium';
+import { Hand, LedgerCard } from '@/components/scriptorium';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import type { CourseSummary, CoursesData } from '@/lib/fixtures/courses';
 
 import { CreateCourseDialog } from '../_components/CreateCourseDialog';
+import { CoursesContent } from './_components/CoursesContent';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,13 +25,53 @@ type DashboardCourse = {
   readonly updated_at: string;
 };
 
+function relativeUpdatedLabel(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const days = Math.floor(diffMs / 86_400_000);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 7) return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days / 7)}w ago`;
+  if (days < 365) return `${Math.floor(days / 30)}mo ago`;
+  return `${Math.floor(days / 365)}y ago`;
+}
+
+function shapeCourses(rows: readonly DashboardCourse[]): CoursesData {
+  const courses: CourseSummary[] = rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    kicker: r.description ?? undefined,
+    status: r.published ? 'published' : 'draft',
+    price: 0,
+    lessons: 0,
+    sales: 0,
+    revenue: 0,
+    finishRate: r.published ? 0 : undefined,
+    progress: r.published ? undefined : 0,
+    updated: relativeUpdatedLabel(r.updated_at),
+  }));
+
+  return {
+    kpis: {
+      totalCourses: courses.length,
+      published: courses.filter((c) => c.status === 'published').length,
+      revenue30d: 0,
+      mrr: 0,
+      avgFinish: 0,
+    },
+    courses,
+    // Lesson performance + reviews need analytics the MVP doesn't track
+    // yet; ship the sections empty so they hide gracefully until they do.
+    lessonPerf: [],
+    reviews: [],
+  };
+}
+
 export default async function CoursesTab(): Promise<React.JSX.Element> {
   const supabase = getSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  // Layout already auth-gates, but keep a defensive null check for the
-  // type narrowing on `user.id` below.
   if (!user) return <></>;
 
   const { data: courses, error } = await supabase
@@ -35,6 +79,8 @@ export default async function CoursesTab(): Promise<React.JSX.Element> {
     .select('id, title, description, published, updated_at')
     .eq('creator_id', user.id)
     .order('updated_at', { ascending: false });
+
+  const shaped = shapeCourses(courses ?? []);
 
   return (
     <DashboardShell
@@ -48,86 +94,24 @@ export default async function CoursesTab(): Promise<React.JSX.Element> {
       actions={<CreateCourseDialog />}
     >
       {error ? (
-        <p style={{ color: 'var(--crimson)' }}>Couldn&rsquo;t load your courses: {error.message}</p>
-      ) : !courses || courses.length === 0 ? (
-        <EmptyCoursesState />
+        <LedgerCard>
+          <p style={{ color: 'var(--crimson)' }}>
+            Couldn&rsquo;t load your courses: {error.message}
+          </p>
+        </LedgerCard>
+      ) : shaped.courses.length === 0 ? (
+        <LedgerCard>
+          <p
+            className="body-italic"
+            style={{ fontSize: 18, color: 'var(--ink)', textAlign: 'center' }}
+          >
+            no courses yet. light the lantern and write the first.
+          </p>
+          <Hand>~ the button above opens a fresh scroll ~</Hand>
+        </LedgerCard>
       ) : (
-        <CourseLedger courses={courses} />
+        <CoursesContent data={shaped} createCta={<CreateCourseDialog />} />
       )}
     </DashboardShell>
-  );
-}
-
-function CourseLedger({
-  courses,
-}: {
-  readonly courses: readonly DashboardCourse[];
-}): React.JSX.Element {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {courses.map((c, i) => (
-        <Link
-          key={c.id}
-          href={`/dashboard/courses/${c.id}`}
-          style={{ textDecoration: 'none', color: 'inherit' }}
-        >
-          <LedgerCard rotate={i % 2 === 0 ? -0.3 : 0.3}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'space-between',
-                gap: 18,
-              }}
-            >
-              <div style={{ flex: 1 }}>
-                <Kicker>{c.published ? 'signed · published' : 'drying · draft'}</Kicker>
-                <h3 style={{ marginTop: 6 }}>{c.title}</h3>
-                {c.description && (
-                  <p
-                    className="body-italic"
-                    style={{
-                      marginTop: 6,
-                      color: 'var(--ink-soft)',
-                      fontSize: 15,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {c.description}
-                  </p>
-                )}
-                <Hand>~ updated {new Date(c.updated_at).toLocaleDateString()} ~</Hand>
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'flex-end',
-                  gap: 10,
-                }}
-              >
-                {c.published ? <WaxSeal letter="P" /> : <Chip>draft</Chip>}
-              </div>
-            </div>
-          </LedgerCard>
-        </Link>
-      ))}
-    </div>
-  );
-}
-
-function EmptyCoursesState(): React.JSX.Element {
-  return (
-    <LedgerCard>
-      <p className="body-italic" style={{ fontSize: 18, color: 'var(--ink)', textAlign: 'center' }}>
-        no courses yet. light the lantern and write the first.
-      </p>
-      <p className="hand" style={{ marginTop: 8, textAlign: 'center', fontSize: 16 }}>
-        ~ the button above opens a fresh scroll ~
-      </p>
-    </LedgerCard>
   );
 }
