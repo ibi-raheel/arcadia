@@ -16,32 +16,32 @@ export const TAVERN_OUTSIDE_COLLIDERS: readonly PixelRect[] = [];
  *
  * Coordinates eyeballed from the 1× preview; nudge in browser if needed.
  */
-// 2026-04-23 screenshot feedback — radius was 220, too loose. User
-// highlighted tight red boxes around each door. Dropped to 80 so the
-// prompt only fires when the avatar is visually at a door, not
-// whenever they happen to wander near a tavern. Nudge per-building
-// if a specific door's visual centre doesn't match the coord below.
+// 2026-04-23 grid-based screenshot — door stairs sit on the LEFT side of
+// the island (x ≈ 400–550), not the middle. Previous coords (x ≈ 1200)
+// were in empty grass. Radius 80 keeps the trigger tight enough that it
+// only fires when the avatar is visually at a door. Coords read off the
+// dev grid overlay; nudge per-building if any door still feels off.
 export const TAVERN_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
   {
     buildingId: 'tavern-a',
-    centerX: 1180,
-    centerY: 560,
+    centerX: 400,
+    centerY: 200,
     radius: 80,
     label: 'Press ENTER to visit The Three Ravens',
     route: '/tavern?b=tavern-a',
   },
   {
     buildingId: 'tavern-b',
-    centerX: 1200,
-    centerY: 1260,
+    centerX: 400,
+    centerY: 950,
     radius: 80,
     label: 'Press ENTER to visit The Iron Chalice',
     route: '/tavern?b=tavern-b',
   },
   {
     buildingId: 'tavern-c',
-    centerX: 1220,
-    centerY: 1960,
+    centerX: 550,
+    centerY: 1750,
     radius: 80,
     label: 'Press ENTER to visit The Sleeping Hollow',
     route: '/tavern?b=tavern-c',
@@ -65,9 +65,9 @@ export const TAVERN_OUTSIDE_DOOR_SPAWNS: Record<
   string,
   { readonly x: number; readonly y: number } | undefined
 > = {
-  'tavern-a': { x: 1180, y: 560 },
-  'tavern-b': { x: 1200, y: 1260 },
-  'tavern-c': { x: 1220, y: 1960 },
+  'tavern-a': { x: 400, y: 200 },
+  'tavern-b': { x: 400, y: 950 },
+  'tavern-c': { x: 550, y: 1750 },
 };
 
 /** West (bridge) edge returns the member to the square at the east gate. */
