@@ -16,32 +16,33 @@ export const TAVERN_OUTSIDE_COLLIDERS: readonly PixelRect[] = [];
  *
  * Coordinates eyeballed from the 1× preview; nudge in browser if needed.
  */
-// 2026-04-23 grid-based screenshot — door stairs sit on the LEFT side of
-// the island (x ≈ 400–550), not the middle. Previous coords (x ≈ 1200)
-// were in empty grass. Radius 80 keeps the trigger tight enough that it
-// only fires when the avatar is visually at a door. Coords read off the
-// dev grid overlay; nudge per-building if any door still feels off.
+// 2026-04-23 grid-reads from the user:
+// - Tavern A (top, blue roof):      (1100, 550)
+// - Tavern B (middle, red roof):    (1150, 1350)   ← x best-guess; nudge if off
+// - Tavern C (bottom, green roof):  (1200, 2200)
+// Radius 80 keeps the trigger tight enough that the prompt only fires
+// when the avatar is visually at a door's stairs.
 export const TAVERN_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
   {
     buildingId: 'tavern-a',
-    centerX: 400,
-    centerY: 200,
+    centerX: 1100,
+    centerY: 550,
     radius: 80,
     label: 'Press ENTER to visit The Three Ravens',
     route: '/tavern?b=tavern-a',
   },
   {
     buildingId: 'tavern-b',
-    centerX: 400,
-    centerY: 950,
+    centerX: 1150,
+    centerY: 1350,
     radius: 80,
     label: 'Press ENTER to visit The Iron Chalice',
     route: '/tavern?b=tavern-b',
   },
   {
     buildingId: 'tavern-c',
-    centerX: 550,
-    centerY: 1750,
+    centerX: 1200,
+    centerY: 2200,
     radius: 80,
     label: 'Press ENTER to visit The Sleeping Hollow',
     route: '/tavern?b=tavern-c',
@@ -65,9 +66,9 @@ export const TAVERN_OUTSIDE_DOOR_SPAWNS: Record<
   string,
   { readonly x: number; readonly y: number } | undefined
 > = {
-  'tavern-a': { x: 400, y: 200 },
-  'tavern-b': { x: 400, y: 950 },
-  'tavern-c': { x: 550, y: 1750 },
+  'tavern-a': { x: 1100, y: 550 },
+  'tavern-b': { x: 1150, y: 1350 },
+  'tavern-c': { x: 1200, y: 2200 },
 };
 
 /** West (bridge) edge returns the member to the square at the east gate. */
