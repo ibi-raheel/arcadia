@@ -231,10 +231,24 @@ export function VideoLessonViewer({ initial, previewOnly = false }: Props): Reac
 
   return (
     <div>
-      <div className="aspect-video w-full overflow-hidden rounded-lg bg-black">
-        <div ref={hostRef} className="h-full w-full" />
+      <div
+        style={{
+          aspectRatio: '16 / 9',
+          width: '100%',
+          overflow: 'hidden',
+          borderRadius: 3,
+          border: '1px solid var(--bronze-deep)',
+          background: 'var(--night-deep)',
+          boxShadow: 'inset 0 0 0 2px rgba(90, 63, 34, 0.4), 0 6px 14px rgba(0, 0, 0, 0.35)',
+        }}
+      >
+        <div ref={hostRef} style={{ width: '100%', height: '100%' }} />
       </div>
-      {error && <p className="mt-2 text-xs text-red-300">Couldn&rsquo;t save progress: {error}</p>}
+      {error && (
+        <p className="hand" style={{ marginTop: 8, color: 'var(--crimson)' }}>
+          ~ couldn&rsquo;t save progress: {error} ~
+        </p>
+      )}
     </div>
   );
 }

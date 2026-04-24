@@ -1,11 +1,89 @@
+// `/login` — the doorway into Arcadia. Night-room + scroll form with a
+// blue drop-cap "A", bronze underline fields, and a bronze primary
+// submit. Mirrors the signup scroll but uses "open the door" copy.
+
 'use client';
 
-import { Suspense, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
+
+import {
+  BronzeButton,
+  Desk,
+  DropCap,
+  Hand,
+  Kicker,
+  NightRoom,
+  ScrollCard,
+  VellumField,
+} from '@/components/scriptorium';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
-function LoginForm() {
+export default function LoginPage(): React.JSX.Element {
+  return (
+    <NightRoom>
+      <Desk>
+        <div
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '40px 24px',
+          }}
+        >
+          <div style={{ width: '100%', maxWidth: 480 }}>
+            <ScrollCard>
+              <header
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 18,
+                  paddingBottom: 18,
+                  borderBottom: '1px dashed rgba(90, 63, 34, 0.3)',
+                }}
+              >
+                <DropCap letter="A" variant="blue" />
+                <div style={{ flex: 1 }}>
+                  <Kicker>the doorway</Kicker>
+                  <h1
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontStyle: 'italic',
+                      fontSize: 34,
+                      margin: '4px 0 0',
+                      color: 'var(--ink)',
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    Welcome back.
+                  </h1>
+                  <Hand>~ sign the ledger to step inside ~</Hand>
+                </div>
+              </header>
+
+              <Suspense
+                fallback={
+                  <p
+                    className="body-italic"
+                    style={{ marginTop: 18, color: 'var(--ink-quiet)', textAlign: 'center' }}
+                  >
+                    ~ unfurling the scroll ~
+                  </p>
+                }
+              >
+                <LoginForm />
+              </Suspense>
+            </ScrollCard>
+          </div>
+        </div>
+      </Desk>
+    </NightRoom>
+  );
+}
+
+function LoginForm(): React.JSX.Element {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get('next') ?? '/';
@@ -15,7 +93,7 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     setError(null);
     setLoading(true);
@@ -34,54 +112,76 @@ function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-4">
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-neutral-400">Email</span>
-        <input
-          type="email"
-          autoComplete="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="rounded border border-neutral-800 bg-neutral-950 px-3 py-2 text-neutral-100 focus:border-neutral-600 focus:outline-none"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-neutral-400">Password</span>
-        <input
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="rounded border border-neutral-800 bg-neutral-950 px-3 py-2 text-neutral-100 focus:border-neutral-600 focus:outline-none"
-        />
-      </label>
-      {error && <p className="text-sm text-red-400">{error}</p>}
-      <button
-        type="submit"
-        disabled={loading}
-        className="rounded bg-neutral-100 px-3 py-2 text-sm font-medium text-neutral-900 transition hover:bg-white disabled:opacity-60"
+    <form
+      onSubmit={handleSubmit}
+      style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 16 }}
+    >
+      <VellumField
+        label="email"
+        name="email"
+        type="email"
+        autoComplete="email"
+        required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <VellumField
+        label="password"
+        name="password"
+        type="password"
+        autoComplete="current-password"
+        required
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      {error && (
+        <p
+          className="hand"
+          style={{ margin: 0, color: 'var(--crimson)' }}
+          role="alert"
+          aria-live="polite"
+        >
+          ~ {error} ~
+        </p>
+      )}
+      <div
+        style={{
+          marginTop: 8,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 14,
+          flexWrap: 'wrap',
+        }}
       >
-        {loading ? 'Signing in…' : 'Log in'}
-      </button>
-      <p className="text-center text-xs text-neutral-500">
-        No account?{' '}
-        <Link href="/signup" className="underline hover:text-neutral-300">
-          Sign up
+        <Hand>~ no account yet? ~</Hand>
+        <BronzeButton type="submit" disabled={loading}>
+          {loading ? 'opening…' : 'open the door →'}
+        </BronzeButton>
+      </div>
+      <div
+        style={{
+          paddingTop: 12,
+          borderTop: '1px dashed rgba(90, 63, 34, 0.3)',
+          textAlign: 'center',
+        }}
+      >
+        <Link
+          href="/signup"
+          style={{
+            fontFamily: 'var(--font-caps)',
+            fontSize: 11,
+            letterSpacing: 2,
+            textTransform: 'uppercase',
+            color: 'var(--bronze-deep)',
+            textDecoration: 'none',
+            borderBottom: '1px dashed var(--bronze)',
+            paddingBottom: 1,
+          }}
+        >
+          · stamp a new name ·
         </Link>
-      </p>
+      </div>
     </form>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-8 bg-[#0a0a0a] p-8 text-neutral-200">
-      <h1 className="text-3xl font-semibold tracking-tight">Log in to Arcadia</h1>
-      <Suspense fallback={<p className="text-sm text-neutral-500">Loading…</p>}>
-        <LoginForm />
-      </Suspense>
-    </main>
   );
 }

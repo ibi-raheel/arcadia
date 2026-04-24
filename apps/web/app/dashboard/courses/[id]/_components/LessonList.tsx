@@ -83,13 +83,26 @@ export function LessonList({
   };
 
   return (
-    <div className="space-y-1">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       {items.length === 0 ? (
-        <p className="pl-3 text-xs text-slate-500">No lessons yet.</p>
+        <p
+          className="body-italic"
+          style={{ paddingLeft: 10, color: 'var(--ink-quiet)', fontSize: 13 }}
+        >
+          no lessons yet.
+        </p>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={items.map((l) => l.id)} strategy={verticalListSortingStrategy}>
-            <ul className="space-y-1">
+            <ul
+              style={{
+                listStyle: 'none',
+                padding: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+              }}
+            >
               {items.map((l) => (
                 <SortableLesson
                   key={l.id}
@@ -149,33 +162,57 @@ function SortableLesson({
     });
   };
 
+  const merged: React.CSSProperties = {
+    ...style,
+    borderRadius: 3,
+    border: `1px solid ${isSelected ? 'var(--gilt)' : 'rgba(138, 106, 58, 0.3)'}`,
+    background: isSelected ? 'rgba(255, 222, 155, 0.35)' : 'rgba(232, 213, 165, 0.35)',
+    boxShadow: isSelected ? '0 2px 8px rgba(201, 161, 74, 0.25)' : 'none',
+    opacity: isDragging ? 0.4 : 1,
+  };
+
   return (
-    <li
-      ref={setNodeRef}
-      style={style}
-      className={`rounded-md border ${
-        isSelected
-          ? 'border-emerald-600 bg-slate-900'
-          : 'border-slate-800 bg-slate-950/50 hover:border-slate-700'
-      } ${isDragging ? 'opacity-40' : ''}`}
-    >
-      <div className="flex items-center gap-2 p-1.5 pl-2">
+    <li ref={setNodeRef} style={merged}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px' }}>
         <button
           type="button"
           {...attributes}
           {...listeners}
           title="Drag to reorder"
-          className="cursor-grab touch-none select-none text-slate-600 hover:text-slate-400 active:cursor-grabbing"
+          style={{
+            cursor: 'grab',
+            touchAction: 'none',
+            userSelect: 'none',
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--bronze-deep)',
+            fontSize: 12,
+            padding: 0,
+          }}
         >
           ⋮⋮
         </button>
-        <span className="text-xs text-slate-500">{lesson.type === 'video' ? '▶' : '✎'}</span>
+        <span style={{ color: 'var(--bronze-deep)', fontSize: 12 }}>
+          {lesson.type === 'video' ? '▶' : '✎'}
+        </span>
         <button
           type="button"
           onClick={select}
-          className={`flex-1 truncate text-left text-xs ${
-            isSelected ? 'text-emerald-200' : 'text-slate-300 hover:text-white'
-          }`}
+          style={{
+            flex: 1,
+            textAlign: 'left',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-body)',
+            fontSize: 14,
+            color: isSelected ? 'var(--gilt-deep)' : 'var(--ink)',
+            fontWeight: isSelected ? 600 : 400,
+            padding: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
         >
           {lesson.title}
         </button>
@@ -184,7 +221,17 @@ function SortableLesson({
           onClick={remove}
           disabled={pending}
           title="Delete lesson"
-          className="rounded px-1 py-0.5 text-[10px] text-slate-600 transition hover:bg-red-950/40 hover:text-red-300 disabled:opacity-30"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--ink-quiet)',
+            padding: '2px 4px',
+            fontSize: 10,
+            cursor: 'pointer',
+            borderRadius: 2,
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--wax)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-quiet)')}
         >
           ✕
         </button>
@@ -215,9 +262,20 @@ function AddLessonButton({
           setOpen(true);
           onError(null);
         }}
-        className="ml-2 mt-1 text-xs text-emerald-400 transition hover:text-emerald-300"
+        style={{
+          marginLeft: 10,
+          marginTop: 4,
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          fontFamily: 'var(--font-hand)',
+          fontSize: 15,
+          color: 'var(--bronze-deep)',
+          padding: 0,
+          textAlign: 'left',
+        }}
       >
-        + Add lesson
+        + add lesson
       </button>
     );
   }
@@ -244,7 +302,7 @@ function AddLessonButton({
         e.preventDefault();
         submit();
       }}
-      className="ml-2 mt-1 flex items-center gap-1"
+      style={{ marginLeft: 10, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}
     >
       <input
         autoFocus
@@ -252,16 +310,29 @@ function AddLessonButton({
         value={title}
         onChange={(e) => setTitle(e.target.value.slice(0, LESSON_TITLE_MAX))}
         onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
-        placeholder="Lesson title"
+        placeholder="lesson title"
         disabled={pending}
-        className="w-40 rounded border border-slate-700 bg-slate-950 px-1.5 py-0.5 text-xs text-slate-100 focus:border-emerald-500 focus:outline-none"
+        className="field"
+        style={{ width: 160, fontSize: 13 }}
       />
       <button
         type="submit"
         disabled={pending || !title.trim()}
-        className="rounded bg-emerald-600 px-2 py-0.5 text-xs font-semibold text-white disabled:opacity-40"
+        style={{
+          padding: '3px 10px',
+          borderRadius: 20,
+          border: 'none',
+          cursor: 'pointer',
+          background:
+            'linear-gradient(135deg, var(--bronze-bright) 0%, var(--bronze) 45%, var(--bronze-deep) 100%)',
+          color: 'var(--night)',
+          fontFamily: 'var(--font-display)',
+          fontStyle: 'italic',
+          fontSize: 12,
+          opacity: !title.trim() || pending ? 0.4 : 1,
+        }}
       >
-        {pending ? '…' : 'OK'}
+        {pending ? '…' : 'ok'}
       </button>
     </form>
   );

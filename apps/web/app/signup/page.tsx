@@ -1,11 +1,26 @@
+// `/signup` — new-name doorway. Matches /login's scroll form shape but
+// uses a wax drop-cap + wax submit button so "stamping a new name"
+// reads as the heavier, one-way action.
+
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+
+import {
+  Desk,
+  DropCap,
+  Hand,
+  Kicker,
+  NightRoom,
+  ScrollCard,
+  VellumField,
+  WaxButton,
+} from '@/components/scriptorium';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
-export default function SignupPage() {
+export default function SignupPage(): React.JSX.Element {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,7 +28,7 @@ export default function SignupPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     setError(null);
     setInfo(null);
@@ -40,48 +55,133 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-8 bg-[#0a0a0a] p-8 text-neutral-200">
-      <h1 className="text-3xl font-semibold tracking-tight">Create an Arcadia account</h1>
-      <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-neutral-400">Email</span>
-          <input
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="rounded border border-neutral-800 bg-neutral-950 px-3 py-2 text-neutral-100 focus:border-neutral-600 focus:outline-none"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-neutral-400">Password</span>
-          <input
-            type="password"
-            autoComplete="new-password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="rounded border border-neutral-800 bg-neutral-950 px-3 py-2 text-neutral-100 focus:border-neutral-600 focus:outline-none"
-          />
-        </label>
-        {error && <p className="text-sm text-red-400">{error}</p>}
-        {info && <p className="text-sm text-emerald-400">{info}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded bg-neutral-100 px-3 py-2 text-sm font-medium text-neutral-900 transition hover:bg-white disabled:opacity-60"
+    <NightRoom>
+      <Desk>
+        <div
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '40px 24px',
+          }}
         >
-          {loading ? 'Creating…' : 'Sign up'}
-        </button>
-        <p className="text-center text-xs text-neutral-500">
-          Already have an account?{' '}
-          <Link href="/login" className="underline hover:text-neutral-300">
-            Log in
-          </Link>
-        </p>
-      </form>
-    </main>
+          <div style={{ width: '100%', maxWidth: 480 }}>
+            <ScrollCard>
+              <header
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 18,
+                  paddingBottom: 18,
+                  borderBottom: '1px dashed rgba(90, 63, 34, 0.3)',
+                }}
+              >
+                <DropCap letter="N" variant="wax" />
+                <div style={{ flex: 1 }}>
+                  <Kicker>a new name</Kicker>
+                  <h1
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontStyle: 'italic',
+                      fontSize: 34,
+                      margin: '4px 0 0',
+                      color: 'var(--ink)',
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    Stamp your mark.
+                  </h1>
+                  <Hand>~ enrolment is free while we&rsquo;re in beta ~</Hand>
+                </div>
+              </header>
+
+              <form
+                onSubmit={handleSubmit}
+                style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 16 }}
+              >
+                <VellumField
+                  label="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <VellumField
+                  label="password"
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                {error && (
+                  <p
+                    className="hand"
+                    style={{ margin: 0, color: 'var(--crimson)' }}
+                    role="alert"
+                    aria-live="polite"
+                  >
+                    ~ {error} ~
+                  </p>
+                )}
+                {info && (
+                  <p
+                    className="hand"
+                    style={{ margin: 0, color: 'var(--verdigris-2)' }}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    ~ {info} ~
+                  </p>
+                )}
+                <div
+                  style={{
+                    marginTop: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 14,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <Hand>~ already a scribe here? ~</Hand>
+                  <WaxButton type="submit" disabled={loading}>
+                    {loading ? 'sealing…' : 'seal the pact'}
+                  </WaxButton>
+                </div>
+                <div
+                  style={{
+                    paddingTop: 12,
+                    borderTop: '1px dashed rgba(90, 63, 34, 0.3)',
+                    textAlign: 'center',
+                  }}
+                >
+                  <Link
+                    href="/login"
+                    style={{
+                      fontFamily: 'var(--font-caps)',
+                      fontSize: 11,
+                      letterSpacing: 2,
+                      textTransform: 'uppercase',
+                      color: 'var(--bronze-deep)',
+                      textDecoration: 'none',
+                      borderBottom: '1px dashed var(--bronze)',
+                      paddingBottom: 1,
+                    }}
+                  >
+                    · open the door ·
+                  </Link>
+                </div>
+              </form>
+            </ScrollCard>
+          </div>
+        </div>
+      </Desk>
+    </NightRoom>
   );
 }

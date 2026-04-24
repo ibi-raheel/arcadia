@@ -93,13 +93,16 @@ export function createEnterPromptManager(
 ): EnterPromptManager {
   const container = scene.add.container(0, 0);
   const bg = scene.add.graphics();
+  // Scriptorium pill: italic display text (IM Fell English) on near-
+  // black with a bronze border + wax drop shadow. Matches the rest of
+  // the UI — was a yellow/serif bold on dark blue before 2026-04-24.
   const text = addCrispText(scene, 0, 0, '', {
-    fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
+    fontFamily: '"IM Fell English", "EB Garamond", Georgia, serif',
     fontSize: '20px',
-    fontStyle: 'bold',
-    color: '#fef3c7',
-    stroke: '#1c1917',
-    strokeThickness: 4,
+    fontStyle: 'italic',
+    color: '#e8d5a5',
+    stroke: '#0a0a0a',
+    strokeThickness: 3,
   }).setOrigin(0.5, 1);
   container.add([bg, text]);
   container.setDepth(2_000_000);
@@ -119,14 +122,17 @@ export function createEnterPromptManager(
     }
 
     text.setText(nearest.label);
-    const w = text.width + 28;
-    const h = text.height + 14;
+    const w = text.width + 34;
+    const h = text.height + 18;
     bg.clear();
-    bg.fillStyle(0x0b1220, 0.92);
-    bg.fillRoundedRect(-w / 2, -h, w, h, 10);
-    bg.lineStyle(2, 0xfacc15, 1);
-    bg.strokeRoundedRect(-w / 2, -h, w, h, 10);
-    text.setPosition(0, -7);
+    // Night background with a bronze border and a subtle inner glow.
+    bg.fillStyle(0x0e0806, 0.95);
+    bg.fillRoundedRect(-w / 2, -h, w, h, 4);
+    bg.lineStyle(1.5, 0x8e6e28, 1); // --bronze-deep edge
+    bg.strokeRoundedRect(-w / 2, -h, w, h, 4);
+    bg.lineStyle(1, 0xd4a868, 0.55); // --bronze-bright highlight
+    bg.strokeRoundedRect(-w / 2 + 2, -h + 2, w - 4, h - 4, 3);
+    text.setPosition(0, -9);
     // Anchor the prompt above the avatar's head so it clears the name tag
     // (name tag anchored at avatar-top minus 6px, extending ~24px upward).
     // 2026-04-23: raised from -90 → -130 to stop the prompt bg clipping the

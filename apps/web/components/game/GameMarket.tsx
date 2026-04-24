@@ -1,14 +1,17 @@
-// Phase 4 market mount. Mirrors GameAcademy's single-player shape + a
-// full-screen StallView modal that opens when the scene emits
-// MARKET_OPEN_STALL_EVENT. URL carries ?course=<id>; the URL is the sole
-// source of truth for which stall (if any) is open — avoids state/URL races.
+// Phase 4 market mount. Single-player scene + a full-screen catalog
+// scroll (opens when the scene emits MARKET_OPEN_CATALOG_EVENT) + the
+// StallView modal (opens when a catalog row is picked; URL carries
+// ?course=<id>).
 //
-// 2026-04-23 (Phase 7):
-//   - M4: removed the "← Return to World" button (edge-exit covers it).
-//   - M5: removed the "Search stalls…" input (no one used it).
-//   - M6: `locallyEnrolledIds` moved here from StallView so reopening a
-//     stall after enrolling in the same session still shows "Open in
-//     Academy" instead of the Enrol button.
+// 2026-04-24 — retired the floating-card stall pattern. Stall picking
+// is now a catalog-scroll click that drops ?course=<id> directly into
+// the URL; the scene no longer emits a per-stall event. Deep links
+// with ?course= still open the StallView the same way they did before.
+//
+// Earlier behaviour retained:
+//   - URL `?course=<id>` drives StallView open/close.
+//   - `locallyEnrolledIds` set keeps "Open in Academy" after a session
+//     enrol without a full page reload (Phase 7 item M6).
 
 'use client';
 
@@ -25,7 +28,7 @@ import {
   PROGRESS_CALLBACK_REGISTRY_KEY,
 } from './scenes/boot/asset-manifest';
 import {
-  MARKET_OPEN_STALL_EVENT,
+  MARKET_OPEN_CATALOG_EVENT,
   MARKET_SCENE_KEY,
   MARKET_STALLS_REGISTRY_KEY,
   MarketScene,
@@ -36,6 +39,7 @@ import { MEMBER_REGISTRY_KEY, type SceneMember } from './scenes/world/WorldScene
 
 import type { StallData } from '@/app/market/_components/StallView';
 import { StallView } from '@/app/market/_components/StallView';
+import { CatalogScroll } from '@/app/market/_components/CatalogScroll';
 
 type Props = {
   readonly member: SceneMember;
@@ -51,10 +55,8 @@ export default function GameMarket({ member, stalls, stallDetails }: Props): Rea
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const [preloadProgress, setPreloadProgress] = useState<number | null>(null);
+  const [catalogOpen, setCatalogOpen] = useState(false);
 
-  // Course ids the member enrolled in during this session. Merged with
-  // `stall.enrolled` so reopening the modal after enrolling still shows
-  // "Open in Academy" instead of the Enrol button (Phase 7 item M6).
   const [locallyEnrolledIds, setLocallyEnrolledIds] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
@@ -67,11 +69,8 @@ export default function GameMarket({ member, stalls, stallDetails }: Props): Rea
     });
   }, []);
 
-  // URL is the single source of truth for the open stall id.
   const openCourseId = searchParams.get('course');
 
-  // Keep a ref to router so the Phaser lifecycle effect (mounted once)
-  // can call the latest router.replace on stall-click events.
   const routerRef = useRef(router);
   useEffect(() => {
     routerRef.current = router;
@@ -101,11 +100,10 @@ export default function GameMarket({ member, stalls, stallDetails }: Props): Rea
       setPreloadProgress(progress);
     });
 
-    const handleOpenStall = (courseId: string): void => {
-      // Navigate only — the URL flips the modal open via `openCourseId`.
-      routerRef.current.replace(`/market?course=${courseId}`, { scroll: false });
+    const handleOpenCatalog = (): void => {
+      setCatalogOpen(true);
     };
-    game.events.on(MARKET_OPEN_STALL_EVENT, handleOpenStall);
+    game.events.on(MARKET_OPEN_CATALOG_EVENT, handleOpenCatalog);
 
     setPreloadProgress(0);
     gameRef.current = game;
@@ -114,27 +112,30 @@ export default function GameMarket({ member, stalls, stallDetails }: Props): Rea
       const g = gameRef.current;
       gameRef.current = null;
       if (g) {
-        g.events.off(MARKET_OPEN_STALL_EVENT, handleOpenStall);
+        g.events.off(MARKET_OPEN_CATALOG_EVENT, handleOpenCatalog);
         g.destroy(true);
       }
     };
   }, [member, stalls]);
 
+  const pickStall = useCallback((courseId: string) => {
+    setCatalogOpen(false);
+    routerRef.current.replace(`/market?course=${courseId}`, { scroll: false });
+  }, []);
+
   const closeStall = useCallback(() => {
-    // Drop ?course= — the derived `openCourseId` then flips null and
-    // the modal unmounts.
     const params = new URLSearchParams(searchParams.toString());
     params.delete('course');
     const qs = params.toString();
     router.replace(qs ? `/market?${qs}` : '/market', { scroll: false });
   }, [router, searchParams]);
 
+  const closeCatalog = useCallback(() => setCatalogOpen(false), []);
+
   const activeStall = useMemo(() => {
     if (!openCourseId) return null;
     const base = stallDetails[openCourseId];
     if (!base) return null;
-    // Merge the server-fetched `enrolled` with the session-local set so
-    // re-opening the modal after enrolling still reads as enrolled.
     return base.enrolled || !locallyEnrolledIds.has(openCourseId)
       ? base
       : { ...base, enrolled: true };
@@ -145,6 +146,13 @@ export default function GameMarket({ member, stalls, stallDetails }: Props): Rea
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <div ref={containerRef} className="absolute inset-0" />
+      <CatalogScroll
+        open={catalogOpen && !activeStall}
+        onClose={closeCatalog}
+        stalls={stalls}
+        locallyEnrolledIds={locallyEnrolledIds}
+        onPick={pickStall}
+      />
       {activeStall && (
         <StallView stall={activeStall} onClose={closeStall} onEnrolled={markEnrolled} />
       )}
