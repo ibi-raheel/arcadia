@@ -1,6 +1,22 @@
+// `/academy/[courseId]` — member course viewer. Night-room + desk frame,
+// ledger-card rail on the left, a scroll/vellum page on the right. The
+// interactive viewers (VideoLessonViewer, WrittenLessonViewer) keep their
+// own client-side progress wiring; only the chrome changed in 8.5.
+
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
+import {
+  Desk,
+  DropCap,
+  GhostButton,
+  Hand,
+  Kicker,
+  LedgerCard,
+  NightRoom,
+  ScrollCard,
+  VellumCard,
+} from '@/components/scriptorium';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 import { VideoLessonViewer } from './_components/VideoLessonViewer';
@@ -91,69 +107,138 @@ export default async function CourseViewerPage({
     selectedLessonId && progress ? progress.find((p) => p.lesson_id === selectedLessonId) : null;
   const startSec = selectedProgress?.watched_secs ?? 0;
 
+  const firstLetter = course.title.charAt(0).toUpperCase() || 'A';
+
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="border-b border-slate-800 bg-slate-900/60">
-        <div className="mx-auto flex max-w-6xl items-center justify-between p-4">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/academy"
-              className="text-sm text-slate-400 transition hover:text-slate-200"
-            >
-              ← Academy
-            </Link>
-            <span className="text-slate-700">/</span>
-            <h1 className="text-lg font-semibold">{course.title}</h1>
-          </div>
-          <CourseProgress completed={completedLessons} total={totalLessons} />
-        </div>
-      </header>
-
-      <div className="mx-auto grid max-w-6xl grid-cols-[300px_1fr] gap-6 p-6">
-        <aside className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-          {course.description && (
-            <p className="mb-4 text-sm text-slate-400">{course.description}</p>
-          )}
-          {groupedSections.length === 0 ? (
-            <p className="text-sm text-slate-500">This course has no content yet.</p>
-          ) : (
-            <ol className="space-y-4">
-              {groupedSections.map((s) => (
-                <li key={s.id}>
-                  <h3 className="text-sm font-semibold text-slate-200">{s.title}</h3>
-                  <ul className="mt-2 space-y-1">
-                    {s.lessons.map((l) => (
-                      <li key={l.id}>
-                        <LessonRow
-                          courseId={course.id}
-                          lesson={l}
-                          completed={completedSet.has(l.id)}
-                          selected={l.id === selectedLessonId}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ol>
-          )}
-        </aside>
-
-        <section className="min-h-[500px] rounded-xl border border-slate-800 bg-slate-900/40 p-6">
-          {selectedLesson ? (
-            <LessonBody
-              lesson={selectedLesson}
-              startSec={startSec}
-              completed={completedSet.has(selectedLesson.id)}
-            />
-          ) : (
-            <div className="grid h-full place-items-center text-sm text-slate-500">
-              Select a lesson from the left rail to start.
+    <NightRoom>
+      <Desk>
+        <div style={{ maxWidth: 1180, margin: '0 auto', padding: '30px 28px 48px' }}>
+          <header
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: 24,
+              marginBottom: 22,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 18, flex: 1 }}>
+              <DropCap letter={firstLetter} variant="blue" />
+              <div style={{ flex: 1 }}>
+                <Link href="/academy" style={{ textDecoration: 'none' }}>
+                  <GhostButton size="sm">← the academy</GhostButton>
+                </Link>
+                <div style={{ marginTop: 10 }}>
+                  <Kicker onDark>a lesson, under lantern</Kicker>
+                </div>
+                <h1
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontStyle: 'italic',
+                    fontSize: 42,
+                    lineHeight: 1.1,
+                    color: 'var(--vellum)',
+                    margin: '6px 0 4px',
+                  }}
+                >
+                  {course.title}
+                </h1>
+                {course.description && <Hand onDark>{`~ ${course.description} ~`}</Hand>}
+              </div>
             </div>
-          )}
-        </section>
-      </div>
-    </main>
+            <CourseProgress completed={completedLessons} total={totalLessons} />
+          </header>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '300px 1fr',
+              gap: 22,
+              alignItems: 'start',
+            }}
+          >
+            <LedgerCard>
+              <Kicker>the chapters</Kicker>
+              {groupedSections.length === 0 ? (
+                <p className="body-italic" style={{ marginTop: 10, color: 'var(--ink-quiet)' }}>
+                  ~ nothing inked yet ~
+                </p>
+              ) : (
+                <ol
+                  style={{
+                    listStyle: 'none',
+                    margin: '12px 0 0',
+                    padding: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 16,
+                  }}
+                >
+                  {groupedSections.map((s) => (
+                    <li key={s.id}>
+                      <h3
+                        style={{
+                          fontFamily: 'var(--font-display)',
+                          fontStyle: 'italic',
+                          fontSize: 17,
+                          color: 'var(--ink)',
+                          margin: 0,
+                          paddingBottom: 4,
+                          borderBottom: '1px dashed rgba(90, 63, 34, 0.3)',
+                        }}
+                      >
+                        {s.title}
+                      </h3>
+                      <ul
+                        style={{
+                          listStyle: 'none',
+                          margin: '6px 0 0',
+                          padding: 0,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 2,
+                        }}
+                      >
+                        {s.lessons.map((l) => (
+                          <li key={l.id}>
+                            <LessonRow
+                              courseId={course.id}
+                              lesson={l}
+                              completed={completedSet.has(l.id)}
+                              selected={l.id === selectedLessonId}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </LedgerCard>
+
+            <div>
+              {selectedLesson === null ? (
+                <ScrollCard>
+                  <div style={{ padding: '32px 8px', textAlign: 'center' }}>
+                    <Kicker>no page turned</Kicker>
+                    <p className="body-italic" style={{ marginTop: 12, color: 'var(--ink-soft)' }}>
+                      Pick a lesson from the chapters on the left to begin.
+                    </p>
+                    <Hand>~ the scribe is ready ~</Hand>
+                  </div>
+                </ScrollCard>
+              ) : (
+                <LessonBody
+                  lesson={selectedLesson}
+                  startSec={startSec}
+                  completed={completedSet.has(selectedLesson.id)}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      </Desk>
+    </NightRoom>
   );
 }
 
@@ -189,15 +274,30 @@ function LessonRow({
     <Link
       href={`/academy/${courseId}?lesson=${lesson.id}`}
       scroll={false}
-      className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition ${
-        selected
-          ? 'bg-slate-800 text-emerald-200'
-          : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
-      }`}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '6px 8px',
+        borderRadius: 2,
+        textDecoration: 'none',
+        fontSize: 13,
+        color: selected ? 'var(--ink)' : 'var(--ink-soft)',
+        background: selected ? 'rgba(201, 138, 58, 0.16)' : 'transparent',
+        borderLeft: selected ? '2px solid var(--bronze)' : '2px solid transparent',
+        transition: 'background 120ms ease, color 120ms ease',
+      }}
     >
-      <span className="text-slate-500">{icon}</span>
-      <span className="flex-1 truncate">{lesson.title}</span>
-      {completed && <span className="text-emerald-400">✓</span>}
+      <span
+        className="mono"
+        style={{ color: selected ? 'var(--bronze-deep)' : 'var(--ink-faint)', width: 12 }}
+      >
+        {icon}
+      </span>
+      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {lesson.title}
+      </span>
+      {completed && <span style={{ color: 'var(--verdigris-2)' }}>✓</span>}
     </Link>
   );
 }
@@ -211,12 +311,38 @@ function CourseProgress({
 }): React.JSX.Element {
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
   return (
-    <div className="flex items-center gap-3">
-      <div className="h-2 w-48 overflow-hidden rounded-full bg-slate-800">
-        <div className="h-full bg-emerald-500 transition-all" style={{ width: `${pct}%` }} />
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-end',
+        gap: 6,
+        minWidth: 200,
+      }}
+    >
+      <Kicker onDark>progress</Kicker>
+      <div
+        style={{
+          width: 200,
+          height: 8,
+          borderRadius: 4,
+          background: 'rgba(232, 213, 165, 0.14)',
+          border: '1px solid rgba(138, 106, 58, 0.45)',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            width: `${pct}%`,
+            height: '100%',
+            background:
+              'linear-gradient(90deg, var(--bronze) 0%, var(--lantern) 60%, var(--gilt) 100%)',
+            transition: 'width 240ms ease',
+          }}
+        />
       </div>
-      <span className="text-xs text-slate-400">
-        {completed}/{total}
+      <span className="mono" style={{ color: 'var(--vellum-2)', fontSize: 11 }}>
+        {completed}/{total} · {pct}%
       </span>
     </div>
   );
@@ -231,32 +357,72 @@ function LessonBody({
   readonly startSec: number;
   readonly completed: boolean;
 }): React.JSX.Element {
+  const isVideo = lesson.type === 'video' && lesson.youtube_video_id;
+  const Shell = isVideo ? VellumCard : ScrollCard;
   return (
-    <div>
-      <h2 className="text-xl font-semibold">{lesson.title}</h2>
-      <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">
-        {lesson.type ?? 'written'} lesson
-      </p>
-      <div className="mt-6">
-        {lesson.type === 'video' && lesson.youtube_video_id ? (
-          <VideoLessonViewer
-            initial={{
-              lessonId: lesson.id,
-              videoId: lesson.youtube_video_id,
-              startSec,
-              durationSec: lesson.duration_sec,
+    <Shell>
+      <header
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 12,
+          paddingBottom: 10,
+          marginBottom: 16,
+          borderBottom: '1px dashed rgba(90, 63, 34, 0.3)',
+        }}
+      >
+        <div>
+          <Kicker>{isVideo ? 'video lesson' : 'written lesson'}</Kicker>
+          <h2
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontStyle: 'italic',
+              fontSize: 28,
+              color: 'var(--ink)',
+              margin: '4px 0 0',
             }}
-          />
-        ) : lesson.content ? (
-          <WrittenLessonViewer
-            lessonId={lesson.id}
-            content={lesson.content}
-            initiallyCompleted={completed}
-          />
-        ) : (
-          <p className="text-sm text-slate-500">Nothing to show yet.</p>
+          >
+            {lesson.title}
+          </h2>
+        </div>
+        {completed && (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              color: 'var(--verdigris-2)',
+              fontFamily: 'var(--font-caps)',
+              fontSize: 11,
+              letterSpacing: 2,
+              textTransform: 'uppercase',
+            }}
+          >
+            ✓ signed
+          </span>
         )}
-      </div>
-    </div>
+      </header>
+      {isVideo ? (
+        <VideoLessonViewer
+          initial={{
+            lessonId: lesson.id,
+            videoId: lesson.youtube_video_id!,
+            startSec,
+            durationSec: lesson.duration_sec,
+          }}
+        />
+      ) : lesson.content ? (
+        <WrittenLessonViewer
+          lessonId={lesson.id}
+          content={lesson.content}
+          initiallyCompleted={completed}
+        />
+      ) : (
+        <p className="body-italic" style={{ color: 'var(--ink-quiet)' }}>
+          ~ nothing inked on this page yet ~
+        </p>
+      )}
+    </Shell>
   );
 }
