@@ -16,10 +16,11 @@ export type ScribeStage = 'outline' | 'lesson' | 'image';
 export const SCRIBE_MODEL_ID: Record<ScribeStage, string> = {
   outline: 'gemini-2.5-pro',
   lesson: 'gemini-2.5-flash',
-  // Gemini 2.5 Flash Image supports native image generation with the
-  // same GOOGLE_GENERATIVE_AI_API_KEY. Uses the generateText path
-  // with responseModalities: ['IMAGE'] (see image route).
-  image: 'gemini-2.5-flash-image-preview',
+  // Imagen 4 Fast — dedicated image endpoint on the Generative
+  // Language API (accessible with the standard Gemini key, no Vertex
+  // AI service-account required). The older gemini-2.5-flash-image-
+  // preview got deprecated on v1beta mid-build.
+  image: 'imagen-4.0-fast-generate-001',
 };
 
 /** Resolve a language-model instance for a given stage. Thin enough
@@ -28,12 +29,10 @@ export function scribeLanguageModel(stage: 'outline' | 'lesson') {
   return google(SCRIBE_MODEL_ID[stage]);
 }
 
-/** Image generation uses Gemini via `generateText` with image
- *  response modality — the SDK returns the image as a file in the
- *  response, not through the dedicated experimental_generateImage
- *  path (which targets Imagen-on-Vertex and needs GCP auth). */
+/** Image generation uses Imagen 4 via experimental_generateImage —
+ *  dedicated endpoint, stable, same API key as text. */
 export function scribeImageModel() {
-  return google(SCRIBE_MODEL_ID.image);
+  return google.image(SCRIBE_MODEL_ID.image);
 }
 
 /** Hard per-draft token budget. Above this, streaming actions bail
