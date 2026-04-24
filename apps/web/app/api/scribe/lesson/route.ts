@@ -9,6 +9,7 @@
 import { streamText } from 'ai';
 
 import { scribeConfigured, scribeLanguageModel, tokenBudget } from '@/lib/scribe/gateway';
+import { readScribePreferences } from '@/lib/scribe/preferences';
 import { lessonPrompt } from '@/lib/scribe/prompts';
 import type { DraftLessonBody, DraftOutlineSection, DraftSource } from '@/lib/types/course-drafts';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
@@ -59,6 +60,7 @@ export async function POST(request: Request): Promise<Response> {
 
   const peers = section.lessons.filter((l) => l.id !== lesson.id).map((l) => l.title);
 
+  const preferences = await readScribePreferences(user.id);
   const { system, prompt } = lessonPrompt({
     courseTitle: (draftRow.title as string | null) ?? 'Untitled course',
     sectionTitle: section.title,
@@ -66,6 +68,7 @@ export async function POST(request: Request): Promise<Response> {
     peerLessonTitles: peers,
     userPrompt: (draftRow.user_prompt as string | null) ?? '',
     sources: (draftRow.sources as DraftSource[]) ?? [],
+    preferences,
     revisionFeedback: body.feedback,
   });
 

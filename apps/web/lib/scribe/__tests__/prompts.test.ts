@@ -90,6 +90,30 @@ describe('outlinePrompt', () => {
     expect(prompt).toContain('"sections"');
     expect(prompt).toContain('"lessons"');
   });
+
+  it('injects creator preferences when present', () => {
+    const { prompt } = outlinePrompt({
+      userPrompt: 'x',
+      sources: [],
+      preferences: {
+        voice_guide: 'plain-spoken, short sentences',
+        image_style: null,
+        audience: 'working designers',
+      },
+    });
+    expect(prompt).toContain('plain-spoken, short sentences');
+    expect(prompt).toContain('working designers');
+    expect(prompt.toLowerCase()).toContain('teaching voice');
+  });
+
+  it('omits preferences block when nothing is set', () => {
+    const { prompt } = outlinePrompt({
+      userPrompt: 'x',
+      sources: [],
+      preferences: { voice_guide: null, image_style: null, audience: null },
+    });
+    expect(prompt.toLowerCase()).not.toContain('teaching voice');
+  });
 });
 
 describe('lessonPrompt', () => {
@@ -173,6 +197,24 @@ describe('imagePrompt', () => {
       revisionFeedback: 'more verdigris',
     });
     expect(p).toContain('more verdigris');
+  });
+
+  it("appends the creator's image_style preference to the preamble", () => {
+    const p = imagePrompt({
+      target: 'thumbnail',
+      courseTitle: 'c',
+      subjectTitle: 's',
+      subjectSummary: 'x',
+      preferences: {
+        voice_guide: null,
+        image_style: 'muted palette, no human faces',
+        audience: null,
+      },
+    });
+    expect(p).toContain('muted palette, no human faces');
+    // Must still start with the locked preamble — personal style is
+    // additive, not replacement.
+    expect(p.startsWith(IMAGE_STYLE_PREAMBLE)).toBe(true);
   });
 });
 

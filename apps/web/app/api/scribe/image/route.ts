@@ -16,6 +16,7 @@ import { randomUUID } from 'crypto';
 import { experimental_generateImage as generateImage } from 'ai';
 
 import { scribeConfigured, scribeImageModel } from '@/lib/scribe/gateway';
+import { readScribePreferences } from '@/lib/scribe/preferences';
 import { imagePrompt } from '@/lib/scribe/prompts';
 import type {
   DraftImage,
@@ -82,11 +83,13 @@ export async function POST(request: Request): Promise<Response> {
     targetStore = { lesson_id: lesson.id };
   }
 
+  const preferences = await readScribePreferences(user.id);
   const prompt = imagePrompt({
     target: body.target === 'thumbnail' ? 'thumbnail' : 'lesson',
     courseTitle,
     subjectTitle,
     subjectSummary,
+    preferences,
     revisionFeedback: body.feedback,
   });
 
