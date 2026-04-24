@@ -24,10 +24,14 @@ import type { EventsData, LiveEvent } from '@/lib/fixtures/events';
 
 type Props = {
   readonly data: EventsData;
+  readonly onChanged?: () => void;
 };
 
-export function EventsContent({ data }: Props): React.JSX.Element {
+export function EventsContent({ data, onChanged }: Props): React.JSX.Element {
   const [creating, setCreating] = useState(false);
+  const notify = (): void => {
+    onChanged?.();
+  };
 
   const sorted = useMemo(
     () => [...data.events].sort((a, b) => Date.parse(b.startsAt) - Date.parse(a.startsAt)),
@@ -84,7 +88,15 @@ export function EventsContent({ data }: Props): React.JSX.Element {
         )}
       </div>
 
-      {creating && <CreateEventForm onCancel={() => setCreating(false)} />}
+      {creating && (
+        <CreateEventForm
+          onCancel={() => setCreating(false)}
+          onCreated={() => {
+            setCreating(false);
+            notify();
+          }}
+        />
+      )}
 
       {live.length > 0 && (
         <EventSection
@@ -92,6 +104,7 @@ export function EventsContent({ data }: Props): React.JSX.Element {
           title="on the hearth"
           accent="var(--verdigris)"
           events={live}
+          onChanged={notify}
         />
       )}
 
@@ -101,6 +114,7 @@ export function EventsContent({ data }: Props): React.JSX.Element {
           title="the calendar"
           accent="var(--lantern)"
           events={upcoming}
+          onChanged={notify}
         />
       )}
 
@@ -111,6 +125,7 @@ export function EventsContent({ data }: Props): React.JSX.Element {
           accent="var(--ink-faint)"
           events={past}
           dimmed
+          onChanged={notify}
         />
       )}
 
@@ -169,12 +184,14 @@ function EventSection({
   accent,
   events,
   dimmed = false,
+  onChanged,
 }: {
   readonly kicker: string;
   readonly title: string;
   readonly accent: string;
   readonly events: readonly LiveEvent[];
   readonly dimmed?: boolean;
+  readonly onChanged?: () => void;
 }): React.JSX.Element {
   return (
     <section style={{ marginTop: 22 }}>
@@ -202,7 +219,7 @@ function EventSection({
         }}
       >
         {events.map((e) => (
-          <EventCard key={e.id} event={e} accent={accent} />
+          <EventCard key={e.id} event={e} accent={accent} onChanged={onChanged} />
         ))}
       </div>
     </section>
@@ -212,9 +229,11 @@ function EventSection({
 function EventCard({
   event,
   accent,
+  onChanged,
 }: {
   readonly event: LiveEvent;
   readonly accent: string;
+  readonly onChanged?: () => void;
 }): React.JSX.Element {
   const [editing, setEditing] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -223,12 +242,22 @@ function EventCard({
   const onDelete = (): void => {
     if (!window.confirm(`Delete "${event.title}"? This can't be undone.`)) return;
     startTransition(async () => {
-      await deleteEvent(event.id);
+      const result = await deleteEvent(event.id);
+      if (result.ok) onChanged?.();
     });
   };
 
   if (editing) {
-    return <EditEventForm event={event} onDone={() => setEditing(false)} />;
+    return (
+      <EditEventForm
+        event={event}
+        onDone={() => setEditing(false)}
+        onSaved={() => {
+          setEditing(false);
+          onChanged?.();
+        }}
+      />
+    );
   }
 
   return (
@@ -353,7 +382,13 @@ const LOCATIONS: readonly { readonly value: string; readonly label: string }[] =
   { value: 'tavern-c', label: 'The Sleeping Hollow' },
 ];
 
-function CreateEventForm({ onCancel }: { readonly onCancel: () => void }): React.JSX.Element {
+function CreateEventForm({
+  onCancel,
+  onCreated,
+}: {
+  readonly onCancel: () => void;
+  readonly onCreated?: () => void;
+}): React.JSX.Element {
   const nowLocal = dateToIsoLocal(new Date(Date.now() + 3_600_000).toISOString());
   const endLocal = dateToIsoLocal(new Date(Date.now() + 2 * 3_600_000).toISOString());
 
@@ -393,7 +428,10 @@ function CreateEventForm({ onCancel }: { readonly onCancel: () => void }): React
             streamUrl: values.streamUrl || null,
             location: values.location,
           });
-          if (result.ok) onCancel();
+          if (result.ok) {
+            if (onCreated) onCreated();
+            else onCancel();
+          }
           return result.ok ? { ok: true } : { ok: false, error: result.error };
         }}
         onCancel={onCancel}
@@ -405,9 +443,11 @@ function CreateEventForm({ onCancel }: { readonly onCancel: () => void }): React
 function EditEventForm({
   event,
   onDone,
+  onSaved,
 }: {
   readonly event: LiveEvent;
   readonly onDone: () => void;
+  readonly onSaved?: () => void;
 }): React.JSX.Element {
   return (
     <VellumCard style={{ padding: '18px 20px' }}>
@@ -445,7 +485,10 @@ function EditEventForm({
             streamUrl: values.streamUrl || null,
             location: values.location,
           });
-          if (result.ok) onDone();
+          if (result.ok) {
+            if (onSaved) onSaved();
+            else onDone();
+          }
           return result.ok ? { ok: true } : { ok: false, error: result.error };
         }}
         onCancel={onDone}
