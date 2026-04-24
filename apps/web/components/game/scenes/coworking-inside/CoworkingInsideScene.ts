@@ -103,14 +103,35 @@ export class CoworkingInsideScene extends Phaser.Scene {
     this.wireKeyboardInput();
     this.wirePointerInput();
 
+    const buildingId = this.registry.get(COWORKING_BUILDING_ID_REGISTRY_KEY) as string | null;
+
+    // Rebuild the return edge with `?from=<tentId>` so the outdoor scene
+    // spawns the member back at the tent door they came from
+    // (continuity). Falls back to the static config route when no
+    // buildingId is present.
+    const baseEdge = coworkingInsideLayersConfig.returnEdge.bottom;
+    const returnEdge = buildingId && baseEdge
+      ? {
+          bottom: {
+            ...baseEdge,
+            route: `${baseEdge.route}?from=${encodeURIComponent(buildingId)}`,
+          },
+        }
+      : coworkingInsideLayersConfig.returnEdge;
+
     this.edgeTriggers = createEdgeTriggerManager(
       this,
       bounds.width,
       bounds.height,
-      coworkingInsideLayersConfig.returnEdge,
+      returnEdge,
+      () => {
+        // Pre-navigate hook — send LEAVE_BUILDING before the fade
+        // starts so the Colyseus room leave isn't racing the redirect.
+        // Replaces the old React "Leave tent" button's handler.
+        this.colyseus?.send(MSG.LEAVE_BUILDING, { building: 'coworking' });
+      },
     );
 
-    const buildingId = this.registry.get(COWORKING_BUILDING_ID_REGISTRY_KEY) as string | null;
     this.capacityHud = createCapacityHud(this, {
       label: labelFromBuildingId(buildingId),
       max: HUD_MAX_CLIENTS,
