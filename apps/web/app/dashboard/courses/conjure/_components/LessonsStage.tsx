@@ -250,13 +250,16 @@ function LessonCard({
   const [revising, setRevising] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [approving, startApprove] = useTransition();
+  const [cardError, setCardError] = useState<string | null>(null);
 
   const approved = body?.approved === true;
   const composed = body !== null;
 
   const approveToggle = (): void => {
+    setCardError(null);
     startApprove(async () => {
       const result = await setLessonApproved(draft.id, section.id, lesson.id, !approved);
+      if (!result.ok) setCardError(result.error);
       onApproveChanged(result.ok, !approved);
     });
   };
@@ -311,6 +314,12 @@ function LessonCard({
         </div>
         <StatusChip approved={approved} composed={composed} streaming={streaming} />
       </header>
+
+      {cardError && (
+        <p className="hand" role="alert" style={{ margin: '8px 0 0', color: 'var(--crimson)' }}>
+          ~ {cardError} ~
+        </p>
+      )}
 
       {streaming && (
         <pre
