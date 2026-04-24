@@ -5,6 +5,17 @@ import { useEffect, useState, useTransition } from 'react';
 
 import { VideoLessonViewer } from '@/app/academy/[courseId]/_components/VideoLessonViewer';
 import { WrittenLessonViewer } from '@/app/academy/[courseId]/_components/WrittenLessonViewer';
+import {
+  BronzeButton,
+  Chip,
+  DropCap,
+  GhostButton,
+  Hand,
+  Kicker,
+  MapCard,
+  WaxButton,
+  WaxSeal,
+} from '@/components/scriptorium';
 
 import { enrolInCourse } from '../actions';
 
@@ -75,140 +86,248 @@ export function StallView({ stall, onClose, onEnrolled }: Props): React.JSX.Elem
       if (!result.ok) {
         setEnrolError(result.error);
       } else {
-        // Stay in the Market — don't redirect or refresh. The parent's
-        // session-local enrolled set flips the prop on subsequent opens.
         onEnrolled?.(stall.id);
       }
     });
   };
+
+  const totalLessons = stall.sections.reduce((sum, s) => sum + s.lessons.length, 0);
+  const firstLetter = stall.title.charAt(0).toUpperCase() || 'A';
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="stall-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-xl"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 50,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 20,
+        background: 'rgba(5, 2, 8, 0.7)',
+        backdropFilter: 'blur(16px)',
+      }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950/95 p-6 shadow-2xl">
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="absolute right-4 top-4 rounded-md p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white"
-        >
-          ✕
-        </button>
+      <div style={{ position: 'relative', maxWidth: 820, width: '100%', maxHeight: '90vh' }}>
+        <MapCard style={{ overflowY: 'auto', maxHeight: '90vh', padding: 28 }}>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            style={{
+              position: 'absolute',
+              right: 12,
+              top: 12,
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--ink-quiet)',
+              padding: 8,
+              fontSize: 16,
+              lineHeight: 1,
+              borderRadius: 3,
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--wax)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-quiet)')}
+          >
+            ✕
+          </button>
 
-        <header className="border-b border-slate-800 pb-4">
-          <h2 id="stall-title" className="text-2xl font-semibold text-slate-100">
-            {stall.title}
-          </h2>
-          <p className="mt-1 text-sm text-slate-400">by {stall.creatorName}</p>
-          {stall.description && <p className="mt-3 text-sm text-slate-300">{stall.description}</p>}
-          <p className="mt-3 text-xs text-slate-500">
-            {stall.enrolmentCount} enrolled ·{' '}
-            {stall.sections.reduce((sum, s) => sum + s.lessons.length, 0)} lessons
-          </p>
-        </header>
-
-        <section className="mt-4 space-y-4">
-          {stall.sections.length === 0 ? (
-            <p className="text-sm text-slate-500">This course has no content yet.</p>
-          ) : (
-            stall.sections.map((s) => (
-              <div key={s.id}>
-                <h3 className="text-sm font-semibold text-slate-200">{s.title}</h3>
-                <ul className="mt-2 space-y-1">
-                  {s.lessons.map((l) => (
-                    <li key={l.id} className="flex items-center gap-2 text-xs">
-                      <span className="text-slate-500">{l.type === 'video' ? '▶' : '✎'}</span>
-                      <span className="flex-1 truncate text-slate-300">{l.title}</span>
-                      {l.isPreview ? (
-                        <button
-                          type="button"
-                          onClick={() => setActivePreviewId(activePreviewId === l.id ? null : l.id)}
-                          className="rounded bg-emerald-900/60 px-2 py-0.5 text-[10px] font-medium text-emerald-300 transition hover:bg-emerald-800/70"
-                        >
-                          {activePreviewId === l.id ? 'Hide preview' : '✓ Preview'}
-                        </button>
-                      ) : (
-                        <span className="text-[10px] text-slate-600">Locked</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))
-          )}
-        </section>
-
-        {activePreview && (
-          <section className="mt-6 rounded-lg border border-emerald-900/60 bg-slate-900/60 p-4">
-            <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-emerald-300">
-              Preview: {activePreview.title}
-            </h4>
-            {activePreview.type === 'video' && activePreview.youtubeVideoId ? (
-              <VideoLessonViewer
-                previewOnly
-                initial={{
-                  lessonId: activePreview.id,
-                  videoId: activePreview.youtubeVideoId,
-                  startSec: 0,
-                  durationSec: activePreview.durationSec,
+          <header
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 18,
+              paddingBottom: 20,
+              borderBottom: '1px dashed rgba(90, 63, 34, 0.3)',
+            }}
+          >
+            <DropCap letter={firstLetter} variant={isEnrolled ? 'verdigris' : 'wax'} />
+            <div style={{ flex: 1, paddingTop: 2 }}>
+              <Kicker>a stall in the market</Kicker>
+              <h2
+                id="stall-title"
+                style={{
+                  fontSize: 34,
+                  margin: '4px 0 0',
+                  color: 'var(--ink)',
+                  lineHeight: 1.1,
                 }}
-              />
-            ) : activePreview.content ? (
-              <WrittenLessonViewer
-                previewOnly
-                lessonId={activePreview.id}
-                content={activePreview.content}
-                initiallyCompleted={false}
-              />
+              >
+                {stall.title}
+              </h2>
+              <Hand>{`~ by ${stall.creatorName} ~`}</Hand>
+              {stall.description && (
+                <p
+                  className="body-italic"
+                  style={{ marginTop: 12, color: 'var(--ink-soft)', fontSize: 15 }}
+                >
+                  {stall.description}
+                </p>
+              )}
+              <p
+                className="mono"
+                style={{
+                  marginTop: 12,
+                  color: 'var(--ink-faint)',
+                  fontSize: 10,
+                  letterSpacing: 1.5,
+                }}
+              >
+                {stall.enrolmentCount} ENROLLED · {totalLessons} LESSONS
+              </p>
+            </div>
+            {isEnrolled && <WaxSeal letter="E" />}
+          </header>
+
+          <section style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {stall.sections.length === 0 ? (
+              <p className="body-italic" style={{ color: 'var(--ink-quiet)' }}>
+                this stall is still being set out — come back by lamplight.
+              </p>
             ) : (
-              <p className="text-sm text-slate-500">Nothing to show yet.</p>
+              stall.sections.map((s) => (
+                <div key={s.id}>
+                  <h3 style={{ margin: 0, fontSize: 20, color: 'var(--ink)' }}>{s.title}</h3>
+                  <ul
+                    style={{
+                      listStyle: 'none',
+                      padding: 0,
+                      marginTop: 8,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 4,
+                    }}
+                  >
+                    {s.lessons.map((l) => (
+                      <li
+                        key={l.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: '6px 8px',
+                          borderRadius: 3,
+                          border: '1px solid rgba(138, 106, 58, 0.22)',
+                          background: 'rgba(255, 244, 210, 0.4)',
+                        }}
+                      >
+                        <span style={{ color: 'var(--bronze-deep)', fontSize: 13 }}>
+                          {l.type === 'video' ? '▶' : '✎'}
+                        </span>
+                        <span style={{ flex: 1, color: 'var(--ink)', fontSize: 14 }}>
+                          {l.title}
+                        </span>
+                        {l.isPreview ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActivePreviewId(activePreviewId === l.id ? null : l.id)
+                            }
+                            style={{
+                              background: 'transparent',
+                              border: '1px dashed var(--verdigris-2)',
+                              color: 'var(--verdigris)',
+                              padding: '3px 8px',
+                              borderRadius: 12,
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: 10,
+                              letterSpacing: 1.2,
+                              textTransform: 'uppercase',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {activePreviewId === l.id ? 'hide' : '✓ preview'}
+                          </button>
+                        ) : (
+                          <Chip>locked</Chip>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))
             )}
           </section>
-        )}
 
-        <footer className="mt-6 flex items-center justify-between border-t border-slate-800 pt-4">
-          <p className="text-xs text-slate-500">
-            <span className="font-medium text-slate-300">Free while in beta</span> — no payment
-            today.
-          </p>
-          {isEnrolled ? (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-slate-500 hover:text-white"
-              >
-                Keep browsing
-              </button>
-              <button
-                type="button"
-                onClick={() => router.push(`/academy/${stall.id}`)}
-                className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
-              >
-                Open in Academy
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-3">
-              {enrolError && <span className="text-xs text-red-300">{enrolError}</span>}
-              <button
-                type="button"
-                onClick={handleEnrol}
-                disabled={pending}
-                className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
-              >
-                {pending ? 'Enrolling…' : 'Enrol'}
-              </button>
-            </div>
+          {activePreview && (
+            <section
+              style={{
+                marginTop: 20,
+                padding: 16,
+                borderRadius: 3,
+                border: '1px solid var(--verdigris-2)',
+                background: 'rgba(90, 122, 92, 0.08)',
+              }}
+            >
+              <Kicker>preview · {activePreview.title}</Kicker>
+              <div style={{ marginTop: 12 }}>
+                {activePreview.type === 'video' && activePreview.youtubeVideoId ? (
+                  <VideoLessonViewer
+                    previewOnly
+                    initial={{
+                      lessonId: activePreview.id,
+                      videoId: activePreview.youtubeVideoId,
+                      startSec: 0,
+                      durationSec: activePreview.durationSec,
+                    }}
+                  />
+                ) : activePreview.content ? (
+                  <WrittenLessonViewer
+                    previewOnly
+                    lessonId={activePreview.id}
+                    content={activePreview.content}
+                    initiallyCompleted={false}
+                  />
+                ) : (
+                  <p className="body-italic" style={{ color: 'var(--ink-quiet)' }}>
+                    nothing to show yet.
+                  </p>
+                )}
+              </div>
+            </section>
           )}
-        </footer>
+
+          <footer
+            style={{
+              marginTop: 22,
+              paddingTop: 18,
+              borderTop: '1px dashed rgba(90, 63, 34, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 14,
+              flexWrap: 'wrap',
+            }}
+          >
+            <Hand>~ free while in beta · no payment today ~</Hand>
+            {isEnrolled ? (
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <GhostButton onClick={onClose} size="sm">
+                  keep browsing
+                </GhostButton>
+                <BronzeButton onClick={() => router.push(`/academy/${stall.id}`)}>
+                  step inside →
+                </BronzeButton>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                {enrolError && (
+                  <span style={{ color: 'var(--crimson)', fontSize: 13 }}>{enrolError}</span>
+                )}
+                <WaxButton onClick={handleEnrol} disabled={pending}>
+                  {pending ? 'sealing…' : 'seal the pact'}
+                </WaxButton>
+              </div>
+            )}
+          </footer>
+        </MapCard>
       </div>
     </div>
   );
