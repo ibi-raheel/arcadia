@@ -67,6 +67,8 @@ async function loadFolk(): Promise<FolkData> {
     },
     acquisition: [],
     geography: [],
+    cohorts: [],
+    newsletter: null,
     members,
   };
 }

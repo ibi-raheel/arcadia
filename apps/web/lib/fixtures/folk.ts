@@ -75,6 +75,32 @@ export type FolkGeoEntry = {
   readonly share: number;
 };
 
+/** One cohort row — a season-joined group tracked over time. */
+export type FolkCohort = {
+  readonly season: string; // e.g. "Spring 2026"
+  readonly joined: number;
+  readonly retainedAt30d: number; // percent
+  readonly retainedAt90d: number; // percent
+  readonly ltv: number; // $ per member
+};
+
+/** One newsletter send — the NewsletterPerf card rows. */
+export type FolkNewsletterSend = {
+  readonly subject: string;
+  readonly sentOn: string; // human-readable date
+  readonly sent: number;
+  readonly opens: number; // absolute count
+  readonly clicks: number;
+  readonly conversions: number;
+};
+
+export type FolkNewsletter = {
+  readonly avgOpenRate: number; // percent
+  readonly avgClickRate: number; // percent
+  readonly avgConversionRate: number; // percent
+  readonly recent: readonly FolkNewsletterSend[];
+};
+
 /** Audience growth hero numbers — feeds the 30-day sparkline card that
  *  sits at the very top of /folk. When `series` is empty the card
  *  still renders numbers but suppresses the sparkline. */
@@ -100,6 +126,8 @@ export type FolkData = {
   readonly growth: FolkGrowth;
   readonly acquisition: readonly FolkAcquisitionSource[];
   readonly geography: readonly FolkGeoEntry[];
+  readonly cohorts: readonly FolkCohort[];
+  readonly newsletter: FolkNewsletter | null;
   readonly members: readonly FolkMember[];
 };
 
@@ -204,6 +232,52 @@ export const FOLK_FIXTURE: FolkData = {
     { source: 'paid · ads', count: 15, share: 5, color: '#6d1a24' }, // --oxblood
     { source: 'unknown road', count: 9, share: 3, color: '#735844' }, // --ink-quiet
   ],
+  cohorts: [
+    { season: 'Winter 2026', joined: 42, retainedAt30d: 88, retainedAt90d: 71, ltv: 74 },
+    { season: 'Autumn 2025', joined: 58, retainedAt30d: 81, retainedAt90d: 64, ltv: 118 },
+    { season: 'Summer 2025', joined: 36, retainedAt30d: 75, retainedAt90d: 58, ltv: 142 },
+    { season: 'Spring 2025', joined: 29, retainedAt30d: 72, retainedAt90d: 55, ltv: 168 },
+    { season: 'Winter 2025', joined: 18, retainedAt30d: 67, retainedAt90d: 50, ltv: 196 },
+  ],
+  newsletter: {
+    avgOpenRate: 48.2,
+    avgClickRate: 9.4,
+    avgConversionRate: 2.1,
+    recent: [
+      {
+        subject: 'on the weather of a second draft',
+        sentOn: 'Apr 20',
+        sent: 186,
+        opens: 96,
+        clicks: 21,
+        conversions: 4,
+      },
+      {
+        subject: 'a workbench & a candle',
+        sentOn: 'Apr 13',
+        sent: 184,
+        opens: 84,
+        clicks: 18,
+        conversions: 3,
+      },
+      {
+        subject: 'mapping before the ink dries',
+        sentOn: 'Apr 6',
+        sent: 181,
+        opens: 92,
+        clicks: 17,
+        conversions: 5,
+      },
+      {
+        subject: 'notes from a quieter month',
+        sentOn: 'Mar 30',
+        sent: 178,
+        opens: 78,
+        clicks: 14,
+        conversions: 2,
+      },
+    ],
+  },
   geography: [
     { place: 'London · England', count: 84, share: 27 },
     { place: 'Brooklyn · NY', count: 52, share: 17 },
