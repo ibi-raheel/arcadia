@@ -58,6 +58,23 @@ export type FolkAtRiskEntry = {
   readonly urgency: FolkRiskUrgency;
 };
 
+/** One acquisition source — drives the "how they found you" horizontal
+ *  bars panel. `share` is a percent of total signups; the card computes
+ *  bar widths from count/max so shares can drift without math errors. */
+export type FolkAcquisitionSource = {
+  readonly source: string;
+  readonly count: number;
+  readonly share: number; // percent
+  readonly color: string; // CSS color
+};
+
+/** One geographic bucket for the "they live in" bars panel. */
+export type FolkGeoEntry = {
+  readonly place: string;
+  readonly count: number;
+  readonly share: number;
+};
+
 /** Audience growth hero numbers — feeds the 30-day sparkline card that
  *  sits at the very top of /folk. When `series` is empty the card
  *  still renders numbers but suppresses the sparkline. */
@@ -81,6 +98,8 @@ export type FolkData = {
   readonly retentionCurves: readonly FolkRetentionCurve[];
   readonly atRisk: readonly FolkAtRiskEntry[];
   readonly growth: FolkGrowth;
+  readonly acquisition: readonly FolkAcquisitionSource[];
+  readonly geography: readonly FolkGeoEntry[];
   readonly members: readonly FolkMember[];
 };
 
@@ -177,6 +196,22 @@ export const FOLK_FIXTURE: FolkData = {
       301, 301, 303, 305, 306, 307, 309, 308, 310, 311, 312,
     ],
   },
+  acquisition: [
+    { source: 'the letter', count: 132, share: 42, color: '#f2c469' }, // --lantern
+    { source: 'word of mouth', count: 78, share: 25, color: '#8a6a3a' }, // --bronze
+    { source: 'search', count: 48, share: 15, color: '#5a7a5c' }, // --verdigris
+    { source: 'the forums', count: 30, share: 10, color: '#8f2530' }, // --wax
+    { source: 'paid · ads', count: 15, share: 5, color: '#6d1a24' }, // --oxblood
+    { source: 'unknown road', count: 9, share: 3, color: '#735844' }, // --ink-quiet
+  ],
+  geography: [
+    { place: 'London · England', count: 84, share: 27 },
+    { place: 'Brooklyn · NY', count: 52, share: 17 },
+    { place: 'Kyoto · Japan', count: 38, share: 12 },
+    { place: 'Berlin · Germany', count: 29, share: 9 },
+    { place: 'Mexico City · MX', count: 24, share: 8 },
+    { place: 'elsewhere', count: 85, share: 27 },
+  ],
   atRisk: [
     {
       who: 'Calla Wright',

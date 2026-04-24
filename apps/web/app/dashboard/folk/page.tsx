@@ -65,6 +65,8 @@ async function loadFolk(): Promise<FolkData> {
       followers: members.filter((m) => m.role === 'wanderer').length,
       series: [],
     },
+    acquisition: [],
+    geography: [],
     members,
   };
 }
