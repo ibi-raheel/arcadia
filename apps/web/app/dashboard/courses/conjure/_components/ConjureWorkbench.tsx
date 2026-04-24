@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { Hand, Kicker, LedgerCard } from '@/components/scriptorium';
 import type { CourseDraft, DraftSource } from '@/lib/types/course-drafts';
 
+import { ImagesStage } from './ImagesStage';
 import { LessonsStage } from './LessonsStage';
 import { OutlineStage } from './OutlineStage';
 import { Satchel } from './Satchel';
@@ -39,7 +40,7 @@ export function ConjureWorkbench({ initialDraft }: Props): React.JSX.Element {
   const showOutline =
     draft.outline.length > 0 || draft.user_prompt.trim().length > 0 || draft.sources.length > 0;
 
-  const beyondOutline = draft.stage === 'images' || draft.stage === 'ready';
+  const showImages = draft.stage === 'images' || draft.stage === 'ready';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -59,13 +60,16 @@ export function ConjureWorkbench({ initialDraft }: Props): React.JSX.Element {
         <LessonsStage draft={draft} onDraftChanged={setDraft} />
       )}
 
-      {beyondOutline && (
+      {showImages && <ImagesStage draft={draft} onDraftChanged={setDraft} />}
+
+      {draft.stage === 'ready' && (
         <LedgerCard>
-          <Kicker>further stages</Kicker>
+          <Kicker>stage 4 · seal</Kicker>
           <p className="body-italic" style={{ fontSize: 16, color: 'var(--ink)' }}>
-            images + seal land in 10.6 + 10.7.
+            everything&rsquo;s approved. the seal step lands in 10.7 — then the course materializes
+            into real rows in the kiln.
           </p>
-          <Hand>~ you&rsquo;re on stage: {draft.stage} ~</Hand>
+          <Hand>~ nearly there ~</Hand>
         </LedgerCard>
       )}
     </div>
