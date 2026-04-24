@@ -118,11 +118,17 @@
   box-shadow: 0 8px 18px rgba(80,10,20,0.55), inset 0 -4px 10px rgba(30,0,0,0.45), inset 0 2px 4px rgba(255,200,200,0.2);
 }
 .btn-ghost {
-  background: transparent; color: var(--vellum);
-  border: 1px solid var(--bronze);
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--bronze-deep);
   box-shadow: none;
 }
-.btn-ghost:hover { background: rgba(184,140,82,0.14); }
+.btn-ghost:hover { background: rgba(184,140,82,0.16); border-color: var(--bronze); }
+.btn-ghost.on-dark {
+  color: var(--vellum);
+  border-color: var(--bronze);
+}
+.btn-ghost.on-dark:hover { background: rgba(184,140,82,0.14); }
 .btn-sm { font-size: 14px; padding: 7px 16px; }
 
 /* Fields */

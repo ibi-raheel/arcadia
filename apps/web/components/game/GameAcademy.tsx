@@ -1,12 +1,18 @@
 // Phase 3.5 academy mount. Single-player mirror of GameTavern without
-// Colyseus / chat / leaderboard — just Phaser + a local avatar + course
-// podiums. Podium clicks fire a navigation event routed to /academy/[id].
+// Colyseus / chat / leaderboard — just Phaser + a local avatar + a
+// central lectern. Walking up to the lectern + pressing ENTER opens a
+// React scroll modal (LedgerScroll) listing the member's courses.
+//
+// 2026-04-24 — retired the floating-card podium pattern. The course list
+// is now kept in React and only shown when the member interacts with
+// the scene centrepiece.
 
 'use client';
 
 import * as Phaser from 'phaser';
-import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { LedgerScroll } from '@/app/academy/_components/LedgerScroll';
 
 import { BuildingTransition } from './BuildingTransition';
 import { LevelUpBanner } from './LevelUpBanner';
@@ -18,7 +24,7 @@ import {
 } from './scenes/boot/asset-manifest';
 import {
   ACADEMY_COURSES_REGISTRY_KEY,
-  ACADEMY_NAVIGATE_EVENT,
+  ACADEMY_OPEN_LEDGER_EVENT,
   ACADEMY_SCENE_KEY,
   AcademyScene,
   type AcademyCoursePodium,
@@ -34,10 +40,10 @@ type Props = {
 export default function GameAcademy({ member, courses }: Props): React.JSX.Element {
   useLevelSync({ memberId: member.memberId });
 
-  const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const [preloadProgress, setPreloadProgress] = useState<number | null>(null);
+  const [ledgerOpen, setLedgerOpen] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current || gameRef.current) return;
@@ -63,10 +69,10 @@ export default function GameAcademy({ member, courses }: Props): React.JSX.Eleme
       setPreloadProgress(progress);
     });
 
-    const handleNavigate = (courseId: string): void => {
-      router.push(`/academy/${courseId}`);
+    const handleOpenLedger = (): void => {
+      setLedgerOpen(true);
     };
-    game.events.on(ACADEMY_NAVIGATE_EVENT, handleNavigate);
+    game.events.on(ACADEMY_OPEN_LEDGER_EVENT, handleOpenLedger);
 
     setPreloadProgress(0);
     gameRef.current = game;
@@ -75,17 +81,20 @@ export default function GameAcademy({ member, courses }: Props): React.JSX.Eleme
       const g = gameRef.current;
       gameRef.current = null;
       if (g) {
-        g.events.off(ACADEMY_NAVIGATE_EVENT, handleNavigate);
+        g.events.off(ACADEMY_OPEN_LEDGER_EVENT, handleOpenLedger);
         g.destroy(true);
       }
     };
-  }, [member, courses, router]);
+  }, [member, courses]);
+
+  const closeLedger = useCallback(() => setLedgerOpen(false), []);
 
   const ready = preloadProgress !== null && preloadProgress >= 1;
 
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <div ref={containerRef} className="absolute inset-0" />
+      <LedgerScroll open={ledgerOpen} onClose={closeLedger} courses={courses} />
       <BuildingTransition
         ready={ready}
         displayName="The Academy"

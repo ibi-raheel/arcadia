@@ -8,6 +8,7 @@ import { notFound, redirect } from 'next/navigation';
 
 import {
   Desk,
+  DeskOrnaments,
   DropCap,
   GhostButton,
   Hand,
@@ -49,6 +50,8 @@ type Params = {
   readonly params: { readonly courseId: string };
   readonly searchParams?: { readonly lesson?: string };
 };
+
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
 export default async function CourseViewerPage({
   params,
@@ -112,7 +115,16 @@ export default async function CourseViewerPage({
   return (
     <NightRoom>
       <Desk>
-        <div style={{ maxWidth: 1180, margin: '0 auto', padding: '30px 28px 48px' }}>
+        <DeskOrnaments />
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 1,
+            maxWidth: 1180,
+            margin: '0 auto',
+            padding: '30px 28px 48px',
+          }}
+        >
           <header
             style={{
               display: 'flex',
@@ -126,7 +138,9 @@ export default async function CourseViewerPage({
               <DropCap letter={firstLetter} variant="blue" />
               <div style={{ flex: 1 }}>
                 <Link href="/academy" style={{ textDecoration: 'none' }}>
-                  <GhostButton size="sm">← the academy</GhostButton>
+                  <GhostButton size="sm" onDark>
+                    ← the academy
+                  </GhostButton>
                 </Link>
                 <div style={{ marginTop: 10 }}>
                   <Kicker onDark>a lesson, under lantern</Kicker>
@@ -152,12 +166,12 @@ export default async function CourseViewerPage({
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: '300px 1fr',
+              gridTemplateColumns: '320px 1fr',
               gap: 22,
               alignItems: 'start',
             }}
           >
-            <LedgerCard>
+            <LedgerCard style={{ padding: '22px 20px' }}>
               <Kicker>the chapters</Kicker>
               {groupedSections.length === 0 ? (
                 <p className="body-italic" style={{ marginTop: 10, color: 'var(--ink-quiet)' }}>
@@ -167,48 +181,81 @@ export default async function CourseViewerPage({
                 <ol
                   style={{
                     listStyle: 'none',
-                    margin: '12px 0 0',
+                    margin: '14px 0 0',
                     padding: 0,
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 16,
+                    gap: 18,
                   }}
                 >
-                  {groupedSections.map((s) => (
+                  {groupedSections.map((s, i) => (
                     <li key={s.id}>
-                      <h3
+                      <div
                         style={{
-                          fontFamily: 'var(--font-display)',
-                          fontStyle: 'italic',
-                          fontSize: 17,
-                          color: 'var(--ink)',
-                          margin: 0,
-                          paddingBottom: 4,
+                          display: 'flex',
+                          alignItems: 'baseline',
+                          gap: 8,
+                          paddingBottom: 6,
                           borderBottom: '1px dashed rgba(90, 63, 34, 0.3)',
                         }}
                       >
-                        {s.title}
-                      </h3>
+                        <span
+                          className="mono"
+                          style={{
+                            fontSize: 10,
+                            letterSpacing: 1.8,
+                            color: 'var(--gilt-deep)',
+                            minWidth: 22,
+                          }}
+                        >
+                          {ROMAN[i] ?? `${i + 1}`}
+                        </span>
+                        <h3
+                          style={{
+                            fontFamily: 'var(--font-display)',
+                            fontStyle: 'italic',
+                            fontSize: 19,
+                            color: 'var(--ink)',
+                            margin: 0,
+                            flex: 1,
+                          }}
+                        >
+                          {s.title}
+                        </h3>
+                        <SectionCount
+                          completed={s.lessons.filter((l) => completedSet.has(l.id)).length}
+                          total={s.lessons.length}
+                        />
+                      </div>
                       <ul
                         style={{
                           listStyle: 'none',
-                          margin: '6px 0 0',
+                          margin: '8px 0 0',
                           padding: 0,
                           display: 'flex',
                           flexDirection: 'column',
-                          gap: 2,
+                          gap: 3,
                         }}
                       >
-                        {s.lessons.map((l) => (
-                          <li key={l.id}>
-                            <LessonRow
-                              courseId={course.id}
-                              lesson={l}
-                              completed={completedSet.has(l.id)}
-                              selected={l.id === selectedLessonId}
-                            />
+                        {s.lessons.length === 0 ? (
+                          <li
+                            className="body-italic"
+                            style={{ color: 'var(--ink-quiet)', fontSize: 13, padding: '4px 8px' }}
+                          >
+                            no lessons yet
                           </li>
-                        ))}
+                        ) : (
+                          s.lessons.map((l) => (
+                            <li key={l.id}>
+                              <LessonRow
+                                courseId={course.id}
+                                lesson={l}
+                                completed={completedSet.has(l.id)}
+                                selected={l.id === selectedLessonId}
+                              />
+                            </li>
+                          ))
+                        )}
                       </ul>
                     </li>
                   ))}
@@ -277,28 +324,75 @@ function LessonRow({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 8,
-        padding: '6px 8px',
+        gap: 10,
+        padding: '10px 10px 10px 14px',
         borderRadius: 2,
         textDecoration: 'none',
-        fontSize: 13,
+        fontSize: 14,
+        lineHeight: 1.3,
         color: selected ? 'var(--ink)' : 'var(--ink-soft)',
-        background: selected ? 'rgba(201, 138, 58, 0.16)' : 'transparent',
-        borderLeft: selected ? '2px solid var(--bronze)' : '2px solid transparent',
-        transition: 'background 120ms ease, color 120ms ease',
+        background: selected ? 'rgba(201, 138, 58, 0.18)' : 'transparent',
+        borderLeft: selected ? '3px solid var(--bronze)' : '3px solid transparent',
+        fontWeight: selected ? 500 : 400,
+        transition: 'background 120ms ease, color 120ms ease, border-color 120ms ease',
       }}
     >
       <span
-        className="mono"
-        style={{ color: selected ? 'var(--bronze-deep)' : 'var(--ink-faint)', width: 12 }}
+        style={{
+          color: selected ? 'var(--bronze-deep)' : 'var(--ink-faint)',
+          fontSize: 12,
+          width: 14,
+          textAlign: 'center',
+          flexShrink: 0,
+        }}
       >
         {icon}
       </span>
-      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <span
+        style={{
+          flex: 1,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
         {lesson.title}
       </span>
-      {completed && <span style={{ color: 'var(--verdigris-2)' }}>✓</span>}
+      {completed && (
+        <span
+          style={{
+            color: 'var(--verdigris-2)',
+            fontSize: 13,
+            flexShrink: 0,
+          }}
+          aria-label="completed"
+        >
+          ✓
+        </span>
+      )}
     </Link>
+  );
+}
+
+function SectionCount({
+  completed,
+  total,
+}: {
+  readonly completed: number;
+  readonly total: number;
+}): React.JSX.Element | null {
+  if (total === 0) return null;
+  return (
+    <span
+      className="mono"
+      style={{
+        fontSize: 10,
+        letterSpacing: 1.2,
+        color: completed === total ? 'var(--verdigris-2)' : 'var(--ink-faint)',
+      }}
+    >
+      {completed}/{total}
+    </span>
   );
 }
 

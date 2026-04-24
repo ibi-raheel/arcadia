@@ -27,7 +27,7 @@ describe('academyCameraConfig', () => {
 });
 
 describe('academySpritesConfig', () => {
-  it('exposes the avatar + podium blocks AcademyScene reads', () => {
+  it('exposes the avatar + lectern blocks AcademyScene reads', () => {
     expect(academySpritesConfig.avatar.spawnPixel).toMatchObject({
       x: expect.any(Number),
       y: expect.any(Number),
@@ -35,9 +35,10 @@ describe('academySpritesConfig', () => {
     expect(academySpritesConfig.avatar.size.width).toBeGreaterThan(0);
     expect(academySpritesConfig.avatar.walkSpeed).toBeGreaterThan(0);
 
-    expect(academySpritesConfig.podium.maxPerRow).toBeGreaterThan(0);
-    expect(academySpritesConfig.podium.spacingX).toBeGreaterThan(0);
-    expect(academySpritesConfig.podium.spacingY).toBeGreaterThan(0);
+    expect(academySpritesConfig.lectern.centerX).toBeGreaterThan(0);
+    expect(academySpritesConfig.lectern.centerY).toBeGreaterThan(0);
+    expect(academySpritesConfig.lectern.pedestalWidth).toBeGreaterThan(0);
+    expect(academySpritesConfig.lectern.interactRadius).toBeGreaterThan(0);
   });
 
   it('spawn pixel lies inside the academy interior bounds', () => {
@@ -46,6 +47,14 @@ describe('academySpritesConfig', () => {
     expect(x).toBeLessThanOrEqual(ACADEMY_INTERIOR_SIZE.width);
     expect(y).toBeGreaterThanOrEqual(0);
     expect(y).toBeLessThanOrEqual(ACADEMY_INTERIOR_SIZE.height);
+  });
+
+  it('lectern sits inside the academy interior bounds', () => {
+    const { centerX, centerY } = academySpritesConfig.lectern;
+    expect(centerX).toBeGreaterThanOrEqual(0);
+    expect(centerX).toBeLessThanOrEqual(ACADEMY_INTERIOR_SIZE.width);
+    expect(centerY).toBeGreaterThanOrEqual(0);
+    expect(centerY).toBeLessThanOrEqual(ACADEMY_INTERIOR_SIZE.height);
   });
 });
 

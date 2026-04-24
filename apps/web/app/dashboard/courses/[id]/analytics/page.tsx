@@ -87,7 +87,7 @@ export default async function CourseAnalyticsPage({ params }: Params): Promise<R
       tagline="~ who's read, who's stayed, who's gone quiet ~"
       actions={
         <Link href={`/dashboard/courses/${id}`} style={{ textDecoration: 'none' }}>
-          <GhostButton>← editor</GhostButton>
+          <GhostButton onDark>← editor</GhostButton>
         </Link>
       }
     >

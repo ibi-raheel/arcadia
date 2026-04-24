@@ -1,7 +1,13 @@
 // Phase 3.5 academy scene. Member walks around a 1536×1024 interior and
-// clicks a "course podium" to open the course viewer. Single-player —
-// no Colyseus, no remote avatars. Mirrors TavernScene's image-backed
-// scene shape (bg image, local avatar, screen-space WASD/arrows/click).
+// steps up to a central lectern — press ENTER to open the Scribe's
+// Ledger (a React scroll modal listing enrolled courses). Single-player,
+// no Colyseus.
+//
+// 2026-04-24 — replaced the floating-card "podiums" pattern with the
+// lectern + scroll modal. The registry key for courses is preserved so
+// the React mount still hands the course list in; the scene just stops
+// drawing cards and instead pipes ENTER-on-lectern out to React for the
+// scroll.
 //
 // ADR 0004: no hardcoded tweakable values. See *.config.ts siblings.
 
@@ -14,6 +20,10 @@ import { addCrispText } from '../shared/crisp-text';
 import { createEnterPromptManager, type EnterPromptManager } from '../shared/enter-prompt';
 import { applyFillZoom } from '../shared/fill-zoom';
 import { createJumpBinding, type JumpBinding } from '../shared/jump-binding';
+import {
+  createProximityPromptManager,
+  type ProximityPromptManager,
+} from '../shared/proximity-prompt';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -30,10 +40,9 @@ import { academySpritesConfig } from './sprites.config';
 
 export const ACADEMY_SCENE_KEY = 'AcademyScene' as const;
 
-/**
- * Shape of course data the page passes in via the registry. Each podium
- * maps one-to-one with a row here.
- */
+/** Shape of course data the page passes in via the registry. Now only
+ *  used by the React ledger scroll; the scene itself doesn't render a
+ *  card per course anymore. */
 export type AcademyCoursePodium = {
   readonly id: string;
   readonly title: string;
@@ -42,7 +51,10 @@ export type AcademyCoursePodium = {
 };
 
 export const ACADEMY_COURSES_REGISTRY_KEY = 'academy-courses';
-export const ACADEMY_NAVIGATE_EVENT = 'academy:navigate';
+
+/** Fired when the member is at the lectern and presses ENTER. Carries no
+ *  payload — the React mount already has the course list. */
+export const ACADEMY_OPEN_LEDGER_EVENT = 'academy:open-ledger';
 
 type YSortableGameObject = YSortable & { setDepth: (depth: number) => unknown };
 
@@ -61,6 +73,7 @@ export class AcademyScene extends Phaser.Scene {
   private jumpBinding?: JumpBinding;
   private enterKey?: Phaser.Input.Keyboard.Key;
   private enterPrompt?: EnterPromptManager;
+  private ledgerPrompt?: ProximityPromptManager;
 
   constructor() {
     super({ key: ACADEMY_SCENE_KEY });
@@ -83,7 +96,7 @@ export class AcademyScene extends Phaser.Scene {
     this.wireKeyboardInput();
     this.wirePointerInput();
 
-    this.renderPodiums();
+    this.renderLectern();
 
     // ENTER-gated exit at the bottom-centre archway (Phase 7 item AC10).
     this.enterPrompt = createEnterPromptManager(this, [academyLayersConfig.exitArchway]);
@@ -135,7 +148,6 @@ export class AcademyScene extends Phaser.Scene {
     this.input.on(
       'pointerdown',
       (pointer: Phaser.Input.Pointer, currentlyOver: Phaser.GameObjects.GameObject[]) => {
-        // Don't click-to-move when the click landed on an interactive podium.
         if (currentlyOver.length > 0) return;
         const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
         this.clickTarget = { x: world.x, y: world.y };
@@ -144,66 +156,94 @@ export class AcademyScene extends Phaser.Scene {
   }
 
   /**
-   * Draws one podium per course supplied via the registry. Each podium is
-   * a clickable Rectangle + title label + progress text. Click fires the
-   * game-level navigation event; GameAcademy picks it up and routes.
+   * Draws a centre-of-room wooden lectern with a bound book resting on
+   * top and a soft gilt halo behind. Walking close triggers the
+   * "Press ENTER to open the Scribe's Ledger" prompt. Geometry is
+   * derived from `academySpritesConfig.lectern` so positions can be
+   * tuned without touching the scene class.
    */
-  private renderPodiums(): void {
-    const courses =
-      (this.registry.get(ACADEMY_COURSES_REGISTRY_KEY) as
-        | readonly AcademyCoursePodium[]
-        | undefined) ?? [];
-    if (courses.length === 0) return;
+  private renderLectern(): void {
+    const cfg = academySpritesConfig.lectern;
+    const depthBase = academyLayersConfig.depth.podiums;
 
-    const cfg = academySpritesConfig.podium;
-    const { width: canvasW } = academyCameraConfig.bounds;
+    // Soft warm halo behind the lectern.
+    const halo = this.add.graphics();
+    halo.fillStyle(0xffb23a, 0.12);
+    halo.fillCircle(cfg.centerX, cfg.centerY - 10, 140);
+    halo.setDepth(depthBase - 1);
 
-    courses.forEach((course, index) => {
-      const row = Math.floor(index / cfg.maxPerRow);
-      const colsThisRow = Math.min(cfg.maxPerRow, courses.length - row * cfg.maxPerRow);
-      const col = index % cfg.maxPerRow;
-      const rowWidth = (colsThisRow - 1) * cfg.spacingX;
-      const x = canvasW / 2 - rowWidth / 2 + col * cfg.spacingX;
-      const y = cfg.firstRowCenterY + row * cfg.spacingY;
+    // Stone / wood pedestal — two-tone rectangle.
+    const pedestalBase = this.add
+      .rectangle(cfg.centerX, cfg.centerY + 36, cfg.pedestalWidth, 60, 0x5a3f22)
+      .setStrokeStyle(2, 0x3b2712, 1);
+    pedestalBase.setDepth(depthBase);
 
-      const rect = this.add
-        .rectangle(x, y, cfg.size.width, cfg.size.height, 0x1a1f2a, 0.85)
-        .setStrokeStyle(2, 0x34d399, 0.9);
-      rect.setDepth(academyLayersConfig.depth.podiums);
-      rect.setInteractive({ useHandCursor: true });
+    const pedestalTop = this.add
+      .rectangle(cfg.centerX, cfg.centerY + 2, cfg.pedestalWidth + 18, 16, 0x8a6a3a)
+      .setStrokeStyle(2, 0x3b2712, 1);
+    pedestalTop.setDepth(depthBase);
 
-      const label = addCrispText(this, x, y + cfg.labelOffsetY, course.title, {
-        fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
-        fontSize: '17px',
-        fontStyle: 'bold',
-        color: '#fef3c7',
-        stroke: '#1c1917',
-        strokeThickness: 4,
-        align: 'center',
-        wordWrap: { width: cfg.size.width + 80 },
-      }).setOrigin(0.5, 1);
-      label.setDepth(academyLayersConfig.depth.podiums + 1);
+    // Book — a wedge of three rectangles stacked to look like a closed
+    // tome with gilt edging.
+    const bookBody = this.add
+      .rectangle(cfg.centerX, cfg.centerY - 22, 110, 38, 0x8f2530)
+      .setStrokeStyle(1, 0x5a1620, 1);
+    bookBody.setDepth(depthBase + 1);
 
-      const progressText =
-        course.totalLessons > 0
-          ? `${course.completedLessons}/${course.totalLessons} · ${Math.round((course.completedLessons / course.totalLessons) * 100)}%`
-          : 'No lessons yet';
-      const progress = addCrispText(this, x, y + cfg.progressOffsetY, progressText, {
-        fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
-        fontSize: '13px',
-        color: '#a7f3d0',
-        stroke: '#1c1917',
-        strokeThickness: 3,
-        align: 'center',
-      }).setOrigin(0.5, 0);
-      progress.setDepth(academyLayersConfig.depth.podiums + 1);
+    const bookSpine = this.add
+      .rectangle(cfg.centerX, cfg.centerY - 22, 110, 6, 0xc9a863)
+      .setStrokeStyle(1, 0x8a6a3a, 1);
+    bookSpine.setDepth(depthBase + 2);
 
-      rect.on('pointerover', () => rect.setFillStyle(0x0f172a, 1));
-      rect.on('pointerout', () => rect.setFillStyle(0x1a1f2a, 0.85));
-      rect.on('pointerup', () => {
-        this.game.events.emit(ACADEMY_NAVIGATE_EVENT, course.id);
-      });
+    const bookPages = this.add
+      .rectangle(cfg.centerX, cfg.centerY - 30, 104, 6, 0xe8d5a5)
+      .setStrokeStyle(1, 0x8a6a3a, 1);
+    bookPages.setDepth(depthBase + 2);
+
+    // Gilt sigil on the cover.
+    const sigil = addCrispText(this, cfg.centerX, cfg.centerY - 22, '✦', {
+      fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
+      fontSize: '22px',
+      color: '#d4a868',
+      stroke: '#1c1917',
+      strokeThickness: 3,
+    }).setOrigin(0.5, 0.5);
+    sigil.setDepth(depthBase + 3);
+
+    // "The Scribe's Ledger" caption below the pedestal.
+    const caption = addCrispText(this, cfg.centerX, cfg.centerY + 80, "The Scribe's Ledger", {
+      fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
+      fontSize: '15px',
+      fontStyle: 'italic',
+      color: '#fef3c7',
+      stroke: '#1c1917',
+      strokeThickness: 3,
+    }).setOrigin(0.5, 0);
+    caption.setDepth(depthBase + 1);
+
+    // Breathe the halo with a slow alpha pulse so the lectern reads as
+    // interactable rather than decorative.
+    this.tweens.add({
+      targets: halo,
+      alpha: { from: 0.6, to: 1 },
+      duration: 1800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.inOut',
     });
+
+    this.ledgerPrompt = createProximityPromptManager(
+      this,
+      {
+        centerX: cfg.centerX,
+        centerY: cfg.centerY,
+        radius: cfg.interactRadius,
+        label: "Press ENTER to open the Scribe's Ledger",
+      },
+      () => {
+        this.game.events.emit(ACADEMY_OPEN_LEDGER_EVENT);
+      },
+    );
   }
 
   private readInputState(): InputState {
@@ -223,7 +263,15 @@ export class AcademyScene extends Phaser.Scene {
     this.jumpBinding?.tryJump(this.localAvatar);
 
     const enterJustDown = this.enterKey ? Phaser.Input.Keyboard.JustDown(this.enterKey) : false;
-    this.enterPrompt?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown);
+    // The ledger prompt runs before the archway prompt so a single ENTER
+    // press is consumed by the nearer interactable.
+    const ledgerFired =
+      this.ledgerPrompt?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown) ?? false;
+    this.enterPrompt?.update(
+      this.localAvatar.x,
+      this.localAvatar.y,
+      ledgerFired ? false : enterJustDown,
+    );
 
     const input = this.readInputState();
     const kbd = resolveInputVelocity(input, academySpritesConfig.avatar.walkSpeed);

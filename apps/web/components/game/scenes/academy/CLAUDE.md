@@ -1,13 +1,13 @@
 # AcademyScene
 
-Interior room (Phase 3.5). Mirror of TavernScene's image-backed shape, minus the multiplayer and chat machinery. Member walks around a 1536×1024 interior and clicks a **course podium** to open the React course viewer at `/academy/[courseId]`.
+Interior room (Phase 3.5). Mirror of TavernScene's image-backed shape, minus the multiplayer and chat machinery. Member walks around a 1536×1024 interior and steps up to a central **lectern** — pressing ENTER opens a React scroll modal (`LedgerScroll`) listing the courses in their library; each row in the scroll links to `/academy/[courseId]`.
 
 ## Files
 
-- `AcademyScene.ts` — scene class. Loads the interior image, mounts `LocalAvatar`, renders one clickable podium per course passed via registry.
+- `AcademyScene.ts` — scene class. Loads the interior image, mounts `LocalAvatar`, renders the central lectern + gilt halo + "Press ENTER to open the Scribe's Ledger" proximity prompt.
 - `camera.config.ts` — zoom `1.365×` (matches new Tavern), rect-shaped bounds = `ACADEMY_INTERIOR_SIZE` (1536×1024).
-- `sprites.config.ts` — avatar `135×135` (consistent with every other image-backed interior; bumped from 90×90 on 2026-04-22). Podium geometry: size, spacing, row layout params.
-- `layers.config.ts` — depth bands (ground / podiums / dynamic / overlay), plus `ACADEMY_EXIT_ARCHWAY` — ENTER-gated proximity trigger at `(768, 960)` radius `120`. Route returns to `/academy-outside`; academy-outside's bottom-edge return then carries `?from=academy` to the Square, landing the member at the north gate (2026-04-23 Phase 7 AC10).
+- `sprites.config.ts` — avatar `135×135`. `lectern` block: `centerX`, `centerY`, `pedestalWidth`, `interactRadius`.
+- `layers.config.ts` — depth bands (ground / podiums / dynamic / overlay), plus `ACADEMY_EXIT_ARCHWAY` — ENTER-gated proximity trigger at `(768, 960)` radius `120`. Route returns to `/academy-outside`; academy-outside's bottom-edge return then carries `?from=academy` to the Square, landing the member at the north gate (2026-04-23 Phase 7 AC10). The `podiums` depth band is reused for the lectern visuals.
 - `__tests__/configs.test.ts` — shape assertions.
 
 ## Assets loaded
@@ -18,19 +18,19 @@ Interior room (Phase 3.5). Mirror of TavernScene's image-backed shape, minus the
 ## Synced with
 
 - **No Colyseus.** Single-player Phase 3.5; if we want peers in the hall later, drop in an `academy-realm1` room (same shape as `tavern-realm1`).
-- Supabase: courses + progress fetched server-side by `app/academy/page.tsx`; passed to the scene via `ACADEMY_COURSES_REGISTRY_KEY` before Phaser boots.
+- Supabase: courses + progress fetched server-side by `app/academy/page.tsx`; passed to the scene via `ACADEMY_COURSES_REGISTRY_KEY` before Phaser boots, and forwarded to `LedgerScroll` in React.
 
 ## React ↔ scene events (on `game.events`)
 
-- `ACADEMY_NAVIGATE_EVENT` — fired on podium click with the course id. `GameAcademy` listens and calls `router.push('/academy/<id>')`.
+- `ACADEMY_OPEN_LEDGER_EVENT` — fired when the member is inside the lectern radius and presses ENTER. `GameAcademy` listens and opens the `LedgerScroll` modal. No payload — the React mount already holds the course list.
 
 ## Controls
 
 - **W / A / S / D** or arrows — move.
 - **Click on floor** — click-to-move.
-- **Click on a podium** — opens that course's viewer.
+- **ENTER at the lectern** — opens the Scribe's Ledger scroll (list of courses; click a row to step into one).
 - **SPACE** — one-shot jump (2026-04-23 Phase 7 AC8 — `createJumpBinding`).
-- **ENTER near the bottom-centre archway** — shows `Press ENTER to leave the Academy` and routes to `/academy-outside` (2026-04-23 Phase 7 AC10). The `← Return to World` React button was removed in the same commit.
+- **ENTER near the bottom-centre archway** — shows `Press ENTER to leave the Academy` and routes to `/academy-outside` (2026-04-23 Phase 7 AC10).
 
 ## Invariants
 
@@ -39,3 +39,8 @@ Interior room (Phase 3.5). Mirror of TavernScene's image-backed shape, minus the
 - `BOOT_ASSETS.academyInterior` must be preloaded by BootScene before scene start.
 - ADR 0004: no hardcoded tweakable values in `AcademyScene.ts`; all live in the sibling `*.config.ts` modules.
 - TAD §4.2 originally said "Academy never gets a Phaser scene" — superseded by this scene (2026-04-20 inline amendment; revisit whether to promote to a dedicated ADR before Phase 5).
+- ENTER consumption order: lectern prompt runs first, archway prompt second. A single ENTER press fires at most one of the two so the member can never trigger both simultaneously when the two radii happen to overlap.
+
+## History
+
+- **2026-04-24** — replaced the floating-card "podium" pattern with a single centrepiece lectern + React scroll modal. `renderPodiums()` gone; `renderLectern()` draws pedestal + book + halo + caption. `ACADEMY_NAVIGATE_EVENT` retired (course-click navigation now happens inside React via `Link`).
