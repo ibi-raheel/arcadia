@@ -12,7 +12,7 @@
 
 import { useCallback, useState, useTransition } from 'react';
 
-import { deleteDraftImage, reloadDraft, setImageApproved } from '@/app/_actions/scribe';
+import { reloadDraft, setImageApproved } from '@/app/_actions/scribe';
 import {
   BronzeButton,
   Chip,
@@ -21,6 +21,7 @@ import {
   Kicker,
   ScrollCard,
   VellumCard,
+  VellumField,
   WaxButton,
   WaxSeal,
 } from '@/components/scriptorium';
@@ -127,13 +128,6 @@ export function ImagesStage({ draft, onDraftChanged }: Props): React.JSX.Element
             const refreshed = await reloadDraft(draft.id);
             if (refreshed.ok) onDraftChanged(refreshed.value);
           }}
-          onDelete={async () => {
-            const target = imageFor(null);
-            if (!target) return;
-            await deleteDraftImage(draft.id, target.id);
-            const refreshed = await reloadDraft(draft.id);
-            if (refreshed.ok) onDraftChanged(refreshed.value);
-          }}
         />
 
         {draft.outline.map((section, si) => (
@@ -171,13 +165,6 @@ export function ImagesStage({ draft, onDraftChanged }: Props): React.JSX.Element
                     const refreshed = await reloadDraft(draft.id);
                     if (refreshed.ok) onDraftChanged(refreshed.value);
                   }}
-                  onDelete={async () => {
-                    const target = imageFor(lesson.id);
-                    if (!target) return;
-                    await deleteDraftImage(draft.id, target.id);
-                    const refreshed = await reloadDraft(draft.id);
-                    if (refreshed.ok) onDraftChanged(refreshed.value);
-                  }}
                 />
               ))}
             </div>
@@ -197,7 +184,6 @@ function ImageCard({
   disabledWhileOthers,
   onGenerate,
   onApproveChanged,
-  onDelete,
 }: {
   readonly draftId: string;
   readonly title: string;
@@ -207,9 +193,10 @@ function ImageCard({
   readonly disabledWhileOthers: boolean;
   readonly onGenerate: (feedback?: string) => Promise<void>;
   readonly onApproveChanged: (ok: boolean) => void | Promise<void>;
-  readonly onDelete: () => Promise<void>;
 }): React.JSX.Element {
   const [approving, startApprove] = useTransition();
+  const [revising, setRevising] = useState(false);
+  const [feedback, setFeedback] = useState('');
   const approved = image?.approved === true;
 
   const approveToggle = (): void => {
@@ -218,6 +205,12 @@ function ImageCard({
       const r = await setImageApproved(draftId, image.id, !approved);
       await onApproveChanged(r.ok);
     });
+  };
+
+  const submitRevise = async (): Promise<void> => {
+    await onGenerate(feedback);
+    setRevising(false);
+    setFeedback('');
   };
 
   return (
@@ -262,34 +255,56 @@ function ImageCard({
 
       <ImagePreview image={image} pending={pending} large />
 
-      <footer
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: 10,
-          paddingTop: 10,
-          borderTop: '1px dashed rgba(90, 63, 34, 0.2)',
-        }}
-      >
-        {image ? (
-          <>
-            <GhostButton size="sm" onClick={() => void onDelete()} disabled={disabledWhileOthers}>
-              re-roll
-            </GhostButton>
-            <WaxButton onClick={approveToggle} disabled={approving || disabledWhileOthers}>
-              {approved ? 'un-approve' : 'approve'}
-            </WaxButton>
-          </>
-        ) : (
-          <BronzeButton
-            size="sm"
-            onClick={() => void onGenerate()}
-            disabled={pending || disabledWhileOthers}
-          >
-            {pending ? 'the scribe is painting…' : 'generate'}
-          </BronzeButton>
-        )}
-      </footer>
+      {image && !revising && <PromptPanel prompt={image.prompt} />}
+
+      {revising && (
+        <ReviseRow
+          value={feedback}
+          onChange={setFeedback}
+          onCancel={() => {
+            setRevising(false);
+            setFeedback('');
+          }}
+          onSubmit={submitRevise}
+          disabled={pending || disabledWhileOthers}
+          lastPrompt={image?.prompt}
+        />
+      )}
+
+      {!revising && (
+        <footer
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 10,
+            paddingTop: 10,
+            borderTop: '1px dashed rgba(90, 63, 34, 0.2)',
+          }}
+        >
+          {image ? (
+            <>
+              <GhostButton
+                size="sm"
+                onClick={() => setRevising(true)}
+                disabled={pending || disabledWhileOthers}
+              >
+                re-roll
+              </GhostButton>
+              <WaxButton onClick={approveToggle} disabled={approving || disabledWhileOthers}>
+                {approved ? 'un-approve' : 'approve'}
+              </WaxButton>
+            </>
+          ) : (
+            <BronzeButton
+              size="sm"
+              onClick={() => void onGenerate()}
+              disabled={pending || disabledWhileOthers}
+            >
+              {pending ? 'the scribe is painting…' : 'generate'}
+            </BronzeButton>
+          )}
+        </footer>
+      )}
     </VellumCard>
   );
 }
@@ -302,7 +317,6 @@ function LessonImageCard({
   disabledWhileOthers,
   onGenerate,
   onApproveChanged,
-  onDelete,
 }: {
   readonly draftId: string;
   readonly lesson: DraftOutlineLesson;
@@ -311,9 +325,10 @@ function LessonImageCard({
   readonly disabledWhileOthers: boolean;
   readonly onGenerate: (feedback?: string) => Promise<void>;
   readonly onApproveChanged: (ok: boolean) => void | Promise<void>;
-  readonly onDelete: () => Promise<void>;
 }): React.JSX.Element {
   const [approving, startApprove] = useTransition();
+  const [revising, setRevising] = useState(false);
+  const [feedback, setFeedback] = useState('');
   const approved = image?.approved === true;
 
   const approveToggle = (): void => {
@@ -322,6 +337,12 @@ function LessonImageCard({
       const r = await setImageApproved(draftId, image.id, !approved);
       await onApproveChanged(r.ok);
     });
+  };
+
+  const submitRevise = async (): Promise<void> => {
+    await onGenerate(feedback);
+    setRevising(false);
+    setFeedback('');
   };
 
   return (
@@ -355,38 +376,61 @@ function LessonImageCard({
         </div>
       </header>
       <ImagePreview image={image} pending={pending} />
-      <footer
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: 8,
-          paddingTop: 8,
-          borderTop: '1px dashed rgba(90, 63, 34, 0.2)',
-        }}
-      >
-        {image ? (
-          <>
-            <GhostButton size="sm" onClick={() => void onDelete()} disabled={disabledWhileOthers}>
-              re-roll
-            </GhostButton>
-            <WaxButton
+
+      {image && !revising && <PromptPanel prompt={image.prompt} />}
+
+      {revising && (
+        <ReviseRow
+          value={feedback}
+          onChange={setFeedback}
+          onCancel={() => {
+            setRevising(false);
+            setFeedback('');
+          }}
+          onSubmit={submitRevise}
+          disabled={pending || disabledWhileOthers}
+          lastPrompt={image?.prompt}
+        />
+      )}
+
+      {!revising && (
+        <footer
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 8,
+            paddingTop: 8,
+            borderTop: '1px dashed rgba(90, 63, 34, 0.2)',
+          }}
+        >
+          {image ? (
+            <>
+              <GhostButton
+                size="sm"
+                onClick={() => setRevising(true)}
+                disabled={pending || disabledWhileOthers}
+              >
+                re-roll
+              </GhostButton>
+              <WaxButton
+                size="sm"
+                onClick={approveToggle}
+                disabled={approving || disabledWhileOthers}
+              >
+                {approved ? 'un-approve' : 'approve'}
+              </WaxButton>
+            </>
+          ) : (
+            <BronzeButton
               size="sm"
-              onClick={approveToggle}
-              disabled={approving || disabledWhileOthers}
+              onClick={() => void onGenerate()}
+              disabled={pending || disabledWhileOthers}
             >
-              {approved ? 'un-approve' : 'approve'}
-            </WaxButton>
-          </>
-        ) : (
-          <BronzeButton
-            size="sm"
-            onClick={() => void onGenerate()}
-            disabled={pending || disabledWhileOthers}
-          >
-            {pending ? 'painting…' : 'generate'}
-          </BronzeButton>
-        )}
-      </footer>
+              {pending ? 'painting…' : 'generate'}
+            </BronzeButton>
+          )}
+        </footer>
+      )}
     </VellumCard>
   );
 }
@@ -449,6 +493,106 @@ function ImagePreview({
         0% { background-position: 200% 0; }
         100% { background-position: -200% 0; }
       }`}</style>
+    </div>
+  );
+}
+
+/** Small mono panel that shows the exact prompt the scribe used.
+ *  Collapsible so approved / ready cards don't hog vertical space.
+ *  Gives the creator a concrete anchor when they hit "re-roll" —
+ *  they can see what was sent and decide how to change it. */
+function PromptPanel({ prompt }: { readonly prompt: string }): React.JSX.Element {
+  const [open, setOpen] = useState(false);
+  return (
+    <details
+      open={open}
+      onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}
+      style={{
+        padding: 10,
+        borderRadius: 3,
+        background: 'rgba(16, 10, 5, 0.04)',
+        border: '1px dashed rgba(90, 63, 34, 0.2)',
+      }}
+    >
+      <summary
+        className="mono"
+        style={{
+          cursor: 'pointer',
+          fontSize: 10,
+          letterSpacing: 1.4,
+          textTransform: 'uppercase',
+          color: 'var(--ink-faint)',
+          listStyle: 'none',
+        }}
+      >
+        {open ? '▾ prompt used' : '▸ prompt used'}
+      </summary>
+      <pre
+        className="mono"
+        style={{
+          marginTop: 8,
+          fontSize: 11,
+          lineHeight: 1.5,
+          color: 'var(--ink)',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
+        }}
+      >
+        {prompt}
+      </pre>
+    </details>
+  );
+}
+
+/** Inline revise form: textarea + cancel + regenerate. Shows the
+ *  last prompt above the field when present so the creator can see
+ *  what they're nudging. On submit, calls the parent's onGenerate
+ *  with the feedback string. */
+function ReviseRow({
+  value,
+  onChange,
+  onCancel,
+  onSubmit,
+  disabled,
+  lastPrompt,
+}: {
+  readonly value: string;
+  readonly onChange: (v: string) => void;
+  readonly onCancel: () => void;
+  readonly onSubmit: () => void | Promise<void>;
+  readonly disabled: boolean;
+  readonly lastPrompt?: string;
+}): React.JSX.Element {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {lastPrompt && <PromptPanel prompt={lastPrompt} />}
+      <VellumField
+        label="~ what should change? ~"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="softer palette · more empty space · swap the foreground object for …"
+        disabled={disabled}
+      />
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: 8,
+          paddingTop: 8,
+          borderTop: '1px dashed rgba(90, 63, 34, 0.2)',
+        }}
+      >
+        <GhostButton type="button" size="sm" onClick={onCancel} disabled={disabled}>
+          set aside
+        </GhostButton>
+        <BronzeButton
+          size="sm"
+          onClick={() => void onSubmit()}
+          disabled={disabled || value.trim().length === 0}
+        >
+          regenerate
+        </BronzeButton>
+      </div>
     </div>
   );
 }
