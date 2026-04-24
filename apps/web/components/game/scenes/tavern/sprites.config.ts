@@ -4,11 +4,12 @@
 
 export const tavernSpritesConfig = {
   avatar: {
-    // Top-centre spawn. Exit is the bottom-centre archway (trigger
-    // threshold 400 → fires at y>=624). Spawning at y=300 gives a
-    // clear north-south walk down through the room toward the
-    // archway.
-    spawnPixel: { x: 768, y: 300 },
+    // 2026-04-23 (Phase 7) — spawn AT the exit archway so the
+    // "Press ENTER to leave" prompt is visible on arrival (matches
+    // the market/square pattern). Member lands at the archway's
+    // centre (768, 960); the exit is now ENTER-gated, so sitting
+    // inside the radius shows the prompt without firing navigation.
+    spawnPixel: { x: 768, y: 960 },
     // 90×90 display — 128 × 0.7 (user request, 2026-04-20). Source sheets
     // stay 64×64; setDisplaySize upscales ~1.4× (pixelArt keeps nearest-
     // neighbour crisp).

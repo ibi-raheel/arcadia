@@ -5,9 +5,9 @@ Phase 4 course catalogue. Member walks a 1536×1024 interior and clicks a **stal
 ## Files
 
 - `MarketScene.ts` — scene class. Loads interior image, mounts `LocalAvatar`, renders one clickable stall per course passed via registry.
-- `camera.config.ts` — zoom `1.365×` (matches Tavern + Academy), rect-shaped bounds = `MARKET_INTERIOR_SIZE` (1536×1024).
-- `sprites.config.ts` — avatar `135×135` (consistent with every other image-backed interior). Stall geometry: size, spacing, row layout.
-- `layers.config.ts` — depth bands (ground / stalls / dynamic / overlay).
+- `camera.config.ts` — zoom `1.0` (lives under `applyFillZoom` — see `scenes/shared/fill-zoom.ts`), rect-shaped bounds = `MARKET_INTERIOR_SIZE` (1536×1024).
+- `sprites.config.ts` — avatar spawn at `(768, 140)` under the top archway (2026-04-23 Phase 7 M1), size `135×135`. Stall geometry: size, spacing, row layout.
+- `layers.config.ts` — depth bands (ground / stalls / dynamic / overlay), plus `MARKET_RETURN_EDGE` on the top edge with `promptLabel: 'Press ENTER to return to the Square'` and `span: { min: 500, max: 1036 }` confining firing to the archway width. Route is `/world?from=market` so the Square spawns the member on the south bridge.
 - `__tests__/configs.test.ts` — shape assertions.
 
 ## Assets loaded
@@ -23,7 +23,13 @@ Phase 4 course catalogue. Member walks a 1536×1024 interior and clicks a **stal
 ## React ↔ scene events (on `game.events`)
 
 - `MARKET_OPEN_STALL_EVENT` — fired on stall click with the course id. `GameMarket` listens and opens the `StallView` modal, updating URL `?course=<id>`.
-- `MARKET_FILTER_EVENT` — React HUD → scene. Payload: lowercased search string. Scene hides stalls whose `haystack` (title + creator name) doesn't match.
+- `MARKET_FILTER_EVENT` — was wired to a HUD search input. The input + emission were removed 2026-04-23 (Phase 7 M5); the scene's listener is now dormant. Remove in a future cleanup if not re-introduced.
+
+## React overlays (2026-04-23 Phase 7 pass)
+
+- `← Return to World` button — removed. The top-archway ENTER exit covers it.
+- `Search stalls…` input — removed; search state + `MARKET_FILTER_EVENT` emit effect deleted from `GameMarket.tsx`.
+- `StallView` enrolment persists across modal reopens in the same session. `GameMarket` owns a `locallyEnrolledIds` Set passed back via `onEnrolled(courseId)` and merged into `activeStall.enrolled` so reopening a stall after enrolling still shows "Open in Academy" instead of Enrol.
 
 ## Stall visuals
 

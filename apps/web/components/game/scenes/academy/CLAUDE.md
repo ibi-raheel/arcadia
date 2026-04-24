@@ -7,7 +7,7 @@ Interior room (Phase 3.5). Mirror of TavernScene's image-backed shape, minus the
 - `AcademyScene.ts` — scene class. Loads the interior image, mounts `LocalAvatar`, renders one clickable podium per course passed via registry.
 - `camera.config.ts` — zoom `1.365×` (matches new Tavern), rect-shaped bounds = `ACADEMY_INTERIOR_SIZE` (1536×1024).
 - `sprites.config.ts` — avatar `135×135` (consistent with every other image-backed interior; bumped from 90×90 on 2026-04-22). Podium geometry: size, spacing, row layout params.
-- `layers.config.ts` — depth bands (ground / podiums / dynamic / overlay).
+- `layers.config.ts` — depth bands (ground / podiums / dynamic / overlay), plus `ACADEMY_EXIT_ARCHWAY` — ENTER-gated proximity trigger at `(768, 960)` radius `120`. Route returns to `/academy-outside`; academy-outside's bottom-edge return then carries `?from=academy` to the Square, landing the member at the north gate (2026-04-23 Phase 7 AC10).
 - `__tests__/configs.test.ts` — shape assertions.
 
 ## Assets loaded
@@ -29,6 +29,8 @@ Interior room (Phase 3.5). Mirror of TavernScene's image-backed shape, minus the
 - **W / A / S / D** or arrows — move.
 - **Click on floor** — click-to-move.
 - **Click on a podium** — opens that course's viewer.
+- **SPACE** — one-shot jump (2026-04-23 Phase 7 AC8 — `createJumpBinding`).
+- **ENTER near the bottom-centre archway** — shows `Press ENTER to leave the Academy` and routes to `/academy-outside` (2026-04-23 Phase 7 AC10). The `← Return to World` React button was removed in the same commit.
 
 ## Invariants
 

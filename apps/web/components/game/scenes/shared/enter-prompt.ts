@@ -13,6 +13,8 @@
 
 import type Phaser from 'phaser';
 
+import { addCrispText } from './crisp-text';
+
 export type EntryTrigger = {
   /** Stable identity (tavern-a, tent-3, academy-main, …). Carried in URL. */
   readonly buildingId: string;
@@ -40,6 +42,14 @@ export type EnterPromptManager = {
 };
 
 /**
+ * Fired synchronously the instant ENTER is pressed inside a trigger's
+ * radius, BEFORE the camera fade begins. Scenes that need to send a
+ * Colyseus LEAVE_BUILDING (or similar pre-navigate signal) use this —
+ * firing after the fade would race the room leave.
+ */
+export type EnterPromptFiredCallback = (trigger: EntryTrigger) => void;
+
+/**
  * Find the nearest trigger whose circle contains the avatar. Pure — lifted
  * out so it's unit-testable without Phaser.
  */
@@ -65,19 +75,18 @@ export function findNearestActiveTrigger(
 export function createEnterPromptManager(
   scene: Phaser.Scene,
   triggers: readonly EntryTrigger[],
+  onFire?: EnterPromptFiredCallback,
 ): EnterPromptManager {
   const container = scene.add.container(0, 0);
   const bg = scene.add.graphics();
-  const text = scene.add
-    .text(0, 0, '', {
-      fontFamily: '"Courier New", monospace',
-      fontSize: '20px',
-      fontStyle: 'bold',
-      color: '#f8fafc',
-      stroke: '#0f172a',
-      strokeThickness: 3,
-    })
-    .setOrigin(0.5, 1);
+  const text = addCrispText(scene, 0, 0, '', {
+    fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
+    fontSize: '20px',
+    fontStyle: 'bold',
+    color: '#fef3c7',
+    stroke: '#1c1917',
+    strokeThickness: 4,
+  }).setOrigin(0.5, 1);
   container.add([bg, text]);
   container.setDepth(2_000_000);
   container.setVisible(false);
@@ -104,15 +113,22 @@ export function createEnterPromptManager(
     bg.lineStyle(2, 0xfacc15, 1);
     bg.strokeRoundedRect(-w / 2, -h, w, h, 10);
     text.setPosition(0, -7);
-    // Anchor the prompt above the avatar's head so it's visible even when
-    // the trigger radius is large (e.g. academy's 1200px premises zone).
-    // Previously positioned at the trigger center + offset, which pushed
-    // the prompt off-screen for big radii.
-    container.setPosition(ax, ay - 90);
+    // Anchor the prompt above the avatar's head so it clears the name tag
+    // (name tag anchored at avatar-top minus 6px, extending ~24px upward).
+    // 2026-04-23: raised from -90 → -130 to stop the prompt bg clipping the
+    // nameplate on 135px outdoor avatars (Phase 7 item AC2).
+    container.setPosition(ax, ay - 130);
     container.setVisible(true);
 
     if (enterJustDown) {
       navigating = true;
+      if (onFire) {
+        try {
+          onFire(nearest);
+        } catch (err) {
+          console.error('enter-prompt onFire callback threw:', err);
+        }
+      }
       scene.cameras.main.fadeOut(300, 0, 0, 0);
       scene.cameras.main.once('camerafadeoutcomplete', () => {
         if (typeof window !== 'undefined') window.location.href = nearest.route;

@@ -11,7 +11,10 @@ import * as Phaser from 'phaser';
 import { BOOT_ASSETS } from '../boot/asset-manifest';
 import { isAvatarId } from '../shared/avatar-palette';
 import { spawnColliders } from '../shared/colliders';
+import { addCrispText } from '../shared/crisp-text';
 import { createEdgeTriggerManager, type EdgeTriggerManager } from '../shared/edge-triggers';
+import { applyFillZoom } from '../shared/fill-zoom';
+import { createJumpBinding, type JumpBinding } from '../shared/jump-binding';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -96,6 +99,8 @@ export class MarketScene extends Phaser.Scene {
     D: Phaser.Input.Keyboard.Key;
   };
   private clickTarget: { x: number; y: number } | null = null;
+  private jumpBinding?: JumpBinding;
+  private enterKey?: Phaser.Input.Keyboard.Key;
 
   private memberId: string | null = null;
   private lastPositionSaveAt = 0;
@@ -112,7 +117,8 @@ export class MarketScene extends Phaser.Scene {
 
     const { bounds, zoom, fadeInMs } = marketCameraConfig;
     this.cameras.main.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
-    this.cameras.main.setZoom(zoom);
+    applyFillZoom(this, bounds.width, bounds.height, zoom);
+    this.scale.on('resize', () => applyFillZoom(this, bounds.width, bounds.height, zoom));
     this.physics.world.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
     this.cameras.main.fadeIn(fadeInMs, 0, 0, 0);
 
@@ -211,6 +217,9 @@ export class MarketScene extends Phaser.Scene {
       S: Phaser.Input.Keyboard.Key;
       D: Phaser.Input.Keyboard.Key;
     };
+    this.jumpBinding = createJumpBinding(this);
+    this.input.keyboard.addCapture('ENTER');
+    this.enterKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
   }
 
   private wirePointerInput(): void {
@@ -248,44 +257,40 @@ export class MarketScene extends Phaser.Scene {
       rect.setInteractive({ useHandCursor: true });
       rect.setData('courseId', stall.id);
 
-      const title = this.add
-        .text(x, y + cfg.labelOffsetY, stall.title, {
-          fontFamily: 'system-ui, sans-serif',
-          fontSize: '16px',
-          color: '#f1f5f9',
-          stroke: '#0f172a',
-          strokeThickness: 4,
-          align: 'center',
-          wordWrap: { width: cfg.size.width + 80 },
-        })
-        .setOrigin(0.5, 1);
+      const title = addCrispText(this, x, y + cfg.labelOffsetY, stall.title, {
+        fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
+        fontSize: '17px',
+        fontStyle: 'bold',
+        color: '#fef3c7',
+        stroke: '#1c1917',
+        strokeThickness: 4,
+        align: 'center',
+        wordWrap: { width: cfg.size.width + 80 },
+      }).setOrigin(0.5, 1);
       title.setDepth(marketLayersConfig.depth.stalls + 1);
 
-      const creator = this.add
-        .text(x, y + cfg.creatorOffsetY, `by ${stall.creatorName}`, {
-          fontFamily: 'system-ui, sans-serif',
-          fontSize: '11px',
-          color: '#cbd5e1',
-          stroke: '#0f172a',
-          strokeThickness: 3,
-          align: 'center',
-        })
-        .setOrigin(0.5, 0);
+      const creator = addCrispText(this, x, y + cfg.creatorOffsetY, `by ${stall.creatorName}`, {
+        fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
+        fontSize: '12px',
+        fontStyle: 'italic',
+        color: '#cbd5e1',
+        stroke: '#1c1917',
+        strokeThickness: 3,
+        align: 'center',
+      }).setOrigin(0.5, 0);
       creator.setDepth(marketLayersConfig.depth.stalls + 1);
 
       const footerText = stall.enrolled
         ? `${stall.lessonCount} lessons · Enrolled`
         : `${stall.lessonCount} lessons · ${stall.enrolmentCount} enrolled`;
-      const footer = this.add
-        .text(x, y + cfg.priceOffsetY, footerText, {
-          fontFamily: 'system-ui, sans-serif',
-          fontSize: '12px',
-          color: stall.enrolled ? '#a7f3d0' : '#e9d5ff',
-          stroke: '#0f172a',
-          strokeThickness: 3,
-          align: 'center',
-        })
-        .setOrigin(0.5, 0);
+      const footer = addCrispText(this, x, y + cfg.priceOffsetY, footerText, {
+        fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
+        fontSize: '13px',
+        color: stall.enrolled ? '#a7f3d0' : '#e9d5ff',
+        stroke: '#1c1917',
+        strokeThickness: 3,
+        align: 'center',
+      }).setOrigin(0.5, 0);
       footer.setDepth(marketLayersConfig.depth.stalls + 1);
 
       rect.on('pointerover', () => rect.setFillStyle(0x0f172a, 1));
@@ -332,6 +337,8 @@ export class MarketScene extends Phaser.Scene {
   public override update(time: number, _deltaMs: number): void {
     if (!this.localAvatar) return;
 
+    this.jumpBinding?.tryJump(this.localAvatar);
+
     const input = this.readInputState();
     const kbd = resolveInputVelocity(input, marketSpritesConfig.avatar.walkSpeed);
 
@@ -376,7 +383,10 @@ export class MarketScene extends Phaser.Scene {
       obj.setDepth(calculateYSortDepth(obj, { depthBase, yAnchorRatio }));
     }
 
-    this.edgeTriggers?.update(this.localAvatar.x, this.localAvatar.y);
+    const enterJustDown = this.enterKey
+      ? Phaser.Input.Keyboard.JustDown(this.enterKey)
+      : false;
+    this.edgeTriggers?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown);
 
     // Persist position to localStorage every POSITION_SAVE_INTERVAL_MS
     // so page reloads pick up where the member left off. Skipped when

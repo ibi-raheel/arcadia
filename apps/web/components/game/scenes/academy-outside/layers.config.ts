@@ -28,7 +28,7 @@ export const ACADEMY_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
 
 /** Bottom edge returns the member to the central square. */
 export const ACADEMY_OUTSIDE_RETURN_EDGE: EdgeTriggers = {
-  bottom: { route: '/world', threshold: 300 },
+  bottom: { route: '/world?from=academy', threshold: 300 },
 };
 
 export const academyOutsideLayersConfig = {
