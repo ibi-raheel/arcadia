@@ -1,13 +1,9 @@
 // Route handler: POST /api/scribe/image
 //
-// Generates a single image via Gemini 2.5 Flash Image, uploads it to
-// the `course-generated-images` bucket, and appends an entry to
+// Generates a single image via Imagen 4 Fast (Google's dedicated
+// image endpoint on the Generative Language API), uploads it to the
+// `course-generated-images` bucket, and appends an entry to
 // `course_drafts.images` jsonb (approved=false).
-//
-// Gemini image gen path: use `generateText` with the image-capable
-// model + `responseModalities: ['IMAGE']` in providerOptions.google.
-// The image comes back as a file part in result.files; we pull the
-// first image file's bytes and upload.
 //
 // Body: {
 //   draftId: string,
@@ -17,7 +13,7 @@
 
 import { randomUUID } from 'crypto';
 
-import { generateText } from 'ai';
+import { experimental_generateImage as generateImage } from 'ai';
 
 import { scribeConfigured, scribeImageModel } from '@/lib/scribe/gateway';
 import { imagePrompt } from '@/lib/scribe/prompts';
@@ -94,15 +90,12 @@ export async function POST(request: Request): Promise<Response> {
     revisionFeedback: body.feedback,
   });
 
-  // Gemini's image model returns image(s) as file parts via generateText.
   let generated;
   try {
-    generated = await generateText({
+    generated = await generateImage({
       model: scribeImageModel(),
       prompt,
-      providerOptions: {
-        google: { responseModalities: ['IMAGE'] },
-      },
+      size: '1024x768',
     });
   } catch (generationErr) {
     return err(
@@ -113,14 +106,9 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  const imageFile = generated.files.find((f) => f.mediaType?.startsWith('image/'));
-  if (!imageFile) {
-    return err('Gemini returned no image — try revising the prompt', 502);
-  }
-
-  const mimeType = imageFile.mediaType ?? 'image/png';
+  const mimeType = generated.image.mediaType ?? 'image/png';
   const ext = mimeType.split('/')[1] ?? 'png';
-  const bytes = imageFile.uint8Array;
+  const bytes = generated.image.uint8Array;
 
   const imageId = randomUUID();
   const storagePath = `${user.id}/${body.draftId}/${imageId}.${ext}`;
