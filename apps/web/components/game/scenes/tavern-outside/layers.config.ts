@@ -16,12 +16,17 @@ export const TAVERN_OUTSIDE_COLLIDERS: readonly PixelRect[] = [];
  *
  * Coordinates eyeballed from the 1× preview; nudge in browser if needed.
  */
+// 2026-04-23 screenshot feedback — radius was 220, too loose. User
+// highlighted tight red boxes around each door. Dropped to 80 so the
+// prompt only fires when the avatar is visually at a door, not
+// whenever they happen to wander near a tavern. Nudge per-building
+// if a specific door's visual centre doesn't match the coord below.
 export const TAVERN_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
   {
     buildingId: 'tavern-a',
     centerX: 1180,
     centerY: 560,
-    radius: 220,
+    radius: 80,
     label: 'Press ENTER to visit The Three Ravens',
     route: '/tavern?b=tavern-a',
   },
@@ -29,7 +34,7 @@ export const TAVERN_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
     buildingId: 'tavern-b',
     centerX: 1200,
     centerY: 1260,
-    radius: 220,
+    radius: 80,
     label: 'Press ENTER to visit The Iron Chalice',
     route: '/tavern?b=tavern-b',
   },
@@ -37,7 +42,7 @@ export const TAVERN_OUTSIDE_ENTRY_TRIGGERS: readonly EntryTrigger[] = [
     buildingId: 'tavern-c',
     centerX: 1220,
     centerY: 1960,
-    radius: 220,
+    radius: 80,
     label: 'Press ENTER to visit The Sleeping Hollow',
     route: '/tavern?b=tavern-c',
   },
