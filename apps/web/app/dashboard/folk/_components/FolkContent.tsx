@@ -19,7 +19,7 @@ import {
   StackedBar,
   VellumCard,
 } from '@/components/scriptorium';
-import type { FolkData, FolkMember, FolkTier } from '@/lib/fixtures/folk';
+import type { FolkData, FolkMember, FolkRetentionCurve, FolkTier } from '@/lib/fixtures/folk';
 
 export function FolkContent({ data }: { readonly data: FolkData }): React.JSX.Element {
   return (
@@ -64,6 +64,12 @@ export function FolkContent({ data }: { readonly data: FolkData }): React.JSX.El
         </section>
       )}
 
+      {data.retentionCurves.length > 0 && (
+        <section style={{ marginTop: 22 }}>
+          <RetentionCurveCard curves={data.retentionCurves} />
+        </section>
+      )}
+
       <LedgerCard style={{ marginTop: 22 }}>
         <div
           style={{
@@ -87,6 +93,152 @@ export function FolkContent({ data }: { readonly data: FolkData }): React.JSX.El
         </p>
       </VellumCard>
     </>
+  );
+}
+
+function RetentionCurveCard({
+  curves,
+}: {
+  readonly curves: readonly FolkRetentionCurve[];
+}): React.JSX.Element {
+  const width = 640;
+  const height = 200;
+  const pad = 28;
+  const monthsPerCurve = Math.max(1, ...curves.map((c) => c.data.length));
+  const step = (width - pad * 2) / Math.max(1, monthsPerCurve - 1);
+
+  const paths = curves.map((c) => {
+    const d = c.data
+      .map((v, j) => {
+        const x = pad + j * step;
+        const y = pad + ((100 - v) / 100) * (height - pad * 2);
+        return `${j ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`;
+      })
+      .join(' ');
+    return { label: c.label, color: c.color, d };
+  });
+
+  return (
+    <VellumCard style={{ padding: '22px 26px' }} rotate={0.3}>
+      <Kicker>how long they stay · by tier</Kicker>
+      <h3
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontStyle: 'italic',
+          fontSize: 22,
+          color: 'var(--ink)',
+          margin: '4px 0 0',
+          lineHeight: 1.1,
+        }}
+      >
+        retention curves
+      </h3>
+
+      <svg
+        role="img"
+        aria-label="Per-tier retention curves over 12 months"
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="xMidYMid meet"
+        style={{
+          display: 'block',
+          marginTop: 14,
+          width: '100%',
+          height: 'auto',
+          overflow: 'visible',
+        }}
+      >
+        {/* Dashed horizontal gridlines at 0/25/50/75/100 %. */}
+        {[0, 25, 50, 75, 100].map((p) => {
+          const y = pad + ((100 - p) / 100) * (height - pad * 2);
+          return (
+            <g key={p}>
+              <line
+                x1={pad}
+                y1={y}
+                x2={width - pad}
+                y2={y}
+                stroke="rgba(90, 63, 34, 0.22)"
+                strokeDasharray="2 3"
+              />
+              <text
+                x={pad - 6}
+                y={y + 3}
+                textAnchor="end"
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 10,
+                  fill: 'var(--ink-faint)',
+                }}
+              >
+                {p}%
+              </text>
+            </g>
+          );
+        })}
+        {/* Month labels along the bottom — every third month keeps the
+            axis from crowding. */}
+        {[0, 3, 6, 9, monthsPerCurve - 1].map((m) => (
+          <text
+            key={m}
+            x={pad + m * step}
+            y={height - 6}
+            textAnchor="middle"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              fill: 'var(--ink-faint)',
+            }}
+          >
+            mo {m + 1}
+          </text>
+        ))}
+        {paths.map((p, i) => (
+          <path
+            key={i}
+            d={p.d}
+            fill="none"
+            style={{
+              // Inline style.stroke (rather than the stroke attribute)
+              // so CSS variables resolve reliably in Chromium — the
+              // presentation attribute version rendered transparent
+              // under puppeteer even though it worked in dev.
+              stroke: p.color,
+              strokeWidth: 2.2,
+              strokeLinecap: 'round',
+              strokeLinejoin: 'round',
+              filter: `drop-shadow(0 0 4px ${p.color})`,
+            }}
+          >
+            <title>{p.label}</title>
+          </path>
+        ))}
+      </svg>
+
+      <div
+        style={{
+          display: 'flex',
+          gap: 18,
+          marginTop: 10,
+          flexWrap: 'wrap',
+        }}
+      >
+        {curves.map((c) => (
+          <div key={c.label} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <span aria-hidden="true" style={{ width: 18, height: 2, background: c.color }} />
+            <span
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontStyle: 'italic',
+                fontSize: 14,
+                color: 'var(--ink)',
+              }}
+            >
+              {c.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </VellumCard>
   );
 }
 
