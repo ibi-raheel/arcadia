@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
+import { DashboardShell } from '@/components/dashboard/DashboardShell';
+import { Chip, GhostButton, WaxSeal } from '@/components/scriptorium';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 import { PublishToggle } from './_components/PublishToggle';
@@ -73,15 +75,44 @@ export default async function CourseEditorPage({
     : null;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <Header course={course} />
-      <div className="mx-auto grid max-w-6xl grid-cols-[300px_1fr] gap-6 p-6">
+    <DashboardShell
+      kicker={course.published ? 'signed · published' : 'drying · draft'}
+      title={course.title}
+      tagline={course.description ?? undefined}
+      actions={
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {course.published ? <WaxSeal letter="P" /> : <Chip>draft</Chip>}
+          <Link
+            href={`/dashboard/courses/${course.id}/analytics`}
+            style={{ textDecoration: 'none' }}
+          >
+            <GhostButton onDark>analytics →</GhostButton>
+          </Link>
+          <PublishToggle courseId={course.id} published={course.published} />
+        </div>
+      }
+    >
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '300px 1fr',
+          gap: 20,
+          color: 'var(--ink)',
+        }}
+      >
         <SectionTree
           courseId={course.id}
           initialSections={sectionsWithLessons}
           selectedLessonId={selectedLessonId}
         />
-        <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-6">
+        <div
+          style={{
+            background: 'linear-gradient(180deg, var(--vellum) 0%, var(--vellum-2) 100%)',
+            borderRadius: 3,
+            padding: 22,
+            boxShadow: '0 18px 34px rgba(0,0,0,0.52)',
+          }}
+        >
           {selectedLesson === null ? (
             <LessonPanePlaceholder hasSections={sectionsWithLessons.length > 0} />
           ) : selectedLesson.type === 'video' ? (
@@ -105,7 +136,7 @@ export default async function CourseEditorPage({
           )}
         </div>
       </div>
-    </main>
+    </DashboardShell>
   );
 }
 
@@ -150,64 +181,25 @@ async function loadSelectedLesson(
   };
 }
 
-function Header({ course }: { readonly course: Course }): React.JSX.Element {
-  return (
-    <header className="border-b border-slate-800 bg-slate-900/60">
-      <div className="mx-auto flex max-w-6xl items-center justify-between p-4">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard"
-            className="text-sm text-slate-400 transition hover:text-slate-200"
-          >
-            ← Dashboard
-          </Link>
-          <span className="text-slate-700">/</span>
-          <h1 className="text-lg font-semibold">{course.title}</h1>
-          <PublishedBadge published={course.published} />
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/dashboard/courses/${course.id}/analytics`}
-            className="rounded-md border border-slate-700 px-3 py-1 text-xs font-medium text-slate-300 transition hover:border-slate-500 hover:text-white"
-          >
-            Analytics
-          </Link>
-          <PublishToggle courseId={course.id} published={course.published} />
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function PublishedBadge({ published }: { readonly published: boolean }): React.JSX.Element {
-  return published ? (
-    <span className="rounded-full bg-emerald-900/60 px-2 py-0.5 text-xs font-medium text-emerald-300">
-      Published
-    </span>
-  ) : (
-    <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-400">
-      Draft
-    </span>
-  );
-}
-
 function LessonPanePlaceholder({
   hasSections,
 }: {
   readonly hasSections: boolean;
 }): React.JSX.Element {
   return (
-    <div className="p-6 text-center">
+    <div style={{ padding: 20, textAlign: 'center', color: 'var(--ink-soft)' }}>
       {hasSections ? (
-        <p className="text-slate-400">
+        <p className="body-italic">
           Select a lesson from the left rail to edit it here. Video lessons (YouTube) land in Step
           8.
         </p>
       ) : (
         <div>
-          <p className="text-slate-300">This course has no sections yet.</p>
-          <p className="mt-2 text-sm text-slate-500">
-            Add one from the left rail to start authoring lessons.
+          <p className="body-italic" style={{ color: 'var(--ink)' }}>
+            This course has no sections yet.
+          </p>
+          <p className="hand" style={{ marginTop: 8 }}>
+            ~ add one from the left rail to start authoring ~
           </p>
         </div>
       )}

@@ -69,18 +69,29 @@ export function WrittenLessonViewer({
   }, [lessonId, previewOnly]);
 
   return (
-    <div>
-      <article className="prose prose-invert max-w-none prose-headings:text-slate-100 prose-a:text-emerald-400 prose-code:text-amber-200 prose-code:bg-slate-900 prose-code:px-1 prose-code:rounded">
+    <div className="scriptorium-prose">
+      <article>
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
       </article>
-      <div ref={sentinelRef} className="mt-8 text-center text-xs text-slate-600">
-        {completed ? (
-          <span className="inline-flex items-center gap-1 text-emerald-400">✓ Marked complete</span>
-        ) : (
-          '— end of lesson —'
-        )}
+      <div
+        ref={sentinelRef}
+        style={{
+          marginTop: 32,
+          textAlign: 'center',
+          fontFamily: 'var(--font-caps)',
+          fontSize: 11,
+          letterSpacing: 2,
+          textTransform: 'uppercase',
+          color: completed ? 'var(--verdigris-2)' : 'var(--ink-quiet)',
+        }}
+      >
+        {completed ? '✓ signed · marked complete' : '— end of lesson —'}
       </div>
-      {error && <p className="mt-2 text-xs text-red-300">Couldn&rsquo;t save progress: {error}</p>}
+      {error && (
+        <p className="hand" style={{ marginTop: 8, textAlign: 'center', color: 'var(--crimson)' }}>
+          ~ couldn&rsquo;t save progress: {error} ~
+        </p>
+      )}
     </div>
   );
 }

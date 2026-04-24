@@ -1,8 +1,11 @@
 // Square layer config. Holds empty colliders (user drops rects later per the
-// Phase-5 Step-15 scaffold), y-sort depth bands, and the four edge-portal
-// routes that wire the square to its outdoor neighbours + the market.
+// Phase-5 Step-15 scaffold), y-sort depth bands, the four edge-portal
+// routes that wire the square to its outdoor neighbours + the market, and
+// the lodge proximity trigger in the top-right that opens the member's
+// home landing (/).
 
 import type { EdgeTriggers } from '../shared/edge-triggers';
+import type { EntryTrigger } from '../shared/enter-prompt';
 import type { PixelRect } from '../shared/types';
 
 /**
@@ -96,6 +99,26 @@ export const SQUARE_NPC = {
   ],
 } as const;
 
+/**
+ * Lodge entry — a small cabin baked into the top-right of the square
+ * PNG. Walking into the radius shows "Press ENTER to step into your
+ * lodge"; ENTER routes to `/` (the member's home landing, with doorways
+ * to world / market / dashboard).
+ *
+ * Coordinates are eyeballed against the 2508² source; nudge
+ * centerX/centerY/radius if the door ends up off-centre once rendered.
+ * Added 2026-04-24 per user request for a personal-home affordance
+ * inside the square.
+ */
+export const SQUARE_LODGE_ENTRY: EntryTrigger = {
+  buildingId: 'lodge',
+  centerX: 2250,
+  centerY: 500,
+  radius: 200,
+  label: 'Press ENTER to step into your lodge',
+  route: '/',
+};
+
 export const squareLayersConfig = {
   depth: {
     ground: 0,
@@ -107,5 +130,6 @@ export const squareLayersConfig = {
   },
   colliders: SQUARE_COLLIDERS,
   edgeTriggers: SQUARE_EDGE_TRIGGERS,
+  lodgeEntry: SQUARE_LODGE_ENTRY,
   npc: SQUARE_NPC,
 } as const;

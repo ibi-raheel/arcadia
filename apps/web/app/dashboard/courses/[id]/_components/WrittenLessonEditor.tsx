@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import '@uiw/react-md-editor/markdown-editor.css';
 
+import { GhostButton, Kicker } from '@/components/scriptorium';
+
 import { renameLesson, updateLessonContent, updateLessonType } from '../actions';
 import { LESSON_CONTENT_MAX, LESSON_TITLE_MAX } from '../validation';
 
@@ -122,46 +124,72 @@ export function WrittenLessonEditor({ courseId, lesson }: Props): React.JSX.Elem
   };
 
   return (
-    <section className="flex h-full flex-col">
-      <header className="mb-4 flex items-center gap-3">
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value.slice(0, LESSON_TITLE_MAX))}
-          onBlur={commitTitle}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              (e.target as HTMLInputElement).blur();
-            }
-          }}
-          disabled={titlePending}
-          className="flex-1 rounded-lg border border-transparent bg-transparent px-2 py-1 text-xl font-semibold text-slate-100 hover:border-slate-800 focus:border-emerald-500 focus:bg-slate-950 focus:outline-none"
-        />
+    <section style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <header
+        style={{
+          marginBottom: 14,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          paddingBottom: 10,
+          borderBottom: '1px dashed rgba(90, 63, 34, 0.3)',
+        }}
+      >
+        <div style={{ flex: 1 }}>
+          <Kicker>written lesson</Kicker>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value.slice(0, LESSON_TITLE_MAX))}
+            onBlur={commitTitle}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                (e.target as HTMLInputElement).blur();
+              }
+            }}
+            disabled={titlePending}
+            style={{
+              width: '100%',
+              marginTop: 4,
+              padding: '2px 0',
+              border: 'none',
+              borderBottom: '1.5px solid transparent',
+              background: 'transparent',
+              fontFamily: 'var(--font-display)',
+              fontStyle: 'italic',
+              fontSize: 28,
+              color: 'var(--ink)',
+              outline: 'none',
+            }}
+            onFocus={(e) => (e.currentTarget.style.borderBottomColor = 'var(--lantern)')}
+          />
+        </div>
         <SaveIndicator status={status} />
-        <button
-          type="button"
-          onClick={convertToVideo}
-          disabled={typePending}
-          className="rounded-md border border-slate-700 px-3 py-1 text-xs font-medium text-slate-300 transition hover:border-slate-500 hover:text-white disabled:opacity-50"
-        >
-          Convert to video
-        </button>
+        <GhostButton onClick={convertToVideo} disabled={typePending} size="sm">
+          convert to video
+        </GhostButton>
       </header>
 
-      <div data-color-mode="dark" className="flex-1">
+      <div data-color-mode="light" style={{ flex: 1 }}>
         <MDEditor
           value={content}
           onChange={handleContentChange}
           height={500}
           preview="live"
           visibleDragbar={false}
-          textareaProps={{ maxLength: LESSON_CONTENT_MAX, placeholder: 'Write your lesson…' }}
+          textareaProps={{
+            maxLength: LESSON_CONTENT_MAX,
+            placeholder: 'write your lesson — the keeper&rsquo;s hand…',
+          }}
         />
       </div>
 
-      <p className="mt-2 text-right text-xs text-slate-500">
-        {content.length.toLocaleString()}/{LESSON_CONTENT_MAX.toLocaleString()}
+      <p
+        className="mono"
+        style={{ marginTop: 8, textAlign: 'right', color: 'var(--ink-faint)', fontSize: 11 }}
+      >
+        {content.length.toLocaleString()} / {LESSON_CONTENT_MAX.toLocaleString()}
       </p>
     </section>
   );
@@ -169,13 +197,25 @@ export function WrittenLessonEditor({ courseId, lesson }: Props): React.JSX.Elem
 
 function SaveIndicator({ status }: { readonly status: SaveStatus }): React.JSX.Element {
   if (status === 'idle') {
-    return <span className="text-xs text-slate-600">Unsaved changes</span>;
+    return <span className="hand">~ unsaved ~</span>;
   }
   if (status === 'saving') {
-    return <span className="text-xs text-amber-400">Saving…</span>;
+    return (
+      <span className="hand" style={{ color: 'var(--lantern-2)' }}>
+        ~ saving ~
+      </span>
+    );
   }
   if (status === 'saved') {
-    return <span className="text-xs text-emerald-400">Saved</span>;
+    return (
+      <span className="hand" style={{ color: 'var(--verdigris)' }}>
+        ~ sealed ~
+      </span>
+    );
   }
-  return <span className="text-xs text-red-400">Save failed: {status.message}</span>;
+  return (
+    <span className="hand" style={{ color: 'var(--crimson)' }}>
+      ~ the ink ran: {status.message} ~
+    </span>
+  );
 }

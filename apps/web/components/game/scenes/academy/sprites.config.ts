@@ -1,6 +1,11 @@
-// Academy sprites + spawn + podium geometry.
-// Avatar sizing matches the new Tavern (90×90) for visual consistency
-// between the two buildings.
+// Academy sprites + spawn + lectern geometry.
+// Avatar sizing matches every other image-backed interior (135×135) for
+// visual consistency between buildings.
+//
+// 2026-04-24 — replaced the `podium` grid-layout knobs with a single
+// `lectern` centrepiece. The scene no longer draws a card per course;
+// the React mount owns the course list and opens a scroll when the
+// member walks up to the lectern + presses ENTER.
 
 export const academySpritesConfig = {
   avatar: {
@@ -11,21 +16,14 @@ export const academySpritesConfig = {
     walkSpeed: 200,
     clickArrivalThreshold: 2,
   },
-  podium: {
-    // Per-podium clickable footprint size. Slightly larger than the avatar
-    // so tapping a podium from a nearby tile still registers cleanly.
-    size: { width: 140, height: 70 },
-    /** Pixel gap between podiums in a row. */
-    spacingX: 240,
-    /** Pixel gap between rows when > maxPerRow podiums are visible. */
-    spacingY: 260,
-    /** Max podiums per row before wrapping to a new row. */
-    maxPerRow: 4,
-    /** Y-centre for the first row of podiums (roughly middle of the image). */
-    firstRowCenterY: 520,
-    /** Label offset above the podium rectangle's y-centre. */
-    labelOffsetY: -70,
-    /** Progress text offset below the podium rectangle's y-centre. */
-    progressOffsetY: 60,
+  lectern: {
+    /** World-pixel centre of the lectern (mid-hall). */
+    centerX: 768,
+    centerY: 520,
+    /** Pedestal footprint width — the book rests on a top slab slightly
+     *  wider than this. */
+    pedestalWidth: 120,
+    /** ENTER-prompt activation radius around `centerX/Y`. */
+    interactRadius: 140,
   },
 } as const;

@@ -24,6 +24,7 @@ import { createCapacityHud, type CapacityHud } from '../shared/capacity-hud';
 import { spawnColliders } from '../shared/colliders';
 import { addCrispText } from '../shared/crisp-text';
 import { createEdgeTriggerManager, type EdgeTriggerManager } from '../shared/edge-triggers';
+import { createEnterPromptManager, type EnterPromptManager } from '../shared/enter-prompt';
 import { applyFillZoom } from '../shared/fill-zoom';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
@@ -84,6 +85,7 @@ export class SquareScene extends Phaser.Scene {
   private unsubscribeConnected: (() => void) | null = null;
 
   private edgeTriggers?: EdgeTriggerManager;
+  private lodgePrompt?: EnterPromptManager;
   private capacityHud?: CapacityHud;
 
   private npcBubble?: Phaser.GameObjects.Container;
@@ -119,6 +121,10 @@ export class SquareScene extends Phaser.Scene {
       bounds.height,
       squareLayersConfig.edgeTriggers,
     );
+
+    // Lodge entry — proximity prompt at the cabin in the top-right of
+    // the square. Routes to / (the member's home landing).
+    this.lodgePrompt = createEnterPromptManager(this, [squareLayersConfig.lodgeEntry]);
 
     this.capacityHud = createCapacityHud(this, { label: 'Square', max: HUD_MAX_CLIENTS });
 
@@ -293,9 +299,11 @@ export class SquareScene extends Phaser.Scene {
   private teardown(): void {
     this.teardownRemoteAvatars();
     this.edgeTriggers?.destroy();
+    this.lodgePrompt?.destroy();
     this.capacityHud?.destroy();
     this.npcBubble?.destroy();
     this.edgeTriggers = undefined;
+    this.lodgePrompt = undefined;
     this.capacityHud = undefined;
     this.npcBubble = undefined;
     this.npcBubbleText = undefined;
@@ -429,6 +437,20 @@ export class SquareScene extends Phaser.Scene {
 
     this.updateNpcBubble(this.localAvatar.x, this.localAvatar.y);
     const enterJustDown = this.enterKey ? Phaser.Input.Keyboard.JustDown(this.enterKey) : false;
-    this.edgeTriggers?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown);
+    // Lodge runs before edges so a single ENTER press is consumed by
+    // the nearer interactable (lodge sits well inside the map; edge
+    // triggers only fire in the 300 px edge band, so spatial overlap is
+    // impossible — but the defensive ordering keeps future triggers
+    // safe).
+    const lodgeFired = this.lodgePrompt?.update(
+      this.localAvatar.x,
+      this.localAvatar.y,
+      enterJustDown,
+    );
+    this.edgeTriggers?.update(
+      this.localAvatar.x,
+      this.localAvatar.y,
+      lodgeFired?.navigated ? false : enterJustDown,
+    );
   }
 }

@@ -26,15 +26,16 @@ describe('marketCameraConfig', () => {
 });
 
 describe('marketSpritesConfig', () => {
-  it('exposes avatar + stall blocks MarketScene reads', () => {
+  it('exposes avatar + crystal blocks MarketScene reads', () => {
     expect(marketSpritesConfig.avatar.spawnPixel).toMatchObject({
       x: expect.any(Number),
       y: expect.any(Number),
     });
     expect(marketSpritesConfig.avatar.size.width).toBeGreaterThan(0);
-    expect(marketSpritesConfig.stall.maxPerRow).toBeGreaterThan(0);
-    expect(marketSpritesConfig.stall.spacingX).toBeGreaterThan(0);
-    expect(marketSpritesConfig.stall.spacingY).toBeGreaterThan(0);
+    expect(marketSpritesConfig.crystal.centerX).toBeGreaterThan(0);
+    expect(marketSpritesConfig.crystal.centerY).toBeGreaterThan(0);
+    expect(marketSpritesConfig.crystal.pedestalWidth).toBeGreaterThan(0);
+    expect(marketSpritesConfig.crystal.interactRadius).toBeGreaterThan(0);
   });
 
   it('spawn pixel lies inside the market interior bounds', () => {
@@ -43,6 +44,14 @@ describe('marketSpritesConfig', () => {
     expect(x).toBeLessThanOrEqual(MARKET_INTERIOR_SIZE.width);
     expect(y).toBeGreaterThanOrEqual(0);
     expect(y).toBeLessThanOrEqual(MARKET_INTERIOR_SIZE.height);
+  });
+
+  it('crystal sits inside the market interior bounds', () => {
+    const { centerX, centerY } = marketSpritesConfig.crystal;
+    expect(centerX).toBeGreaterThanOrEqual(0);
+    expect(centerX).toBeLessThanOrEqual(MARKET_INTERIOR_SIZE.width);
+    expect(centerY).toBeGreaterThanOrEqual(0);
+    expect(centerY).toBeLessThanOrEqual(MARKET_INTERIOR_SIZE.height);
   });
 });
 
