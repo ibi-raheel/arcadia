@@ -18,6 +18,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, useTransition } from 'react';
 
+import { BronzeButton, Kicker, LedgerCard } from '@/components/scriptorium';
+
 import { createSection, deleteSection, renameSection, reorderSections } from '../actions';
 import { SECTION_TITLE_MAX } from '../validation';
 import { LessonList, type LessonRow } from './LessonList';
@@ -85,24 +87,53 @@ export function SectionTree({
   );
 
   return (
-    <aside className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Sections</h2>
+    <LedgerCard>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 12,
+        }}
+      >
+        <Kicker>chapters</Kicker>
         <AddSectionButton courseId={courseId} onError={setError} />
       </div>
 
       {error && (
-        <p className="mb-3 rounded-md bg-red-950/50 px-3 py-2 text-xs text-red-300">{error}</p>
+        <p
+          style={{
+            marginBottom: 12,
+            padding: '8px 10px',
+            background: 'rgba(143, 37, 48, 0.14)',
+            border: '1px dashed var(--wax-deep)',
+            borderRadius: 3,
+            color: 'var(--oxblood)',
+            fontFamily: 'var(--font-body)',
+            fontSize: 13,
+          }}
+        >
+          {error}
+        </p>
       )}
 
       {sections.length === 0 ? (
-        <p className="text-sm text-slate-500">
-          No sections yet. Click <span className="font-medium text-slate-300">+ Add</span> to start.
+        <p className="body-italic" style={{ color: 'var(--ink-quiet)', fontSize: 14 }}>
+          no chapters yet. click <span style={{ color: 'var(--ink)' }}>+ add</span> to start.
         </p>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-            <ol className={`space-y-2 ${pending ? 'opacity-70' : ''}`}>
+            <ol
+              style={{
+                listStyle: 'none',
+                padding: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+                opacity: pending ? 0.7 : 1,
+              }}
+            >
               {sections.map((s) => (
                 <SortableSection
                   key={s.id}
@@ -116,7 +147,7 @@ export function SectionTree({
           </SortableContext>
         </DndContext>
       )}
-    </aside>
+    </LedgerCard>
   );
 }
 
@@ -134,16 +165,15 @@ function AddSectionButton({
 
   if (!open) {
     return (
-      <button
-        type="button"
+      <BronzeButton
+        size="sm"
         onClick={() => {
           setOpen(true);
           onError(null);
         }}
-        className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-semibold text-white transition hover:bg-emerald-500"
       >
-        + Add
-      </button>
+        + add
+      </BronzeButton>
     );
   }
 
@@ -169,7 +199,7 @@ function AddSectionButton({
         e.preventDefault();
         submit();
       }}
-      className="flex items-center gap-1"
+      style={{ display: 'flex', alignItems: 'center', gap: 6 }}
     >
       <input
         autoFocus
@@ -177,17 +207,14 @@ function AddSectionButton({
         value={title}
         onChange={(e) => setTitle(e.target.value.slice(0, SECTION_TITLE_MAX))}
         onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
-        placeholder="Section title"
+        placeholder="chapter name"
         disabled={pending}
-        className="w-40 rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100 focus:border-emerald-500 focus:outline-none"
+        className="field"
+        style={{ width: 160, fontSize: 14 }}
       />
-      <button
-        type="submit"
-        disabled={pending || !title.trim()}
-        className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-semibold text-white disabled:opacity-40"
-      >
-        {pending ? '…' : 'OK'}
-      </button>
+      <BronzeButton type="submit" size="sm" disabled={pending || !title.trim()}>
+        {pending ? '…' : 'ok'}
+      </BronzeButton>
     </form>
   );
 }
@@ -211,28 +238,45 @@ function SortableSection({
     transition,
   } as React.CSSProperties;
 
+  const merged: React.CSSProperties = {
+    ...style,
+    background: 'rgba(255, 244, 210, 0.55)',
+    border: '1px solid rgba(138, 106, 58, 0.4)',
+    borderRadius: 3,
+    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.18)',
+    opacity: isDragging ? 0.4 : 1,
+  };
+
   return (
-    <li
-      ref={setNodeRef}
-      style={style}
-      className={`rounded-lg border border-slate-800 bg-slate-900/60 ${
-        isDragging ? 'opacity-40' : ''
-      }`}
-    >
-      <div className="flex items-center gap-2 p-2">
+    <li ref={setNodeRef} style={merged}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 8 }}>
         <button
           type="button"
           {...attributes}
           {...listeners}
           title="Drag to reorder"
-          className="cursor-grab touch-none select-none text-slate-500 hover:text-slate-300 active:cursor-grabbing"
+          style={{
+            cursor: 'grab',
+            touchAction: 'none',
+            userSelect: 'none',
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--bronze)',
+            fontSize: 14,
+            padding: '2px 4px',
+          }}
         >
           ⋮⋮
         </button>
         <SectionTitleEditor section={section} courseId={courseId} onError={onError} />
       </div>
 
-      <div className="border-t border-slate-800 px-3 py-2 pl-6">
+      <div
+        style={{
+          borderTop: '1px dashed rgba(90, 63, 34, 0.3)',
+          padding: '8px 12px 10px 24px',
+        }}
+      >
         <LessonList
           courseId={courseId}
           sectionId={section.id}
@@ -290,7 +334,7 @@ function SectionTitleEditor({
   };
 
   return (
-    <div className="flex flex-1 items-center gap-2">
+    <div style={{ display: 'flex', flex: 1, alignItems: 'center', gap: 8 }}>
       {editing ? (
         <input
           autoFocus
@@ -309,13 +353,28 @@ function SectionTitleEditor({
             }
           }}
           disabled={pending}
-          className="flex-1 rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+          className="field"
+          style={{ flex: 1, fontSize: 15 }}
         />
       ) : (
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="flex-1 truncate text-left text-sm font-medium text-slate-200 hover:text-white"
+          style={{
+            flex: 1,
+            textAlign: 'left',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-display)',
+            fontStyle: 'italic',
+            fontSize: 17,
+            color: 'var(--ink)',
+            padding: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
         >
           {section.title}
         </button>
@@ -325,7 +384,17 @@ function SectionTitleEditor({
         onClick={remove}
         disabled={pending}
         title="Delete section"
-        className="rounded-md px-1.5 py-1 text-xs text-slate-500 transition hover:bg-red-950/40 hover:text-red-300 disabled:opacity-30"
+        style={{
+          background: 'transparent',
+          border: 'none',
+          color: 'var(--ink-quiet)',
+          padding: '3px 6px',
+          fontSize: 13,
+          cursor: 'pointer',
+          borderRadius: 3,
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--wax)')}
+        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-quiet)')}
       >
         ✕
       </button>
