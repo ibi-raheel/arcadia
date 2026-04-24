@@ -19,7 +19,14 @@ import {
   StackedBar,
   VellumCard,
 } from '@/components/scriptorium';
-import type { FolkData, FolkMember, FolkRetentionCurve, FolkTier } from '@/lib/fixtures/folk';
+import type {
+  FolkAtRiskEntry,
+  FolkData,
+  FolkMember,
+  FolkRetentionCurve,
+  FolkRiskUrgency,
+  FolkTier,
+} from '@/lib/fixtures/folk';
 
 export function FolkContent({ data }: { readonly data: FolkData }): React.JSX.Element {
   return (
@@ -64,9 +71,24 @@ export function FolkContent({ data }: { readonly data: FolkData }): React.JSX.El
         </section>
       )}
 
-      {data.retentionCurves.length > 0 && (
-        <section style={{ marginTop: 22 }}>
-          <RetentionCurveCard curves={data.retentionCurves} />
+      {(data.retentionCurves.length > 0 || data.atRisk.length > 0) && (
+        <section
+          style={{
+            marginTop: 22,
+            display: 'grid',
+            // `1.3fr 1fr` — retention card reads as the primary surface,
+            // at-risk list as the sidebar companion. Collapses to one
+            // column under 900px so neither panel squeezes.
+            gridTemplateColumns: 'minmax(0, 1.3fr) minmax(0, 1fr)',
+            gap: 20,
+          }}
+        >
+          {data.retentionCurves.length > 0 ? (
+            <RetentionCurveCard curves={data.retentionCurves} />
+          ) : (
+            <div />
+          )}
+          {data.atRisk.length > 0 ? <AtRiskCard risks={data.atRisk} /> : <div />}
         </section>
       )}
 
@@ -93,6 +115,96 @@ export function FolkContent({ data }: { readonly data: FolkData }): React.JSX.El
         </p>
       </VellumCard>
     </>
+  );
+}
+
+function AtRiskCard({ risks }: { readonly risks: readonly FolkAtRiskEntry[] }): React.JSX.Element {
+  const dot: Record<FolkRiskUrgency, string> = {
+    high: 'var(--oxblood)',
+    medium: 'var(--wax)',
+    low: 'var(--lantern)',
+  };
+  return (
+    <EnvelopeCard style={{ padding: '22px 26px' }} rotate={-0.3}>
+      <Kicker onDark>at risk · the draughty seats</Kicker>
+      <h3
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontStyle: 'italic',
+          fontSize: 22,
+          color: 'var(--vellum)',
+          margin: '4px 0 0',
+          lineHeight: 1.1,
+        }}
+      >
+        who may leave the hearth
+      </h3>
+      <div
+        style={{
+          marginTop: 14,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        {risks.map((r, i) => (
+          <div
+            key={`${r.who}-${i}`}
+            style={{
+              display: 'flex',
+              gap: 12,
+              alignItems: 'center',
+              padding: '12px 0',
+              borderBottom: i === risks.length - 1 ? 'none' : '1px dashed rgba(232, 213, 165, 0.2)',
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                width: 8,
+                height: 8,
+                flexShrink: 0,
+                borderRadius: '50%',
+                background: dot[r.urgency],
+                boxShadow: `0 0 8px ${dot[r.urgency]}`,
+              }}
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontStyle: 'italic',
+                  fontSize: 16,
+                  color: 'var(--vellum)',
+                  lineHeight: 1.1,
+                }}
+              >
+                {r.who}
+              </div>
+              <div
+                className="mono"
+                style={{
+                  fontSize: 9,
+                  letterSpacing: 1.3,
+                  color: 'var(--vellum-shadow)',
+                  textTransform: 'uppercase',
+                  marginTop: 3,
+                }}
+              >
+                {r.tier} · {r.reason}
+              </div>
+            </div>
+            <GhostButton
+              size="sm"
+              onDark
+              disabled
+              title="Outgoing-missive tray lands in a later chapter"
+            >
+              reach out
+            </GhostButton>
+          </div>
+        ))}
+      </div>
+    </EnvelopeCard>
   );
 }
 
