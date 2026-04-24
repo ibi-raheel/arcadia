@@ -13,6 +13,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/server';
 import type { CourseSummary, CoursesData } from '@/lib/fixtures/courses';
 
 import { CreateCourseDialog } from '../_components/CreateCourseDialog';
+import { ConjureLink } from './_components/ConjureLink';
 import { CoursesContent } from './_components/CoursesContent';
 
 export const dynamic = 'force-dynamic';
@@ -91,7 +92,12 @@ export default async function CoursesTab(): Promise<React.JSX.Element> {
         </>
       }
       tagline="~ publish what&rsquo;s finished, keep what&rsquo;s drying ~"
-      actions={<CreateCourseDialog />}
+      actions={
+        <>
+          <ConjureLink />
+          <CreateCourseDialog />
+        </>
+      }
     >
       {error ? (
         <LedgerCard>
@@ -110,7 +116,15 @@ export default async function CoursesTab(): Promise<React.JSX.Element> {
           <Hand>~ the button above opens a fresh scroll ~</Hand>
         </LedgerCard>
       ) : (
-        <CoursesContent data={shaped} createCta={<CreateCourseDialog />} />
+        <CoursesContent
+          data={shaped}
+          createCta={
+            <>
+              <ConjureLink />
+              <CreateCourseDialog />
+            </>
+          }
+        />
       )}
     </DashboardShell>
   );
