@@ -7,15 +7,19 @@ import type { PixelRect } from '../shared/types';
 export const MARKET_COLLIDERS: readonly PixelRect[] = [];
 
 /**
- * Bottom edge returns the member to the central square. 2026-04-23
- * (Phase 7 item M1): the spawn moved from the bottom (y=880) to the
- * top (y=140) so the member enters facing the stalls. The return edge
- * had to move to the opposite edge — otherwise the member spawned
- * inside the 300 px trigger band and was instantly bounced back to
- * /world. Player walks south through the stalls to exit.
+ * Top edge returns the member to the central square. 2026-04-23 (Phase
+ * 7): the edge is ENTER-gated via `promptLabel`, mirroring the pattern
+ * used for the Square's four outgoing exits. Walking into the top band
+ * shows a prompt pill; only ENTER navigates. Spawn sits at y=380 (see
+ * sprites.config.ts), which is outside the 300 px trigger band, so the
+ * prompt doesn't appear on arrival.
  */
 export const MARKET_RETURN_EDGE: EdgeTriggers = {
-  bottom: { route: '/world', threshold: 300 },
+  top: {
+    route: '/world',
+    threshold: 300,
+    promptLabel: 'Press ENTER to return to the Square',
+  },
 };
 
 export const marketLayersConfig = {
