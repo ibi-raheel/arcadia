@@ -17,11 +17,12 @@ import { revalidatePath } from 'next/cache';
 
 import type {
   CourseDraft,
+  DraftLessonBody,
   DraftOutlineSection,
   DraftSource,
   DraftStage,
 } from '@/lib/types/course-drafts';
-import { canAdvance, totalSourceChars } from '@/lib/types/course-drafts';
+import { allLessonsApproved, canAdvance, totalSourceChars } from '@/lib/types/course-drafts';
 import { isSupportedMime, parseSourceBuffer } from '@/lib/scribe/parse';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -305,6 +306,52 @@ export async function setDraftStage(
   if (updErr) return { ok: false, error: updErr.message };
   revalidatePath('/dashboard/courses/conjure');
   return { ok: true, value: { stage: to } };
+}
+
+/** Flip an individual lesson's approved flag. Safe to call on a
+ *  lesson that doesn't yet have a body — it's a no-op. */
+export async function setLessonApproved(
+  draftId: string,
+  sectionId: string,
+  lessonId: string,
+  approved: boolean,
+): Promise<Result<{ readonly approved: boolean }>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const supabase = getSupabaseServerClient();
+  const { data: row, error: readErr } = await supabase
+    .from('course_drafts')
+    .select('lessons, outline')
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId)
+    .maybeSingle();
+  if (readErr) return { ok: false, error: readErr.message };
+  if (!row) return { ok: false, error: 'draft not found' };
+
+  const current = (row.lessons as DraftLessonBody[]) ?? [];
+  const target = current.find((l) => l.section_id === sectionId && l.lesson_id === lessonId);
+  if (!target) return { ok: false, error: 'lesson body not found — compose it first' };
+
+  const next = current.map((l) =>
+    l.section_id === sectionId && l.lesson_id === lessonId ? { ...l, approved } : l,
+  );
+
+  const patch: Record<string, unknown> = { lessons: next };
+  // Auto-advance to `images` when everything is approved.
+  if (approved) {
+    const outline = (row.outline as DraftOutlineSection[]) ?? [];
+    if (allLessonsApproved(outline, next)) patch.stage = 'images';
+  }
+
+  const { error } = await supabase
+    .from('course_drafts')
+    .update(patch)
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/dashboard/courses/conjure');
+  return { ok: true, value: { approved } };
 }
 
 /** Overwrites the outline (used when the client hand-edits section
