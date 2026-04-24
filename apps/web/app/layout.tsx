@@ -8,6 +8,7 @@ import {
   JetBrains_Mono,
 } from 'next/font/google';
 import './globals.css';
+import './scriptorium.css';
 
 // Midnight Scriptorium — six faces. Each binds to its --font-* CSS variable
 // consumed by globals.css + Tailwind utilities (`font-display`, etc). Weights
