@@ -3,9 +3,9 @@
 
 export const coworkingOutsideSpritesConfig = {
   avatar: {
-    // 2026-04-24 user request: +50 y (1121 → 1171) so the member lands
-    // slightly south of the east bridge instead of centred on it.
-    spawnPixel: { x: 2450, y: 1171 },
+    // 2026-04-24 final: y=1121 (back from the +50 nudge — user tested
+    // 1171 then asked to lower the y coord by 50).
+    spawnPixel: { x: 2450, y: 1121 },
     size: { width: 135, height: 135 },
     bodyOffset: { x: 22, y: 62, width: 45, height: 22 },
     walkSpeed: 325,
