@@ -40,13 +40,16 @@ export function createProximityPromptManager(
 ): ProximityPromptManager {
   const container = scene.add.container(0, 0);
   const bg = scene.add.graphics();
+  // Scriptorium pill — same treatment as enter-prompt so every in-scene
+  // prompt reads as one UI language (IM Fell English italic + night-on-
+  // bronze frame, not the earlier Georgia-bold yellow-on-blue).
   const text = addCrispText(scene, 0, 0, trigger.label, {
-    fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
+    fontFamily: '"IM Fell English", "EB Garamond", Georgia, serif',
     fontSize: '20px',
-    fontStyle: 'bold',
-    color: '#fef3c7',
-    stroke: '#1c1917',
-    strokeThickness: 4,
+    fontStyle: 'italic',
+    color: '#e8d5a5',
+    stroke: '#0a0a0a',
+    strokeThickness: 3,
   }).setOrigin(0.5, 1);
   container.add([bg, text]);
   container.setDepth(2_000_000);
@@ -60,14 +63,16 @@ export function createProximityPromptManager(
       container.setVisible(false);
       return false;
     }
-    const w = text.width + 28;
-    const h = text.height + 14;
+    const w = text.width + 34;
+    const h = text.height + 18;
     bg.clear();
-    bg.fillStyle(0x0b1220, 0.92);
-    bg.fillRoundedRect(-w / 2, -h, w, h, 10);
-    bg.lineStyle(2, 0xfacc15, 1);
-    bg.strokeRoundedRect(-w / 2, -h, w, h, 10);
-    text.setPosition(0, -7);
+    bg.fillStyle(0x0e0806, 0.95);
+    bg.fillRoundedRect(-w / 2, -h, w, h, 4);
+    bg.lineStyle(1.5, 0x8e6e28, 1);
+    bg.strokeRoundedRect(-w / 2, -h, w, h, 4);
+    bg.lineStyle(1, 0xd4a868, 0.55);
+    bg.strokeRoundedRect(-w / 2 + 2, -h + 2, w - 4, h - 4, 3);
+    text.setPosition(0, -9);
     container.setPosition(ax, ay - 130);
     container.setVisible(true);
     if (enterJustDown) {

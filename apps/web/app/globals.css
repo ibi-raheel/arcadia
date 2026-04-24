@@ -214,11 +214,11 @@ pre,
   font-size: var(--kicker-size);
   letter-spacing: var(--kicker-tracking);
   text-transform: uppercase;
-  /* --bronze-deep on vellum ≈ 7:1 (WCAG AA); --ink-quiet was ~2.4:1 and
-     rendered the kicker nearly invisible on recent-activity + folk-roll
-     + payouts-monthly. Don't change the ::before bullet — it reads as a
-     decorative lantern-dot, not content. */
-  color: var(--bronze-deep);
+  /* --ink-soft on vellum ≈ 10:1 (WCAG AAA). Was --bronze-deep (~7:1)
+     but user 2026-04-24 review flagged every kicker as still too faint
+     on the parchment surfaces. Don't change ::before bullet — the
+     lantern-dot is decorative, not content. */
+  color: var(--ink-soft);
 }
 .kicker::before {
   content: '·  ';

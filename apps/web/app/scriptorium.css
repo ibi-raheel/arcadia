@@ -267,15 +267,15 @@
 .medallion.locked { background: radial-gradient(circle at 32% 28%, #3a3a3a, #1e1e1e); color: rgba(150,140,120,0.5); opacity: 0.6; }
 .medallion.locked .emblem { color: rgba(150,140,120,0.45); }
 
-/* Kicker label. --bronze-deep reads cleanly on vellum (~7:1); the
-   earlier --ink-quiet was ~2.4:1 and below WCAG AA. on-dark variant
-   keeps its warmer cue against oak. */
+/* Kicker label. --ink-soft on vellum ≈ 10:1 (WCAG AAA) — bumped from
+   --bronze-deep after 2026-04-24 review. on-dark variant keeps its
+   warmer cue against oak. */
 .kicker {
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--bronze-deep);
+  color: var(--ink-soft);
 }
 .kicker.on-dark { color: var(--vellum-shadow); }
 .kicker::before { content: "·  "; color: var(--lantern); }
