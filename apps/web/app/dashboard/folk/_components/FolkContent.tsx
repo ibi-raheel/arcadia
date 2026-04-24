@@ -24,10 +24,12 @@ import { buildSparkline } from '@/lib/charts/sparkline';
 import type {
   FolkAcquisitionSource,
   FolkAtRiskEntry,
+  FolkCohort,
   FolkData,
   FolkGeoEntry,
   FolkGrowth,
   FolkMember,
+  FolkNewsletter,
   FolkRetentionCurve,
   FolkRiskUrgency,
   FolkTier,
@@ -95,6 +97,18 @@ export function FolkContent({ data }: { readonly data: FolkData }): React.JSX.El
         >
           {data.acquisition.length > 0 ? <AcquisitionCard sources={data.acquisition} /> : <div />}
           {data.geography.length > 0 ? <GeographyCard entries={data.geography} /> : <div />}
+        </section>
+      )}
+
+      {data.cohorts.length > 0 && (
+        <section style={{ marginTop: 22 }}>
+          <CohortsCard cohorts={data.cohorts} />
+        </section>
+      )}
+
+      {data.newsletter && (
+        <section style={{ marginTop: 22 }}>
+          <NewsletterCard data={data.newsletter} />
         </section>
       )}
 
@@ -475,6 +489,330 @@ function GeographyCard({
         ))}
       </div>
     </VellumCard>
+  );
+}
+
+function CohortsCard({ cohorts }: { readonly cohorts: readonly FolkCohort[] }): React.JSX.Element {
+  return (
+    <LedgerCard style={{ padding: '22px 26px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          marginBottom: 10,
+        }}
+      >
+        <div>
+          <Kicker>cohorts · who stayed, who slipped</Kicker>
+          <h3
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontStyle: 'italic',
+              fontSize: 22,
+              color: 'var(--ink)',
+              margin: '4px 0 0',
+              lineHeight: 1.1,
+            }}
+          >
+            by the season they joined
+          </h3>
+        </div>
+      </div>
+      <table style={{ width: '100%', marginTop: 10, borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            <CohortTh>season joined</CohortTh>
+            <CohortTh align="right">joined</CohortTh>
+            <CohortTh align="right">30d retained</CohortTh>
+            <CohortTh align="right">90d retained</CohortTh>
+            <CohortTh align="right">ltv</CohortTh>
+          </tr>
+        </thead>
+        <tbody>
+          {cohorts.map((c, i) => (
+            <tr
+              key={c.season}
+              style={{
+                borderTop: '1px dashed rgba(90,63,34,0.25)',
+                borderBottom: i === cohorts.length - 1 ? 'none' : '1px dashed rgba(90,63,34,0.1)',
+              }}
+            >
+              <CohortTd>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontStyle: 'italic',
+                    fontSize: 16,
+                    color: 'var(--ink)',
+                  }}
+                >
+                  {c.season}
+                </span>
+              </CohortTd>
+              <CohortTd align="right">
+                <span
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontStyle: 'italic',
+                    fontSize: 17,
+                    color: 'var(--ink)',
+                    fontVariantNumeric: 'oldstyle-nums',
+                  }}
+                >
+                  {c.joined}
+                </span>
+              </CohortTd>
+              <CohortTd align="right">
+                <CohortPct value={c.retainedAt30d} />
+              </CohortTd>
+              <CohortTd align="right">
+                <CohortPct value={c.retainedAt90d} />
+              </CohortTd>
+              <CohortTd align="right">
+                <span
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontStyle: 'italic',
+                    fontSize: 17,
+                    color: 'var(--oxblood)',
+                    fontVariantNumeric: 'oldstyle-nums',
+                  }}
+                >
+                  ${c.ltv}
+                </span>
+              </CohortTd>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </LedgerCard>
+  );
+}
+
+function CohortTh({
+  children,
+  align = 'left',
+}: {
+  readonly children: React.ReactNode;
+  readonly align?: 'left' | 'right';
+}): React.JSX.Element {
+  return (
+    <th
+      style={{
+        textAlign: align,
+        padding: '10px',
+        fontFamily: 'var(--font-caps)',
+        fontSize: 11,
+        letterSpacing: 2,
+        textTransform: 'uppercase',
+        color: 'var(--ink-soft)',
+        fontWeight: 500,
+      }}
+    >
+      {children}
+    </th>
+  );
+}
+
+function CohortTd({
+  children,
+  align = 'left',
+}: {
+  readonly children: React.ReactNode;
+  readonly align?: 'left' | 'right';
+}): React.JSX.Element {
+  return <td style={{ padding: '12px 10px', textAlign: align, fontSize: 15 }}>{children}</td>;
+}
+
+function CohortPct({ value }: { readonly value: number }): React.JSX.Element {
+  const color = value >= 75 ? 'var(--verdigris)' : value >= 55 ? 'var(--ink)' : 'var(--wax)';
+  return (
+    <span
+      className="mono"
+      style={{
+        fontSize: 14,
+        color,
+        fontWeight: 500,
+      }}
+    >
+      {value.toFixed(0)}%
+    </span>
+  );
+}
+
+function NewsletterCard({ data }: { readonly data: FolkNewsletter }): React.JSX.Element {
+  return (
+    <VellumCard style={{ padding: '22px 26px' }} rotate={0.1}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 18,
+          marginBottom: 14,
+        }}
+      >
+        <div>
+          <Kicker>the letter · post</Kicker>
+          <h3
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontStyle: 'italic',
+              fontSize: 22,
+              color: 'var(--ink)',
+              margin: '4px 0 0',
+              lineHeight: 1.1,
+            }}
+          >
+            how the missives land
+          </h3>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            gap: 22,
+            alignItems: 'baseline',
+            flexWrap: 'wrap',
+          }}
+        >
+          <NewsletterAvg label="open" value={data.avgOpenRate} />
+          <NewsletterAvg label="click" value={data.avgClickRate} />
+          <NewsletterAvg label="convert" value={data.avgConversionRate} />
+        </div>
+      </div>
+
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            <CohortTh>subject</CohortTh>
+            <CohortTh>sent</CohortTh>
+            <CohortTh align="right">to</CohortTh>
+            <CohortTh align="right">opens</CohortTh>
+            <CohortTh align="right">clicks</CohortTh>
+            <CohortTh align="right">conversions</CohortTh>
+          </tr>
+        </thead>
+        <tbody>
+          {data.recent.map((s, i) => {
+            const openPct = s.sent > 0 ? (s.opens / s.sent) * 100 : 0;
+            const clickPct = s.sent > 0 ? (s.clicks / s.sent) * 100 : 0;
+            const convPct = s.sent > 0 ? (s.conversions / s.sent) * 100 : 0;
+            return (
+              <tr
+                key={s.subject}
+                style={{
+                  borderTop: '1px dashed rgba(90,63,34,0.25)',
+                  borderBottom:
+                    i === data.recent.length - 1 ? 'none' : '1px dashed rgba(90,63,34,0.1)',
+                }}
+              >
+                <CohortTd>
+                  <span className="body-italic" style={{ color: 'var(--ink)', fontSize: 15 }}>
+                    {s.subject}
+                  </span>
+                </CohortTd>
+                <CohortTd>
+                  <span className="mono" style={{ color: 'var(--ink-faint)', fontSize: 11 }}>
+                    {s.sentOn}
+                  </span>
+                </CohortTd>
+                <CohortTd align="right">
+                  <span className="mono" style={{ color: 'var(--ink-faint)', fontSize: 12 }}>
+                    {s.sent}
+                  </span>
+                </CohortTd>
+                <CohortTd align="right">
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontStyle: 'italic',
+                      fontSize: 16,
+                      color: 'var(--ink)',
+                      fontVariantNumeric: 'oldstyle-nums',
+                    }}
+                  >
+                    {s.opens}{' '}
+                    <span className="mono" style={{ fontSize: 10, color: 'var(--ink-faint)' }}>
+                      {openPct.toFixed(0)}%
+                    </span>
+                  </span>
+                </CohortTd>
+                <CohortTd align="right">
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontStyle: 'italic',
+                      fontSize: 16,
+                      color: 'var(--ink)',
+                      fontVariantNumeric: 'oldstyle-nums',
+                    }}
+                  >
+                    {s.clicks}{' '}
+                    <span className="mono" style={{ fontSize: 10, color: 'var(--ink-faint)' }}>
+                      {clickPct.toFixed(1)}%
+                    </span>
+                  </span>
+                </CohortTd>
+                <CohortTd align="right">
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontStyle: 'italic',
+                      fontSize: 16,
+                      color: 'var(--oxblood)',
+                      fontVariantNumeric: 'oldstyle-nums',
+                    }}
+                  >
+                    {s.conversions}{' '}
+                    <span className="mono" style={{ fontSize: 10, color: 'var(--ink-faint)' }}>
+                      {convPct.toFixed(1)}%
+                    </span>
+                  </span>
+                </CohortTd>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </VellumCard>
+  );
+}
+
+function NewsletterAvg({
+  label,
+  value,
+}: {
+  readonly label: string;
+  readonly value: number;
+}): React.JSX.Element {
+  return (
+    <div style={{ textAlign: 'right' }}>
+      <div
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontStyle: 'italic',
+          fontSize: 22,
+          color: 'var(--ink)',
+          lineHeight: 1,
+          fontVariantNumeric: 'oldstyle-nums',
+        }}
+      >
+        {value.toFixed(1)}%
+      </div>
+      <div
+        className="mono"
+        style={{
+          fontSize: 9,
+          letterSpacing: 1.3,
+          color: 'var(--ink-faint)',
+          textTransform: 'uppercase',
+          marginTop: 3,
+        }}
+      >
+        avg · {label}
+      </div>
+    </div>
   );
 }
 
