@@ -40,6 +40,7 @@ import {
 } from './scenes/tavern-outside/TavernOutsideScene';
 import { tavernOutsideCameraConfig } from './scenes/tavern-outside/camera.config';
 import { TAVERN_OUTSIDE_DOOR_SPAWNS } from './scenes/tavern-outside/layers.config';
+import { COWORKING_OUTSIDE_DOOR_SPAWNS } from './scenes/coworking-outside/layers.config';
 import { MEMBER_REGISTRY_KEY, type SceneMember } from './scenes/world/WorldScene';
 
 export type OutdoorVariant = 'academy-outside' | 'tavern-outside' | 'coworking-outside';
@@ -123,13 +124,14 @@ export default function GameOutdoor({
   const spec = VARIANT_MAP[variant];
   const searchParams = useSearchParams();
   // `?from=<buildingId>` drops the avatar next to a specific door instead
-  // of the default spawn. Today only tavern-outside uses this — coworking
-  // stays at its default centre-east spawn.
+  // of the default spawn. Tavern-outside + coworking-outside both use
+  // this; academy-outside has one door so no per-door override.
   const spawnOverride = useMemo(() => {
-    if (variant !== 'tavern-outside') return undefined;
     const from = searchParams.get('from');
     if (!from) return undefined;
-    return TAVERN_OUTSIDE_DOOR_SPAWNS[from];
+    if (variant === 'tavern-outside') return TAVERN_OUTSIDE_DOOR_SPAWNS[from];
+    if (variant === 'coworking-outside') return COWORKING_OUTSIDE_DOOR_SPAWNS[from];
+    return undefined;
   }, [variant, searchParams]);
 
   const containerRef = useRef<HTMLDivElement>(null);

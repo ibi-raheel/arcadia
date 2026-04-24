@@ -24,11 +24,11 @@ describe('coworking-outside configs', () => {
     expect(spawnPixel.y).toBeLessThan(COWORKING_OUTSIDE_IMAGE_SIZE.height - 100);
   });
 
-  it('ships exactly five entry triggers with distinct building IDs', () => {
-    expect(COWORKING_OUTSIDE_ENTRY_TRIGGERS).toHaveLength(5);
+  it('ships exactly four entry triggers with distinct building IDs (tent-2 removed)', () => {
+    expect(COWORKING_OUTSIDE_ENTRY_TRIGGERS).toHaveLength(4);
     const ids = COWORKING_OUTSIDE_ENTRY_TRIGGERS.map((t) => t.buildingId);
-    expect(new Set(ids).size).toBe(5);
-    expect(ids).toEqual(['tent-1', 'tent-2', 'tent-3', 'tent-4', 'tent-5']);
+    expect(new Set(ids).size).toBe(4);
+    expect(ids).toEqual(['tent-1', 'tent-3', 'tent-4', 'tent-5']);
   });
 
   it('every tent entry targets /coworking/inside with its buildingId in the query', () => {
