@@ -9,14 +9,7 @@
 import { useCallback, useRef, useState, useTransition } from 'react';
 
 import { removeDraftSource, updateDraftPrompt, uploadDraftSource } from '@/app/_actions/scribe';
-import {
-  BronzeButton,
-  GhostButton,
-  Hand,
-  Kicker,
-  VellumCard,
-  WaxSeal,
-} from '@/components/scriptorium';
+import { BronzeButton, Hand, Kicker, VellumCard, WaxSeal } from '@/components/scriptorium';
 import type { DraftSource } from '@/lib/types/course-drafts';
 import { totalSourceChars } from '@/lib/types/course-drafts';
 
@@ -379,22 +372,6 @@ export function Satchel({
             {prompt.length} / 2,000
           </div>
         </div>
-      </div>
-
-      {/* Primary action (wired in 10.4) */}
-      <div
-        style={{
-          marginTop: 16,
-          paddingTop: 14,
-          borderTop: '1px dashed rgba(90, 63, 34, 0.25)',
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: 10,
-        }}
-      >
-        <GhostButton type="button" size="sm" disabled title="Coming in sub-phase 10.4">
-          ask the scribe →
-        </GhostButton>
       </div>
     </VellumCard>
   );

@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { Hand, Kicker, LedgerCard } from '@/components/scriptorium';
 import type { CourseDraft, DraftSource } from '@/lib/types/course-drafts';
 
+import { OutlineStage } from './OutlineStage';
 import { Satchel } from './Satchel';
 import { StageRibbon } from './StageRibbon';
 
@@ -34,6 +35,11 @@ export function ConjureWorkbench({ initialDraft }: Props): React.JSX.Element {
     setDraft((d) => ({ ...d, user_prompt: userPrompt }));
   };
 
+  const showOutline =
+    draft.outline.length > 0 || draft.user_prompt.trim().length > 0 || draft.sources.length > 0;
+
+  const beyondOutline = draft.stage === 'images' || draft.stage === 'ready';
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <StageRibbon stage={draft.stage} />
@@ -46,12 +52,24 @@ export function ConjureWorkbench({ initialDraft }: Props): React.JSX.Element {
         onPromptChanged={onPromptChanged}
       />
 
-      {draft.stage !== 'satchel' && (
+      {showOutline && <OutlineStage draft={draft} onDraftChanged={setDraft} />}
+
+      {draft.stage === 'lessons' && (
         <LedgerCard>
-          <Kicker>coming soon</Kicker>
+          <Kicker>stage 2 · lessons</Kicker>
           <p className="body-italic" style={{ fontSize: 16, color: 'var(--ink)' }}>
-            the next stage lands in the following sub-phase — this placeholder is what the workbench
-            shows while the scribe is still learning to draft outlines.
+            outline approved. the scribe is ready to compose each lesson body — that UI lands in
+            sub-phase 10.5.
+          </p>
+          <Hand>~ one lesson at a time, streamed, approvable ~</Hand>
+        </LedgerCard>
+      )}
+
+      {beyondOutline && (
+        <LedgerCard>
+          <Kicker>further stages</Kicker>
+          <p className="body-italic" style={{ fontSize: 16, color: 'var(--ink)' }}>
+            images + seal land in 10.6 + 10.7.
           </p>
           <Hand>~ you&rsquo;re on stage: {draft.stage} ~</Hand>
         </LedgerCard>
