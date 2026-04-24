@@ -55,6 +55,7 @@ async function loadFolk(): Promise<FolkData> {
     churnRisk: 0,
     money: { mrr: 0, mrrDelta: 0 },
     tiers: [],
+    retentionCurves: [],
     members,
   };
 }

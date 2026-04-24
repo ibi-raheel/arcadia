@@ -39,6 +39,15 @@ export type FolkMoney = {
   readonly mrrDelta: number; // percent
 };
 
+/** Retention curve for one tier — percentage (0–100) retained at the
+ *  end of each month since sign-up. `data[0]` is month-1 (100 unless
+ *  churn is very fast), `data[11]` is month-12. */
+export type FolkRetentionCurve = {
+  readonly label: string;
+  readonly color: string; // CSS color (hex or var())
+  readonly data: readonly number[];
+};
+
 export type FolkData = {
   readonly totalPaying: number;
   readonly totalFolk: number;
@@ -46,6 +55,7 @@ export type FolkData = {
   readonly churnRisk: number; // count of folk unseen > 14 days
   readonly money: FolkMoney;
   readonly tiers: readonly FolkTier[];
+  readonly retentionCurves: readonly FolkRetentionCurve[];
   readonly members: readonly FolkMember[];
 };
 
@@ -104,6 +114,28 @@ export const FOLK_FIXTURE: FolkData = {
       rate: 180,
       count: 1,
       benefits: ['name on the wall', 'every new scroll free', 'dinner when I pass through'],
+    },
+  ],
+  retentionCurves: [
+    {
+      label: 'guildling',
+      // Hex rather than `var(--bronze)` — CSS variables don't resolve
+      // consistently in SVG stroke under all Chromium versions. The
+      // tier palette below matches the `tiers[].color` tokens.
+      color: '#8a6a3a', // --bronze
+      // Month-1 through month-12 retention %. Flattens around 36% by
+      // year-end — realistic for a cheap entry tier.
+      data: [100, 82, 68, 58, 51, 46, 42, 40, 38, 37, 36, 36],
+    },
+    {
+      label: 'lantern-bearer',
+      color: '#f2c469', // --lantern
+      data: [100, 92, 84, 78, 74, 70, 68, 66, 64, 63, 62, 62],
+    },
+    {
+      label: 'hearth-keeper',
+      color: '#8f2530', // --wax
+      data: [100, 97, 94, 92, 90, 88, 87, 86, 86, 85, 85, 85],
     },
   ],
   members: [
