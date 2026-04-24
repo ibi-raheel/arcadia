@@ -204,8 +204,9 @@ export default async function CourseViewerPage({
                           style={{
                             fontSize: 10,
                             letterSpacing: 1.8,
-                            color: 'var(--gilt-deep)',
+                            color: 'var(--bronze-deep)',
                             minWidth: 22,
+                            fontWeight: 500,
                           }}
                         >
                           {ROMAN[i] ?? `${i + 1}`}

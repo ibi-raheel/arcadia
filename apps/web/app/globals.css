@@ -56,11 +56,18 @@
   --crimson: #a8364a;
   --oxblood: #6d1a24;
 
-  /* ── Ink & gilt ── */
+  /* ── Ink & gilt ──
+     WCAG notes (on vellum #e8d5a5):
+       --ink            ≈ 16 : 1   AAA primary
+       --ink-soft       ≈ 10 : 1   AAA secondary
+       --ink-faint      ≈  5.2 : 1 AA  (was 4.4 — bumped 2026-04-24)
+       --ink-quiet      ≈  4.0 : 1 AA-large (was 2.4 — bumped 2026-04-24)
+     Anything quieter than --ink-quiet is decorative-only; use sparingly
+     and never for real content. */
   --ink: #140a05;
   --ink-soft: #3a2418;
-  --ink-faint: #6e5544;
-  --ink-quiet: #8f7b68;
+  --ink-faint: #5a402c;
+  --ink-quiet: #735844;
   --ink-blue: #1f3147;
   --ink-red: #8a2838;
   --gilt: #c9a14a;
@@ -207,7 +214,11 @@ pre,
   font-size: var(--kicker-size);
   letter-spacing: var(--kicker-tracking);
   text-transform: uppercase;
-  color: var(--ink-quiet);
+  /* --bronze-deep on vellum ≈ 7:1 (WCAG AA); --ink-quiet was ~2.4:1 and
+     rendered the kicker nearly invisible on recent-activity + folk-roll
+     + payouts-monthly. Don't change the ::before bullet — it reads as a
+     decorative lantern-dot, not content. */
+  color: var(--bronze-deep);
 }
 .kicker::before {
   content: '·  ';
