@@ -11,10 +11,7 @@ import { BOOT_ASSETS } from '../boot/asset-manifest';
 import { isAvatarId } from '../shared/avatar-palette';
 import { spawnColliders } from '../shared/colliders';
 import { addCrispText } from '../shared/crisp-text';
-import {
-  createEnterPromptManager,
-  type EnterPromptManager,
-} from '../shared/enter-prompt';
+import { createEnterPromptManager, type EnterPromptManager } from '../shared/enter-prompt';
 import { applyFillZoom } from '../shared/fill-zoom';
 import { createJumpBinding, type JumpBinding } from '../shared/jump-binding';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
@@ -225,9 +222,7 @@ export class AcademyScene extends Phaser.Scene {
 
     this.jumpBinding?.tryJump(this.localAvatar);
 
-    const enterJustDown = this.enterKey
-      ? Phaser.Input.Keyboard.JustDown(this.enterKey)
-      : false;
+    const enterJustDown = this.enterKey ? Phaser.Input.Keyboard.JustDown(this.enterKey) : false;
     this.enterPrompt?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown);
 
     const input = this.readInputState();

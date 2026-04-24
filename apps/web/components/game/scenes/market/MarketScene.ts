@@ -383,9 +383,7 @@ export class MarketScene extends Phaser.Scene {
       obj.setDepth(calculateYSortDepth(obj, { depthBase, yAnchorRatio }));
     }
 
-    const enterJustDown = this.enterKey
-      ? Phaser.Input.Keyboard.JustDown(this.enterKey)
-      : false;
+    const enterJustDown = this.enterKey ? Phaser.Input.Keyboard.JustDown(this.enterKey) : false;
     this.edgeTriggers?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown);
 
     // Persist position to localStorage every POSITION_SAVE_INTERVAL_MS

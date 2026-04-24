@@ -428,9 +428,7 @@ export class SquareScene extends Phaser.Scene {
     }
 
     this.updateNpcBubble(this.localAvatar.x, this.localAvatar.y);
-    const enterJustDown = this.enterKey
-      ? Phaser.Input.Keyboard.JustDown(this.enterKey)
-      : false;
+    const enterJustDown = this.enterKey ? Phaser.Input.Keyboard.JustDown(this.enterKey) : false;
     this.edgeTriggers?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown);
   }
 }
