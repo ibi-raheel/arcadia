@@ -1,121 +1,141 @@
+// `/dashboard/courses/[id]/analytics` — keeper's tally for one course.
+// Reskinned under the Phase-8 scriptorium: EnvelopeCards for KPIs, a
+// JournalCard with a hand-drawn SVG sparkline of activity, a
+// LedgerCard table of recent progress events. DashboardShell supplies
+// the tab nav + simulation toggle.
+//
+// The real data shape comes from existing fetchCourseAnalytics +
+// aggregate helpers (Phase 5 polish). Server component; the shell
+// itself handles client bits downstream.
+
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
+import { DashboardShell } from '@/components/dashboard/DashboardShell';
+import {
+  Chip,
+  EnvelopeCard,
+  GhostButton,
+  Hand,
+  Kicker,
+  LedgerCard,
+  JournalCard,
+} from '@/components/scriptorium';
+import { bucketTimestamps, buildSparkline } from '@/lib/charts/sparkline';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 import { fetchCourseAnalytics } from './fetch';
 
 export const dynamic = 'force-dynamic';
 
-type Params = { readonly params: { readonly id: string } };
+type Params = { readonly params: Promise<{ readonly id: string }> };
 
 export default async function CourseAnalyticsPage({ params }: Params): Promise<React.JSX.Element> {
+  const { id } = await params;
   const supabase = getSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect(`/login?next=/dashboard/courses/${params.id}/analytics`);
+  if (!user) redirect(`/login?next=/dashboard/courses/${id}/analytics`);
 
   const { data: course } = await supabase
     .from('courses')
     .select('id, title')
-    .eq('id', params.id)
+    .eq('id', id)
     .maybeSingle<{ id: string; title: string }>();
 
-  const result = await fetchCourseAnalytics(params.id);
+  const result = await fetchCourseAnalytics(id);
   if (!result.ok) {
     if (result.status === 'unauthorized' || result.status === 'not-found') notFound();
     return (
-      <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
-        <p className="text-red-400">Couldn&rsquo;t load analytics: {result.error}</p>
-      </main>
+      <DashboardShell
+        kicker={course?.title ?? 'a course'}
+        title="the keeper's tally"
+        tagline="~ the ink ran ~"
+      >
+        <LedgerCard>
+          <p style={{ color: 'var(--crimson)' }}>Couldn&rsquo;t load: {result.error}</p>
+        </LedgerCard>
+      </DashboardShell>
     );
   }
+
   const { enrolmentCount, completionRate, activeInLastWeek, recentActivity } = result.data;
 
+  // Sparkline over the last 14 days, one bucket per day. `recentActivity`
+  // already filters to the last ~2 weeks from fetch.ts; build from its
+  // timestamps.
+  const now = new Date();
+  const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+  const series = bucketTimestamps(
+    recentActivity.map((r) => r.updatedAt),
+    twoWeeksAgo.toISOString(),
+    now.toISOString(),
+    14,
+  );
+  const hasActivity = series.some((n) => n > 0);
+
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="border-b border-slate-800 bg-slate-900/60">
-        <div className="mx-auto flex max-w-5xl items-center justify-between p-4">
-          <div className="flex items-center gap-3">
-            <Link
-              href={`/dashboard/courses/${params.id}`}
-              className="text-sm text-slate-400 transition hover:text-slate-200"
-            >
-              ← Editor
-            </Link>
-            <span className="text-slate-700">/</span>
-            <h1 className="text-lg font-semibold">{course?.title ?? 'Course'} — Analytics</h1>
-          </div>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-5xl p-8">
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard label="Enrolments" value={String(enrolmentCount)} hint="total members" />
-          <StatCard
-            label="Completion rate"
-            value={`${Math.round(completionRate * 100)}%`}
-            hint="finished every lesson"
-          />
-          <StatCard label="Active this week" value={String(activeInLastWeek)} hint="last 7 days" />
-        </section>
-
-        <section className="mt-8">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">
-            Recent activity
-          </h2>
-          {recentActivity.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-slate-800 bg-slate-900/40 p-6 text-sm text-slate-500">
-              No progress events yet. Once members start watching lessons, their activity appears
-              here.
-            </p>
-          ) : (
-            <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-900/80 text-xs uppercase tracking-wide text-slate-500">
-                  <tr>
-                    <th className="px-4 py-2 text-left">Member</th>
-                    <th className="px-4 py-2 text-left">Lesson</th>
-                    <th className="px-4 py-2 text-left">Status</th>
-                    <th className="px-4 py-2 text-left">When</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentActivity.map((row) => (
-                    <tr
-                      key={`${row.memberId}-${row.lessonId}-${row.updatedAt}`}
-                      className="border-t border-slate-800"
-                    >
-                      <td className="px-4 py-2 text-slate-200">{row.displayName}</td>
-                      <td className="px-4 py-2 text-slate-300">{row.lessonTitle}</td>
-                      <td className="px-4 py-2">
-                        {row.completed ? (
-                          <span className="rounded-full bg-emerald-900/60 px-2 py-0.5 text-xs text-emerald-300">
-                            Completed
-                          </span>
-                        ) : (
-                          <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-400">
-                            In progress
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-2 text-xs text-slate-500">
-                        {new Date(row.updatedAt).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+    <DashboardShell
+      kicker={course?.title ?? 'a course'}
+      title={
+        <>
+          the keeper&rsquo;s <em style={{ color: 'var(--lantern)', fontStyle: 'italic' }}>tally</em>
+          .
+        </>
+      }
+      tagline="~ who's read, who's stayed, who's gone quiet ~"
+      actions={
+        <Link href={`/dashboard/courses/${id}`} style={{ textDecoration: 'none' }}>
+          <GhostButton>← editor</GhostButton>
+        </Link>
+      }
+    >
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: 18,
+          marginBottom: 22,
+        }}
+      >
+        <Kpi label="enrolments" value={String(enrolmentCount)} hint="total folk" />
+        <Kpi
+          label="completion"
+          value={`${Math.round(completionRate * 100)}%`}
+          hint="finished every lesson"
+        />
+        <Kpi label="active · 7d" value={String(activeInLastWeek)} hint="seen in a week" />
       </div>
-    </main>
+
+      <JournalCard style={{ marginBottom: 22 }}>
+        <Kicker>activity · last fourteen days</Kicker>
+        {hasActivity ? (
+          <div style={{ marginTop: 12 }}>
+            <ActivitySparkline series={series} />
+          </div>
+        ) : (
+          <p className="body-italic" style={{ marginTop: 12, color: 'var(--ink-quiet)' }}>
+            no progress events yet. the ink is still drying on this page.
+          </p>
+        )}
+      </JournalCard>
+
+      <LedgerCard>
+        <Kicker>recent activity</Kicker>
+        {recentActivity.length === 0 ? (
+          <p className="body-italic" style={{ marginTop: 12, color: 'var(--ink-quiet)' }}>
+            Once members start watching lessons, their activity appears here.
+          </p>
+        ) : (
+          <ActivityTable rows={recentActivity} />
+        )}
+      </LedgerCard>
+    </DashboardShell>
   );
 }
 
-function StatCard({
+function Kpi({
   label,
   value,
   hint,
@@ -125,10 +145,123 @@ function StatCard({
   readonly hint: string;
 }): React.JSX.Element {
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-2 text-3xl font-semibold text-slate-100">{value}</p>
-      <p className="mt-1 text-xs text-slate-500">{hint}</p>
-    </div>
+    <EnvelopeCard>
+      <Kicker>{label}</Kicker>
+      <div
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontStyle: 'italic',
+          fontSize: 38,
+          color: 'var(--vellum)',
+          lineHeight: 1,
+          marginTop: 6,
+        }}
+      >
+        {value}
+      </div>
+      <Hand onDark>{`~ ${hint} ~`}</Hand>
+    </EnvelopeCard>
+  );
+}
+
+function ActivitySparkline({ series }: { readonly series: readonly number[] }): React.JSX.Element {
+  const { line, area, viewBox, last } = buildSparkline([...series], { width: 600, height: 90 });
+  return (
+    <svg viewBox={viewBox} width="100%" height={90} preserveAspectRatio="none">
+      <path d={area} fill="rgba(143,37,48,0.12)" />
+      <path
+        d={line}
+        fill="none"
+        stroke="var(--wax)"
+        strokeWidth={2.2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx={last.x} cy={last.y} r={3.5} fill="var(--wax)" />
+    </svg>
+  );
+}
+
+type ActivityRow = {
+  readonly memberId: string;
+  readonly lessonId: string;
+  readonly updatedAt: string;
+  readonly displayName: string;
+  readonly lessonTitle: string;
+  readonly completed: boolean;
+};
+
+function ActivityTable({ rows }: { readonly rows: readonly ActivityRow[] }): React.JSX.Element {
+  return (
+    <table style={{ width: '100%', marginTop: 14, borderCollapse: 'collapse' }}>
+      <thead>
+        <tr>
+          <Th>member</Th>
+          <Th>lesson</Th>
+          <Th>status</Th>
+          <Th>when</Th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr
+            key={`${row.memberId}-${row.lessonId}-${row.updatedAt}`}
+            style={{ borderTop: '1px dashed rgba(90,63,34,0.25)' }}
+          >
+            <Td>
+              <span style={{ color: 'var(--ink)' }}>{row.displayName}</span>
+            </Td>
+            <Td>
+              <span style={{ color: 'var(--ink-soft)' }}>{row.lessonTitle}</span>
+            </Td>
+            <Td>
+              {row.completed ? (
+                <Chip variant="verdigris">sealed</Chip>
+              ) : (
+                <Chip variant="bronze">reading</Chip>
+              )}
+            </Td>
+            <Td>
+              <span className="mono" style={{ color: 'var(--ink-faint)' }}>
+                {new Date(row.updatedAt).toLocaleString()}
+              </span>
+            </Td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function Th({ children }: { readonly children: React.ReactNode }): React.JSX.Element {
+  return (
+    <th
+      style={{
+        textAlign: 'left',
+        padding: '8px 10px',
+        fontFamily: 'var(--font-caps)',
+        fontSize: 11,
+        letterSpacing: 2,
+        textTransform: 'uppercase',
+        color: 'var(--gilt)',
+        fontWeight: 400,
+      }}
+    >
+      {children}
+    </th>
+  );
+}
+
+function Td({ children }: { readonly children: React.ReactNode }): React.JSX.Element {
+  return (
+    <td
+      style={{
+        padding: '10px',
+        fontFamily: 'var(--font-body)',
+        fontSize: 15,
+      }}
+    >
+      {children}
+    </td>
   );
 }
