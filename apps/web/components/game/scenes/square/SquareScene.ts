@@ -22,10 +22,13 @@ import { BOOT_ASSETS } from '../boot/asset-manifest';
 import { isAvatarId } from '../shared/avatar-palette';
 import { createCapacityHud, type CapacityHud } from '../shared/capacity-hud';
 import { spawnColliders } from '../shared/colliders';
-import { addCrispText } from '../shared/crisp-text';
 import { createEdgeTriggerManager, type EdgeTriggerManager } from '../shared/edge-triggers';
 import { createEnterPromptManager, type EnterPromptManager } from '../shared/enter-prompt';
 import { applyFillZoom } from '../shared/fill-zoom';
+import {
+  createProximityPromptManager,
+  type ProximityPromptManager,
+} from '../shared/proximity-prompt';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -47,6 +50,11 @@ import { squareLayersConfig } from './layers.config';
 import { squareSpritesConfig } from './sprites.config';
 
 export const SQUARE_SCENE_KEY = 'SquareScene' as const;
+
+/** Fired on the scene's event bus when the local avatar is within the
+ *  wanderer's proximity radius and presses ENTER. The React side
+ *  (SageFeatures.tsx) listens for this and opens the dialogue popup. */
+export const SQUARE_OPEN_SAGE_EVENT = 'square:open-sage' as const;
 
 /**
  * Registry key written by `GameSquare` before boot when the URL carries
@@ -86,12 +94,8 @@ export class SquareScene extends Phaser.Scene {
 
   private edgeTriggers?: EdgeTriggerManager;
   private lodgePrompt?: EnterPromptManager;
+  private sagePrompt?: ProximityPromptManager;
   private capacityHud?: CapacityHud;
-
-  private npcBubble?: Phaser.GameObjects.Container;
-  private npcBubbleText?: Phaser.GameObjects.Text;
-  private npcBubbleBg?: Phaser.GameObjects.Graphics;
-  private npcWasNear = false;
 
   constructor() {
     super({ key: SQUARE_SCENE_KEY });
@@ -128,7 +132,22 @@ export class SquareScene extends Phaser.Scene {
 
     this.capacityHud = createCapacityHud(this, { label: 'Square', max: HUD_MAX_CLIENTS });
 
-    this.createNpcBubble();
+    // Wanderer NPC — proximity prompt at the bearded merchant on the
+    // rug in the upper-left. ENTER opens the React sage dialogue
+    // (SageFeatures listens for SQUARE_OPEN_SAGE_EVENT).
+    const npc = squareLayersConfig.npc;
+    this.sagePrompt = createProximityPromptManager(
+      this,
+      {
+        centerX: npc.position.x,
+        centerY: npc.position.y,
+        radius: npc.proximityPx,
+        label: 'Press ENTER to speak with the wanderer',
+      },
+      () => {
+        this.events.emit(SQUARE_OPEN_SAGE_EVENT);
+      },
+    );
 
     this.colyseus = this.registry.get(COLYSEUS_CONNECTION_REGISTRY_KEY) as
       | ColyseusConnection
@@ -300,60 +319,12 @@ export class SquareScene extends Phaser.Scene {
     this.teardownRemoteAvatars();
     this.edgeTriggers?.destroy();
     this.lodgePrompt?.destroy();
+    this.sagePrompt?.destroy();
     this.capacityHud?.destroy();
-    this.npcBubble?.destroy();
     this.edgeTriggers = undefined;
     this.lodgePrompt = undefined;
+    this.sagePrompt = undefined;
     this.capacityHud = undefined;
-    this.npcBubble = undefined;
-    this.npcBubbleText = undefined;
-    this.npcBubbleBg = undefined;
-  }
-
-  private createNpcBubble(): void {
-    const text = addCrispText(this, 0, 0, '', {
-      fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
-      fontSize: '17px',
-      color: '#1c1917',
-      wordWrap: { width: 260 },
-      align: 'center',
-    })
-      .setOrigin(0.5, 1)
-      .setPadding(12, 8, 12, 8);
-    const bg = this.add.graphics();
-    this.npcBubble = this.add.container(0, 0, [bg, text]).setDepth(2_000_000).setVisible(false);
-    this.npcBubbleText = text;
-    this.npcBubbleBg = bg;
-  }
-
-  private showRandomNpcTip(): void {
-    if (!this.npcBubble || !this.npcBubbleText || !this.npcBubbleBg) return;
-    const tips = squareLayersConfig.npc.tips;
-    const tip = tips[Math.floor(Math.random() * tips.length)] ?? '';
-    this.npcBubbleText.setText(tip);
-    const w = this.npcBubbleText.width;
-    const h = this.npcBubbleText.height;
-    this.npcBubbleBg.clear();
-    this.npcBubbleBg.fillStyle(0xffffff, 0.95);
-    this.npcBubbleBg.lineStyle(2, 0x1e293b, 1);
-    this.npcBubbleBg.fillRoundedRect(-w / 2, -h, w, h, 10);
-    this.npcBubbleBg.strokeRoundedRect(-w / 2, -h, w, h, 10);
-    // Tail pointing down at the NPC's head.
-    this.npcBubbleBg.fillTriangle(-8, 0, 8, 0, 0, 10);
-    this.npcBubbleBg.strokeTriangle(-8, 0, 8, 0, 0, 10);
-    this.npcBubble.setVisible(true);
-  }
-
-  private updateNpcBubble(ax: number, ay: number): void {
-    if (!this.npcBubble) return;
-    const cfg = squareLayersConfig.npc;
-    this.npcBubble.setPosition(cfg.position.x, cfg.headY);
-    const dx = ax - cfg.position.x;
-    const dy = ay - cfg.position.y;
-    const near = Math.hypot(dx, dy) < cfg.proximityPx;
-    if (near && !this.npcWasNear) this.showRandomNpcTip();
-    if (!near && this.npcWasNear) this.npcBubble.setVisible(false);
-    this.npcWasNear = near;
   }
 
   private sendMoveIfChanged(now: number): void {
@@ -435,22 +406,28 @@ export class SquareScene extends Phaser.Scene {
       obj.setDepth(calculateYSortDepth(obj, { depthBase, yAnchorRatio }));
     }
 
-    this.updateNpcBubble(this.localAvatar.x, this.localAvatar.y);
     const enterJustDown = this.enterKey ? Phaser.Input.Keyboard.JustDown(this.enterKey) : false;
-    // Lodge runs before edges so a single ENTER press is consumed by
-    // the nearer interactable (lodge sits well inside the map; edge
-    // triggers only fire in the 300 px edge band, so spatial overlap is
-    // impossible — but the defensive ordering keeps future triggers
-    // safe).
-    const lodgeFired = this.lodgePrompt?.update(
+    // Sage runs first — opens the React dialogue overlay and consumes
+    // the ENTER for that frame so the lodge / edge triggers don't also
+    // fire.
+    const sageFired = this.sagePrompt?.update(
       this.localAvatar.x,
       this.localAvatar.y,
       enterJustDown,
     );
+    // Lodge runs before edges so a single ENTER press is consumed by
+    // the nearer interactable. (Lodge sits well inside the map; edge
+    // triggers only fire in the 300 px edge band, so spatial overlap
+    // is impossible — but the defensive ordering keeps future
+    // triggers safe.)
+    const lodgeFired = sageFired
+      ? undefined
+      : this.lodgePrompt?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown);
+    const edgeEnterAllowed = !sageFired && !lodgeFired?.navigated;
     this.edgeTriggers?.update(
       this.localAvatar.x,
       this.localAvatar.y,
-      lodgeFired?.navigated ? false : enterJustDown,
+      edgeEnterAllowed ? enterJustDown : false,
     );
   }
 }
