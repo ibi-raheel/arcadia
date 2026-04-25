@@ -220,6 +220,7 @@ export default function GameCoworkingInside(): React.JSX.Element {
           memberId={fetchState.member.memberId}
           displayName={fetchState.member.displayName}
           initialXp={fetchState.member.xp}
+          loaded={sceneReady}
         />
       )}
       <div className="relative flex-1">

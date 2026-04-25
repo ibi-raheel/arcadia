@@ -21,9 +21,13 @@ import './panel.css';
 type Props = {
   readonly displayName: string;
   readonly xp: number;
+  /** When false (e.g. while a scene is preloading), the bar reserves
+   *  layout space but renders invisible — keeps the Phaser canvas
+   *  height stable across the loading → ready transition. Default true. */
+  readonly loaded?: boolean;
 };
 
-export function PlayerBar({ displayName, xp }: Props): React.JSX.Element {
+export function PlayerBar({ displayName, xp, loaded = true }: Props): React.JSX.Element {
   const { level, percent, currentLevelXp, nextLevelXp } = progressToNextLevel(xp);
   const widthPct = Math.round(percent * 100);
   const ariaText =
@@ -43,7 +47,11 @@ export function PlayerBar({ displayName, xp }: Props): React.JSX.Element {
         display: 'flex',
         alignItems: 'center',
         gap: 16,
+        // Reserve layout space during scene preload but stay invisible —
+        // prevents the Phaser canvas from resizing when the HUD pops in.
+        visibility: loaded ? 'visible' : 'hidden',
       }}
+      aria-hidden={!loaded}
     >
       <Shield level={level} />
 

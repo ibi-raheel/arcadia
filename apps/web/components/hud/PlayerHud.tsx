@@ -19,9 +19,17 @@ type Props = {
   readonly displayName: string;
   /** XP at mount; the HUD subscribes to Realtime updates from then on. */
   readonly initialXp: number;
+  /** When false (scene still preloading), the bar reserves layout
+   *  space but renders invisible. Default true. */
+  readonly loaded?: boolean;
 };
 
-export function PlayerHud({ memberId, displayName, initialXp }: Props): React.JSX.Element {
+export function PlayerHud({
+  memberId,
+  displayName,
+  initialXp,
+  loaded = true,
+}: Props): React.JSX.Element {
   const [xp, setXp] = useState(initialXp);
 
   // Re-sync the local state if the parent re-fetches and passes a
@@ -55,5 +63,5 @@ export function PlayerHud({ memberId, displayName, initialXp }: Props): React.JS
     };
   }, [memberId]);
 
-  return <PlayerBar displayName={displayName} xp={xp} />;
+  return <PlayerBar displayName={displayName} xp={xp} loaded={loaded} />;
 }

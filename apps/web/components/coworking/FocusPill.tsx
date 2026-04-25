@@ -75,8 +75,8 @@ export function FocusPill({ currentFocus, connection }: Props): React.JSX.Elemen
         onClick={() => setEditing(true)}
         style={{
           position: 'fixed',
-          // 80 (not 16) so the player HUD (top: 12, height ~56) sits clear above.
-          top: 80,
+          // 100 — leaves ~36 px below the HUD bar (bar is ~64 px tall).
+          top: 100,
           left: 16,
           zIndex: 70,
           padding: '8px 14px',
@@ -114,8 +114,8 @@ export function FocusPill({ currentFocus, connection }: Props): React.JSX.Elemen
     <div
       style={{
         position: 'fixed',
-        // 80 (not 16) so the player HUD (top: 12, height ~56) sits clear above.
-        top: 80,
+        // 100 — leaves ~36 px below the HUD bar (bar is ~64 px tall).
+        top: 100,
         left: 16,
         zIndex: 70,
         padding: '10px 12px',
