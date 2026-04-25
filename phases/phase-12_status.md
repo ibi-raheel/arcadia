@@ -2,6 +2,26 @@
 
 Source plan: `phase-12_plan.md`. Entries chronological, newest on top.
 
+## 2026-04-25 — 12.A polish · volume slider + focus pill
+
+Two follow-ups after the user's first session in the tent:
+
+- **Volume slider was inert.** Was: JukeboxOverlay held local
+  volume state; JukeboxAudio sibling read localStorage on render
+  and never re-rendered when the slider moved. Fix: lifted volume
+  into CoworkingFeatures, passed down to both. Slider now updates
+  audio in real time. (PR #23, commit `e918113`.)
+- **"What I'm working on" focus line shipped.** Top-left
+  screen-anchored pill (`FocusPill.tsx`). New `MSG.SET_FOCUS`
+  message + `currentFocus` field on `AvatarState`. Renders above
+  the nameplate (`avatar-renderer.ts` grew a second text label +
+  `setVisualsFocus` helper). Per-avatar, not per-tent — focus
+  follows you between scenes.
+- **Audio shipped too.** Four ambient MP3s at
+  `public/audio/coworking/{lofi,cafe,rain,ambient-piano}.mp3`
+  sourced from Bensound (free w/ attribution; ATTRIBUTION.md
+  documents sources + the swap-to-CC0 path).
+
 ## 2026-04-25 — 12.A.4–7 · client UI landed
 
 - CoworkingInsideScene: proximity prompts at jukebox + chest.

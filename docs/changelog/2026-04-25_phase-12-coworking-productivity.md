@@ -139,6 +139,22 @@ this pattern.
   Once dropped, `JukeboxAudio` plays them automatically — no
   code change.
 
+## 12.A polish (same-day follow-ups, PRs #22 + #23)
+
+- **Volume slider was inert.** JukeboxOverlay held local volume
+  state; JukeboxAudio sibling never re-rendered when the slider
+  moved. Lifted volume into CoworkingFeatures as shared state;
+  slider now drives audio in real time.
+- **"What I'm working on" focus line.** Top-left screen-anchored
+  `FocusPill` lets the keeper write a short focus string. New
+  `MSG.SET_FOCUS` + `currentFocus` field on `AvatarState`; renders
+  above the avatar's nameplate via `setVisualsFocus`. Per-avatar
+  (not per-tent) — focus follows the keeper between scenes.
+- **Audio shipped.** Four Bensound tracks at
+  `public/audio/coworking/{lofi,cafe,rain,ambient-piano}.mp3`
+  with `ATTRIBUTION.md` documenting sources + the swap-to-CC0
+  path.
+
 ## 12.B (deferred)
 
 Three more PNG objects already have coordinates reserved:
