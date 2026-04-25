@@ -280,7 +280,6 @@ export default function GameTavern(): React.JSX.Element {
       {fetchState.status === 'ready' && (
         <PlayerHud
           memberId={fetchState.member.memberId}
-          avatarId={fetchState.member.avatarId}
           displayName={fetchState.member.displayName}
           initialXp={fetchState.member.xp}
         />
