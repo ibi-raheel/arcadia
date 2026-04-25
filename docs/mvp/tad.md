@@ -48,12 +48,14 @@ BROWSER CLIENT
 
 | Layer | Technology | Version | Why |
 |---|---|---|---|
-| Web framework | Next.js | 14+ | SSR for Market / Academy; API routes for CF Stream + auth; React ecosystem |
+| Web framework | Next.js | 14+ | SSR for Market / Academy; API routes for streaming AI + auth; React ecosystem |
 | Game engine | Phaser 3 | 3.88+ | Best browser-native 2D engine; WebGL + Canvas fallback; tilemap + sprite system |
 | Multiplayer | Colyseus | 0.16.x (server + client matched — see ADR 0005) | Room-based WS state sync; TypeScript schema; scales with Redis |
 | Database & auth | Supabase | Latest | Postgres + Auth + Realtime + Storage; RLS for data isolation |
 | UI | Tailwind CSS | 3+ | Utility-first; clean with Next.js / React |
-| Video | Cloudflare Stream | Latest | Adaptive-bitrate HLS; global CDN; signed playback URLs |
+| Lesson editor | TipTap | 2.x (Phase 10) | WYSIWYG rich-text editor on ProseMirror. Replaced `@uiw/react-md-editor`. Round-trips markdown via `tiptap-markdown`. |
+| Video | YouTube unlisted (MVP) / Cloudflare Stream (post-MVP target) | — | Per ADR 0006: YouTube unlisted carries the demo so we ship without a billable video host. CF Stream stays in §7 below as the post-MVP shape. |
+| AI (text + images) | `@ai-sdk/google` via direct Gemini API | `ai`@^5, `@ai-sdk/google`@^2 (Phase 10–11) | Gemini 2.5 Pro for outline + sage; Gemini 2.5 Flash for lesson bodies + sage chat; Imagen 4 Fast for course images. ADR 0013 supersedes ADR 0011's earlier Vercel AI Gateway pick. |
 | Language | TypeScript | 5+ | Shared types across Next.js, Colyseus, and Supabase client layers |
 | Deployment | Vercel + Railway | Latest | Vercel: Next.js zero-config. Railway: WebSocket-friendly always-on Node.js |
 
@@ -73,9 +75,13 @@ Codebase layout is a monorepo: `/apps/web` (Next.js), `/apps/game-server` (Colys
 | `/academy/[courseId]` | CSR | Course viewer | Member |
 | `/market` | SSR | Market — course catalogue | Member |
 | `/dashboard` | CSR | Creator dashboard | Creator role |
-| `/api/stream/upload` | API route | CF Stream pre-signed URL | Creator |
-| `/api/stream/token` | API route | CF Stream signed playback URL | Member |
-| `/api/stream/webhook` | API route | CF Stream transcode-complete callback | Cloudflare (verified signature) |
+| `/api/stream/upload` | API route | CF Stream pre-signed URL (post-MVP — not built; YouTube link paste handles MVP) | Creator |
+| `/api/stream/token` | API route | CF Stream signed playback URL (post-MVP) | Member |
+| `/api/stream/webhook` | API route | CF Stream transcode-complete callback (post-MVP) | Cloudflare (verified signature) |
+| `/api/scribe/outline` *(Phase 10)* | Streaming route | Gemini 2.5 Pro — outline JSON for the AI course maker | Creator |
+| `/api/scribe/lesson` *(Phase 10)* | Streaming route | Gemini 2.5 Flash — markdown lesson body | Creator |
+| `/api/scribe/image` *(Phase 10)* | API route | Imagen 4 Fast — course thumbnail / lesson illustration | Creator |
+| `/api/sage/chat` *(Phase 11)* | Streaming route | Gemini 2.5 Flash — sage NPC chat over the curated doc corpus | Member |
 
 ### 3.2 Phaser canvas mounting
 
@@ -386,9 +392,13 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION create_membership_on_signup();
 ```
 
-## 7. Video delivery — Cloudflare Stream
+## 7. Video delivery
 
-> **MVP amendment (2026-04-20 — ADR 0006):** Phase 3 uses **Cloudinary** instead of Cloudflare Stream. CF Stream has no free tier; Cloudinary's free tier (25 credits/month, no card) covers the Phase 3 demo with equivalent features (HLS adaptive streaming, signed URLs, auto-transcoding). The upload / playback flow shape below is preserved; only the vendor-specific bits change: `/api/stream/upload` → `/api/cloudinary/sign-upload`, `cf_stream_id` → `cloudinary_public_id` (both columns coexist in the `lessons` table for swap-back safety), and no webhook is used since Cloudinary's upload response carries `duration` synchronously. Swap-back path back to CF Stream is documented in ADR 0006. The original CF-Stream-shaped content below stays as the post-MVP target.
+> **What ships today (2026-04-25):** The MVP delivers video via **YouTube unlisted** — creators paste a YouTube link in the dashboard and the academy embeds the IFrame Player. Resume-position + 80%-completion tracking work against the YouTube IFrame API. ADR 0006 captures the rationale: no card-required free tier exists for true private-video hosts at MVP scale, and YouTube unlisted is plenty for a demo. The Cloudinary variant briefly considered in ADR 0006 was never built.
+>
+> **Post-MVP target:** Cloudflare Stream (the original §7 architecture below) when payments are wired up and we can afford a per-minute streaming bill. The upload / playback / signing / webhook flow described here is preserved as the swap-target shape so a future PR can land the wiring without re-architecting.
+
+> **Original Cloudflare Stream design — preserved for the post-MVP swap.**
 
 
 ### 7.1 Upload flow
