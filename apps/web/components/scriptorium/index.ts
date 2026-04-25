@@ -11,3 +11,4 @@ export * from './fields';
 export * from './chips';
 export * from './simulation';
 export * from './charts';
+export * from './FlipCard';
