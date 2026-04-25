@@ -15,8 +15,8 @@ import * as Phaser from 'phaser';
 import type { ColyseusConnection, ColyseusRoom } from '../../net/colyseus-client';
 import { BOOT_ASSETS } from '../boot/asset-manifest';
 import { isAvatarId } from '../shared/avatar-palette';
-import { tavernDisplayName } from '../shared/building-names';
-import { createCapacityHud, type CapacityHud } from '../shared/capacity-hud';
+// Capacity HUD removed 2026-04-25 (user-feedback hotfix). Auto-
+// sharding still happens at maxClients=20, just silently now.
 import { spawnColliders } from '../shared/colliders';
 import { addCrispText } from '../shared/crisp-text';
 import {
@@ -68,7 +68,6 @@ export const TAVERN_BUILDING_ID_REGISTRY_KEY = 'tavern-building-id';
 export const TAVERN_OPEN_FEED_EVENT = 'tavern:open-feed';
 
 const MOVE_INTERVAL_MS = 50;
-const HUD_MAX_CLIENTS = 20;
 
 /**
  * Event emitted on `game.events` by the React chat layer when a new message
@@ -162,8 +161,6 @@ export class TavernScene extends Phaser.Scene {
   private readonly remoteAvatars = new Map<string, RemoteAvatar>();
   private unsubscribeConnected: (() => void) | null = null;
 
-  private capacityHud?: CapacityHud;
-
   // 2026-04-23 (Phase 7): ENTER-gated archway exit. Proximity prompt +
   // ENTER fires LEAVE_BUILDING and navigates to /tavern-outside
   // (optionally with `?from=<buildingId>` so the outdoor scene can spawn
@@ -210,10 +207,7 @@ export class TavernScene extends Phaser.Scene {
     if (this.input.keyboard) this.input.keyboard.enabled = true;
 
     const buildingId = this.registry.get(TAVERN_BUILDING_ID_REGISTRY_KEY) as string | null;
-    this.capacityHud = createCapacityHud(this, {
-      label: tavernDisplayName(buildingId),
-      max: HUD_MAX_CLIENTS,
-    });
+    void buildingId;
 
     // 2026-04-23 (Phase 7): ENTER-gated archway exit. Walking into the
     // archway radius shows "Press ENTER to leave the tavern"; ENTER
@@ -461,21 +455,11 @@ export class TavernScene extends Phaser.Scene {
 
     avatarsProxy.onAdd((state: AvatarState, sessionId: string) => {
       this.addRemoteAvatar(sessionId, state, room.sessionId, $);
-      this.refreshHud(room);
     }, true);
 
     avatarsProxy.onRemove((_state: AvatarState, sessionId: string) => {
       this.removeRemoteAvatar(sessionId);
-      this.refreshHud(room);
     });
-
-    this.refreshHud(room);
-  }
-
-  private refreshHud(room: ColyseusRoom): void {
-    if (!this.capacityHud) return;
-    const count = (room.state.avatars as unknown as { size: number }).size;
-    this.capacityHud.setCount(count);
   }
 
   private addRemoteAvatar(
@@ -515,9 +499,6 @@ export class TavernScene extends Phaser.Scene {
       this.unsubscribeConnected();
       this.unsubscribeConnected = null;
     }
-
-    this.capacityHud?.destroy();
-    this.capacityHud = undefined;
   }
 
   private sendMoveIfChanged(now: number): void {

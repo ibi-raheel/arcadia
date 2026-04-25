@@ -11,6 +11,7 @@
 
 'use client';
 
+import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import type { Editor } from '@tiptap/react';
@@ -64,6 +65,11 @@ export function ScriptoriumEditor({
         openOnClick: false,
         autolink: true,
         HTMLAttributes: { class: 'scriptorium-link', rel: 'noreferrer' },
+      }),
+      Image.configure({
+        inline: false,
+        allowBase64: false,
+        HTMLAttributes: { class: 'scriptorium-img' },
       }),
       Placeholder.configure({
         placeholder: placeholder ?? 'begin writing — the scribe listens…',

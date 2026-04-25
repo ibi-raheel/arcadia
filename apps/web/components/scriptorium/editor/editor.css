@@ -192,6 +192,29 @@
   color: var(--lantern, var(--wax));
 }
 
+/* Images — block-level, vellum-bordered, click-to-select. The
+ * scriptorium-img class is applied by the Image extension on the
+ * <img> element. Selected state gets a lantern outline so the
+ * creator can see what they're about to move. */
+.scriptorium-editor-surface .ProseMirror img,
+.scriptorium-editor-surface .ProseMirror .scriptorium-img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1.2em auto;
+  padding: 6px;
+  background: var(--vellum);
+  border: 1px solid rgba(90, 63, 34, 0.22);
+  border-radius: 3px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+}
+.scriptorium-editor-surface .ProseMirror img.ProseMirror-selectednode,
+.scriptorium-editor-surface .ProseMirror .scriptorium-img.ProseMirror-selectednode {
+  outline: 2px solid var(--lantern);
+  outline-offset: 2px;
+}
+
 /* Placeholder — shows when the editor is empty. */
 .scriptorium-editor-surface .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
