@@ -16,6 +16,7 @@ export {
   type UpdateLevelPayload,
   type SetJukeboxPayload,
   type StartPomodoroPayload,
+  type SetFocusPayload,
   type MessagePayloads,
 } from './protocol/messages';
 

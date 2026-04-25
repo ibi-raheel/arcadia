@@ -12,6 +12,10 @@ export const MSG = {
   SET_JUKEBOX: 'SET_JUKEBOX',
   START_POMODORO: 'START_POMODORO',
   STOP_POMODORO: 'STOP_POMODORO',
+  /** Phase 12 — set the caller's avatar `currentFocus` line.
+   *  Empty payload string clears it. Per-avatar state, not
+   *  per-tent. */
+  SET_FOCUS: 'SET_FOCUS',
 } as const;
 
 export type MessageType = (typeof MSG)[keyof typeof MSG];
@@ -63,6 +67,13 @@ export interface StartPomodoroPayload {
 
 // STOP_POMODORO carries no payload — sender's session id is enough.
 
+/** Per-avatar focus line. Empty `text` clears the line. Server
+ *  caps to FOCUS_MAX_CHARS (60) so a runaway client can't pollute
+ *  the room state. */
+export interface SetFocusPayload {
+  text: string;
+}
+
 // Compile-time mapping of message type → payload. Use this for exhaustive
 // handler wiring on both sides.
 export interface MessagePayloads {
@@ -73,4 +84,5 @@ export interface MessagePayloads {
   [MSG.SET_JUKEBOX]: SetJukeboxPayload;
   [MSG.START_POMODORO]: StartPomodoroPayload;
   [MSG.STOP_POMODORO]: Record<string, never>;
+  [MSG.SET_FOCUS]: SetFocusPayload;
 }

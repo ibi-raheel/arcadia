@@ -19,6 +19,7 @@ import { useEffect, useState } from 'react';
 import type { ColyseusConnection, ColyseusRoom } from '@/components/game/net/colyseus-client';
 import type { PhaserGameLike } from '@/components/tavern/types';
 
+import { FocusPill } from './FocusPill';
 import { HearthPill } from './HearthPill';
 import { HourglassOverlay } from './HourglassOverlay';
 import { JukeboxAudio } from './JukeboxAudio';
@@ -53,12 +54,49 @@ const EMPTY_POMODORO: PomodoroView = {
   startedBy: '',
 };
 
+const VOLUME_STORAGE_KEY = 'arcadia.jukebox.volume';
+const DEFAULT_VOLUME = 0.3;
+
+function readStoredVolume(): number {
+  if (typeof window === 'undefined') return DEFAULT_VOLUME;
+  try {
+    const stored = window.localStorage.getItem(VOLUME_STORAGE_KEY);
+    const v = stored ? Number(stored) : NaN;
+    if (Number.isFinite(v) && v >= 0 && v <= 1) return v;
+  } catch {
+    /* private mode */
+  }
+  return DEFAULT_VOLUME;
+}
+
 export function CoworkingFeatures({ gameRef, connection }: Props): React.JSX.Element {
   const [jukeboxOpen, setJukeboxOpen] = useState(false);
   const [hourglassOpen, setHourglassOpen] = useState(false);
   const [jukebox, setJukebox] = useState<JukeboxView>(EMPTY_JUKEBOX);
   const [pomodoro, setPomodoro] = useState<PomodoroView>(EMPTY_POMODORO);
   const [memberCount, setMemberCount] = useState(0);
+  const [volume, setVolumeState] = useState<number>(DEFAULT_VOLUME);
+  const [localFocus, setLocalFocus] = useState<string>('');
+
+  // Hydrate volume from localStorage on mount.
+  useEffect(() => {
+    setVolumeState(readStoredVolume());
+  }, []);
+
+  // Persist + propagate. Single setter across overlay + audio so
+  // the slider's value lives in one place; the audio element reads
+  // it from props.
+  const setVolume = (next: number): void => {
+    const v = Math.max(0, Math.min(1, next));
+    setVolumeState(v);
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem(VOLUME_STORAGE_KEY, String(v));
+      } catch {
+        /* private mode */
+      }
+    }
+  };
 
   // --- Phaser → React event bridge ---
   useEffect(() => {
@@ -97,7 +135,7 @@ export function CoworkingFeatures({ gameRef, connection }: Props): React.JSX.Ele
         const state = room.state as unknown as {
           jukebox?: JukeboxView;
           pomodoro?: PomodoroView;
-          avatars?: { size: number };
+          avatars?: { size: number; get: (id: string) => { currentFocus?: string } | undefined };
         };
         if (state.jukebox) {
           setJukebox({
@@ -116,6 +154,19 @@ export function CoworkingFeatures({ gameRef, connection }: Props): React.JSX.Ele
           });
         }
         setMemberCount(state.avatars?.size ?? 0);
+        // Pull the local avatar's currentFocus so the pill reflects
+        // server state (covers reconnect / re-render). Also dispatch
+        // a window event so Phaser's LocalAvatar updates its
+        // nameplate (CoworkingInsideScene listens via window
+        // event — same bridge pattern as overlay-input-events).
+        const me = state.avatars?.get(room.sessionId);
+        const nextFocus = me?.currentFocus ?? '';
+        setLocalFocus(nextFocus);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('arcadia:local-focus-changed', { detail: nextFocus }),
+          );
+        }
       };
 
       // Read once now (covers the case where state was already
@@ -141,12 +192,15 @@ export function CoworkingFeatures({ gameRef, connection }: Props): React.JSX.Ele
 
   return (
     <>
-      <JukeboxAudio jukebox={jukebox} />
+      <JukeboxAudio jukebox={jukebox} volume={volume} />
+      <FocusPill currentFocus={localFocus} connection={connection} />
       <HearthPill memberCount={memberCount} pomodoro={pomodoro} />
       <PomodoroBanner pomodoro={pomodoro} />
       {jukeboxOpen && (
         <JukeboxOverlay
           jukebox={jukebox}
+          volume={volume}
+          onVolumeChange={setVolume}
           connection={connection}
           onClose={() => setJukeboxOpen(false)}
         />

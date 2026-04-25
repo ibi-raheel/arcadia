@@ -228,6 +228,23 @@ function isSetJukeboxPayload(value: unknown): value is SetJukeboxPayload {
   return typeof (value as { playlist?: unknown }).playlist === 'string';
 }
 
+// --- Focus line (Phase 12 · per-avatar) ----------------------------------
+
+const FOCUS_MAX_CHARS = 60;
+
+/**
+ * Apply a SET_FOCUS payload to the caller's AvatarState. Empty
+ * string clears the focus. Trims + slices to FOCUS_MAX_CHARS so a
+ * chatty client can't bloat the broadcast.
+ */
+export function applySetFocus(avatar: AvatarState, payload: unknown): boolean {
+  if (!isRecord(payload)) return false;
+  const text = (payload as { text?: unknown }).text;
+  if (typeof text !== 'string') return false;
+  avatar.currentFocus = text.trim().slice(0, FOCUS_MAX_CHARS);
+  return true;
+}
+
 // --- internal guards -----------------------------------------------------
 
 const BUILDINGS = ['tavern', 'academy', 'market'] as const;
