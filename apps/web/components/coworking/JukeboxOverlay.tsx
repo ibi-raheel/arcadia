@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import {
   emitOverlayInputBlur,
@@ -31,26 +31,21 @@ import { MSG } from '@arcadia/shared';
 import { PLAYLISTS, findPlaylist, type PlaylistDescriptor } from './playlists';
 import type { JukeboxView } from './CoworkingFeatures';
 
-const VOLUME_STORAGE_KEY = 'arcadia.jukebox.volume';
-const DEFAULT_VOLUME = 0.3;
-
 type Props = {
   readonly jukebox: JukeboxView;
+  readonly volume: number;
+  readonly onVolumeChange: (next: number) => void;
   readonly connection: ColyseusConnection | null;
   readonly onClose: () => void;
 };
 
-export function JukeboxOverlay({ jukebox, connection, onClose }: Props): React.JSX.Element {
-  const [volume, setVolume] = useState<number>(DEFAULT_VOLUME);
-
-  // Hydrate volume from localStorage.
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const stored = window.localStorage.getItem(VOLUME_STORAGE_KEY);
-    const v = stored ? Number(stored) : NaN;
-    if (Number.isFinite(v) && v >= 0 && v <= 1) setVolume(v);
-  }, []);
-
+export function JukeboxOverlay({
+  jukebox,
+  volume,
+  onVolumeChange,
+  connection,
+  onClose,
+}: Props): React.JSX.Element {
   // Esc + overlay-input bridge.
   useEffect(() => {
     const handler = (e: KeyboardEvent): void => {
@@ -70,17 +65,6 @@ export function JukeboxOverlay({ jukebox, connection, onClose }: Props): React.J
   const setStation = (id: string): void => {
     const room = connection?.getCurrentRoom();
     room?.send(MSG.SET_JUKEBOX, { playlist: id });
-  };
-
-  const onVolumeChange = (next: number): void => {
-    setVolume(next);
-    if (typeof window !== 'undefined') {
-      try {
-        window.localStorage.setItem(VOLUME_STORAGE_KEY, String(next));
-      } catch {
-        /* private mode */
-      }
-    }
   };
 
   const current = findPlaylist(jukebox.playlist);

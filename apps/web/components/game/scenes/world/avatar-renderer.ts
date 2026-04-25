@@ -28,6 +28,12 @@ export type AvatarVisuals = {
    * the name, better looking font").
    */
   readonly nameText: Phaser.GameObjects.Text;
+  /**
+   * Phase 12 — "what I'm working on" line shown above the nameplate
+   * inside coworking tents. Only visible when `currentFocus` is
+   * non-empty. Hidden by default; updated via `setVisualsFocus`.
+   */
+  readonly focusText: Phaser.GameObjects.Text;
   /** Display size used at creation — drives `syncVisualAttachments` offsets. */
   readonly size: AvatarSize;
   /** Mutable so `setVisualsLevel` can rebuild the combined label text. */
@@ -83,7 +89,22 @@ export function createAvatarVisuals(
     strokeThickness: 4,
   }).setOrigin(0.5, 1);
 
-  return { gameObject, sprite, nameText, size, displayName, level };
+  // Focus line — sits above the nameplate. Italic, slightly muted,
+  // hidden by default (empty text is invisible thanks to the
+  // strokeThickness, but we also setVisible(false) to keep depth
+  // sorting tidy).
+  const focusText = addCrispText(scene, x, y - size.height / 2 - 32, '', {
+    fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
+    fontSize: '14px',
+    fontStyle: 'italic',
+    color: '#d4a868',
+    stroke: '#1c1917',
+    strokeThickness: 3,
+  })
+    .setOrigin(0.5, 1)
+    .setVisible(false);
+
+  return { gameObject, sprite, nameText, focusText, size, displayName, level };
 }
 
 /**
@@ -92,13 +113,16 @@ export function createAvatarVisuals(
  */
 export function syncVisualAttachments(visuals: AvatarVisuals): void {
   const dy = visuals.size.height / 2;
-  visuals.nameText.setPosition(visuals.gameObject.x, visuals.gameObject.y - dy - 6);
+  const namePlateY = visuals.gameObject.y - dy - 6;
+  visuals.nameText.setPosition(visuals.gameObject.x, namePlateY);
+  visuals.focusText.setPosition(visuals.gameObject.x, namePlateY - 26);
 }
 
 /** Apply the same depth to body + attachments (y-sort). */
 export function setVisualsDepth(visuals: AvatarVisuals, depth: number): void {
   visuals.gameObject.setDepth(depth);
   visuals.nameText.setDepth(depth + 0.1);
+  visuals.focusText.setDepth(depth + 0.1);
 }
 
 /** Update the level portion of the combined nameplate. */
@@ -107,8 +131,23 @@ export function setVisualsLevel(visuals: AvatarVisuals, level: number): void {
   visuals.nameText.setText(`${visuals.displayName} · Lv ${level}`);
 }
 
+/**
+ * Phase 12 — set the focus line above the nameplate. Empty string
+ * hides the label; non-empty wraps in scriptorium tildes.
+ */
+export function setVisualsFocus(visuals: AvatarVisuals, focus: string): void {
+  const trimmed = focus.trim();
+  if (trimmed.length === 0) {
+    visuals.focusText.setVisible(false);
+    return;
+  }
+  visuals.focusText.setText(`~ ${trimmed} ~`);
+  visuals.focusText.setVisible(true);
+}
+
 /** Clean up all game objects — use on scene teardown or when a peer leaves. */
 export function destroyVisuals(visuals: AvatarVisuals): void {
   visuals.gameObject.destroy();
   visuals.nameText.destroy();
+  visuals.focusText.destroy();
 }

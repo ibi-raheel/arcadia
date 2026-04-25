@@ -16,6 +16,7 @@ import {
   createAvatarVisuals,
   destroyVisuals,
   setVisualsDepth,
+  setVisualsFocus,
   setVisualsLevel,
   syncVisualAttachments,
   type AvatarBody,
@@ -177,6 +178,14 @@ export class LocalAvatar {
 
   setLevel(level: number): void {
     setVisualsLevel(this.visuals, level);
+  }
+
+  /** Phase 12 — render the "what I'm working on" line above the
+   *  nameplate. Empty string hides it. Server is the source of
+   *  truth (broadcast back via state); this method is purely
+   *  optimistic UI for the local member's own avatar. */
+  setFocus(focus: string): void {
+    setVisualsFocus(this.visuals, focus);
   }
 
   destroy(): void {

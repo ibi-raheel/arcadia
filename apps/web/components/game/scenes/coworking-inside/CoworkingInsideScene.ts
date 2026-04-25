@@ -185,6 +185,23 @@ export class CoworkingInsideScene extends Phaser.Scene {
       capturesOnBlur: ['W', 'A', 'S', 'D', 'SPACE', 'ENTER'],
     });
 
+    // Phase 12 — listen for local-focus changes (dispatched by
+    // CoworkingFeatures whenever the room broadcasts this member's
+    // avatar.currentFocus) and forward to the LocalAvatar so its
+    // nameplate stays in sync.
+    const onFocusChange = (e: Event): void => {
+      const detail = (e as CustomEvent<string>).detail;
+      this.localAvatar?.setFocus(detail ?? '');
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('arcadia:local-focus-changed', onFocusChange);
+    }
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('arcadia:local-focus-changed', onFocusChange);
+      }
+    });
+
     this.colyseus = this.registry.get(COLYSEUS_CONNECTION_REGISTRY_KEY) as
       | ColyseusConnection
       | undefined;
