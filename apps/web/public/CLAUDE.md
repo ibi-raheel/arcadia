@@ -32,10 +32,18 @@ public/
 │                        still preloaded by BootScene for potential rollback)
 ├── tavern-interior.png (1536×1024 bar interior — rendered as TavernScene's
 │                        static background since 2026-04-19; replaces the tilemap path)
-└── transitions/        (1×1 transparent placeholder PNGs shown during building-entry
-    ├── tavern.png       fade-ins; swap each file for real art any time, no code change)
-    ├── academy.png
-    └── market.png
+├── transitions/        (1×1 transparent placeholder PNGs shown during building-entry
+│   ├── tavern.png       fade-ins; swap each file for real art any time, no code change)
+│   ├── academy.png
+│   └── market.png
+└── hud/                ← persistent player-HUD assets (Phase 14, 2026-04-25)
+    └── kenney/         (subset of Kenney "Fantasy UI Borders" v1.0, CC0 — see
+        ├── panel.png    ATTRIBUTION.md. Used as 9-slice `border-image` for the
+        ├── panel-002.png  AvatarBadge + XPBar panels. PNGs are 48×48 with
+        ├── border.png   transparent middles + corner ornaments — DO NOT add a
+        ├── divider.png  background to the PNG; the dark navy fill comes from
+        ├── LICENSE.txt  CSS tokens. Add new variants here only when actually used.)
+        └── ATTRIBUTION.md
 ```
 
 ## Workflows
@@ -142,4 +150,4 @@ Update this file whenever you:
 - Change the avatar-spritesheet contract (new action beyond idle/walk/jump, different grid convention)
 - Add a new crop/generation script that belongs in the commands cheat sheet above
 
-Last refreshed: 2026-04-19.
+Last refreshed: 2026-04-25 (added `hud/kenney/` subset for Phase 14 player HUD).

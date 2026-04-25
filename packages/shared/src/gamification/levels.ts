@@ -25,3 +25,33 @@ export function calculateLevel(totalXp: number): number {
 export function isValidLevel(level: number): boolean {
   return Number.isInteger(level) && level >= MIN_LEVEL && level <= MAX_LEVEL;
 }
+
+export type LevelProgress = {
+  /** Player's current level (1..MAX_LEVEL). */
+  readonly level: number;
+  /** XP threshold the player has reached (the floor of `level`). */
+  readonly currentLevelXp: number;
+  /** XP needed for next level. `null` when at MAX_LEVEL. */
+  readonly nextLevelXp: number | null;
+  /** Fill ratio to next level, in [0, 1]. Always 1 at MAX_LEVEL. */
+  readonly percent: number;
+};
+
+/**
+ * Compute the player's level + progress to the next level, in one pass.
+ * Used by the player HUD to draw the XP bar without re-walking thresholds
+ * twice. Pure function over `LEVEL_THRESHOLDS`.
+ */
+export function progressToNextLevel(totalXp: number): LevelProgress {
+  const xp = Math.max(0, totalXp);
+  const level = calculateLevel(xp);
+  const currentLevelXp = LEVEL_THRESHOLDS.find((t) => t.level === level)?.minXp ?? 0;
+  const nextThreshold = LEVEL_THRESHOLDS.find((t) => t.level === level + 1);
+  if (!nextThreshold) {
+    return { level, currentLevelXp, nextLevelXp: null, percent: 1 };
+  }
+  const span = nextThreshold.minXp - currentLevelXp;
+  const into = xp - currentLevelXp;
+  const percent = span <= 0 ? 1 : Math.min(1, Math.max(0, into / span));
+  return { level, currentLevelXp, nextLevelXp: nextThreshold.minXp, percent };
+}

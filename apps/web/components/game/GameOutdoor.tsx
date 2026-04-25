@@ -17,6 +17,7 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 import { BuildingTransition } from './BuildingTransition';
 import { LevelUpBanner } from './LevelUpBanner';
+import { PlayerHud } from '@/components/hud/PlayerHud';
 import { BootScene } from './scenes/boot/BootScene';
 import {
   NEXT_SCENE_KEY_REGISTRY_KEY,
@@ -93,7 +94,7 @@ async function fetchSession(): Promise<SessionFetch> {
   }
   const { data, error } = await supabase
     .from('memberships')
-    .select('avatar_id, display_name, realm_id')
+    .select('avatar_id, display_name, realm_id, xp')
     .eq('member_id', session.user.id)
     .maybeSingle();
   if (error) return { status: 'error', message: error.message };
@@ -112,6 +113,7 @@ async function fetchSession(): Promise<SessionFetch> {
       realmId: data.realm_id,
       avatarId,
       displayName: data.display_name ?? 'Player',
+      xp: typeof data.xp === 'number' ? data.xp : 0,
     },
   };
 }
@@ -205,6 +207,14 @@ export default function GameOutdoor({
         backgroundImage={spec.transitionImage}
       />
       <LevelUpBanner />
+      {fetchState.status === 'ready' && (
+        <PlayerHud
+          memberId={fetchState.member.memberId}
+          avatarId={fetchState.member.avatarId}
+          displayName={fetchState.member.displayName}
+          initialXp={fetchState.member.xp}
+        />
+      )}
     </div>
   );
 }

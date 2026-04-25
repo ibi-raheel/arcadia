@@ -26,4 +26,6 @@ export {
   MAX_LEVEL,
   calculateLevel,
   isValidLevel,
+  progressToNextLevel,
+  type LevelProgress,
 } from './gamification/levels';
