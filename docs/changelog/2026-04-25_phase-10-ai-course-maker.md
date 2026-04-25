@@ -168,6 +168,84 @@ and defaults to 75k.
 
 Both Phase-10 migrations are already applied to prod.
 
+## Post-initial-PR additions (all on the same branch)
+
+### Gemini direct, Gateway out (ADR 0013)
+
+First real-world test surfaced the Gateway friction: user had a
+Gemini key, not a Gateway key. Swapped to `@ai-sdk/google` via
+`GOOGLE_GENERATIVE_AI_API_KEY`. One env var covers text + images.
+`lib/scribe/gateway.ts` now exports `scribeLanguageModel(stage)` +
+`scribeImageModel()`. `SCRIBE_MODEL_ID`: Gemini 2.5 Pro for outline,
+Gemini 2.5 Flash for lessons, **Imagen 4 Fast** for images (dropped
+the deprecated `gemini-2.5-flash-image-preview`).
+
+### Stage-machine fix
+
+`canAdvance` was too strict — only allowed single-step forward.
+The outline route legitimately jumps satchel → lessons directly,
+so approve from a stale client state failed silently. Loosened to
+allow any stage change (forward or back); only staying in place is
+rejected. 12 vitest cases updated.
+
+### Approve no longer silent
+
+Outline + lesson + image approve callbacks now reload the draft on
+success so server-side auto-advances (lessons → images when every
+lesson approved; images → ready when every image approved) show up
+in the UI immediately. Errors surface in the existing crimson
+hand-script lines instead of disappearing.
+
+### Re-roll that listens (image stage)
+
+Image cards used to just delete-and-start-over on re-roll. Now:
+
+- Each ready image shows a collapsible **▸ prompt used** panel —
+  the exact string sent to Imagen (locked preamble + personal style
+  + framing + subject + any prior feedback).
+- Re-roll opens an inline revise row: the last prompt at top, a
+  "~ what should change? ~" VellumField, a regenerate BronzeButton.
+- The image route already accepted `feedback`; the UI just wasn't
+  surfacing it. Now it's the primary path.
+
+### The scribe's memory (sub-phase 10.10)
+
+Per-creator preferences that persist across drafts:
+
+- Migration `20260425000003` adds `creator_preferences` (creator_id
+  PK, voice_guide, image_style, audience). Per-user RLS.
+- `ScribeMemory` card at the top of the workbench (collapsed by
+  default; shows summary chips once set).
+- `lib/scribe/preferences.ts` — `readScribePreferences(userId)`
+  used by the three route handlers to inject "the creator's memory"
+  into every prompt. voice_guide + audience go into text prompts;
+  image_style is appended to the locked IMAGE_STYLE_PREAMBLE
+  (additive, never replacement).
+
+4 new vitest cases cover the injection logic (with / without
+preferences, image_style appending while preserving the locked
+preamble).
+
+### The scriptorium editor (sub-phase 10.11)
+
+Ripped out `@uiw/react-md-editor` split-pane. Dropped in a TipTap
+WYSIWYG surface:
+
+- `ScriptoriumEditor.tsx` — TipTap editor with StarterKit + Link +
+  Placeholder + tiptap-markdown (so content round-trips as
+  markdown — the DB column + academy viewer are unchanged).
+- `EditorToolbar.tsx` — five groups of bronze-rimmed buttons:
+  headings (H2/H3/¶), marks (B/I/S), lists (• / 1. / ❝), code +
+  link, history (↶/↷).
+- `editor.css` — ProseMirror content is styled with the same rules
+  as the academy viewer. Headings use the display serif italic,
+  em takes the hand font, blockquote gets the wax border + vellum
+  tint, code block goes ink on sepia. What the creator edits is
+  exactly what publishes.
+
+`@uiw/react-md-editor` is no longer imported anywhere; safe to
+remove from `package.json` in a follow-up.
+
 ## Deferred
 
 - Resume a mid-stream stage if the server restarts.

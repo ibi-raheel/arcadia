@@ -149,7 +149,34 @@ course.
 - **Test:** start a draft, navigate away, return → resume lands on
   the correct stage.
 
-### 10.9 — Docs + exit
+### 10.10 — The scribe's memory (post-hoc, added during build)
+
+- New `creator_preferences` table (creator_id PK, voice_guide,
+  image_style, audience, timestamps). Per-user RLS.
+- `lib/scribe/preferences.ts` — route-handler-safe reader
+  (`readScribePreferences`). Server actions `getCreatorPreferences`
+  + `saveCreatorPreferences`.
+- `ScribeMemory.tsx` — collapsible LedgerCard at top of the
+  workbench. Voice + image style + audience textareas. Injected
+  into every stage prompt.
+- **Test:** preferences persist across drafts; outline + lesson
+  prompts include "teaching voice" when voice_guide set; image
+  prompt appends image_style after the locked preamble.
+
+### 10.11 — The scriptorium editor (post-hoc, WYSIWYG)
+
+- Rip out `@uiw/react-md-editor` (split raw/preview).
+- Drop in TipTap + StarterKit + Link + Placeholder + tiptap-markdown.
+- `components/scriptorium/editor/ScriptoriumEditor.tsx` +
+  `EditorToolbar.tsx` + `editor.css` — toolbar (H2/H3/¶, B/I/S,
+  lists, quote, code, link, undo/redo) and ProseMirror surface
+  styled with the same scriptorium prose rules as the academy
+  viewer. Content round-trips as markdown, so the academy
+  viewer + existing lessons are untouched.
+- **Test:** open a sealed course in the builder — content loads,
+  toolbar toggles, autosave saves, character cap works.
+
+### 10.12 — Docs + exit
 
 - `phases/phase-10_status.md` running log (already kept per
   sub-phase).
