@@ -1,8 +1,8 @@
 # ADR 0014 — Sage knowledge base: static markdown corpus, no RAG
 
 **Date:** 2026-04-25
-**Status:** Accepted
-**Related:** Phase 11 plan, ADR 0013 (Gemini direct)
+**Status:** Superseded by [ADR 0017](0017_2026-04-25_sage-static-welcome.md) (same day — the LLM approach was retired in favour of a static welcome + flip cards).
+**Related:** Phase 11 plan, ADR 0013 (Gemini direct), ADR 0017 (supersedes)
 
 ## Context
 
