@@ -225,7 +225,7 @@ export function VideoLessonEditor({ courseId, lesson }: Props): React.JSX.Elemen
           </p>
         )}
         {videoId && (
-          <p className="mono" style={{ marginTop: 8, color: 'var(--ink-faint)', fontSize: 11 }}>
+          <p className="mono" style={{ marginTop: 8, color: 'var(--ink-soft)', fontSize: 11 }}>
             stored video id: <span style={{ color: 'var(--ink)' }}>{videoId}</span>
           </p>
         )}

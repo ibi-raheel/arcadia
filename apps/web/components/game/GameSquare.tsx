@@ -10,6 +10,8 @@ import * as Phaser from 'phaser';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { SageFeatures } from '@/components/sage/SageFeatures';
+import type { PhaserGameLike } from '@/components/tavern/types';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 import { BuildingTransition } from './BuildingTransition';
@@ -211,6 +213,7 @@ export default function GameSquare(): React.JSX.Element {
         backgroundImage="/worlds/square-2508x2508.png"
       />
       <LevelUpBanner />
+      <SageFeatures gameRef={gameRef as unknown as React.MutableRefObject<PhaserGameLike | null>} />
     </div>
   );
 }

@@ -118,7 +118,7 @@ export function SectionTree({
       )}
 
       {sections.length === 0 ? (
-        <p className="body-italic" style={{ color: 'var(--ink-quiet)', fontSize: 14 }}>
+        <p className="body-italic" style={{ color: 'var(--ink-soft)', fontSize: 14 }}>
           no chapters yet. click <span style={{ color: 'var(--ink)' }}>+ add</span> to start.
         </p>
       ) : (
@@ -387,14 +387,14 @@ function SectionTitleEditor({
         style={{
           background: 'transparent',
           border: 'none',
-          color: 'var(--ink-quiet)',
+          color: 'var(--ink-soft)',
           padding: '3px 6px',
           fontSize: 13,
           cursor: 'pointer',
           borderRadius: 3,
         }}
         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--wax)')}
-        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-quiet)')}
+        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-soft)')}
       >
         ✕
       </button>

@@ -257,7 +257,7 @@ function PublishedCourseCard({
             <Kicker>finish rate</Kicker>
             <span
               className="mono"
-              style={{ fontSize: 10, color: 'var(--ink-faint)', letterSpacing: 1.2 }}
+              style={{ fontSize: 10, color: 'var(--ink-soft)', letterSpacing: 1.2 }}
             >
               {finish}%
             </span>
@@ -321,7 +321,7 @@ function DraftCourseCard({
           <span
             className="mono"
             style={{
-              fontSize: 9,
+              fontSize: 10,
               letterSpacing: 1.3,
               color: inReview ? 'var(--oxblood)' : 'var(--ink-faint)',
               textTransform: 'uppercase',
@@ -350,7 +350,7 @@ function DraftCourseCard({
             <Kicker>authored</Kicker>
             <span
               className="mono"
-              style={{ fontSize: 10, color: 'var(--ink-faint)', letterSpacing: 1.2 }}
+              style={{ fontSize: 10, color: 'var(--ink-soft)', letterSpacing: 1.2 }}
             >
               {progress}%
             </span>
@@ -362,7 +362,7 @@ function DraftCourseCard({
               marginTop: 6,
               fontSize: 10,
               letterSpacing: 1.2,
-              color: 'var(--ink-faint)',
+              color: 'var(--ink-soft)',
               textTransform: 'uppercase',
             }}
           >
@@ -388,9 +388,9 @@ function CoursePill({
       <div
         className="mono"
         style={{
-          fontSize: 9,
+          fontSize: 10,
           letterSpacing: 1.3,
-          color: 'var(--ink-faint)',
+          color: 'var(--ink-soft)',
           textTransform: 'uppercase',
         }}
       >
@@ -519,7 +519,7 @@ function LessonRow({
       }}
     >
       <PerfTd>
-        <span className="mono" style={{ color: 'var(--ink-faint)', fontSize: 11, marginRight: 8 }}>
+        <span className="mono" style={{ color: 'var(--ink-soft)', fontSize: 11, marginRight: 8 }}>
           {index.toString().padStart(2, '0')}
         </span>
         <span className="body-italic" style={{ color: 'var(--ink)', fontSize: 15 }}>
@@ -679,7 +679,7 @@ function ReviewsScroll({
                 <div
                   className="mono"
                   style={{
-                    fontSize: 9,
+                    fontSize: 10,
                     letterSpacing: 1.3,
                     color: 'var(--vellum-shadow)',
                     textTransform: 'uppercase',

@@ -105,14 +105,14 @@ export function CreateCourseDialog(): React.JSX.Element {
                   background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  color: 'var(--ink-quiet)',
+                  color: 'var(--ink-soft)',
                   padding: 8,
                   fontSize: 16,
                   lineHeight: 1,
                   borderRadius: 3,
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--wax)')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-quiet)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-soft)')}
               >
                 ✕
               </button>
@@ -169,7 +169,7 @@ export function CreateCourseDialog(): React.JSX.Element {
                     className="field-label"
                     style={{ display: 'block' }}
                   >
-                    description <span style={{ color: 'var(--ink-quiet)' }}>(optional)</span>
+                    description <span style={{ color: 'var(--ink-soft)' }}>(optional)</span>
                   </label>
                   <textarea
                     id="create-course-description"
@@ -196,7 +196,7 @@ export function CreateCourseDialog(): React.JSX.Element {
                       marginTop: 4,
                       fontSize: 10,
                       letterSpacing: 1.2,
-                      color: 'var(--ink-faint)',
+                      color: 'var(--ink-soft)',
                       textAlign: 'right',
                     }}
                   >

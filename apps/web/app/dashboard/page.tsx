@@ -281,7 +281,7 @@ function RevenueRoiCard({ data }: { readonly data: DashboardStudioData }): React
                 >
                   {s.label}
                 </span>
-                <span className="mono" style={{ fontSize: 10, color: 'var(--ink-faint)' }}>
+                <span className="mono" style={{ fontSize: 10, color: 'var(--ink-soft)' }}>
                   {s.share}%
                 </span>
                 <span
@@ -382,7 +382,7 @@ function RevenueRoiCard({ data }: { readonly data: DashboardStudioData }): React
                     marginTop: 8,
                     fontSize: 10,
                     letterSpacing: 1.2,
-                    color: 'var(--ink-faint)',
+                    color: 'var(--ink-soft)',
                     textTransform: 'uppercase',
                   }}
                 >
@@ -574,9 +574,9 @@ function CourseRow({
         <div
           className="mono"
           style={{
-            fontSize: 9,
+            fontSize: 10,
             letterSpacing: 1.2,
-            color: 'var(--ink-faint)',
+            color: 'var(--ink-soft)',
             textTransform: 'uppercase',
             marginTop: 2,
           }}
@@ -606,7 +606,7 @@ function CourseRow({
         {course.status === 'published' ? (
           <div style={{ marginTop: 6 }}>
             <BarProgress pct={course.completion ?? 0} color="var(--verdigris)" height={4} />
-            <div className="mono" style={{ fontSize: 9, color: 'var(--ink-faint)', marginTop: 2 }}>
+            <div className="mono" style={{ fontSize: 10, color: 'var(--ink-soft)', marginTop: 2 }}>
               {course.completion ?? 0}% finish rate
             </div>
           </div>
@@ -617,7 +617,7 @@ function CourseRow({
               color={course.status === 'review' ? 'var(--oxblood)' : 'var(--lantern)'}
               height={4}
             />
-            <div className="mono" style={{ fontSize: 9, color: 'var(--ink-faint)', marginTop: 2 }}>
+            <div className="mono" style={{ fontSize: 10, color: 'var(--ink-soft)', marginTop: 2 }}>
               {course.progress ?? 0}% ready
             </div>
           </div>
@@ -750,7 +750,7 @@ function FunnelCard({
                 <div
                   className="mono"
                   style={{
-                    fontSize: 9,
+                    fontSize: 10,
                     letterSpacing: 1.2,
                     color: 'var(--vellum-shadow)',
                     marginTop: 2,
@@ -777,7 +777,7 @@ function ActivityFeed({
     <VellumCard>
       <Kicker>what&rsquo;s happening</Kicker>
       {activity.length === 0 ? (
-        <p className="body-italic" style={{ marginTop: 14, color: 'var(--ink-quiet)' }}>
+        <p className="body-italic" style={{ marginTop: 14, color: 'var(--ink-soft)' }}>
           nothing new this hour. the ink is still drying.
         </p>
       ) : (
@@ -797,7 +797,7 @@ function ActivityFeed({
               <span className="body" style={{ flex: 1 }}>
                 {a.text}
               </span>
-              <span style={{ color: 'var(--ink-quiet)', fontSize: 13 }}>{a.when}</span>
+              <span style={{ color: 'var(--ink-soft)', fontSize: 13 }}>{a.when}</span>
             </li>
           ))}
         </ul>

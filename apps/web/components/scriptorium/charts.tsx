@@ -213,7 +213,7 @@ export function Stat({
           }}
         >
           {arrow} {Math.abs(delta).toFixed(1)}%{' '}
-          <span style={{ color: 'var(--ink-faint)' }}>vs prev</span>
+          <span style={{ color: 'var(--ink-soft)' }}>vs prev</span>
         </div>
       )}
     </div>

@@ -481,7 +481,7 @@ function ImagePreview({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: 'var(--ink-faint)',
+        color: 'var(--ink-soft)',
         fontFamily: 'var(--font-mono)',
         fontSize: 11,
         letterSpacing: 1.4,
@@ -521,7 +521,7 @@ function PromptPanel({ prompt }: { readonly prompt: string }): React.JSX.Element
           fontSize: 10,
           letterSpacing: 1.4,
           textTransform: 'uppercase',
-          color: 'var(--ink-faint)',
+          color: 'var(--ink-soft)',
           listStyle: 'none',
         }}
       >

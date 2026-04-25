@@ -449,7 +449,7 @@ export default function KitPage(): React.JSX.Element {
                 }}
               >
                 <span>the coin of venice</span>
-                <span className="mono" style={{ color: 'var(--ink-faint)' }}>
+                <span className="mono" style={{ color: 'var(--ink-soft)' }}>
                   68%
                 </span>
               </div>
@@ -467,7 +467,7 @@ export default function KitPage(): React.JSX.Element {
                 }}
               >
                 <span>sealing wax · by lantern</span>
-                <span className="mono" style={{ color: 'var(--ink-faint)' }}>
+                <span className="mono" style={{ color: 'var(--ink-soft)' }}>
                   42%
                 </span>
               </div>
@@ -485,7 +485,7 @@ export default function KitPage(): React.JSX.Element {
                 }}
               >
                 <span>the lantern's trim</span>
-                <span className="mono" style={{ color: 'var(--ink-faint)' }}>
+                <span className="mono" style={{ color: 'var(--ink-soft)' }}>
                   92%
                 </span>
               </div>
@@ -515,7 +515,7 @@ export default function KitPage(): React.JSX.Element {
               ]}
               label={
                 <div style={{ textAlign: 'center' }}>
-                  <div className="mono" style={{ fontSize: 9, color: 'var(--ink-faint)' }}>
+                  <div className="mono" style={{ fontSize: 10, color: 'var(--ink-soft)' }}>
                     30D
                   </div>
                   <div
@@ -559,7 +559,7 @@ export default function KitPage(): React.JSX.Element {
                   >
                     {s.label}
                   </span>
-                  <span className="mono" style={{ fontSize: 10, color: 'var(--ink-faint)' }}>
+                  <span className="mono" style={{ fontSize: 10, color: 'var(--ink-soft)' }}>
                     {s.share}%
                   </span>
                   <span
@@ -617,7 +617,7 @@ export default function KitPage(): React.JSX.Element {
               display: 'block',
               fontFamily: 'var(--font-hand)',
               fontSize: 17,
-              color: 'var(--ink-quiet)',
+              color: 'var(--ink-soft)',
               marginTop: 6,
             }}
           >

@@ -120,14 +120,14 @@ export function FeedScroll({
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              color: 'var(--ink-quiet)',
+              color: 'var(--ink-soft)',
               padding: 8,
               fontSize: 16,
               lineHeight: 1,
               borderRadius: 3,
             }}
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--wax)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-quiet)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-soft)')}
           >
             ✕
           </button>
@@ -180,7 +180,7 @@ export function FeedScroll({
           {posts.length === 0 ? (
             <p
               className="body-italic"
-              style={{ marginTop: 22, color: 'var(--ink-quiet)', textAlign: 'center' }}
+              style={{ marginTop: 22, color: 'var(--ink-soft)', textAlign: 'center' }}
             >
               no notes yet. the tablet is quiet.
             </p>
@@ -361,7 +361,7 @@ function UpcomingBanner({ event }: { readonly event: LiveEvent }): React.JSX.Ele
           style={{
             fontSize: 10,
             letterSpacing: 1.3,
-            color: 'var(--ink-faint)',
+            color: 'var(--ink-soft)',
             textTransform: 'uppercase',
             marginTop: 3,
           }}
@@ -438,9 +438,9 @@ function FeedRow({
           <div
             className="mono"
             style={{
-              fontSize: 9,
+              fontSize: 10,
               letterSpacing: 1.3,
-              color: 'var(--ink-faint)',
+              color: 'var(--ink-soft)',
               textTransform: 'uppercase',
               marginTop: 2,
             }}
@@ -524,7 +524,7 @@ function EventCard({
       <span
         className="mono"
         style={{
-          fontSize: 9,
+          fontSize: 10,
           letterSpacing: 1.3,
           color: 'var(--verdigris)',
           textTransform: 'uppercase',
@@ -536,7 +536,7 @@ function EventCard({
       <span
         className="mono"
         style={{
-          fontSize: 9,
+          fontSize: 10,
           letterSpacing: 1.3,
           color: 'var(--bronze-deep)',
           textTransform: 'uppercase',
@@ -548,9 +548,9 @@ function EventCard({
       <span
         className="mono"
         style={{
-          fontSize: 9,
+          fontSize: 10,
           letterSpacing: 1.3,
-          color: 'var(--ink-faint)',
+          color: 'var(--ink-soft)',
           textTransform: 'uppercase',
         }}
       >
@@ -585,7 +585,7 @@ function EventCard({
         style={{
           fontSize: 10,
           letterSpacing: 1.3,
-          color: 'var(--ink-faint)',
+          color: 'var(--ink-soft)',
           textTransform: 'uppercase',
         }}
       >
