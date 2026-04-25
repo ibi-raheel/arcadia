@@ -87,7 +87,7 @@ export function LessonList({
       {items.length === 0 ? (
         <p
           className="body-italic"
-          style={{ paddingLeft: 10, color: 'var(--ink-quiet)', fontSize: 13 }}
+          style={{ paddingLeft: 10, color: 'var(--ink-soft)', fontSize: 13 }}
         >
           no lessons yet.
         </p>
@@ -224,14 +224,14 @@ function SortableLesson({
           style={{
             background: 'transparent',
             border: 'none',
-            color: 'var(--ink-quiet)',
+            color: 'var(--ink-soft)',
             padding: '2px 4px',
             fontSize: 10,
             cursor: 'pointer',
             borderRadius: 2,
           }}
           onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--wax)')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-quiet)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-soft)')}
         >
           ✕
         </button>

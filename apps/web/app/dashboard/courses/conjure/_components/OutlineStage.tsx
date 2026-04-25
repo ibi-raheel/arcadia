@@ -412,7 +412,7 @@ function SectionBlock({
                 fontSize: 10,
                 letterSpacing: 1.2,
                 textTransform: 'uppercase',
-                color: 'var(--ink-faint)',
+                color: 'var(--ink-soft)',
                 minWidth: 28,
               }}
             >
