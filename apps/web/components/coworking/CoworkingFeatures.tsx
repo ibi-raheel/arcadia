@@ -85,68 +85,55 @@ export function CoworkingFeatures({ gameRef, connection }: Props): React.JSX.Ele
 
   // --- Colyseus state subscription ---
   // Lifts state.jukebox / state.pomodoro / avatars.size into React on
-  // every server broadcast.
+  // every server broadcast. Uses room.onStateChange (catch-all on every
+  // diff) instead of getStateCallbacks per-field — more reliable for
+  // nested Schema fields and simpler to reason about.
   useEffect(() => {
     if (!connection) return;
-    let cancelled = false;
     let detach: (() => void) | null = null;
 
-    const wire = async (room: ColyseusRoom): Promise<void> => {
-      const { getStateCallbacks } = await import('colyseus.js');
-      if (cancelled) return;
-      const $ = getStateCallbacks(room as unknown as Parameters<typeof getStateCallbacks>[0]);
-
-      const readJukebox = (): void => {
-        const j = (room.state as unknown as { jukebox: JukeboxView }).jukebox;
-        if (!j) return;
-        setJukebox({
-          playlist: j.playlist,
-          startedAt: j.startedAt,
-          lastChangedBy: j.lastChangedBy,
-        });
-      };
-      const readPomodoro = (): void => {
-        const p = (room.state as unknown as { pomodoro: PomodoroView }).pomodoro;
-        if (!p) return;
-        setPomodoro({
-          phase: p.phase,
-          endsAt: p.endsAt,
-          cycle: p.cycle,
-          totalCycles: p.totalCycles,
-          startedBy: p.startedBy,
-        });
-      };
-      const readSize = (): void => {
-        setMemberCount((room.state.avatars as unknown as { size: number }).size);
+    const wire = (room: ColyseusRoom): void => {
+      const readAll = (): void => {
+        const state = room.state as unknown as {
+          jukebox?: JukeboxView;
+          pomodoro?: PomodoroView;
+          avatars?: { size: number };
+        };
+        if (state.jukebox) {
+          setJukebox({
+            playlist: state.jukebox.playlist ?? '',
+            startedAt: state.jukebox.startedAt ?? 0,
+            lastChangedBy: state.jukebox.lastChangedBy ?? '',
+          });
+        }
+        if (state.pomodoro) {
+          setPomodoro({
+            phase: (state.pomodoro.phase ?? 'idle') as PomodoroView['phase'],
+            endsAt: state.pomodoro.endsAt ?? 0,
+            cycle: state.pomodoro.cycle ?? 0,
+            totalCycles: state.pomodoro.totalCycles ?? 0,
+            startedBy: state.pomodoro.startedBy ?? '',
+          });
+        }
+        setMemberCount(state.avatars?.size ?? 0);
       };
 
-      readJukebox();
-      readPomodoro();
-      readSize();
-
-      const offJukebox = $((room.state as { jukebox: object }).jukebox).onChange(readJukebox);
-      const offPomodoro = $((room.state as { pomodoro: object }).pomodoro).onChange(readPomodoro);
-      // avatars MapSchema add/remove → tally.
-      $(room.state as unknown as Parameters<typeof getStateCallbacks>[0] /* shape */);
-      // any avatar add/remove changes size — re-read on each.
-      const avatarsProxy = $(room.state).avatars;
-      const offAdd = avatarsProxy.onAdd(() => readSize(), false);
-      const offRemove = avatarsProxy.onRemove(() => readSize());
-
-      detach = () => {
-        offJukebox();
-        offPomodoro();
-        offAdd?.();
-        offRemove?.();
-      };
+      // Read once now (covers the case where state was already
+      // populated before the listener attached) + subscribe to every
+      // future server diff. Colyseus 0.16's onStateChange fires on
+      // any nested mutation, including Schema-on-Schema updates.
+      readAll();
+      const off = (
+        room as unknown as { onStateChange: (cb: () => void) => () => void }
+      ).onStateChange(readAll);
+      detach = off;
     };
 
     const unsubscribe = connection.subscribeConnected((room) => {
-      void wire(room);
+      wire(room);
     });
 
     return () => {
-      cancelled = true;
       unsubscribe();
       detach?.();
     };
