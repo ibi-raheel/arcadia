@@ -41,10 +41,11 @@ Top-right pill reads `Square · <count> / 20`. Invisible until the first Colyseu
 Bearded merchant baked into the upper-left of `square-2508x2508.png` (rug at ~x=355 y=620). On 2026-04-25 (Phase 11) the old random-tip Phaser bubble was retired in favour of an AI guide. Now:
 
 - A `ProximityPromptManager` (same helper as the lodge entry / academy lectern) shows "Press ENTER to speak with the wanderer" when the avatar is within `SQUARE_NPC.proximityPx`.
-- ENTER fires `SQUARE_OPEN_SAGE_EVENT` on the scene event bus.
+- ENTER fires `SQUARE_OPEN_SAGE_EVENT` on the **game** bus (`this.game.events`, not `this.events` — the React listener lives on the game-level bus). Hotfix 2026-04-25.
 - React `SageFeatures` (mounted by `GameSquare`) listens and opens the `SageDialogue` ScrollCard.
 - Chat goes to `POST /api/sage/chat`, streamed Gemini Flash response grounded in the curated MVP doc corpus (`lib/sage/knowledge.ts`).
 - Conversation persists in `localStorage` under `arcadia.sage.history` (capped 30 messages × 4k chars).
+- While the dialogue is open, the scene releases its keyboard captures via `bindOverlayInputBridge` (see `shared/overlay-input-events.ts`) so WASD / SPACE / ENTER reach the input field instead of moving the avatar.
 
 Sage is React-rendered, not Phaser — see ADR 0015. The Phaser side only owns proximity detection + the prompt pill.
 
