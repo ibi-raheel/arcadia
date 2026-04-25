@@ -29,6 +29,10 @@ import {
   VellumCard,
 } from '@/components/scriptorium';
 import {
+  emitOverlayInputBlur,
+  emitOverlayInputFocus,
+} from '@/components/game/scenes/shared/overlay-input-events';
+import {
   eventStatus,
   formatEventWhen,
   liveEvent,
@@ -74,6 +78,14 @@ export function FeedScroll({
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [open, onClose]);
+
+  // While the feed is open, release Phaser's keyboard captures so
+  // the composer textarea actually receives WASD / SPACE / ENTER.
+  useEffect(() => {
+    if (!open) return;
+    emitOverlayInputFocus();
+    return () => emitOverlayInputBlur();
+  }, [open]);
 
   const liveNow = useMemo(() => liveEvent(events), [events]);
   const next = useMemo(() => nextEvent(events), [events]);

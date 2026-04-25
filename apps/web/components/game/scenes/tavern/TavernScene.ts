@@ -24,6 +24,7 @@ import {
   type EnterPromptManager,
   type EntryTrigger,
 } from '../shared/enter-prompt';
+import { bindOverlayInputBridge } from '../shared/overlay-input-events';
 import {
   createProximityPromptManager,
   type ProximityPromptManager,
@@ -277,10 +278,18 @@ export class TavernScene extends Phaser.Scene {
     // avatar. Re-enabled on blur.
     this.game.events.on(TAVERN_CHAT_FOCUS_EVENT, this.disableKeyboardInput, this);
     this.game.events.on(TAVERN_CHAT_BLUR_EVENT, this.enableKeyboardInput, this);
+    // Same focus / blur gate, but for ANY overlay input (feed
+    // composer, sage dialogue, future overlays). Decoupled from the
+    // chat-specific events so a future overlay doesn't have to know
+    // about TAVERN_CHAT_*.
+    const unbindOverlayInput = bindOverlayInputBridge(this, {
+      capturesOnBlur: ['W', 'A', 'S', 'D', 'SPACE', 'ENTER'],
+    });
     const teardown = () => {
       this.game.events.off(TAVERN_SPEECH_EVENT, this.showSpeechBubble, this);
       this.game.events.off(TAVERN_CHAT_FOCUS_EVENT, this.disableKeyboardInput, this);
       this.game.events.off(TAVERN_CHAT_BLUR_EVENT, this.enableKeyboardInput, this);
+      unbindOverlayInput();
       this.tabletPrompt?.destroy();
       this.tabletPrompt = undefined;
       this.teardownSpeechBubbles();
