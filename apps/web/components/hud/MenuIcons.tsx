@@ -11,7 +11,7 @@ import './panel.css';
 
 type IconProps = { readonly size?: number };
 
-function ProfileIcon({ size = 22 }: IconProps): React.JSX.Element {
+function ProfileIcon({ size = 28 }: IconProps): React.JSX.Element {
   // Filled head + shoulders silhouette.
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden>
@@ -21,7 +21,7 @@ function ProfileIcon({ size = 22 }: IconProps): React.JSX.Element {
   );
 }
 
-function QuestsIcon({ size = 22 }: IconProps): React.JSX.Element {
+function QuestsIcon({ size = 28 }: IconProps): React.JSX.Element {
   // Filled scroll with two darker text bands cut out of it.
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden>
@@ -36,7 +36,7 @@ function QuestsIcon({ size = 22 }: IconProps): React.JSX.Element {
   );
 }
 
-function EventsIcon({ size = 22 }: IconProps): React.JSX.Element {
+function EventsIcon({ size = 28 }: IconProps): React.JSX.Element {
   // Filled calendar with darker grid cells.
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden>
@@ -51,7 +51,7 @@ function EventsIcon({ size = 22 }: IconProps): React.JSX.Element {
   );
 }
 
-function SettingsIcon({ size = 22 }: IconProps): React.JSX.Element {
+function SettingsIcon({ size = 28 }: IconProps): React.JSX.Element {
   // Filled eight-tooth gear with a punched-out hub.
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden>

@@ -22,13 +22,15 @@
      Drop `fill` so only the ornament rim renders and our brown bg
      fills the inside. The PNG itself was tinted cream → bronze (see
      scripts/tint-panel.mjs + panel-bronze.png) so the rim reads
-     warm with the HUD instead of cold-white over it. */
+     warm with the HUD instead of cold-white over it.
+     Border-width 6px (was 12px, 2026-04-25) — the thicker frame
+     stole visual focus from the stats. */
   border-image-source: url('/hud/kenney/panel-bronze.png');
   border-image-slice: 12;
-  border-image-width: 12px;
+  border-image-width: 6px;
   border-image-repeat: stretch;
   border-style: solid;
-  border-width: 12px;
+  border-width: 6px;
 
   /* The Kenney pack is pixel-art; default browser scaling blurs it. */
   image-rendering: pixelated;
@@ -74,8 +76,8 @@
  * centred. No border, no background; only the glyph itself reads.
  * Hover brightens + lifts; active darkens. */
 .hud-icon-btn {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
