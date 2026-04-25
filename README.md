@@ -8,7 +8,7 @@ Each community (**Realm**) gives members an avatar, a space to gather (**Tavern*
 
 ## Status
 
-🚀 **MVP feature-complete 2026-04-21.** All five phases in `/docs/mvp/phase-plan.md` shipped and verified on prod. 15 of 17 Phase-5 steps landed in code; the two remaining (60 FPS measurement + demo-cut rehearsal) are manual QA that runs before the actual demo recording.
+🚀 **MVP shipped 2026-04-21; post-MVP feature work continued 2026-04-22 → 25.** The original 6-phase build (0–5) in `/docs/mvp/phase-plan.md` is verified on prod. Five extension phases shipped on top: world rendering rebuild (image-backed), Phase 8 UI wire-up, Phase 9 feed + events, Phase 10 AI scribe, Phase 11 AI sage + UI legibility audit. 15 of 17 Phase-5 steps landed in code; the two remaining (60 FPS measurement + demo-cut rehearsal) are manual QA before the demo recording.
 
 **What's live at `arcadia-web-swart.vercel.app`:**
 
@@ -22,9 +22,13 @@ Each community (**Realm**) gives members an avatar, a space to gather (**Tavern*
 - **`/academy`** — Phaser course hall with walkable podiums.
 - **`/academy/[courseId]`** — YouTube IFrame Player (resume + 80% completion) + `react-markdown` lessons (scroll-to-complete).
 - **`/market`** — Phaser stall hall with search HUD; click a stall → modal with blurred backdrop, inline previews, one-click enrol, real enrolment counts.
-- **`/dashboard`** — creator list (role-gated).
-- **`/dashboard/courses/[id]`** — two-pane editor (drag-reorder, Markdown + YouTube editors, publish toggle, Analytics pill).
+- **`/dashboard`** — creator studio (role-gated). 6 tabs: studio · courses · events · folk · payouts · settings. Scriptorium-styled per Phase 8.
+- **`/dashboard/courses/[id]`** — drag-reorder section/lesson tree + TipTap WYSIWYG lesson editor (Phase 10) + YouTube editor + publish toggle + Analytics pill. Replaced the old `@uiw/react-md-editor` split-pane.
+- **`/dashboard/courses/conjure`** *(Phase 10 — the Scribe)* — staged AI course maker. Satchel accepts PDFs/DOCX/TXT/MD as grounding context; Gemini drafts outline → lesson bodies → images across four approvable streaming stages; seal materializes real courses + sections + lessons rows. Per-creator "scribe's memory" (voice, image style, audience) persists across drafts.
+- **`/dashboard/events`** *(Phase 9)* — schedule + manage live events. KPI strip + live/upcoming/past sections; events drive the tavern's "live now" banner + YouTube stage overlay.
 - **`/dashboard/courses/[id]/analytics`** — enrolment count, completion rate, active-in-7d, recent activity.
+- **The Sage (`/world`)** *(Phase 11)* — bearded merchant on the rug in the top-left of the square. Walk near him + ENTER → scriptorium chat popup. Gemini-backed AI guide grounded in the curated MVP docs + every ADR. Conversation persists in localStorage.
+- **Tavern feed** *(Phase 9)* — tablet on the back wall of every tavern; ENTER opens an async feed showing creator posts + scheduled events. Live events get a verdigris banner + stage embed.
 - **Gamification** — lesson completion → +25 XP via DB trigger → level recomputes → banner animates → peer badges sync via Colyseus `UPDATE_LEVEL`.
 
 **Video host is YouTube unlisted** (ADR 0006, demo-only scope — swap to a real host required before paying creators).
@@ -39,7 +43,7 @@ Each community (**Realm**) gives members an avatar, a space to gather (**Tavern*
 - 2026-04-25: **Phase 11 · the Sage** — the bearded merchant in the upper-left of the square is now an AI guide. Walk near him + ENTER → scriptorium chat popup. Knowledge corpus baked from `/docs/mvp` + every ADR + README + recent changelog (no RAG, ADR 0014). Conversation persists in localStorage. Bundled with a deep UI legibility audit. See [changelog](docs/changelog/2026-04-25_phase-11-sage-and-ui-audit.md).
 - Polish (collider rects, 60 FPS / demo-cut passes, production hardening) tracked in [`phases/phase-02_polish_backlog.md`](phases/phase-02_polish_backlog.md) + [`phases/phase-05_status.md`](phases/phase-05_status.md).
 
-**Phase exit logs:** [Phase 3](docs/changelog/2026-04-20_phase-03-exit.md) · [Phase 4](docs/changelog/2026-04-21_phase-04-exit.md) · [Phase 5](docs/changelog/2026-04-21_phase-05-exit.md) · [Phase 8](docs/changelog/2026-04-24_phase-08-ui-wireup.md) · [Phase 9](docs/changelog/2026-04-24_phase-09-feed-and-events.md) · [Phase 10](docs/changelog/2026-04-25_phase-10-ai-course-maker.md). Creator-flow setup walkthrough in [`docs/guides/phase-03-setup.md`](docs/guides/phase-03-setup.md); workspace scoping cheat sheet in [`docs/claude-scoping.md`](docs/claude-scoping.md).
+**Phase exit logs:** [Phase 3](docs/changelog/2026-04-20_phase-03-exit.md) · [Phase 4](docs/changelog/2026-04-21_phase-04-exit.md) · [Phase 5](docs/changelog/2026-04-21_phase-05-exit.md) · [Phase 8](docs/changelog/2026-04-24_phase-08-ui-wireup.md) · [Phase 9](docs/changelog/2026-04-24_phase-09-feed-and-events.md) · [Phase 10](docs/changelog/2026-04-25_phase-10-ai-course-maker.md) · [Phase 11](docs/changelog/2026-04-25_phase-11-sage-and-ui-audit.md). Creator-flow setup walkthrough in [`docs/guides/phase-03-setup.md`](docs/guides/phase-03-setup.md); workspace scoping cheat sheet in [`docs/claude-scoping.md`](docs/claude-scoping.md).
 
 ### Live services
 

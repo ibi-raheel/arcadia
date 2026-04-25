@@ -36,6 +36,18 @@ No `?from=` → default spawn at `(1254, 1380)`.
 
 Top-right pill reads `Square · <count> / 20`. Invisible until the first Colyseus state callback fires so it doesn't flash "0" during room join. Driven by `state.avatars.size` on each `onAdd` / `onRemove`.
 
+## The Wanderer (NPC)
+
+Bearded merchant baked into the upper-left of `square-2508x2508.png` (rug at ~x=355 y=620). On 2026-04-25 (Phase 11) the old random-tip Phaser bubble was retired in favour of an AI guide. Now:
+
+- A `ProximityPromptManager` (same helper as the lodge entry / academy lectern) shows "Press ENTER to speak with the wanderer" when the avatar is within `SQUARE_NPC.proximityPx`.
+- ENTER fires `SQUARE_OPEN_SAGE_EVENT` on the scene event bus.
+- React `SageFeatures` (mounted by `GameSquare`) listens and opens the `SageDialogue` ScrollCard.
+- Chat goes to `POST /api/sage/chat`, streamed Gemini Flash response grounded in the curated MVP doc corpus (`lib/sage/knowledge.ts`).
+- Conversation persists in `localStorage` under `arcadia.sage.history` (capped 30 messages × 4k chars).
+
+Sage is React-rendered, not Phaser — see ADR 0015. The Phaser side only owns proximity detection + the prompt pill.
+
 ## Controls
 
 - **W / A / S / D** or arrows — move.

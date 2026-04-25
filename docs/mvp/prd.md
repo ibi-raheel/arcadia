@@ -14,6 +14,15 @@ This PRD defines the Arcadia MVP — a working, demo-ready product scoped to gen
 
 The MVP demonstrates the spatial experience end-to-end across four member-facing surfaces (World, Tavern, Academy, Market) plus a creator dashboard with course builder and basic analytics. Payments are excluded.
 
+> **2026-04-25 amendment.** The original 6-phase MVP (phases 0–5) shipped 2026-04-21. Five extension phases shipped on top by 2026-04-25:
+>
+> - **Phase 8 — UI wire-up.** Every React surface rebuilt on the midnight-scriptorium design system.
+> - **Phase 9 — async feed + live events.** Tavern feed (tablet trigger) + `/dashboard/events`.
+> - **Phase 10 — the Scribe.** AI course maker via Gemini (`/dashboard/courses/conjure`) + TipTap WYSIWYG lesson editor (replacing `@uiw/react-md-editor`).
+> - **Phase 11 — the Sage.** AI guide NPC in `/world` (Gemini-backed chat popup grounded in the curated MVP docs + ADRs).
+>
+> Sections below describe the MVP-as-shipped, with the AI surfaces noted inline. The "out of scope" table in §2 still reflects what was deliberately excluded from the MVP build itself.
+
 *Everything not listed in this document is out of scope for MVP. Add it to the V1 backlog, not this build.*
 
 ## 2. MVP scope — what is built
@@ -103,8 +112,8 @@ The MVP demonstrates the spatial experience end-to-end across four member-facing
 
 - Lists all published courses the member has been granted access to (manual grant in MVP — no payment)
 - Course structure: Course → Section → Lesson (all three modelled as tables; see TAD §6.1)
-- Video lessons delivered via Cloudflare Stream with adaptive-bitrate player
-- Written lessons rendered from Markdown
+- Video lessons delivered via embedded YouTube unlisted player (MVP demo scope per ADR 0006; production swap to Cloudflare Stream or equivalent pending payment model)
+- Written lessons rendered from Markdown via the academy viewer; authored in the dashboard's TipTap WYSIWYG editor (Phase 10)
 - Per-lesson completion tracking: marked complete when video reaches 80% or written lesson is scrolled to the bottom
 - Course progress bar: completed / total lessons
 - Resume from last-watched position on re-entry
@@ -129,11 +138,11 @@ The MVP demonstrates the spatial experience end-to-end across four member-facing
 
 - Create course: title, description, thumbnail upload, price (stored but not charged in MVP)
 - Add sections within a course; add lessons within each section
-- Lesson types: video (upload to Cloudflare Stream) and written (Markdown editor)
-- Video upload: browser direct upload to Cloudflare Stream via pre-signed TUS URL; progress indicator
+- Lesson types: video (creator pastes a YouTube URL — MVP scope per ADR 0006) and written (TipTap WYSIWYG editor — Phase 10)
 - Drag-and-drop reordering for sections and lessons
 - Publish / draft toggle per course
 - Preview mode: creator can view their course as a member would
+- **AI course maker (the Scribe, Phase 10)** — `/dashboard/courses/conjure`. Drop in source documents, write a brief, the scribe drafts an outline → lesson bodies → images across four approvable streaming stages, then materializes a full course tree the creator can polish in the regular builder.
 
 **Basic analytics**
 
