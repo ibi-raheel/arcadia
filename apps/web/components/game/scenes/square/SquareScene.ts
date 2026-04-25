@@ -25,6 +25,7 @@ import { spawnColliders } from '../shared/colliders';
 import { createEdgeTriggerManager, type EdgeTriggerManager } from '../shared/edge-triggers';
 import { createEnterPromptManager, type EnterPromptManager } from '../shared/enter-prompt';
 import { applyFillZoom } from '../shared/fill-zoom';
+import { bindOverlayInputBridge } from '../shared/overlay-input-events';
 import {
   createProximityPromptManager,
   type ProximityPromptManager,
@@ -96,6 +97,7 @@ export class SquareScene extends Phaser.Scene {
   private lodgePrompt?: EnterPromptManager;
   private sagePrompt?: ProximityPromptManager;
   private capacityHud?: CapacityHud;
+  private unbindOverlayInput?: () => void;
 
   constructor() {
     super({ key: SQUARE_SCENE_KEY });
@@ -145,9 +147,16 @@ export class SquareScene extends Phaser.Scene {
         label: 'Press ENTER to speak with the wanderer',
       },
       () => {
-        this.events.emit(SQUARE_OPEN_SAGE_EVENT);
+        this.game.events.emit(SQUARE_OPEN_SAGE_EVENT);
       },
     );
+
+    // Releases keyboard captures while a React overlay input has
+    // focus, so the user can type WASD / SPACE / ENTER into the
+    // sage dialogue without Phaser eating the keys.
+    this.unbindOverlayInput = bindOverlayInputBridge(this, {
+      capturesOnBlur: ['W', 'A', 'S', 'D', 'SPACE', 'ENTER'],
+    });
 
     this.colyseus = this.registry.get(COLYSEUS_CONNECTION_REGISTRY_KEY) as
       | ColyseusConnection
@@ -321,10 +330,12 @@ export class SquareScene extends Phaser.Scene {
     this.lodgePrompt?.destroy();
     this.sagePrompt?.destroy();
     this.capacityHud?.destroy();
+    this.unbindOverlayInput?.();
     this.edgeTriggers = undefined;
     this.lodgePrompt = undefined;
     this.sagePrompt = undefined;
     this.capacityHud = undefined;
+    this.unbindOverlayInput = undefined;
   }
 
   private sendMoveIfChanged(now: number): void {
