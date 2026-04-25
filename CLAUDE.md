@@ -9,6 +9,19 @@ This project workspace is strictly for the **technical build**. Strategy, positi
 - **Work in phases, step by step.** Never jump ahead.
 - **Before starting any phase or sub-phase, write a small plan.** Outline what you are about to do and how, then wait for confirmation before proceeding.
 - **Test thoroughly after every step or feature.** Do not move on until the current step is verified working.
+
+### Sub-phase ritual (codified 2026-04-24 · phase 10)
+
+Every phase breaks into numbered sub-phases (10.0, 10.1, …). For **each** sub-phase:
+
+1. **Plan the sub-phase** — one short paragraph in `phase-NN_plan.md`: what lands, what files change, what the test criterion is.
+2. **Implement** — only the files the sub-phase names. No drive-by refactors.
+3. **Test** — run the narrowest check that proves it works (vitest for pure logic, a browser check for UI, a SQL query for migrations).
+4. **Review** — report the diff summary + test result to the user in one short message. Wait for a go-ahead or feedback before moving to the next sub-phase.
+5. **Commit** — one commit per sub-phase, message prefix `feat(phaseNN.M):` or `fix(phaseNN.M):`.
+6. **Log** — append the sub-phase outcome to `phase-NN_status.md` (one line).
+
+This applies to every phase from Phase 10 onward. If the user says "no need to review, keep going," collapse step 4 but still commit + log each sub-phase separately so the history stays readable.
 - **Run the full CI pipeline locally before any push to a PR-tracked branch.** That means all four stages the GitHub Actions workflow runs: `npm run format:check`, `npm run lint`, `npm run typecheck`, `npx vitest run` (from `apps/web`). Typecheck + vitest alone are not enough — prettier + eslint failures only surface in CI otherwise, and every commit after the miss stacks a red run (see 2026-04-24 hotfix `#13`).
 - **Identify bugs immediately.** If something is broken, flag it clearly before continuing.
 - **Identify wrong fundamental approaches.** If the current approach is architecturally or technically flawed, say so directly — do not patch over a bad foundation.
