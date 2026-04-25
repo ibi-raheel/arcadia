@@ -2,6 +2,42 @@
 
 Source plan: `phase-14_plan.md`. Entries chronological, newest on top.
 
+## 2026-04-25 — 14.5 · post-ship polish (PR #30 → #33 trail)
+
+After the initial PR #29 ship, four polish PRs reshaped the HUD
+based on user feedback. Consolidated entry rather than four
+separate ones because they all landed within an hour:
+
+- **PR #30 — `feat(hud): consolidate into one full-width bar`** —
+  replaced the two-corner layout (`AvatarBadge` + `XPLevelBadge`)
+  with a single full-width `PlayerBar.tsx`. The avatar circle was
+  removed; the shield anchors the left end now. New
+  `MenuIcons.tsx` rides along on the right with four placeholder
+  SVG buttons (Profile / Quests / Events / Settings). Deleted
+  `AvatarBadge.tsx` and `XPLevelBadge.tsx`. Brown panel introduced.
+- **PR #31 — `fix(hud): dark dashboard brown panel + frameless
+  filled icons`** — bg → `--ink` (#140a05) at 85% alpha (the same
+  near-black brown the creator dashboards use). Icon button
+  frames stripped (no border, no bg, no radius). Glyphs redrawn
+  as filled silhouettes (was: stroke outlines).
+- **PR #32 — `fix(hud): bronze border + flush layout`** — wrote
+  `scripts/tint-panel.mjs` (one-off pngjs script) recolouring the
+  Kenney panel ornaments cream → bronze. New `panel-bronze.png`
+  checked into `apps/web/public/hud/kenney/`. Removed screen-edge
+  padding (`top:12 left:12 right:12` → flush). **Restructured each
+  Game* page from `relative` outer → `flex flex-col`**: the HUD
+  now lives in flex flow (not `position: fixed`) and the Phaser
+  canvas is constrained to a `relative flex-1` child below it. The
+  avatar can no longer render behind the bar. PomodoroBanner
+  bumped from `top: 16` → `top: 80` to clear the bar (HearthPill
+  + FocusPill already there from #29).
+- **PR #33 — `fix(hud): thinner bronze rim + larger menu icons`** —
+  `border-image-width` 12 → 6 (delicate frame, not a wall); icon
+  button 32 → 40, glyph 22 → 28.
+
+All four CI green on every merge. No phase 14 sub-phase reopened
+— this is post-ship polish on the same feature.
+
 ## 2026-04-25 — 14.4 · docs (changelog + README + phase-plan + CLAUDE.md routing)
 
 - New `docs/changelog/2026-04-25_phase-14-player-hud.md` with full

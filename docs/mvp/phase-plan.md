@@ -15,7 +15,7 @@
 > - **Phase 11 — the Sage** *(AI portion retired in Phase 13)*. Bearded-merchant NPC in `/world` + UI legibility audit. Originally a Gemini-backed chat; replaced same week by Phase 13's static welcome (ADR 0017 supersedes 0014).
 > - **Phase 12.A — coworking productivity.** Jukebox + hourglass (shared Pomodoro) + hearth pill (occupancy) + focus pill ("what I'm working on") wired to objects in the coworking-inside tent. 12.B (bookshelf / easel / round-table) deferred indefinitely pending usage data.
 > - **Phase 13 — sage as static welcome.** Ripped the AI Sage chat. The wanderer's popup is now a static "welcome, traveller" panel + four flip cards introducing Academy / Square / Dashboard / Coworking. Zero recurring API cost; the Scribe's Gemini wiring is untouched.
-> - **Phase 14 — persistent player HUD.** Top-left avatar portrait + display name; top-right XP progress bar + heraldic SVG shield with the level number. 9-sliced from a single Kenney "Fantasy UI Borders" PNG (CC0). Persists across every Phaser scene; obscured by modals.
+> - **Phase 14 — persistent player HUD.** Full-width top bar: shield (level) + display name + XP progress + four placeholder menu icons (Profile / Quests / Events / Settings). Dark brown panel with a bronze 9-sliced Kenney "Fantasy UI Borders" rim (CC0, recoloured). Lives in the page's flex flow (not a fixed overlay) so the Phaser canvas sits cleanly below it; obscured by modals at z-index 80.
 >
 > The phase-plan format below was kept as the source of truth for the original 12-week scope; new phases follow the **Sub-phase ritual** codified in `CLAUDE.md` (plan → implement → test → review → commit → log per sub-phase) and ship under their own `phases/phase-NN_plan.md` + `phase-NN_status.md`.
 

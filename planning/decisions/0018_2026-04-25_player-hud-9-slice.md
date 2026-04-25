@@ -121,3 +121,31 @@ Tracked under Phase 14 (`phases/phase-14_plan.md`). Four sub-
 phases: 14.0 plan + ADR + asset ingest, 14.1 shared progress
 helper + extended fetchSession, 14.2 PlayerHud component, 14.3
 mount across game pages, 14.4 docs.
+
+**14.5 — Post-ship polish (PR #30 → #33, all 2026-04-25).** The
+initial ship used a two-corner layout (`AvatarBadge` top-left +
+`XPLevelBadge` top-right) and `position: fixed`. After the user
+saw it in-world, four polish PRs reshaped the design without
+re-opening any sub-phase:
+
+- The two-corner panels were consolidated into one full-width
+  `PlayerBar` with the shield as the left anchor (avatar circle
+  removed). Four placeholder menu icons (Profile / Quests /
+  Events / Settings) ride along on the right.
+- The panel bg moved from dark navy to `--ink` at 85% alpha
+  (the dashboard brown).
+- The Kenney panel ornaments were recoloured cream → bronze via
+  `scripts/tint-panel.mjs` (one-off pngjs script, output at
+  `apps/web/public/hud/kenney/panel-bronze.png`).
+- The bar moved out of `position: fixed` into the page's flex
+  flow — each `Game*` page is now `flex flex-col` with the HUD
+  as the first child and the Phaser canvas in a `relative
+  flex-1` child below. World art can no longer render behind
+  the bar.
+- `border-image-width` trimmed 12 → 6 (delicate frame, not a
+  wall); icon button 32 → 40, glyph 22 → 28.
+
+The four polish PRs are documented in the Phase 14 changelog
+("Polish trail" section). The decision rationale (Kenney 9-slice
++ SVG shield + CSS-token fill) above is still load-bearing —
+none of the polish overturned it.
