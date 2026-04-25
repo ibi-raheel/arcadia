@@ -38,12 +38,15 @@ public/
 │   └── market.png
 └── hud/                ← persistent player-HUD assets (Phase 14, 2026-04-25)
     └── kenney/         (subset of Kenney "Fantasy UI Borders" v1.0, CC0 — see
-        ├── panel.png    ATTRIBUTION.md. Used as 9-slice `border-image` for the
-        ├── panel-002.png  AvatarBadge + XPBar panels. PNGs are 48×48 with
-        ├── border.png   transparent middles + corner ornaments — DO NOT add a
-        ├── divider.png  background to the PNG; the dark navy fill comes from
-        ├── LICENSE.txt  CSS tokens. Add new variants here only when actually used.)
-        └── ATTRIBUTION.md
+        ├── panel-bronze.png  ATTRIBUTION.md. **`panel-bronze.png` is the live
+        ├── panel.png         9-slice for the `PlayerBar` rim — bronze ornaments,
+        ├── panel-002.png     produced by `scripts/tint-panel.mjs` from `panel.png`.
+        ├── border.png        Original `panel.png` (cream ornaments) is kept on
+        ├── divider.png       disk for reference. PNGs are 48×48 with transparent
+        ├── LICENSE.txt       middles — DO NOT bake a background into the PNG;
+        └── ATTRIBUTION.md    the dark brown fill comes from `--ink` via panel.css.
+                              Add new variants here only when actually used; if a
+                              new variant needs recolouring, re-run tint-panel.mjs.)
 ```
 
 ## Workflows

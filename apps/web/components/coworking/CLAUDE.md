@@ -44,6 +44,22 @@ React overlays for the coworking tents (Phase 12). Mounted by
 - `public/audio/coworking/*.mp3` — four Bensound tracks (free
   with attribution; see `ATTRIBUTION.md` in that folder).
 
+## Pill positioning (post-Phase-14)
+
+All three coworking pills are anchored to the viewport at
+`top: 80` (z-index 70) so the global player HUD bar at the top
+of the viewport sits clear above them. Earlier draft used
+`top: 16`; bumped during Phase 14 polish (PRs #29 + #32).
+
+| Pill              | top  | left/right          |
+|-------------------|------|---------------------|
+| `FocusPill`       | 80   | left: 16            |
+| `PomodoroBanner`  | 80   | left: 50% (centred) |
+| `HearthPill`      | 80   | right: 16           |
+
+If the HUD bar height ever changes materially, re-tune these
+together.
+
 ## State sync
 
 `room.onStateChange(readAll)` is the single subscription —
