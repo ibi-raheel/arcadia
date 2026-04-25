@@ -67,36 +67,22 @@ export const SQUARE_EDGE_TRIGGERS: EdgeTriggers = {
 };
 
 /**
- * NPC tip-bubble config. The merchant figure is baked into the square PNG
- * (upper-left — bearded man on a rug). Coords point at his visible head;
- * proximityPx is the radius in world pixels at which the tip bubble
- * appears. Ported from the ADR-0007 Tiled square (2026-04-22 feedback —
- * "NPC not giving tip bubbles now").
+ * Wanderer NPC config. The merchant figure is baked into the square PNG
+ * (upper-left — bearded man on a rug). Coords point at his body centre;
+ * proximityPx is the radius in world pixels at which the "Press ENTER
+ * to speak with the wanderer" prompt appears. ENTER fires
+ * SQUARE_OPEN_SAGE_EVENT on the scene's event bus and the React
+ * dialogue overlay opens. See ADR 0015.
+ *
+ * The earlier random-tip bubble (Phase 5) was retired 2026-04-25 in
+ * favour of a Gemini-backed conversation surface — same NPC, much more
+ * useful answers.
  */
 export const SQUARE_NPC = {
   // NPC figure sits on the rug in the upper-left of the 2508² source.
   // Body centre ≈ (355, 620); head top ≈ 540.
   position: { x: 355, y: 620 },
-  /**
-   * Bubble tail tip lands at `headY + 10`, so setting headY = 530 puts
-   * the tail ~10 px above the NPC's head top. User 2026-04-22 screenshot:
-   * earlier coords (320, 285) pointed at empty grass to the upper-left,
-   * the bubble floated far from the NPC.
-   */
-  headY: 530,
   proximityPx: 380,
-  tips: [
-    'Welcome to Arcadia, traveller!',
-    'Psst — the fountain drops a coin at midnight.',
-    'WASD gets you places. Arrow keys too.',
-    'Watch the shrubs. They move sometimes.',
-    'Careful crossing the bridge after rain.',
-    "If you see fireflies, you're close to something good.",
-    'The tavern brews a mean ale. Trust me.',
-    'Spacebar makes you jump. Try it.',
-    'The market opens past the cobblestones.',
-    'Lamps light up at dusk. Mostly.',
-  ],
 } as const;
 
 /**
