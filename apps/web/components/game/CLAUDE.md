@@ -74,6 +74,11 @@ Five surfaces follow the same pattern: Phaser owns the proximity / interaction d
 
 Pattern details: poll `gameRef.current` every 500 ms until Phaser mounts (refs aren't reactive); attach the listener once; clean up on unmount. See `components/tavern/TavernFeatures.tsx` for the canonical implementation.
 
+**Two gotchas that bit hard enough to write down (hotfix 2026-04-25):**
+
+1. **Emit on the right bus.** `this.events` (scene-local) and `this.game.events` (Phaser.Game-level) are different `EventEmitter`s. React listeners on `gameRef.current.events` only see the game bus. Always emit cross-boundary overlays on `this.game.events.emit(...)`.
+2. **Phaser eats WASD / SPACE / ENTER inside overlay inputs.** The KeyboardManager attaches at *capture phase* on `window`, so a textarea calling `event.stopPropagation()` doesn't stop it. The fix is to disable the keyboard plugin while an overlay is open. Use `bindOverlayInputBridge(scene, { capturesOnBlur })` from `scenes/shared/overlay-input-events.ts` on the scene side, and `emitOverlayInputFocus()` / `emitOverlayInputBlur()` from the React overlay's mount / cleanup. Both are decoupled from any specific scene or overlay — any future surface plugs in for free.
+
 ## Phase 8 · UI wire-up touches (2026-04-24)
 
 Non-aesthetic scene changes landed with the React-surface rebuild:
