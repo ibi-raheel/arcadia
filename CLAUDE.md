@@ -10,7 +10,7 @@ This project workspace is strictly for the **technical build**. Strategy, positi
 - **Before starting any phase or sub-phase, write a small plan.** Outline what you are about to do and how, then wait for confirmation before proceeding.
 - **Test thoroughly after every step or feature.** Do not move on until the current step is verified working.
 
-### Sub-phase ritual (codified 2026-04-24 · phase 10)
+### Sub-phase ritual (codified 2026-04-24 · applies phase 10 onward)
 
 Every phase breaks into numbered sub-phases (10.0, 10.1, …). For **each** sub-phase:
 
