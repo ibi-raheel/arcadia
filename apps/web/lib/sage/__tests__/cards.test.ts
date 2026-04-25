@@ -5,12 +5,7 @@ import { SAGE_CARDS } from '../cards';
 describe('SAGE_CARDS', () => {
   it('has exactly the four expected cards', () => {
     expect(SAGE_CARDS).toHaveLength(4);
-    expect(SAGE_CARDS.map((c) => c.id)).toEqual([
-      'academy',
-      'square',
-      'dashboard',
-      'coworking',
-    ]);
+    expect(SAGE_CARDS.map((c) => c.id)).toEqual(['academy', 'square', 'dashboard', 'coworking']);
   });
 
   it('every card has all required fields populated', () => {

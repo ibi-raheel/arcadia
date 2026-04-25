@@ -6,7 +6,13 @@
 
 'use client';
 
-import { useCallback, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
+import {
+  useCallback,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react';
 
 type Props = {
   readonly front: ReactNode;

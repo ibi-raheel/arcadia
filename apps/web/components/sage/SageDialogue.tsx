@@ -108,7 +108,9 @@ export function SageDialogue({ onClose }: Props): React.JSX.Element {
               >
                 welcome, traveller.
               </h2>
-              <Hand>~ here are the four corners of Arcadia. tap any scroll to read its back. ~</Hand>
+              <Hand>
+                ~ here are the four corners of Arcadia. tap any scroll to read its back. ~
+              </Hand>
             </div>
           </header>
 
