@@ -46,7 +46,9 @@ public/
         ├── LICENSE.txt       middles — DO NOT bake a background into the PNG;
         └── ATTRIBUTION.md    the dark brown fill comes from `--ink` via panel.css.
                               Add new variants here only when actually used; if a
-                              new variant needs recolouring, re-run tint-panel.mjs.)
+                              new variant needs recolouring, re-run tint-panel.mjs
+                              with the desired alpha-multiplier (default 1.0;
+                              currently shipping 0.55 for a softer rim — PR #35).)
 ```
 
 ## Workflows

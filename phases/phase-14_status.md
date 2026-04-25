@@ -2,11 +2,11 @@
 
 Source plan: `phase-14_plan.md`. Entries chronological, newest on top.
 
-## 2026-04-25 — 14.5 · post-ship polish (PR #30 → #33 trail)
+## 2026-04-25 — 14.5 · post-ship polish (PR #30 → #36 trail)
 
-After the initial PR #29 ship, four polish PRs reshaped the HUD
-based on user feedback. Consolidated entry rather than four
-separate ones because they all landed within an hour:
+After the initial PR #29 ship, seven polish PRs reshaped the HUD
+based on user feedback. Consolidated entry rather than separate
+ones because they all landed within a few hours:
 
 - **PR #30 — `feat(hud): consolidate into one full-width bar`** —
   replaced the two-corner layout (`AvatarBadge` + `XPLevelBadge`)
@@ -34,8 +34,22 @@ separate ones because they all landed within an hour:
 - **PR #33 — `fix(hud): thinner bronze rim + larger menu icons`** —
   `border-image-width` 12 → 6 (delicate frame, not a wall); icon
   button 32 → 40, glyph 22 → 28.
+- **PR #35 — `fix(hud): softer rim, more breathing room, hidden
+  during preload`** — `scripts/tint-panel.mjs` gained an optional
+  alpha-multiplier arg; re-ran with `0.55` to regenerate
+  `panel-bronze.png` (rim opacity dropped from 100% → 55%).
+  Coworking pills (`HearthPill`, `FocusPill`, `PomodoroBanner`)
+  bumped `top: 80` → `top: 100` for breathing room. `PlayerBar`
+  + `PlayerHud` gained a `loaded?: boolean` prop; when false (tied
+  to parent's `sceneReady`), the bar reserves layout space but
+  renders `visibility: hidden` — HUD stays invisible during scene
+  preload, no Phaser canvas resize when it appears.
+- **PR #36 — `feat(hud): add Chat icon`** — new `ChatIcon` SVG
+  inserted into `MenuIcons.tsx` between Profile and Quests. Menu
+  now reads Profile · Chat · Quests · Events · Settings (5 icons,
+  was 4). Placeholder `onClick` until the chat route lands.
 
-All four CI green on every merge. No phase 14 sub-phase reopened
+All seven CI green on every merge. No phase 14 sub-phase reopened
 — this is post-ship polish on the same feature.
 
 ## 2026-04-25 — 14.4 · docs (changelog + README + phase-plan + CLAUDE.md routing)
