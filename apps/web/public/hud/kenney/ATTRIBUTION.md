@@ -21,10 +21,16 @@ If we need additional variants (e.g. ornament style or a "Double" thicker border
 
 ## Recolour pipeline
 
-The original Kenney panels ship with cream-coloured ornaments. The HUD reads "all dark brown," so the live variant `panel-bronze.png` was produced by recolouring every non-transparent pixel to `--bronze-bright` (#d4a868) via `scripts/tint-panel.mjs` (one-off pngjs script). Alpha is preserved so the corner ornament edges stay anti-aliased. To re-roll the tint after dropping a new variant:
+The original Kenney panels ship with cream-coloured ornaments. The HUD reads "all dark brown," so the live variant `panel-bronze.png` was produced by recolouring every non-transparent pixel to `--bronze-bright` (#d4a868) via `scripts/tint-panel.mjs` (one-off pngjs script). Anti-aliasing on ornament edges is preserved by scaling alpha rather than thresholding it. To re-roll the tint after dropping a new variant:
 
 ```bash
+# Full opacity (default)
 node scripts/tint-panel.mjs apps/web/public/hud/kenney/panel.png apps/web/public/hud/kenney/panel-bronze.png
+
+# Soft rim — multiply every alpha channel value by N (0.0–1.0).
+# Currently shipping with 0.55 (PR #35) so the ornament reads as
+# a delicate frame instead of a loud yellow border.
+node scripts/tint-panel.mjs apps/web/public/hud/kenney/panel.png apps/web/public/hud/kenney/panel-bronze.png 0.55
 ```
 
 If a future re-skin moves away from bronze, edit the R/G/B constants at the top of `scripts/tint-panel.mjs`.
