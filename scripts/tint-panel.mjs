@@ -1,15 +1,18 @@
 // One-off: recolor the Kenney panel ornaments from cream to bronze so
 // the HUD reads as "all dark brown" instead of "dark interior with
 // cream rim". Reads the source PNG, swaps any non-transparent pixel
-// to a bronze tone (preserving alpha), writes alongside as panel-bronze.png.
+// to a bronze tone, writes alongside as panel-bronze.png. Optional
+// alpha multiplier argument softens the rim — 0.6 means "render the
+// border lines at 60% opacity so they're delicate, not loud".
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
 
 const SRC = process.argv[2];
 const DST = process.argv[3];
-if (!SRC || !DST) {
-  console.error('usage: node tint-panel.mjs <src.png> <dst.png>');
+const ALPHA_MUL = process.argv[4] !== undefined ? Number(process.argv[4]) : 1;
+if (!SRC || !DST || Number.isNaN(ALPHA_MUL) || ALPHA_MUL < 0 || ALPHA_MUL > 1) {
+  console.error('usage: node tint-panel.mjs <src.png> <dst.png> [alpha-multiplier=1]');
   process.exit(1);
 }
 
@@ -27,9 +30,11 @@ for (let y = 0; y < png.height; y += 1) {
     png.data[idx] = R;
     png.data[idx + 1] = G;
     png.data[idx + 2] = B;
-    // alpha untouched — preserves anti-aliasing on ornament edges
+    // Apply the alpha multiplier — preserves anti-aliasing on ornament
+    // edges by scaling rather than thresholding.
+    png.data[idx + 3] = Math.round(a * ALPHA_MUL);
   }
 }
 
 writeFileSync(DST, PNG.sync.write(png));
-console.log(`tinted ${SRC} → ${DST} (${png.width}×${png.height})`);
+console.log(`tinted ${SRC} → ${DST} (${png.width}×${png.height}, alpha × ${ALPHA_MUL})`);
