@@ -115,7 +115,7 @@ export default async function CourseAnalyticsPage({ params }: Params): Promise<R
             <ActivitySparkline series={series} />
           </div>
         ) : (
-          <p className="body-italic" style={{ marginTop: 12, color: 'var(--ink-quiet)' }}>
+          <p className="body-italic" style={{ marginTop: 12, color: 'var(--ink-soft)' }}>
             no progress events yet. the ink is still drying on this page.
           </p>
         )}
@@ -124,7 +124,7 @@ export default async function CourseAnalyticsPage({ params }: Params): Promise<R
       <LedgerCard>
         <Kicker>recent activity</Kicker>
         {recentActivity.length === 0 ? (
-          <p className="body-italic" style={{ marginTop: 12, color: 'var(--ink-quiet)' }}>
+          <p className="body-italic" style={{ marginTop: 12, color: 'var(--ink-soft)' }}>
             Once members start watching lessons, their activity appears here.
           </p>
         ) : (
@@ -222,7 +222,7 @@ function ActivityTable({ rows }: { readonly rows: readonly ActivityRow[] }): Rea
               )}
             </Td>
             <Td>
-              <span className="mono" style={{ color: 'var(--ink-faint)' }}>
+              <span className="mono" style={{ color: 'var(--ink-soft)' }}>
                 {new Date(row.updatedAt).toLocaleString()}
               </span>
             </Td>

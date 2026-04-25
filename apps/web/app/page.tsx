@@ -149,7 +149,7 @@ export default async function Home(): Promise<React.JSX.Element> {
                     fontStyle: 'italic',
                     fontSize: 24,
                     margin: '4px 0 0',
-                    color: 'var(--ink-quiet)',
+                    color: 'var(--ink-soft)',
                   }}
                 >
                   Not yet yours

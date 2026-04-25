@@ -203,7 +203,7 @@ export function Satchel({
             fontSize: 10,
             letterSpacing: 1.4,
             textTransform: 'uppercase',
-            color: 'var(--ink-faint)',
+            color: 'var(--ink-soft)',
             marginTop: 10,
           }}
         >
@@ -266,14 +266,14 @@ export function Satchel({
                   border: 'none',
                   background: 'transparent',
                   cursor: 'pointer',
-                  color: 'var(--ink-faint)',
+                  color: 'var(--ink-soft)',
                   fontSize: 14,
                   lineHeight: 1,
                   padding: '2px 4px',
                   borderRadius: 2,
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--crimson)')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-faint)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-soft)')}
               >
                 ×
               </button>
@@ -314,7 +314,7 @@ export function Satchel({
               fontSize: 10,
               letterSpacing: 1.2,
               textTransform: 'uppercase',
-              color: 'var(--ink-faint)',
+              color: 'var(--ink-soft)',
               display: 'flex',
               justifyContent: 'space-between',
             }}
@@ -364,7 +364,7 @@ export function Satchel({
               fontSize: 10,
               letterSpacing: 1.2,
               textTransform: 'uppercase',
-              color: 'var(--ink-faint)',
+              color: 'var(--ink-soft)',
               textAlign: 'right',
               marginTop: 4,
             }}

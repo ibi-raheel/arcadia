@@ -114,7 +114,7 @@ export function ScribeMemory(): React.JSX.Element {
                   fontSize: 10,
                   letterSpacing: 1.2,
                   textTransform: 'uppercase',
-                  color: 'var(--ink-faint)',
+                  color: 'var(--ink-soft)',
                   marginTop: 6,
                 }}
               >
