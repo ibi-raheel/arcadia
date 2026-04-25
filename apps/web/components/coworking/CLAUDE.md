@@ -47,15 +47,17 @@ React overlays for the coworking tents (Phase 12). Mounted by
 ## Pill positioning (post-Phase-14)
 
 All three coworking pills are anchored to the viewport at
-`top: 80` (z-index 70) so the global player HUD bar at the top
-of the viewport sits clear above them. Earlier draft used
-`top: 16`; bumped during Phase 14 polish (PRs #29 + #32).
+`top: 100` (z-index 70) so the global player HUD bar at the top
+of the viewport sits clear above them with comfortable breathing
+room. Position history: `top: 16` originally → `80` (PRs #29 +
+#32, when the HUD landed) → `100` (PR #35, after the user said
+80 was too close).
 
 | Pill              | top  | left/right          |
 |-------------------|------|---------------------|
-| `FocusPill`       | 80   | left: 16            |
-| `PomodoroBanner`  | 80   | left: 50% (centred) |
-| `HearthPill`      | 80   | right: 16           |
+| `FocusPill`       | 100  | left: 16            |
+| `PomodoroBanner`  | 100  | left: 50% (centred) |
+| `HearthPill`      | 100  | right: 16           |
 
 If the HUD bar height ever changes materially, re-tune these
 together.

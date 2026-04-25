@@ -86,11 +86,11 @@ visible while a pomodoro is running). All three got bumped from
 `top: 16` → `top: 80` so the new global HUD sits clear above them.
 Same z-index (70), same modal-obscuration behaviour.
 
-## Polish trail (PR #30 → #33, all merged 2026-04-25)
+## Polish trail (PR #30 → #36, all merged 2026-04-25)
 
 The initial ship in PR #29 used a **two-corner layout** with
 `AvatarBadge` (top-left) + `XPLevelBadge` (top-right) both at
-`position: fixed`. Four polish PRs reshaped it into the final
+`position: fixed`. Seven polish PRs reshaped it into the final
 single-bar form:
 
 - **PR #30 — `feat(hud): consolidate into one full-width bar`** —
@@ -116,6 +116,20 @@ single-bar form:
 - **PR #33 — `fix(hud): thinner bronze rim + larger menu icons`** —
   `border-image-width` 12 → 6 (delicate rim, not a wall); icon
   button 32 → 40, glyph 22 → 28.
+- **PR #35 — `fix(hud): softer rim, more breathing room, hidden
+  during preload`** — `scripts/tint-panel.mjs` gained an optional
+  alpha-multiplier arg; re-ran with `0.55` to regenerate
+  `panel-bronze.png` (rim renders at 55% opacity). Coworking pills
+  (`HearthPill`, `FocusPill`, `PomodoroBanner`) bumped from
+  `top: 80` → `top: 100`. `PlayerBar` + `PlayerHud` gained a
+  `loaded?: boolean` prop; when false (parent's `sceneReady === false`)
+  the bar reserves layout space but renders `visibility: hidden`,
+  so the HUD stays invisible during scene preload without any
+  Phaser canvas resize when it appears.
+- **PR #36 — `feat(hud): add Chat icon`** — new `ChatIcon` SVG
+  inserted into `MenuIcons.tsx` between Profile and Quests. Menu
+  now reads Profile · Chat · Quests · Events · Settings (5 icons,
+  was 4). Placeholder `onClick` until the chat route lands.
 
 ## Files added (final state)
 
