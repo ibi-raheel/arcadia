@@ -11,71 +11,56 @@ import './panel.css';
 
 type IconProps = { readonly size?: number };
 
-function ProfileIcon({ size = 18 }: IconProps): React.JSX.Element {
-  // Head + shoulders silhouette.
+function ProfileIcon({ size = 22 }: IconProps): React.JSX.Element {
+  // Filled head + shoulders silhouette.
   return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden>
-      <circle cx="10" cy="6.5" r="3.2" stroke="currentColor" strokeWidth={1.6} />
-      <path
-        d="M3.5 17.5C3.5 13.9 6.4 12 10 12C13.6 12 16.5 13.9 16.5 17.5"
-        stroke="currentColor"
-        strokeWidth={1.6}
-        strokeLinecap="round"
-      />
+    <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden>
+      <circle cx="10" cy="6.5" r="3.4" fill="currentColor" />
+      <path d="M3 17.5C3 13.6 6.1 11.5 10 11.5C13.9 11.5 17 13.6 17 17.5Z" fill="currentColor" />
     </svg>
   );
 }
 
-function QuestsIcon({ size = 18 }: IconProps): React.JSX.Element {
-  // Rolled scroll with two horizontal text rules.
+function QuestsIcon({ size = 22 }: IconProps): React.JSX.Element {
+  // Filled scroll with two darker text bands cut out of it.
   return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden>
       <path
-        d="M5 4H14C14.55 4 15 4.45 15 5V15C15 16.1 15.9 17 17 17H6C4.9 17 4 16.1 4 15V5C4 4.45 4.45 4 5 4Z"
-        stroke="currentColor"
-        strokeWidth={1.5}
-        strokeLinejoin="round"
+        d="M4.5 3.5H14C14.55 3.5 15 3.95 15 4.5V14.5C15 15.6 15.9 16.5 17 16.5H6C4.9 16.5 4 15.6 4 14.5V4C4 3.72 4.22 3.5 4.5 3.5Z"
+        fill="currentColor"
       />
-      <path d="M7 8H12" stroke="currentColor" strokeWidth={1.4} strokeLinecap="round" />
-      <path d="M7 11H12" stroke="currentColor" strokeWidth={1.4} strokeLinecap="round" />
+      <rect x="6.5" y="6.5" width="6" height="1.4" rx="0.5" fill="rgba(0,0,0,0.45)" />
+      <rect x="6.5" y="9.4" width="6" height="1.4" rx="0.5" fill="rgba(0,0,0,0.45)" />
+      <rect x="6.5" y="12.3" width="4" height="1.4" rx="0.5" fill="rgba(0,0,0,0.45)" />
     </svg>
   );
 }
 
-function EventsIcon({ size = 18 }: IconProps): React.JSX.Element {
-  // Calendar grid with binding rings.
+function EventsIcon({ size = 22 }: IconProps): React.JSX.Element {
+  // Filled calendar with darker grid cells.
   return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden>
-      <rect
-        x="3.5"
-        y="5"
-        width="13"
-        height="11.5"
-        rx="1.5"
-        stroke="currentColor"
-        strokeWidth={1.5}
-      />
-      <path d="M3.5 9H16.5" stroke="currentColor" strokeWidth={1.4} />
-      <path d="M7 3.5V6" stroke="currentColor" strokeWidth={1.4} strokeLinecap="round" />
-      <path d="M13 3.5V6" stroke="currentColor" strokeWidth={1.4} strokeLinecap="round" />
-      <circle cx="7" cy="12" r="0.9" fill="currentColor" />
-      <circle cx="10" cy="12" r="0.9" fill="currentColor" />
-      <circle cx="13" cy="12" r="0.9" fill="currentColor" />
+    <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden>
+      <rect x="3" y="5" width="14" height="12" rx="1.5" fill="currentColor" />
+      <rect x="3" y="5" width="14" height="3.2" fill="rgba(0,0,0,0.35)" />
+      <rect x="6.4" y="3" width="1.4" height="3.4" rx="0.6" fill="currentColor" />
+      <rect x="12.2" y="3" width="1.4" height="3.4" rx="0.6" fill="currentColor" />
+      <circle cx="7" cy="12" r="1" fill="rgba(0,0,0,0.45)" />
+      <circle cx="10" cy="12" r="1" fill="rgba(0,0,0,0.45)" />
+      <circle cx="13" cy="12" r="1" fill="rgba(0,0,0,0.45)" />
     </svg>
   );
 }
 
-function SettingsIcon({ size = 18 }: IconProps): React.JSX.Element {
-  // Eight-tooth gear with hub.
+function SettingsIcon({ size = 22 }: IconProps): React.JSX.Element {
+  // Filled eight-tooth gear with a punched-out hub.
   return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden>
       <path
-        d="M10 2.5L11 4.5L13 4L13.5 6L15.5 6.5L15 8.5L17 9.5L16 11.5L17 13.5L15 14.5L15.5 16.5L13.5 17L13 19L11 18.5L10 20L9 18.5L7 19L6.5 17L4.5 16.5L5 14.5L3 13.5L4 11.5L3 9.5L5 8.5L4.5 6.5L6.5 6L7 4L9 4.5L10 2.5Z"
-        stroke="currentColor"
-        strokeWidth={1.4}
-        strokeLinejoin="round"
+        d="M10 1.5L11.4 4L13.8 3.4L14.4 5.8L16.8 6.4L16.2 8.8L18.5 10L17.2 12L18 14.4L15.6 15L15 17.4L12.6 16.8L11 19L10 17L9 19L7.4 16.8L5 17.4L4.4 15L2 14.4L2.8 12L1.5 10L3.8 8.8L3.2 6.4L5.6 5.8L6.2 3.4L8.6 4L10 1.5Z"
+        fill="currentColor"
+        fillRule="evenodd"
       />
-      <circle cx="10" cy="10.5" r="2.4" stroke="currentColor" strokeWidth={1.4} />
+      <circle cx="10" cy="10" r="2.6" fill="rgba(0,0,0,0.55)" />
     </svg>
   );
 }
