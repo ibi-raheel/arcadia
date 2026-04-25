@@ -44,10 +44,9 @@ export function PomodoroBanner({ pomodoro }: Props): React.JSX.Element | null {
       role="status"
       aria-live="polite"
       style={{
-        // 80 (not 16) so the player HUD bar at the top of the viewport
-        // (~60 px tall) sits clear above this banner.
+        // 100 — leaves ~36 px below the HUD bar (bar is ~64 px tall).
         position: 'fixed',
-        top: 80,
+        top: 100,
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 70,
