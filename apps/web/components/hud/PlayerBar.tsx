@@ -1,11 +1,14 @@
 // Full-width top HUD bar. Replaces the earlier two-panel layout
-// (separate AvatarBadge + XPLevelBadge). The shield now anchors the
-// top-left corner where the avatar circle used to sit; display name
-// + XP track stack to its right; the four placeholder menu icons sit
-// flush right.
+// (separate AvatarBadge + XPLevelBadge). The shield anchors the top-
+// left corner where the avatar circle used to sit; display name + XP
+// track stack to its right; the four placeholder menu icons sit flush
+// right.
 //
-// Stretches across the screen with the same 12 px padding the prior
-// pills used. Z-index 70 — modals at 80 still obscure it.
+// **Layout role:** this bar lives in the parent's flex flow (no
+// `position: fixed`, no screen-edge padding). The Phaser canvas
+// claims the remaining height via `flex-1`, so world art never
+// renders behind the bar. Modals at z-index 80+ are fixed/inset-0
+// over the viewport and still obscure the HUD as before.
 
 'use client';
 
@@ -32,11 +35,10 @@ export function PlayerBar({ displayName, xp }: Props): React.JSX.Element {
     <div
       className="hud-panel"
       style={{
-        position: 'fixed',
-        top: 12,
-        left: 12,
-        right: 12,
-        zIndex: 70,
+        // In-flow flex item; the parent (each Game* page) is a
+        // flex-col container. No fixed-positioning, no screen-edge
+        // offsets — the bar is flush across the top.
+        flex: '0 0 auto',
         padding: '8px 16px',
         display: 'flex',
         alignItems: 'center',

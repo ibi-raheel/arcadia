@@ -208,15 +208,7 @@ export default function GameSquare(): React.JSX.Element {
     fetchState.status === 'ready' && preloadProgress !== null && preloadProgress >= 1;
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-[#0b1220]">
-      <div ref={containerRef} className="absolute inset-0" />
-      <BuildingTransition
-        ready={sceneReady}
-        displayName="The Square"
-        backgroundImage="/worlds/square-2508x2508.png"
-      />
-      <LevelUpBanner />
-      <SageFeatures gameRef={gameRef as unknown as React.MutableRefObject<PhaserGameLike | null>} />
+    <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#0b1220]">
       {fetchState.status === 'ready' && (
         <PlayerHud
           memberId={fetchState.member.memberId}
@@ -224,6 +216,18 @@ export default function GameSquare(): React.JSX.Element {
           initialXp={fetchState.member.xp}
         />
       )}
+      <div className="relative flex-1">
+        <div ref={containerRef} className="absolute inset-0" />
+        <BuildingTransition
+          ready={sceneReady}
+          displayName="The Square"
+          backgroundImage="/worlds/square-2508x2508.png"
+        />
+        <LevelUpBanner />
+        <SageFeatures
+          gameRef={gameRef as unknown as React.MutableRefObject<PhaserGameLike | null>}
+        />
+      </div>
     </div>
   );
 }
