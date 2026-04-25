@@ -29,6 +29,17 @@ export function EditorToolbar({ editor, disabled }: Props): React.JSX.Element {
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
   };
 
+  const promptForImage = (): void => {
+    const url = window.prompt('image URL', 'https://');
+    if (!url || url.trim().length === 0 || url === 'https://') return;
+    const alt = window.prompt('alt text (optional, for accessibility)', '');
+    editor
+      .chain()
+      .focus()
+      .setImage({ src: url.trim(), alt: alt ?? undefined })
+      .run();
+  };
+
   return (
     <div className="scriptorium-editor-toolbar" role="toolbar" aria-label="formatting">
       <Group>
@@ -128,6 +139,7 @@ export function EditorToolbar({ editor, disabled }: Props): React.JSX.Element {
           onClick={promptForLink}
           disabled={disabled}
         />
+        <Button label="insert image" symbol="🖼" onClick={promptForImage} disabled={disabled} />
       </Group>
 
       <Group>

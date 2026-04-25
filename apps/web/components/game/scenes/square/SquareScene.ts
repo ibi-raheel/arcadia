@@ -20,7 +20,9 @@ import * as Phaser from 'phaser';
 import type { ColyseusConnection, ColyseusRoom } from '../../net/colyseus-client';
 import { BOOT_ASSETS } from '../boot/asset-manifest';
 import { isAvatarId } from '../shared/avatar-palette';
-import { createCapacityHud, type CapacityHud } from '../shared/capacity-hud';
+// Capacity HUD removed 2026-04-25 (user-feedback hotfix) — the
+// "Square · N / 20" pill cluttered the world without adding much.
+// Auto-sharding still happens at maxClients=20, just silently now.
 import { spawnColliders } from '../shared/colliders';
 import { createEdgeTriggerManager, type EdgeTriggerManager } from '../shared/edge-triggers';
 import { createEnterPromptManager, type EnterPromptManager } from '../shared/enter-prompt';
@@ -67,7 +69,6 @@ export const SQUARE_OPEN_SAGE_EVENT = 'square:open-sage' as const;
 export const SQUARE_SPAWN_OVERRIDE_REGISTRY_KEY = 'square-spawn-override';
 
 const MOVE_INTERVAL_MS = 50;
-const HUD_MAX_CLIENTS = 20;
 
 type YSortableGameObject = YSortable & { setDepth: (depth: number) => unknown };
 
@@ -96,7 +97,6 @@ export class SquareScene extends Phaser.Scene {
   private edgeTriggers?: EdgeTriggerManager;
   private lodgePrompt?: EnterPromptManager;
   private sagePrompt?: ProximityPromptManager;
-  private capacityHud?: CapacityHud;
   private unbindOverlayInput?: () => void;
 
   constructor() {
@@ -131,8 +131,6 @@ export class SquareScene extends Phaser.Scene {
     // Lodge entry — proximity prompt at the cabin in the top-right of
     // the square. Routes to / (the member's home landing).
     this.lodgePrompt = createEnterPromptManager(this, [squareLayersConfig.lodgeEntry]);
-
-    this.capacityHud = createCapacityHud(this, { label: 'Square', max: HUD_MAX_CLIENTS });
 
     // Wanderer NPC — proximity prompt at the bearded merchant on the
     // rug in the upper-left. ENTER opens the React sage dialogue
@@ -268,21 +266,11 @@ export class SquareScene extends Phaser.Scene {
 
     avatarsProxy.onAdd((state: AvatarState, sessionId: string) => {
       this.addRemoteAvatar(sessionId, state, room.sessionId, $);
-      this.refreshHud(room);
     }, true);
 
     avatarsProxy.onRemove((_state: AvatarState, sessionId: string) => {
       this.removeRemoteAvatar(sessionId);
-      this.refreshHud(room);
     });
-
-    this.refreshHud(room);
-  }
-
-  private refreshHud(room: ColyseusRoom): void {
-    if (!this.capacityHud) return;
-    const count = (room.state.avatars as unknown as { size: number }).size;
-    this.capacityHud.setCount(count);
   }
 
   private addRemoteAvatar(
@@ -329,12 +317,10 @@ export class SquareScene extends Phaser.Scene {
     this.edgeTriggers?.destroy();
     this.lodgePrompt?.destroy();
     this.sagePrompt?.destroy();
-    this.capacityHud?.destroy();
     this.unbindOverlayInput?.();
     this.edgeTriggers = undefined;
     this.lodgePrompt = undefined;
     this.sagePrompt = undefined;
-    this.capacityHud = undefined;
     this.unbindOverlayInput = undefined;
   }
 

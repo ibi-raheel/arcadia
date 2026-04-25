@@ -24,6 +24,7 @@ const KNOWLEDGE_FILES: readonly { readonly path: string; readonly droppable: boo
   { path: 'docs/mvp/prd.md', droppable: false },
   { path: 'docs/mvp/tad.md', droppable: false },
   { path: 'docs/mvp/phase-plan.md', droppable: false },
+  { path: 'docs/mvp/world-areas.md', droppable: false },
   { path: 'README.md', droppable: false },
   // Decisions — the sage gets the "why" behind the architecture.
   { path: 'planning/decisions/0001_2026-04-18_locked-stack.md', droppable: false },
