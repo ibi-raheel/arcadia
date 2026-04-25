@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { AvatarState } from '@arcadia/shared';
+import { AvatarState, JukeboxState, PomodoroState } from '@arcadia/shared';
 
 import {
   applyMove,
@@ -180,10 +180,7 @@ describe('parseBuildingPayload', () => {
 // Phase 12 — coworking productivity (jukebox + pomodoro)
 
 describe('applySetJukebox', () => {
-  const fresh = (): import('@arcadia/shared').JukeboxState => {
-    const { JukeboxState } = require('@arcadia/shared');
-    return new JukeboxState();
-  };
+  const fresh = () => new JukeboxState();
 
   it('sets the playlist + stamps startedAt + lastChangedBy', () => {
     const j = fresh();
@@ -211,10 +208,7 @@ describe('applySetJukebox', () => {
 });
 
 describe('applyStartPomodoro', () => {
-  const fresh = (): import('@arcadia/shared').PomodoroState => {
-    const { PomodoroState } = require('@arcadia/shared');
-    return new PomodoroState();
-  };
+  const fresh = () => new PomodoroState();
 
   it('starts a session from idle with default 25/5/4', () => {
     const p = fresh();
@@ -244,10 +238,7 @@ describe('applyStartPomodoro', () => {
 });
 
 describe('applyStopPomodoro', () => {
-  const fresh = (): import('@arcadia/shared').PomodoroState => {
-    const { PomodoroState } = require('@arcadia/shared');
-    return new PomodoroState();
-  };
+  const fresh = () => new PomodoroState();
 
   it('resets a running session to idle', () => {
     const p = fresh();
@@ -265,10 +256,7 @@ describe('applyStopPomodoro', () => {
 });
 
 describe('tickPomodoro', () => {
-  const fresh = (): import('@arcadia/shared').PomodoroState => {
-    const { PomodoroState } = require('@arcadia/shared');
-    return new PomodoroState();
-  };
+  const fresh = () => new PomodoroState();
 
   it('does nothing while phase is idle', () => {
     const p = fresh();
