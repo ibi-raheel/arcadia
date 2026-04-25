@@ -13,7 +13,11 @@ import {
   AVATAR_DIRECTIONS,
   AvatarState,
   type AvatarDirection,
+  type JukeboxState,
   type MovePayload,
+  type PomodoroState,
+  type SetJukeboxPayload,
+  type StartPomodoroPayload,
   type UpdateLevelPayload,
   type EnterBuildingPayload,
   type LeaveBuildingPayload,
@@ -98,6 +102,130 @@ export function applyUpdateLevel(avatar: AvatarState, payload: unknown): boolean
 export function parseBuildingPayload(payload: unknown): EnterBuildingPayload['building'] | null {
   if (!isBuildingPayload(payload)) return null;
   return payload.building;
+}
+
+// --- coworking · jukebox + pomodoro (Phase 12) ---------------------------
+
+const PLAYLIST_MAX = 32;
+const POMODORO_WORK_MIN = 1;
+const POMODORO_WORK_MAX = 90;
+const POMODORO_BREAK_MIN = 1;
+const POMODORO_BREAK_MAX = 30;
+const POMODORO_CYCLE_MIN = 1;
+const POMODORO_CYCLE_MAX = 8;
+
+/**
+ * Apply a SET_JUKEBOX payload to the per-tent jukebox state. Returns
+ * `true` on accept. The caller (RealmRoom message handler) is
+ * responsible for stamping `lastChangedBy` from the calling client's
+ * member id — that's not in the payload because clients can't fake
+ * other peoples' ids.
+ */
+export function applySetJukebox(
+  jukebox: JukeboxState,
+  payload: unknown,
+  memberId: string,
+  now: number,
+): boolean {
+  if (!isSetJukeboxPayload(payload)) return false;
+  const playlist = payload.playlist.trim().slice(0, PLAYLIST_MAX);
+  jukebox.playlist = playlist;
+  jukebox.startedAt = playlist.length === 0 ? 0 : now;
+  jukebox.lastChangedBy = playlist.length === 0 ? '' : memberId;
+  return true;
+}
+
+/**
+ * Validates + applies a START_POMODORO payload. On accept the state
+ * jumps from idle → first work phase. Rejects if a session is
+ * already running (clients should send STOP first). Defaults backfill
+ * any missing / out-of-range numbers.
+ */
+export function applyStartPomodoro(
+  pomodoro: PomodoroState,
+  payload: unknown,
+  memberId: string,
+  now: number,
+): boolean {
+  if (pomodoro.phase !== 'idle') return false;
+  const parsed = parseStartPomodoro(payload);
+  pomodoro.phase = 'work';
+  pomodoro.cycle = 1;
+  pomodoro.startedBy = memberId;
+  pomodoro.workMinutes = parsed.workMinutes;
+  pomodoro.breakMinutes = parsed.breakMinutes;
+  pomodoro.totalCycles = parsed.totalCycles;
+  pomodoro.endsAt = now + parsed.workMinutes * 60_000;
+  return true;
+}
+
+/**
+ * Hard-stops the running session and resets to idle. No payload.
+ * Returns `true` if a session was running, `false` if already idle.
+ */
+export function applyStopPomodoro(pomodoro: PomodoroState): boolean {
+  if (pomodoro.phase === 'idle') return false;
+  pomodoro.phase = 'idle';
+  pomodoro.endsAt = 0;
+  pomodoro.cycle = 0;
+  pomodoro.startedBy = '';
+  pomodoro.totalCycles = 0;
+  return true;
+}
+
+/**
+ * Server tick — advances the phase if `endsAt <= now`. Returns `true`
+ * if anything changed (caller should broadcast). Pure on `pomodoro`
+ * + `now`.
+ *
+ * Sequence: work → break → work → break → … until `cycle ===
+ * totalCycles && phase === 'break'`, at which point the next tick
+ * resets to idle.
+ */
+export function tickPomodoro(pomodoro: PomodoroState, now: number): boolean {
+  if (pomodoro.phase === 'idle') return false;
+  if (now < pomodoro.endsAt) return false;
+  if (pomodoro.phase === 'work') {
+    if (pomodoro.cycle >= pomodoro.totalCycles) {
+      // Final work phase done — close the session.
+      pomodoro.phase = 'idle';
+      pomodoro.endsAt = 0;
+      pomodoro.cycle = 0;
+      pomodoro.startedBy = '';
+      pomodoro.totalCycles = 0;
+      return true;
+    }
+    pomodoro.phase = 'break';
+    pomodoro.endsAt = now + pomodoro.breakMinutes * 60_000;
+    return true;
+  }
+  // currently 'break' — advance to next work cycle
+  pomodoro.phase = 'work';
+  pomodoro.cycle += 1;
+  pomodoro.endsAt = now + pomodoro.workMinutes * 60_000;
+  return true;
+}
+
+function parseStartPomodoro(payload: unknown): {
+  readonly workMinutes: number;
+  readonly breakMinutes: number;
+  readonly totalCycles: number;
+} {
+  const obj = isRecord(payload) ? (payload as StartPomodoroPayload) : {};
+  const workMinutes = clampInt(obj.workMinutes ?? 25, POMODORO_WORK_MIN, POMODORO_WORK_MAX);
+  const breakMinutes = clampInt(obj.breakMinutes ?? 5, POMODORO_BREAK_MIN, POMODORO_BREAK_MAX);
+  const totalCycles = clampInt(obj.totalCycles ?? 4, POMODORO_CYCLE_MIN, POMODORO_CYCLE_MAX);
+  return { workMinutes, breakMinutes, totalCycles };
+}
+
+function clampInt(v: number | undefined, lo: number, hi: number): number {
+  const n = typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : lo;
+  return n < lo ? lo : n > hi ? hi : n;
+}
+
+function isSetJukeboxPayload(value: unknown): value is SetJukeboxPayload {
+  if (!isRecord(value)) return false;
+  return typeof (value as { playlist?: unknown }).playlist === 'string';
 }
 
 // --- internal guards -----------------------------------------------------

@@ -18,6 +18,11 @@ import { createCapacityHud, type CapacityHud } from '../shared/capacity-hud';
 import { spawnColliders } from '../shared/colliders';
 import { createEdgeTriggerManager, type EdgeTriggerManager } from '../shared/edge-triggers';
 import { applyFillZoom } from '../shared/fill-zoom';
+import { bindOverlayInputBridge } from '../shared/overlay-input-events';
+import {
+  createProximityPromptManager,
+  type ProximityPromptManager,
+} from '../shared/proximity-prompt';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -42,6 +47,12 @@ export const COWORKING_INSIDE_SCENE_KEY = 'CoworkingInsideScene' as const;
 
 /** Registry key the page component writes so the scene can label the HUD. */
 export const COWORKING_BUILDING_ID_REGISTRY_KEY = 'coworking-building-id';
+
+/** Phase 12 — fired on game.events when the avatar is in proximity
+ *  to the matching interactable and presses ENTER. React side
+ *  (`CoworkingFeatures`) listens and opens the corresponding overlay. */
+export const COWORKING_OPEN_JUKEBOX_EVENT = 'coworking:open-jukebox' as const;
+export const COWORKING_OPEN_HOURGLASS_EVENT = 'coworking:open-hourglass' as const;
 
 const MOVE_INTERVAL_MS = 50;
 const HUD_MAX_CLIENTS = 20;
@@ -80,6 +91,9 @@ export class CoworkingInsideScene extends Phaser.Scene {
 
   private edgeTriggers?: EdgeTriggerManager;
   private capacityHud?: CapacityHud;
+  private jukeboxPrompt?: ProximityPromptManager;
+  private chestPrompt?: ProximityPromptManager;
+  private unbindOverlayInput?: () => void;
 
   constructor() {
     super({ key: COWORKING_INSIDE_SCENE_KEY });
@@ -136,6 +150,39 @@ export class CoworkingInsideScene extends Phaser.Scene {
     this.capacityHud = createCapacityHud(this, {
       label: labelFromBuildingId(buildingId),
       max: HUD_MAX_CLIENTS,
+    });
+
+    // Phase 12 — proximity prompts at the jukebox + chest. ENTER on
+    // either fires the corresponding event on the game bus; the
+    // React `CoworkingFeatures` overlay listens and opens its
+    // dialog. The exit edge runs after these in `update()` so a
+    // single ENTER consumes the nearer interactable.
+    const jukeboxCfg = coworkingInsideLayersConfig.interactables.jukebox;
+    this.jukeboxPrompt = createProximityPromptManager(
+      this,
+      {
+        centerX: jukeboxCfg.centerX,
+        centerY: jukeboxCfg.centerY,
+        radius: jukeboxCfg.radius,
+        label: jukeboxCfg.label,
+      },
+      () => this.game.events.emit(COWORKING_OPEN_JUKEBOX_EVENT),
+    );
+
+    const chestCfg = coworkingInsideLayersConfig.interactables.chest;
+    this.chestPrompt = createProximityPromptManager(
+      this,
+      {
+        centerX: chestCfg.centerX,
+        centerY: chestCfg.centerY,
+        radius: chestCfg.radius,
+        label: chestCfg.label,
+      },
+      () => this.game.events.emit(COWORKING_OPEN_HOURGLASS_EVENT),
+    );
+
+    this.unbindOverlayInput = bindOverlayInputBridge(this, {
+      capturesOnBlur: ['W', 'A', 'S', 'D', 'SPACE', 'ENTER'],
     });
 
     this.colyseus = this.registry.get(COLYSEUS_CONNECTION_REGISTRY_KEY) as
@@ -302,8 +349,14 @@ export class CoworkingInsideScene extends Phaser.Scene {
     this.teardownRemoteAvatars();
     this.edgeTriggers?.destroy();
     this.capacityHud?.destroy();
+    this.jukeboxPrompt?.destroy();
+    this.chestPrompt?.destroy();
+    this.unbindOverlayInput?.();
     this.edgeTriggers = undefined;
     this.capacityHud = undefined;
+    this.jukeboxPrompt = undefined;
+    this.chestPrompt = undefined;
+    this.unbindOverlayInput = undefined;
   }
 
   private sendMoveIfChanged(now: number): void {
@@ -385,6 +438,23 @@ export class CoworkingInsideScene extends Phaser.Scene {
     }
 
     const enterJustDown = this.enterKey ? Phaser.Input.Keyboard.JustDown(this.enterKey) : false;
-    this.edgeTriggers?.update(this.localAvatar.x, this.localAvatar.y, enterJustDown);
+    // Run interactables first so a single ENTER press is consumed by
+    // the closest one and doesn't also trigger the exit edge.
+    const jukeboxFired = this.jukeboxPrompt?.update(
+      this.localAvatar.x,
+      this.localAvatar.y,
+      enterJustDown,
+    );
+    const chestFired = this.chestPrompt?.update(
+      this.localAvatar.x,
+      this.localAvatar.y,
+      jukeboxFired ? false : enterJustDown,
+    );
+    const edgeAllowed = !jukeboxFired && !chestFired;
+    this.edgeTriggers?.update(
+      this.localAvatar.x,
+      this.localAvatar.y,
+      edgeAllowed ? enterJustDown : false,
+    );
   }
 }

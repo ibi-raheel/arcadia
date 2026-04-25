@@ -9,6 +9,8 @@ import * as Phaser from 'phaser';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { CoworkingFeatures } from '@/components/coworking/CoworkingFeatures';
+import type { PhaserGameLike } from '@/components/tavern/types';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 import { BuildingTransition } from './BuildingTransition';
@@ -218,6 +220,10 @@ export default function GameCoworkingInside(): React.JSX.Element {
         backgroundImage="/worlds/coworkinginside-2508x2508.png"
       />
       <LevelUpBanner />
+      <CoworkingFeatures
+        gameRef={gameRef as unknown as React.MutableRefObject<PhaserGameLike | null>}
+        connection={colyseusConn}
+      />
     </div>
   );
 }
