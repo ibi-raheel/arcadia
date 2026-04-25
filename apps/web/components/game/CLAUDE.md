@@ -60,6 +60,20 @@ Drop a new sheet file, add an entry to `AVATAR_SHEETS`, and the animations regis
 - ~~**Academy and Market** — never get a Phaser scene.~~ Superseded: both DO have Phaser scenes now (`scenes/academy/` and `scenes/market/`) — see the 2026-04-22 inline TAD amendment in their `CLAUDE.md` files. Phase 8 simplified them: each has a single central interactable (book / crystal) with a proximity prompt that opens a React scroll modal (`LedgerScroll` / `CatalogScroll`). No more per-course/per-stall floating cards in-scene.
 - **V2 customisable worlds** — per-creator scenes follow the same folder convention. Config-driven appearance already aligns.
 
+## React overlays driven by Phaser events
+
+Five surfaces follow the same pattern: Phaser owns the proximity / interaction detection in scene code, fires a named event on the scene's event bus, and a React component mounted by the corresponding `Game<Scene>.tsx` listens and opens an overlay (ScrollCard, modal, panel). Use this pattern for any new React UI that needs in-world triggering — never re-render UI inside Phaser.
+
+| Scene | Event | Listener | Opens |
+|---|---|---|---|
+| `tavern` | `tavern:open-feed` | `TavernFeatures` | `FeedScroll` (Phase 9) |
+| `academy` | `academy:open-ledger` | `LedgerScroll` host | `LedgerScroll` (Phase 8) |
+| `market` | `market:open-catalog` | `CatalogScroll` host | `CatalogScroll` (Phase 8) |
+| `square` | `square:open-sage` | `SageFeatures` | `SageDialogue` (Phase 11) |
+| `tavern` | `tavern:speech` / `tavern:chat-focus` / `tavern:chat-blur` | TavernScene | speech bubbles + keyboard capture toggle |
+
+Pattern details: poll `gameRef.current` every 500 ms until Phaser mounts (refs aren't reactive); attach the listener once; clean up on unmount. See `components/tavern/TavernFeatures.tsx` for the canonical implementation.
+
 ## Phase 8 · UI wire-up touches (2026-04-24)
 
 Non-aesthetic scene changes landed with the React-surface rebuild:
