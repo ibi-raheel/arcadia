@@ -137,7 +137,12 @@ people stay.
 - `apps/web/components/game/scenes/coworking-inside/CLAUDE.md`
   refreshed.
 
-## Sub-phases — 12.B (deferred)
+## Sub-phases — 12.B (deferred indefinitely)
+
+**Status:** Deferred indefinitely as of 2026-04-25 (12.A close).
+Will start once 12.A occupancy + retention metrics show people are
+returning to the tent. No scheduled date; revisit when usage data
+is available.
 
 - The bookshelf → tent_bookmarks
 - The easel → daily-standup ritual

@@ -2,6 +2,16 @@
 
 Source plan: `phase-12_plan.md`. Entries chronological, newest on top.
 
+## 2026-04-25 — 12.B remains deferred (logged for the record)
+
+Per the phase ritual, every step gets a status entry — including
+"no work." 12.B (bookshelf / easel / round-table) is **deferred
+indefinitely**. Reason: no usage data on 12.A yet. Will revisit
+once we can see whether the tent retains members. Coordinates for
+all three objects are already reserved in
+`coworkingInsideLayersConfig.INTERACTABLES`, so resuming is a
+layer-on, not a re-design.
+
 ## 2026-04-25 — 12.A user-verified working · 12.A closed
 
 Live tent session confirmed all four 12.A surfaces behaving as
