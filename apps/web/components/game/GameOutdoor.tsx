@@ -199,14 +199,7 @@ export default function GameOutdoor({
     fetchState.status === 'ready' && preloadProgress !== null && preloadProgress >= 1;
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-[#0b1220]">
-      <div ref={containerRef} className="absolute inset-0" />
-      <BuildingTransition
-        ready={sceneReady}
-        displayName={spec.transitionName}
-        backgroundImage={spec.transitionImage}
-      />
-      <LevelUpBanner />
+    <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#0b1220]">
       {fetchState.status === 'ready' && (
         <PlayerHud
           memberId={fetchState.member.memberId}
@@ -214,6 +207,15 @@ export default function GameOutdoor({
           initialXp={fetchState.member.xp}
         />
       )}
+      <div className="relative flex-1">
+        <div ref={containerRef} className="absolute inset-0" />
+        <BuildingTransition
+          ready={sceneReady}
+          displayName={spec.transitionName}
+          backgroundImage={spec.transitionImage}
+        />
+        <LevelUpBanner />
+      </div>
     </div>
   );
 }

@@ -20,8 +20,10 @@
      keyword pulled the panel PNG's cream centre across the middle,
      overriding background-color (visible in the 6:11 PM screenshot).
      Drop `fill` so only the ornament rim renders and our brown bg
-     fills the inside. */
-  border-image-source: url('/hud/kenney/panel.png');
+     fills the inside. The PNG itself was tinted cream → bronze (see
+     scripts/tint-panel.mjs + panel-bronze.png) so the rim reads
+     warm with the HUD instead of cold-white over it. */
+  border-image-source: url('/hud/kenney/panel-bronze.png');
   border-image-slice: 12;
   border-image-width: 12px;
   border-image-repeat: stretch;
