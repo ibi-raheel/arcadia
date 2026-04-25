@@ -246,37 +246,7 @@ export default function GameTavern(): React.JSX.Element {
     fetchState.status === 'ready' && preloadProgress !== null && preloadProgress >= 1;
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden">
-      <div ref={containerRef} className="absolute inset-0" />
-      {/* Week 8 overlays — chat bottom-right, leaderboard top-right. `fetchState`
-          carries member + realm once ready; rendered conditionally so the
-          panels don't start fetching while we're still authing. */}
-      {fetchState.status === 'ready' && (
-        <>
-          <ChatPanel
-            realmId={fetchState.member.realmId}
-            memberId={fetchState.member.memberId}
-            displayName={fetchState.member.displayName}
-            onMessageReceived={handleMessageReceived}
-            onFocusChange={handleChatFocusChange}
-          />
-          <LeaderboardPanel
-            realmId={fetchState.member.realmId}
-            memberId={fetchState.member.memberId}
-          />
-          <TavernFeatures
-            gameRef={gameRef as unknown as React.MutableRefObject<PhaserGameLike | null>}
-            buildingId={buildingId}
-            canPost={fetchState.role === 'creator' || fetchState.role === 'admin'}
-          />
-        </>
-      )}
-      <BuildingTransition
-        ready={sceneReady}
-        displayName={tavernName}
-        backgroundImage="/tavern-interior.png"
-      />
-      <LevelUpBanner />
+    <div className="flex h-screen w-screen flex-col overflow-hidden">
       {fetchState.status === 'ready' && (
         <PlayerHud
           memberId={fetchState.member.memberId}
@@ -284,6 +254,38 @@ export default function GameTavern(): React.JSX.Element {
           initialXp={fetchState.member.xp}
         />
       )}
+      <div className="relative flex-1">
+        <div ref={containerRef} className="absolute inset-0" />
+        {/* Week 8 overlays — chat bottom-right, leaderboard top-right. `fetchState`
+            carries member + realm once ready; rendered conditionally so the
+            panels don't start fetching while we're still authing. */}
+        {fetchState.status === 'ready' && (
+          <>
+            <ChatPanel
+              realmId={fetchState.member.realmId}
+              memberId={fetchState.member.memberId}
+              displayName={fetchState.member.displayName}
+              onMessageReceived={handleMessageReceived}
+              onFocusChange={handleChatFocusChange}
+            />
+            <LeaderboardPanel
+              realmId={fetchState.member.realmId}
+              memberId={fetchState.member.memberId}
+            />
+            <TavernFeatures
+              gameRef={gameRef as unknown as React.MutableRefObject<PhaserGameLike | null>}
+              buildingId={buildingId}
+              canPost={fetchState.role === 'creator' || fetchState.role === 'admin'}
+            />
+          </>
+        )}
+        <BuildingTransition
+          ready={sceneReady}
+          displayName={tavernName}
+          backgroundImage="/tavern-interior.png"
+        />
+        <LevelUpBanner />
+      </div>
     </div>
   );
 }

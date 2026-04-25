@@ -214,18 +214,7 @@ export default function GameCoworkingInside(): React.JSX.Element {
     fetchState.status === 'ready' && preloadProgress !== null && preloadProgress >= 1;
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden">
-      <div ref={containerRef} className="absolute inset-0" />
-      <BuildingTransition
-        ready={sceneReady}
-        displayName="Coworking Tent"
-        backgroundImage="/worlds/coworkinginside-2508x2508.png"
-      />
-      <LevelUpBanner />
-      <CoworkingFeatures
-        gameRef={gameRef as unknown as React.MutableRefObject<PhaserGameLike | null>}
-        connection={colyseusConn}
-      />
+    <div className="flex h-screen w-screen flex-col overflow-hidden">
       {fetchState.status === 'ready' && (
         <PlayerHud
           memberId={fetchState.member.memberId}
@@ -233,6 +222,19 @@ export default function GameCoworkingInside(): React.JSX.Element {
           initialXp={fetchState.member.xp}
         />
       )}
+      <div className="relative flex-1">
+        <div ref={containerRef} className="absolute inset-0" />
+        <BuildingTransition
+          ready={sceneReady}
+          displayName="Coworking Tent"
+          backgroundImage="/worlds/coworkinginside-2508x2508.png"
+        />
+        <LevelUpBanner />
+        <CoworkingFeatures
+          gameRef={gameRef as unknown as React.MutableRefObject<PhaserGameLike | null>}
+          connection={colyseusConn}
+        />
+      </div>
     </div>
   );
 }
