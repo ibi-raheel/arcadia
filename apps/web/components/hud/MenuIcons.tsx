@@ -21,6 +21,22 @@ function ProfileIcon({ size = 28 }: IconProps): React.JSX.Element {
   );
 }
 
+function ChatIcon({ size = 28 }: IconProps): React.JSX.Element {
+  // Filled speech bubble with a bottom-left tail and three darker dots
+  // for the "messages" affordance.
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden>
+      <path
+        d="M3.5 4H16.5C17.05 4 17.5 4.45 17.5 5V12.5C17.5 13.05 17.05 13.5 16.5 13.5H8.2L5.4 16.7C5.1 17.05 4.5 16.84 4.5 16.4V13.5H3.5C2.95 13.5 2.5 13.05 2.5 12.5V5C2.5 4.45 2.95 4 3.5 4Z"
+        fill="currentColor"
+      />
+      <circle cx="6.8" cy="8.75" r="1" fill="rgba(0,0,0,0.45)" />
+      <circle cx="10" cy="8.75" r="1" fill="rgba(0,0,0,0.45)" />
+      <circle cx="13.2" cy="8.75" r="1" fill="rgba(0,0,0,0.45)" />
+    </svg>
+  );
+}
+
 function QuestsIcon({ size = 28 }: IconProps): React.JSX.Element {
   // Filled scroll with two darker text bands cut out of it.
   return (
@@ -71,6 +87,7 @@ const ICONS: ReadonlyArray<{
   readonly Icon: (props: IconProps) => React.JSX.Element;
 }> = [
   { id: 'profile', label: 'Profile', Icon: ProfileIcon },
+  { id: 'chat', label: 'Chat', Icon: ChatIcon },
   { id: 'quests', label: 'Quests', Icon: QuestsIcon },
   { id: 'events', label: 'Events', Icon: EventsIcon },
   { id: 'settings', label: 'Settings', Icon: SettingsIcon },
