@@ -2,6 +2,18 @@
 
 Source plan: `phase-12_plan.md`. Entries chronological, newest on top.
 
+## 2026-04-25 — 12.A user-verified working · 12.A closed
+
+Live tent session confirmed all four 12.A surfaces behaving as
+designed: jukebox stations switch + per-tab volume scales audio
+in real time, hourglass presets drive the top-centre pomodoro
+banner through work → break → idle, hearth pill reflects
+occupant count, focus pill renders above the nameplate and
+follows the avatar across scenes. Volume-slider + focus-pill
+follow-ups from earlier today verified in the same session. No
+new defects logged. **12.A is closed.** 12.B (bookshelf / easel
+/ round-table) remains deferred until usage data justifies it.
+
 ## 2026-04-25 — 12.A polish · volume slider + focus pill
 
 Two follow-ups after the user's first session in the tent:
