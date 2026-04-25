@@ -18,6 +18,7 @@ import type { PhaserGameLike } from '@/components/tavern/types';
 
 import { BuildingTransition } from './BuildingTransition';
 import { LevelUpBanner } from './LevelUpBanner';
+import { PlayerHud } from '@/components/hud/PlayerHud';
 import { tavernDisplayName } from './scenes/shared/building-names';
 import { useLevelSync } from './net/use-level-sync';
 import { connectToRoom, type ColyseusConnection } from './net/colyseus-client';
@@ -276,6 +277,14 @@ export default function GameTavern(): React.JSX.Element {
         backgroundImage="/tavern-interior.png"
       />
       <LevelUpBanner />
+      {fetchState.status === 'ready' && (
+        <PlayerHud
+          memberId={fetchState.member.memberId}
+          avatarId={fetchState.member.avatarId}
+          displayName={fetchState.member.displayName}
+          initialXp={fetchState.member.xp}
+        />
+      )}
     </div>
   );
 }

@@ -16,6 +16,7 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 import { BuildingTransition } from './BuildingTransition';
 import { LevelUpBanner } from './LevelUpBanner';
+import { PlayerHud } from '@/components/hud/PlayerHud';
 import { useLevelSync } from './net/use-level-sync';
 import { connectToRoom, type ColyseusConnection } from './net/colyseus-client';
 import { BootScene } from './scenes/boot/BootScene';
@@ -216,6 +217,14 @@ export default function GameSquare(): React.JSX.Element {
       />
       <LevelUpBanner />
       <SageFeatures gameRef={gameRef as unknown as React.MutableRefObject<PhaserGameLike | null>} />
+      {fetchState.status === 'ready' && (
+        <PlayerHud
+          memberId={fetchState.member.memberId}
+          avatarId={fetchState.member.avatarId}
+          displayName={fetchState.member.displayName}
+          initialXp={fetchState.member.xp}
+        />
+      )}
     </div>
   );
 }

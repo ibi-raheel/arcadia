@@ -17,6 +17,7 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 import { BuildingTransition } from './BuildingTransition';
 import { LevelUpBanner } from './LevelUpBanner';
+import { PlayerHud } from '@/components/hud/PlayerHud';
 import { BootScene } from './scenes/boot/BootScene';
 import {
   NEXT_SCENE_KEY_REGISTRY_KEY,
@@ -206,6 +207,14 @@ export default function GameOutdoor({
         backgroundImage={spec.transitionImage}
       />
       <LevelUpBanner />
+      {fetchState.status === 'ready' && (
+        <PlayerHud
+          memberId={fetchState.member.memberId}
+          avatarId={fetchState.member.avatarId}
+          displayName={fetchState.member.displayName}
+          initialXp={fetchState.member.xp}
+        />
+      )}
     </div>
   );
 }
