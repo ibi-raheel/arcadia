@@ -17,6 +17,7 @@ import {
   createAvatarVisuals,
   destroyVisuals,
   setVisualsDepth,
+  setVisualsFocus,
   setVisualsLevel,
   syncVisualAttachments,
   type AvatarBody,
@@ -99,6 +100,9 @@ export class RemoteAvatar {
       this.level = state.level;
       setVisualsLevel(this.visuals, this.level);
     }
+    // Phase 12 — sync the "what I'm working on" line. Always
+    // re-applies; setVisualsFocus is cheap + idempotent.
+    setVisualsFocus(this.visuals, state.currentFocus ?? '');
   }
 
   /** Called every frame from WorldScene.update(). `dtSec` = delta/1000. */

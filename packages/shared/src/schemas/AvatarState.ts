@@ -25,4 +25,8 @@ export class AvatarState extends Schema {
   @type('string') direction: AvatarDirection = 's';
   @type('boolean') isMoving = false;
   @type('number') level = 1;
+  /** Phase 12 — short "what I'm working on" line shown above the
+   *  avatar. Empty string = no focus set. Cleared on tent leave by
+   *  the client; otherwise persists across the session. */
+  @type('string') currentFocus = '';
 }
