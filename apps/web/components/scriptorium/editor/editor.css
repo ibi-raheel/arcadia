@@ -1,0 +1,213 @@
+/* Scriptorium editor — toolbar + content surface.
+ *
+ * The editor body (`.ProseMirror`) re-uses `.scriptorium-prose` from
+ * app/scriptorium.css so what the creator sees while editing is
+ * exactly what members see in the academy. The only additions here
+ * are the toolbar styles and a couple of editor-specific affordances
+ * (placeholder, caret, focus ring).
+ */
+
+.scriptorium-editor {
+  display: flex;
+  flex-direction: column;
+  background: var(--vellum);
+  border: 1px solid rgba(90, 63, 34, 0.18);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.scriptorium-editor.is-over-cap {
+  border-color: var(--crimson);
+}
+
+/* ---- Toolbar ---------------------------------------------------- */
+
+.scriptorium-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  background: linear-gradient(180deg, rgba(16, 10, 5, 0.06) 0%, rgba(16, 10, 5, 0.02) 100%);
+  border-bottom: 1px dashed rgba(90, 63, 34, 0.25);
+}
+
+.scriptorium-editor-toolbar.is-empty {
+  height: 44px;
+}
+
+.scriptorium-editor-toolbar-group {
+  display: inline-flex;
+  gap: 2px;
+  padding: 0 6px;
+  border-right: 1px dashed rgba(90, 63, 34, 0.2);
+}
+.scriptorium-editor-toolbar-group:last-child {
+  border-right: none;
+}
+
+.scriptorium-editor-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-mono, ui-monospace, Menlo, monospace);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+.scriptorium-editor-btn:hover:not(:disabled) {
+  background: rgba(125, 90, 58, 0.08);
+  color: var(--ink);
+  border-color: rgba(125, 90, 58, 0.25);
+}
+.scriptorium-editor-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.scriptorium-editor-btn.is-active {
+  background: linear-gradient(180deg, rgba(212, 165, 116, 0.22), rgba(212, 165, 116, 0.1));
+  color: var(--ink);
+  border-color: rgba(212, 165, 116, 0.55);
+  box-shadow: 0 1px 0 rgba(212, 165, 116, 0.4);
+}
+
+/* ---- Content surface ------------------------------------------- */
+
+.scriptorium-editor-surface {
+  min-height: 460px;
+  padding: 24px 28px;
+  overflow: auto;
+}
+
+/* Re-use the same prose styles the academy viewer renders — then
+ * lightly nudge the editor-specific bits. */
+.scriptorium-editor-surface .ProseMirror {
+  outline: none;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.65;
+  min-height: 400px;
+}
+
+/* Headings match the academy look: display serif, italic. */
+.scriptorium-editor-surface .ProseMirror h2,
+.scriptorium-editor-surface .ProseMirror h3 {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--ink);
+  line-height: 1.15;
+  margin: 1.3em 0 0.5em;
+}
+.scriptorium-editor-surface .ProseMirror h2 {
+  font-size: 28px;
+  border-bottom: 1px dashed rgba(90, 63, 34, 0.22);
+  padding-bottom: 6px;
+}
+.scriptorium-editor-surface .ProseMirror h3 {
+  font-size: 22px;
+}
+
+.scriptorium-editor-surface .ProseMirror p {
+  margin: 0 0 1em;
+}
+
+.scriptorium-editor-surface .ProseMirror em {
+  font-family: var(--font-hand, var(--font-body));
+  font-style: italic;
+  color: var(--ink-soft);
+}
+.scriptorium-editor-surface .ProseMirror strong {
+  color: var(--wax-deep, var(--ink));
+}
+
+.scriptorium-editor-surface .ProseMirror ul,
+.scriptorium-editor-surface .ProseMirror ol {
+  padding-left: 1.4em;
+  margin: 0 0 1em;
+}
+.scriptorium-editor-surface .ProseMirror li {
+  margin: 0.25em 0;
+}
+.scriptorium-editor-surface .ProseMirror ul li::marker {
+  color: var(--bronze);
+}
+
+.scriptorium-editor-surface .ProseMirror blockquote,
+.scriptorium-editor-surface .ProseMirror .scriptorium-blockquote {
+  margin: 1em 0;
+  padding: 12px 18px;
+  border-left: 3px solid var(--wax);
+  background: rgba(90, 63, 34, 0.04);
+  font-family: var(--font-display, var(--font-body));
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.scriptorium-editor-surface .ProseMirror code {
+  font-family: var(--font-mono, ui-monospace, Menlo, monospace);
+  font-size: 0.92em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(16, 10, 5, 0.06);
+  color: var(--ink);
+}
+.scriptorium-editor-surface .ProseMirror pre,
+.scriptorium-editor-surface .ProseMirror .scriptorium-code-block {
+  margin: 1em 0;
+  padding: 14px 16px;
+  border-radius: 4px;
+  background: #0f0a06;
+  color: #e8ddc4;
+  font-family: var(--font-mono, ui-monospace, Menlo, monospace);
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-x: auto;
+}
+.scriptorium-editor-surface .ProseMirror pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+.scriptorium-editor-surface .ProseMirror a,
+.scriptorium-editor-surface .ProseMirror .scriptorium-link {
+  color: var(--lantern-core, var(--wax));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+.scriptorium-editor-surface .ProseMirror a:hover {
+  color: var(--lantern, var(--wax));
+}
+
+/* Placeholder — shows when the editor is empty. */
+.scriptorium-editor-surface .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--ink-faint);
+  font-style: italic;
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Caret gets the lantern glow. */
+.scriptorium-editor-surface .ProseMirror {
+  caret-color: var(--lantern-core, var(--wax));
+}
+
+/* Focus ring — subtle. Tiptap handles keyboard focus; we just tint. */
+.scriptorium-editor-surface:focus-within {
+  background: rgba(251, 245, 232, 0.55);
+}

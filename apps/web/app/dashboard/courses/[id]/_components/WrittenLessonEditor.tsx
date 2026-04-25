@@ -3,16 +3,32 @@
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
-import '@uiw/react-md-editor/markdown-editor.css';
 
 import { GhostButton, Kicker } from '@/components/scriptorium';
 
 import { renameLesson, updateLessonContent, updateLessonType } from '../actions';
 import { LESSON_CONTENT_MAX, LESSON_TITLE_MAX } from '../validation';
 
-// @uiw/react-md-editor ships browser-only — dynamic import skips SSR,
-// matching the pattern used by GameWorld / GameTavern.
-const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false });
+// TipTap leans on browser APIs (contenteditable, window); dynamic
+// import skips SSR. Wrapped in a lightweight vellum placeholder
+// during hydration so there's no layout shift.
+const ScriptoriumEditor = dynamic(
+  () =>
+    import('@/components/scriptorium/editor/ScriptoriumEditor').then((m) => m.ScriptoriumEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        style={{
+          minHeight: 500,
+          border: '1px dashed rgba(90, 63, 34, 0.25)',
+          background: 'var(--vellum)',
+          borderRadius: 3,
+        }}
+      />
+    ),
+  },
+);
 
 const AUTOSAVE_DEBOUNCE_MS = 2000;
 
@@ -86,7 +102,7 @@ export function WrittenLessonEditor({ courseId, lesson }: Props): React.JSX.Elem
     };
   }, [courseId, lesson.id, lesson.content]);
 
-  const handleContentChange = (value?: string): void => {
+  const handleContentChange = (value: string): void => {
     const next = value ?? '';
     setContent(next);
     latestContent.current = next;
@@ -171,17 +187,12 @@ export function WrittenLessonEditor({ courseId, lesson }: Props): React.JSX.Elem
         </GhostButton>
       </header>
 
-      <div data-color-mode="light" style={{ flex: 1 }}>
-        <MDEditor
+      <div style={{ flex: 1 }}>
+        <ScriptoriumEditor
           value={content}
           onChange={handleContentChange}
-          height={500}
-          preview="live"
-          visibleDragbar={false}
-          textareaProps={{
-            maxLength: LESSON_CONTENT_MAX,
-            placeholder: 'write your lesson — the keeper&rsquo;s hand…',
-          }}
+          maxLength={LESSON_CONTENT_MAX}
+          placeholder="begin writing — the scribe listens…"
         />
       </div>
 

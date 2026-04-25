@@ -11,8 +11,10 @@ import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { Hand, LedgerCard } from '@/components/scriptorium';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import type { CourseSummary, CoursesData } from '@/lib/fixtures/courses';
+import type { DraftStage } from '@/lib/types/course-drafts';
 
 import { CreateCourseDialog } from '../_components/CreateCourseDialog';
+import { ConjureLink } from './_components/ConjureLink';
 import { CoursesContent } from './_components/CoursesContent';
 
 export const dynamic = 'force-dynamic';
@@ -74,13 +76,24 @@ export default async function CoursesTab(): Promise<React.JSX.Element> {
   } = await supabase.auth.getUser();
   if (!user) return <></>;
 
-  const { data: courses, error } = await supabase
-    .from('courses')
-    .select('id, title, description, published, updated_at')
-    .eq('creator_id', user.id)
-    .order('updated_at', { ascending: false });
+  const [{ data: courses, error }, { data: activeDraft }] = await Promise.all([
+    supabase
+      .from('courses')
+      .select('id, title, description, published, updated_at')
+      .eq('creator_id', user.id)
+      .order('updated_at', { ascending: false }),
+    supabase
+      .from('course_drafts')
+      .select('stage')
+      .eq('creator_id', user.id)
+      .neq('stage', 'sealed')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   const shaped = shapeCourses(courses ?? []);
+  const resumeStage = (activeDraft?.stage ?? null) as DraftStage | null;
 
   return (
     <DashboardShell
@@ -91,7 +104,12 @@ export default async function CoursesTab(): Promise<React.JSX.Element> {
         </>
       }
       tagline="~ publish what&rsquo;s finished, keep what&rsquo;s drying ~"
-      actions={<CreateCourseDialog />}
+      actions={
+        <>
+          <ConjureLink resumeStage={resumeStage} />
+          <CreateCourseDialog />
+        </>
+      }
     >
       {error ? (
         <LedgerCard>
@@ -110,7 +128,15 @@ export default async function CoursesTab(): Promise<React.JSX.Element> {
           <Hand>~ the button above opens a fresh scroll ~</Hand>
         </LedgerCard>
       ) : (
-        <CoursesContent data={shaped} createCta={<CreateCourseDialog />} />
+        <CoursesContent
+          data={shaped}
+          createCta={
+            <>
+              <ConjureLink />
+              <CreateCourseDialog />
+            </>
+          }
+        />
       )}
     </DashboardShell>
   );

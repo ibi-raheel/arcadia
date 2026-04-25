@@ -1,0 +1,660 @@
+'use server';
+
+// Server actions for the AI course maker ("the scribe").
+//
+// Phase 10 sub-phase layering:
+//   10.2 · satchel       — getOrCreateDraft, uploadDraftSource,
+//                           removeDraftSource, updateDraftPrompt
+//   10.3 · streaming     — streamOutline, streamLesson, generateImage
+//   10.7 · seal           — sealDraft (materialize into courses rows)
+//
+// Every action returns a discriminated Result so the client can
+// surface errors without guessing.
+
+import { randomUUID } from 'crypto';
+
+import { revalidatePath } from 'next/cache';
+
+import type {
+  CourseDraft,
+  DraftImage,
+  DraftLessonBody,
+  DraftOutlineSection,
+  DraftSource,
+  DraftStage,
+} from '@/lib/types/course-drafts';
+import {
+  allImagesApproved,
+  allLessonsApproved,
+  canAdvance,
+  totalSourceChars,
+} from '@/lib/types/course-drafts';
+import type { CreatorPreferencesInput } from '@/lib/types/creator-preferences';
+import { AUDIENCE_MAX, IMAGE_STYLE_MAX, VOICE_GUIDE_MAX } from '@/lib/types/creator-preferences';
+import { getSupabaseAdminClient } from '@/lib/supabase/admin';
+import { isSupportedMime, parseSourceBuffer } from '@/lib/scribe/parse';
+import { getSupabaseServerClient } from '@/lib/supabase/server';
+
+type Result<T> =
+  | { readonly ok: true; readonly value: T }
+  | { readonly ok: false; readonly error: string };
+
+const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB, mirrors migration
+const MAX_FILES_PER_DRAFT = 5;
+const MAX_TOTAL_CHARS_PER_DRAFT = 600_000; // ADR 0012
+const USER_PROMPT_MAX = 2_000;
+
+async function requireCreator(): Promise<
+  Result<{ readonly userId: string; readonly realmId: string }>
+> {
+  const supabase = getSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'not signed in' };
+
+  const { data: membership } = await supabase
+    .from('memberships')
+    .select('realm_id, role')
+    .eq('member_id', user.id)
+    .maybeSingle();
+  if (!membership?.realm_id) return { ok: false, error: 'no realm membership' };
+  if (membership.role !== 'creator' && membership.role !== 'admin') {
+    return { ok: false, error: 'only creators can conjure courses' };
+  }
+  return { ok: true, value: { userId: user.id, realmId: membership.realm_id } };
+}
+
+function rowToDraft(row: Record<string, unknown>): CourseDraft {
+  return {
+    id: row.id as string,
+    creator_id: row.creator_id as string,
+    realm_id: row.realm_id as string,
+    title: (row.title as string | null) ?? null,
+    user_prompt: (row.user_prompt as string | null) ?? '',
+    stage: (row.stage as DraftStage) ?? 'satchel',
+    outline: (row.outline as CourseDraft['outline']) ?? [],
+    sources: (row.sources as CourseDraft['sources']) ?? [],
+    lessons: (row.lessons as CourseDraft['lessons']) ?? [],
+    images: (row.images as CourseDraft['images']) ?? [],
+    tokens_used: (row.tokens_used as number) ?? 0,
+    sealed_course_id: (row.sealed_course_id as string | null) ?? null,
+    created_at: row.created_at as string,
+    updated_at: row.updated_at as string,
+  };
+}
+
+/**
+ * Returns the creator's current unsealed draft, or creates a fresh
+ * one if none exists. Used by /dashboard/courses/conjure on page
+ * load — lets the creator resume wherever they left off.
+ */
+export async function getOrCreateDraft(): Promise<Result<CourseDraft>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const supabase = getSupabaseServerClient();
+
+  const { data: existing, error: readErr } = await supabase
+    .from('course_drafts')
+    .select('*')
+    .eq('creator_id', auth.value.userId)
+    .neq('stage', 'sealed')
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (readErr) return { ok: false, error: readErr.message };
+  if (existing) return { ok: true, value: rowToDraft(existing) };
+
+  const { data: fresh, error: insertErr } = await supabase
+    .from('course_drafts')
+    .insert({
+      creator_id: auth.value.userId,
+      realm_id: auth.value.realmId,
+      user_prompt: '',
+    })
+    .select('*')
+    .single();
+  if (insertErr) return { ok: false, error: insertErr.message };
+  return { ok: true, value: rowToDraft(fresh) };
+}
+
+export async function updateDraftPrompt(
+  draftId: string,
+  userPrompt: string,
+): Promise<Result<{ readonly id: string }>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const prompt = userPrompt.trim().slice(0, USER_PROMPT_MAX);
+  const supabase = getSupabaseServerClient();
+  const { error } = await supabase
+    .from('course_drafts')
+    .update({ user_prompt: prompt })
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/dashboard/courses/conjure');
+  return { ok: true, value: { id: draftId } };
+}
+
+/**
+ * Uploads a single source file, parses it, and appends the result
+ * to `course_drafts.sources` jsonb. Called once per file — the
+ * client fires these sequentially per ADR 0012 to keep rate-limit
+ * pressure down.
+ *
+ * FormData must carry one File under the key "file".
+ */
+export async function uploadDraftSource(
+  draftId: string,
+  formData: FormData,
+): Promise<Result<{ readonly source: DraftSource }>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const file = formData.get('file');
+  if (!(file instanceof File)) return { ok: false, error: 'no file submitted' };
+  if (file.size === 0) return { ok: false, error: 'file is empty' };
+  if (file.size > MAX_FILE_BYTES) return { ok: false, error: 'file over 10 MB' };
+  if (!isSupportedMime(file.type)) return { ok: false, error: `unsupported type: ${file.type}` };
+
+  const supabase = getSupabaseServerClient();
+  const { data: draftRow, error: readErr } = await supabase
+    .from('course_drafts')
+    .select('id, sources, creator_id')
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId)
+    .maybeSingle();
+  if (readErr) return { ok: false, error: readErr.message };
+  if (!draftRow) return { ok: false, error: 'draft not found' };
+
+  const currentSources = (draftRow.sources ?? []) as DraftSource[];
+  if (currentSources.length >= MAX_FILES_PER_DRAFT) {
+    return { ok: false, error: `max ${MAX_FILES_PER_DRAFT} files per draft` };
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const parsed = await parseSourceBuffer(buffer, file.type);
+
+  const totalAfter = totalSourceChars(currentSources) + parsed.char_count;
+  if (totalAfter > MAX_TOTAL_CHARS_PER_DRAFT) {
+    return {
+      ok: false,
+      error: `adding this would exceed the ${MAX_TOTAL_CHARS_PER_DRAFT.toLocaleString()}-char budget`,
+    };
+  }
+
+  const sourceId = randomUUID();
+  const storagePath = `${auth.value.userId}/${draftId}/${sourceId}-${sanitise(file.name)}`;
+  const { error: uploadErr } = await supabase.storage
+    .from('course-draft-sources')
+    .upload(storagePath, buffer, {
+      contentType: file.type,
+      upsert: false,
+    });
+  if (uploadErr) return { ok: false, error: uploadErr.message };
+
+  const source: DraftSource = {
+    id: sourceId,
+    filename: file.name,
+    char_count: parsed.char_count,
+    text: parsed.text,
+    storage_path: storagePath,
+  };
+  const nextSources = [...currentSources, source];
+
+  const { error: updateErr } = await supabase
+    .from('course_drafts')
+    .update({ sources: nextSources })
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId);
+  if (updateErr) {
+    // Try to clean up the orphaned file so the bucket doesn't drift.
+    await supabase.storage.from('course-draft-sources').remove([storagePath]);
+    return { ok: false, error: updateErr.message };
+  }
+  revalidatePath('/dashboard/courses/conjure');
+  return { ok: true, value: { source } };
+}
+
+export async function removeDraftSource(
+  draftId: string,
+  sourceId: string,
+): Promise<Result<{ readonly id: string }>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const supabase = getSupabaseServerClient();
+  const { data: draftRow, error: readErr } = await supabase
+    .from('course_drafts')
+    .select('sources')
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId)
+    .maybeSingle();
+  if (readErr) return { ok: false, error: readErr.message };
+  if (!draftRow) return { ok: false, error: 'draft not found' };
+
+  const sources = (draftRow.sources ?? []) as DraftSource[];
+  const target = sources.find((s) => s.id === sourceId);
+  if (!target) return { ok: false, error: 'source not found' };
+
+  const nextSources = sources.filter((s) => s.id !== sourceId);
+  const { error: updateErr } = await supabase
+    .from('course_drafts')
+    .update({ sources: nextSources })
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId);
+  if (updateErr) return { ok: false, error: updateErr.message };
+
+  // Storage orphan is tolerable if this fails — the row is source of truth.
+  await supabase.storage.from('course-draft-sources').remove([target.storage_path]);
+  revalidatePath('/dashboard/courses/conjure');
+  return { ok: true, value: { id: sourceId } };
+}
+
+// ============================================================
+// Creator preferences — the scribe's memory (10.10)
+// ============================================================
+
+/** Fetches the caller's preferences row; returns defaults if none. */
+export async function getCreatorPreferences(): Promise<
+  Result<{
+    readonly voice_guide: string | null;
+    readonly image_style: string | null;
+    readonly audience: string | null;
+  }>
+> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('creator_preferences')
+    .select('voice_guide, image_style, audience')
+    .eq('creator_id', auth.value.userId)
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+
+  return {
+    ok: true,
+    value: {
+      voice_guide: (data?.voice_guide as string | null) ?? null,
+      image_style: (data?.image_style as string | null) ?? null,
+      audience: (data?.audience as string | null) ?? null,
+    },
+  };
+}
+
+/** Upsert preferences. Clips each field to its max length, trims
+ *  whitespace, maps empty string → null. */
+export async function saveCreatorPreferences(
+  input: CreatorPreferencesInput,
+): Promise<Result<{ readonly saved: boolean }>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const clip = (value: string | null | undefined, max: number): string | null => {
+    if (value === undefined || value === null) return null;
+    const trimmed = value.trim().slice(0, max);
+    return trimmed.length === 0 ? null : trimmed;
+  };
+
+  const row = {
+    creator_id: auth.value.userId,
+    voice_guide: clip(input.voice_guide, VOICE_GUIDE_MAX),
+    image_style: clip(input.image_style, IMAGE_STYLE_MAX),
+    audience: clip(input.audience, AUDIENCE_MAX),
+  };
+
+  const supabase = getSupabaseServerClient();
+  const { error } = await supabase
+    .from('creator_preferences')
+    .upsert(row, { onConflict: 'creator_id' });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/dashboard/courses/conjure');
+  return { ok: true, value: { saved: true } };
+}
+
+/** Keep filename readable in the Storage path but strip anything
+ *  that could confuse the path parser. */
+function sanitise(filename: string): string {
+  return filename.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120);
+}
+
+// ============================================================
+// Stage transitions + freshest-read helper
+// ============================================================
+
+/** Re-reads the creator's current draft. Used by client components
+ *  after a streaming route finishes so they can update local state
+ *  with the persisted outline / lessons / stage. */
+export async function reloadDraft(draftId: string): Promise<Result<CourseDraft>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('course_drafts')
+    .select('*')
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId)
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: 'draft not found' };
+  return { ok: true, value: rowToDraft(data) };
+}
+
+/** Moves a draft to a later stage (or an earlier one, for revise).
+ *  The `canAdvance` helper from lib/types/course-drafts is the one
+ *  truth. Refuses the transition if the guard fails. */
+export async function setDraftStage(
+  draftId: string,
+  to: DraftStage,
+): Promise<Result<{ readonly stage: DraftStage }>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const supabase = getSupabaseServerClient();
+  const { data: row, error: readErr } = await supabase
+    .from('course_drafts')
+    .select('stage')
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId)
+    .maybeSingle();
+  if (readErr) return { ok: false, error: readErr.message };
+  if (!row) return { ok: false, error: 'draft not found' };
+
+  const current = (row.stage as DraftStage) ?? 'satchel';
+  if (!canAdvance(current, to)) {
+    return { ok: false, error: `cannot move from ${current} to ${to}` };
+  }
+
+  const { error: updErr } = await supabase
+    .from('course_drafts')
+    .update({ stage: to })
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId);
+  if (updErr) return { ok: false, error: updErr.message };
+  revalidatePath('/dashboard/courses/conjure');
+  return { ok: true, value: { stage: to } };
+}
+
+/** Flip an individual lesson's approved flag. Safe to call on a
+ *  lesson that doesn't yet have a body — it's a no-op. */
+export async function setLessonApproved(
+  draftId: string,
+  sectionId: string,
+  lessonId: string,
+  approved: boolean,
+): Promise<Result<{ readonly approved: boolean }>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const supabase = getSupabaseServerClient();
+  const { data: row, error: readErr } = await supabase
+    .from('course_drafts')
+    .select('lessons, outline')
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId)
+    .maybeSingle();
+  if (readErr) return { ok: false, error: readErr.message };
+  if (!row) return { ok: false, error: 'draft not found' };
+
+  const current = (row.lessons as DraftLessonBody[]) ?? [];
+  const target = current.find((l) => l.section_id === sectionId && l.lesson_id === lessonId);
+  if (!target) return { ok: false, error: 'lesson body not found — compose it first' };
+
+  const next = current.map((l) =>
+    l.section_id === sectionId && l.lesson_id === lessonId ? { ...l, approved } : l,
+  );
+
+  const patch: Record<string, unknown> = { lessons: next };
+  // Auto-advance to `images` when everything is approved.
+  if (approved) {
+    const outline = (row.outline as DraftOutlineSection[]) ?? [];
+    if (allLessonsApproved(outline, next)) patch.stage = 'images';
+  }
+
+  const { error } = await supabase
+    .from('course_drafts')
+    .update(patch)
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/dashboard/courses/conjure');
+  return { ok: true, value: { approved } };
+}
+
+/** Approve / un-approve an individual image. Auto-advances stage to
+ *  `ready` when thumbnail + every lesson image is approved. */
+export async function setImageApproved(
+  draftId: string,
+  imageId: string,
+  approved: boolean,
+): Promise<Result<{ readonly approved: boolean }>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const supabase = getSupabaseServerClient();
+  const { data: row, error: readErr } = await supabase
+    .from('course_drafts')
+    .select('images, outline')
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId)
+    .maybeSingle();
+  if (readErr) return { ok: false, error: readErr.message };
+  if (!row) return { ok: false, error: 'draft not found' };
+
+  const current = (row.images as DraftImage[]) ?? [];
+  const target = current.find((i) => i.id === imageId);
+  if (!target) return { ok: false, error: 'image not found' };
+
+  const next = current.map((i) => (i.id === imageId ? { ...i, approved } : i));
+
+  const patch: Record<string, unknown> = { images: next };
+  if (approved) {
+    const outline = (row.outline as DraftOutlineSection[]) ?? [];
+    if (allImagesApproved(outline, next)) patch.stage = 'ready';
+  }
+
+  const { error } = await supabase
+    .from('course_drafts')
+    .update(patch)
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/dashboard/courses/conjure');
+  return { ok: true, value: { approved } };
+}
+
+/** Delete an image (both the bucket object + the jsonb entry) so
+ *  the creator can re-roll a specific one. */
+export async function deleteDraftImage(
+  draftId: string,
+  imageId: string,
+): Promise<Result<{ readonly id: string }>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const supabase = getSupabaseServerClient();
+  const { data: row, error: readErr } = await supabase
+    .from('course_drafts')
+    .select('images')
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId)
+    .maybeSingle();
+  if (readErr) return { ok: false, error: readErr.message };
+  if (!row) return { ok: false, error: 'draft not found' };
+
+  const current = (row.images as DraftImage[]) ?? [];
+  const target = current.find((i) => i.id === imageId);
+  if (!target) return { ok: false, error: 'image not found' };
+
+  const next = current.filter((i) => i.id !== imageId);
+  const { error: updateErr } = await supabase
+    .from('course_drafts')
+    .update({ images: next })
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId);
+  if (updateErr) return { ok: false, error: updateErr.message };
+
+  // Best-effort remove from storage. Parse path from public URL.
+  // URL shape: /storage/v1/object/public/course-generated-images/<path>
+  const prefix = '/course-generated-images/';
+  const idx = target.url.indexOf(prefix);
+  if (idx !== -1) {
+    const path = target.url.substring(idx + prefix.length).split('?')[0] ?? '';
+    if (path) await supabase.storage.from('course-generated-images').remove([path]);
+  }
+  revalidatePath('/dashboard/courses/conjure');
+  return { ok: true, value: { id: imageId } };
+}
+
+/**
+ * Materialize a draft into real courses / sections / lessons rows.
+ * The user gets dropped on /dashboard/courses/[newCourseId] where the
+ * manual builder takes over for polish.
+ *
+ * Uses the admin client for the multi-row writes so RLS doesn't
+ * interfere with the transactional-ish insert sequence. Ownership
+ * + stage gate are both checked first via the regular server client.
+ */
+export async function sealDraft(draftId: string): Promise<Result<{ readonly courseId: string }>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const supabase = getSupabaseServerClient();
+  const { data: draftRow, error: readErr } = await supabase
+    .from('course_drafts')
+    .select('*')
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId)
+    .maybeSingle();
+  if (readErr) return { ok: false, error: readErr.message };
+  if (!draftRow) return { ok: false, error: 'draft not found' };
+
+  const draft = rowToDraft(draftRow);
+  if (draft.stage !== 'ready' && draft.stage !== 'images') {
+    return {
+      ok: false,
+      error: `cannot seal from stage "${draft.stage}" — every lesson and image must be approved first`,
+    };
+  }
+  if (!draft.title) return { ok: false, error: 'course needs a title before sealing' };
+  if (draft.outline.length === 0) return { ok: false, error: 'outline is empty' };
+  if (!allLessonsApproved(draft.outline, draft.lessons)) {
+    return { ok: false, error: 'every lesson must be approved before sealing' };
+  }
+
+  const admin = getSupabaseAdminClient();
+
+  const thumbnailImage = draft.images.find((i) => i.target === 'thumbnail');
+  const description = draft.user_prompt.trim().slice(0, 500) || null;
+
+  // 1. Create the courses row.
+  const { data: courseRow, error: courseErr } = await admin
+    .from('courses')
+    .insert({
+      realm_id: draft.realm_id,
+      creator_id: draft.creator_id,
+      title: draft.title,
+      description,
+      thumbnail_url: thumbnailImage?.url ?? null,
+      price_cents: 0,
+      published: false,
+    })
+    .select('id')
+    .single();
+  if (courseErr || !courseRow) {
+    return { ok: false, error: courseErr?.message ?? 'course insert failed' };
+  }
+  const courseId = courseRow.id as string;
+
+  // 2. Insert sections + lessons. One section row per outline section,
+  //    one lesson row per outline lesson with body_markdown in `content`.
+  //    If the lesson has an approved image, prepend an image markdown
+  //    line so the academy viewer shows it above the text.
+  for (let si = 0; si < draft.outline.length; si++) {
+    const outlineSection = draft.outline[si];
+    if (!outlineSection) continue;
+
+    const { data: sectionRow, error: sectionErr } = await admin
+      .from('sections')
+      .insert({
+        course_id: courseId,
+        title: outlineSection.title,
+        sort_order: si,
+      })
+      .select('id')
+      .single();
+    if (sectionErr || !sectionRow) {
+      return { ok: false, error: sectionErr?.message ?? 'section insert failed' };
+    }
+    const sectionId = sectionRow.id as string;
+
+    for (let li = 0; li < outlineSection.lessons.length; li++) {
+      const outlineLesson = outlineSection.lessons[li];
+      if (!outlineLesson) continue;
+
+      const body = draft.lessons.find(
+        (l) => l.section_id === outlineSection.id && l.lesson_id === outlineLesson.id,
+      );
+      const image = draft.images.find(
+        (i) => typeof i.target === 'object' && i.target.lesson_id === outlineLesson.id,
+      );
+
+      const contentPrefix = image?.url
+        ? `![${outlineLesson.title.replace(/[\]\\]/g, '')}](${image.url})\n\n`
+        : '';
+      const content = `${contentPrefix}${body?.body_markdown ?? ''}`;
+
+      const { error: lessonErr } = await admin.from('lessons').insert({
+        course_id: courseId,
+        section_id: sectionId,
+        title: outlineLesson.title,
+        type: 'written',
+        content,
+        sort_order: li,
+        is_preview: li === 0 && si === 0,
+      });
+      if (lessonErr) return { ok: false, error: lessonErr.message };
+    }
+  }
+
+  // 3. Mark the draft sealed + link to the new course.
+  const { error: sealErr } = await supabase
+    .from('course_drafts')
+    .update({ stage: 'sealed', sealed_course_id: courseId })
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId);
+  if (sealErr) return { ok: false, error: sealErr.message };
+
+  revalidatePath('/dashboard/courses');
+  revalidatePath('/dashboard/courses/conjure');
+  revalidatePath(`/dashboard/courses/${courseId}`);
+  return { ok: true, value: { courseId } };
+}
+
+/** Overwrites the outline (used when the client hand-edits section
+ *  or lesson titles before approving). */
+export async function updateDraftOutline(
+  draftId: string,
+  outline: readonly DraftOutlineSection[],
+  title?: string,
+): Promise<Result<{ readonly id: string }>> {
+  const auth = await requireCreator();
+  if (!auth.ok) return auth;
+
+  const supabase = getSupabaseServerClient();
+  const patch: Record<string, unknown> = { outline };
+  if (title !== undefined) patch.title = title.trim();
+  const { error } = await supabase
+    .from('course_drafts')
+    .update(patch)
+    .eq('id', draftId)
+    .eq('creator_id', auth.value.userId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/dashboard/courses/conjure');
+  return { ok: true, value: { id: draftId } };
+}
