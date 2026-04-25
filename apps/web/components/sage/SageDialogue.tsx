@@ -20,6 +20,10 @@ import {
   WaxButton,
   WaxSeal,
 } from '@/components/scriptorium';
+import {
+  emitOverlayInputBlur,
+  emitOverlayInputFocus,
+} from '@/components/game/scenes/shared/overlay-input-events';
 import { SAGE_GREETING } from '@/lib/sage/prompts';
 import { loadSageHistory, saveSageHistory, type SageMessage } from '@/lib/sage/storage';
 
@@ -64,6 +68,14 @@ export function SageDialogue({ onClose }: Props): React.JSX.Element {
     inputRef.current?.focus();
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
+
+  // Tell Phaser to release its keyboard captures while the dialogue
+  // is open — otherwise WASD / SPACE / ENTER get eaten by the scene's
+  // movement bindings and never reach the input field.
+  useEffect(() => {
+    emitOverlayInputFocus();
+    return () => emitOverlayInputBlur();
+  }, []);
 
   // Cancel any in-flight stream on unmount.
   useEffect(() => {
