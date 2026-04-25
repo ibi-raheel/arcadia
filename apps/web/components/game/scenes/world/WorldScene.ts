@@ -34,6 +34,8 @@ export type SceneMember = {
   readonly realmId: string;
   readonly avatarId: AvatarId;
   readonly displayName: string;
+  /** Total XP from `memberships.xp`. Drives the player HUD's progress bar. */
+  readonly xp: number;
 };
 
 export const MEMBER_REGISTRY_KEY = 'member';

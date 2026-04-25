@@ -65,7 +65,7 @@ async function fetchSession(): Promise<SessionFetch> {
   }
   const { data, error } = await supabase
     .from('memberships')
-    .select('avatar_id, display_name, realm_id, role')
+    .select('avatar_id, display_name, realm_id, role, xp')
     .eq('member_id', session.user.id)
     .maybeSingle();
   if (error) return { status: 'error', message: error.message };
@@ -89,6 +89,7 @@ async function fetchSession(): Promise<SessionFetch> {
       realmId: data.realm_id,
       avatarId,
       displayName,
+      xp: typeof data.xp === 'number' ? data.xp : 0,
     },
     accessToken: session.access_token,
     role,
