@@ -297,7 +297,7 @@ function EventCard({
             style={{
               fontSize: 10,
               letterSpacing: 1.3,
-              color: 'var(--ink-faint)',
+              color: 'var(--ink-soft)',
               textTransform: 'uppercase',
               marginTop: 4,
             }}
@@ -331,7 +331,7 @@ function EventCard({
         style={{
           fontSize: 10,
           letterSpacing: 1.2,
-          color: 'var(--ink-faint)',
+          color: 'var(--ink-soft)',
           textTransform: 'uppercase',
         }}
       >

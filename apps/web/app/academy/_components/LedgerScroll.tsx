@@ -66,14 +66,14 @@ export function LedgerScroll({ open, onClose, courses }: Props): React.JSX.Eleme
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              color: 'var(--ink-quiet)',
+              color: 'var(--ink-soft)',
               padding: 8,
               fontSize: 16,
               lineHeight: 1,
               borderRadius: 3,
             }}
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--wax)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-quiet)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-soft)')}
           >
             ✕
           </button>
@@ -110,7 +110,7 @@ export function LedgerScroll({ open, onClose, courses }: Props): React.JSX.Eleme
           {courses.length === 0 ? (
             <p
               className="body-italic"
-              style={{ marginTop: 24, color: 'var(--ink-quiet)', textAlign: 'center' }}
+              style={{ marginTop: 24, color: 'var(--ink-soft)', textAlign: 'center' }}
             >
               no courses in your library yet.
             </p>
@@ -248,7 +248,7 @@ function CourseRow({ course }: { readonly course: AcademyCoursePodium }): React.
           </div>
           <span
             className="mono"
-            style={{ fontSize: 11, color: 'var(--ink-faint)', letterSpacing: 0.8 }}
+            style={{ fontSize: 11, color: 'var(--ink-soft)', letterSpacing: 0.8 }}
           >
             {course.completedLessons}/{course.totalLessons} · {pct}%
           </span>

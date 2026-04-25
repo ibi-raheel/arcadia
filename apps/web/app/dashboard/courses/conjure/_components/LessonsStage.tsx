@@ -290,7 +290,7 @@ function LessonCard({
               style={{
                 fontSize: 11,
                 letterSpacing: 1.2,
-                color: 'var(--ink-faint)',
+                color: 'var(--ink-soft)',
                 width: 26,
                 textAlign: 'center',
               }}

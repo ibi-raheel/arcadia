@@ -127,14 +127,14 @@ export function StallView({ stall, onClose, onEnrolled }: Props): React.JSX.Elem
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              color: 'var(--ink-quiet)',
+              color: 'var(--ink-soft)',
               padding: 8,
               fontSize: 16,
               lineHeight: 1,
               borderRadius: 3,
             }}
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--wax)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-quiet)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-soft)')}
           >
             ✕
           </button>
@@ -175,7 +175,7 @@ export function StallView({ stall, onClose, onEnrolled }: Props): React.JSX.Elem
                 className="mono"
                 style={{
                   marginTop: 12,
-                  color: 'var(--ink-faint)',
+                  color: 'var(--ink-soft)',
                   fontSize: 10,
                   letterSpacing: 1.5,
                 }}
@@ -188,7 +188,7 @@ export function StallView({ stall, onClose, onEnrolled }: Props): React.JSX.Elem
 
           <section style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
             {stall.sections.length === 0 ? (
-              <p className="body-italic" style={{ color: 'var(--ink-quiet)' }}>
+              <p className="body-italic" style={{ color: 'var(--ink-soft)' }}>
                 this stall is still being set out — come back by lamplight.
               </p>
             ) : (
@@ -286,7 +286,7 @@ export function StallView({ stall, onClose, onEnrolled }: Props): React.JSX.Elem
                     initiallyCompleted={false}
                   />
                 ) : (
-                  <p className="body-italic" style={{ color: 'var(--ink-quiet)' }}>
+                  <p className="body-italic" style={{ color: 'var(--ink-soft)' }}>
                     nothing to show yet.
                   </p>
                 )}

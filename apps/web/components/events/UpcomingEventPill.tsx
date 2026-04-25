@@ -98,9 +98,9 @@ export function UpcomingEventPill({
           <div
             className="mono"
             style={{
-              fontSize: 9,
+              fontSize: 10,
               letterSpacing: 1.3,
-              color: onDark ? 'var(--vellum-shadow)' : 'var(--ink-faint)',
+              color: onDark ? 'var(--vellum-shadow)' : 'var(--ink-soft)',
               textTransform: 'uppercase',
               marginTop: 2,
             }}

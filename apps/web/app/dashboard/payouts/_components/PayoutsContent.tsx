@@ -93,7 +93,7 @@ export function PayoutsContent({ data }: { readonly data: PayoutsData }): React.
         {hasSeries ? (
           <MonthlySparkline series={data.monthlySeries} />
         ) : (
-          <p className="body-italic" style={{ color: 'var(--ink-quiet)' }}>
+          <p className="body-italic" style={{ color: 'var(--ink-soft)' }}>
             No payouts yet. Once a pay cycle closes, the ledger lights up.
           </p>
         )}
@@ -102,7 +102,7 @@ export function PayoutsContent({ data }: { readonly data: PayoutsData }): React.
       <LedgerCard>
         <Kicker>recent history</Kicker>
         {data.recent.length === 0 ? (
-          <p className="body-italic" style={{ marginTop: 10, color: 'var(--ink-quiet)' }}>
+          <p className="body-italic" style={{ marginTop: 10, color: 'var(--ink-soft)' }}>
             Nothing on record.
           </p>
         ) : (
@@ -195,7 +195,7 @@ function PayoutsTable({ rows }: { readonly rows: readonly Payout[] }): React.JSX
               </span>
             </Td>
             <Td>
-              <span className="mono" style={{ color: 'var(--ink-faint)', fontSize: 11 }}>
+              <span className="mono" style={{ color: 'var(--ink-soft)', fontSize: 11 }}>
                 {p.reference}
               </span>
             </Td>
@@ -203,7 +203,7 @@ function PayoutsTable({ rows }: { readonly rows: readonly Payout[] }): React.JSX
               <MoneyCell value={p.gross} />
             </Td>
             <Td align="right">
-              <span className="mono" style={{ color: 'var(--ink-faint)', fontSize: 12 }}>
+              <span className="mono" style={{ color: 'var(--ink-soft)', fontSize: 12 }}>
                 −{fmt(p.fee)}
               </span>
             </Td>
@@ -224,7 +224,7 @@ function PayoutsTable({ rows }: { readonly rows: readonly Payout[] }): React.JSX
               <StatusChip status={p.status} />
             </Td>
             <Td>
-              <span className="mono" style={{ color: 'var(--ink-faint)', fontSize: 12 }}>
+              <span className="mono" style={{ color: 'var(--ink-soft)', fontSize: 12 }}>
                 {p.arrivedOn ?? '—'}
               </span>
             </Td>
@@ -284,7 +284,7 @@ function TransactionsTable({
               </span>
             </Td>
             <Td>
-              <span className="mono" style={{ color: 'var(--ink-faint)', fontSize: 11 }}>
+              <span className="mono" style={{ color: 'var(--ink-soft)', fontSize: 11 }}>
                 {t.when}
               </span>
             </Td>
@@ -309,7 +309,7 @@ function TransactionsTable({
               <MoneyCell value={t.gross} size={14} />
             </Td>
             <Td align="right">
-              <span className="mono" style={{ color: 'var(--ink-faint)', fontSize: 11 }}>
+              <span className="mono" style={{ color: 'var(--ink-soft)', fontSize: 11 }}>
                 {t.fee === 0 ? '—' : (t.fee < 0 ? '+' : '−') + fmt(Math.abs(t.fee))}
               </span>
             </Td>
@@ -513,7 +513,7 @@ function TaxDocRow({
         <div
           className="mono"
           style={{
-            fontSize: 9,
+            fontSize: 10,
             letterSpacing: 1.3,
             color: 'var(--vellum-shadow)',
             textTransform: 'uppercase',

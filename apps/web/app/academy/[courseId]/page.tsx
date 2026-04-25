@@ -174,7 +174,7 @@ export default async function CourseViewerPage({
             <LedgerCard style={{ padding: '22px 20px' }}>
               <Kicker>the chapters</Kicker>
               {groupedSections.length === 0 ? (
-                <p className="body-italic" style={{ marginTop: 10, color: 'var(--ink-quiet)' }}>
+                <p className="body-italic" style={{ marginTop: 10, color: 'var(--ink-soft)' }}>
                   ~ nothing inked yet ~
                 </p>
               ) : (
@@ -241,7 +241,7 @@ export default async function CourseViewerPage({
                         {s.lessons.length === 0 ? (
                           <li
                             className="body-italic"
-                            style={{ color: 'var(--ink-quiet)', fontSize: 13, padding: '4px 8px' }}
+                            style={{ color: 'var(--ink-soft)', fontSize: 13, padding: '4px 8px' }}
                           >
                             no lessons yet
                           </li>
@@ -514,7 +514,7 @@ function LessonBody({
           initiallyCompleted={completed}
         />
       ) : (
-        <p className="body-italic" style={{ color: 'var(--ink-quiet)' }}>
+        <p className="body-italic" style={{ color: 'var(--ink-soft)' }}>
           ~ nothing inked on this page yet ~
         </p>
       )}

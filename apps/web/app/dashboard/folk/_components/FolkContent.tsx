@@ -246,7 +246,7 @@ function GrowthHero({
                 style={{
                   fontSize: 10,
                   letterSpacing: 1.3,
-                  color: 'var(--ink-faint)',
+                  color: 'var(--ink-soft)',
                   marginTop: 4,
                   textTransform: 'uppercase',
                 }}
@@ -274,7 +274,7 @@ function GrowthHero({
                 style={{
                   fontSize: 10,
                   letterSpacing: 1.3,
-                  color: 'var(--ink-faint)',
+                  color: 'var(--ink-soft)',
                   marginTop: 4,
                   textTransform: 'uppercase',
                 }}
@@ -313,7 +313,7 @@ function GrowthHero({
               <circle cx={sparkline.last.x} cy={sparkline.last.y} r={4} fill="#8f2530" />
             </svg>
           ) : (
-            <div className="body-italic" style={{ color: 'var(--ink-quiet)', textAlign: 'center' }}>
+            <div className="body-italic" style={{ color: 'var(--ink-soft)', textAlign: 'center' }}>
               ~ thirty days of tallies will bloom here once the counters start ~
             </div>
           )}
@@ -322,7 +322,7 @@ function GrowthHero({
             style={{
               fontSize: 10,
               letterSpacing: 1.3,
-              color: 'var(--ink-faint)',
+              color: 'var(--ink-soft)',
               textTransform: 'uppercase',
               marginTop: 8,
               display: 'flex',
@@ -389,7 +389,7 @@ function AcquisitionCard({
                 {s.source}
               </span>
               <span style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
-                <span className="mono" style={{ fontSize: 10, color: 'var(--ink-faint)' }}>
+                <span className="mono" style={{ fontSize: 10, color: 'var(--ink-soft)' }}>
                   {s.share}%
                 </span>
                 <span
@@ -466,7 +466,7 @@ function GeographyCard({
                 {e.place}
               </span>
               <span style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
-                <span className="mono" style={{ fontSize: 10, color: 'var(--ink-faint)' }}>
+                <span className="mono" style={{ fontSize: 10, color: 'var(--ink-soft)' }}>
                   {e.share}%
                 </span>
                 <span
@@ -713,12 +713,12 @@ function NewsletterCard({ data }: { readonly data: FolkNewsletter }): React.JSX.
                   </span>
                 </CohortTd>
                 <CohortTd>
-                  <span className="mono" style={{ color: 'var(--ink-faint)', fontSize: 11 }}>
+                  <span className="mono" style={{ color: 'var(--ink-soft)', fontSize: 11 }}>
                     {s.sentOn}
                   </span>
                 </CohortTd>
                 <CohortTd align="right">
-                  <span className="mono" style={{ color: 'var(--ink-faint)', fontSize: 12 }}>
+                  <span className="mono" style={{ color: 'var(--ink-soft)', fontSize: 12 }}>
                     {s.sent}
                   </span>
                 </CohortTd>
@@ -733,7 +733,7 @@ function NewsletterCard({ data }: { readonly data: FolkNewsletter }): React.JSX.
                     }}
                   >
                     {s.opens}{' '}
-                    <span className="mono" style={{ fontSize: 10, color: 'var(--ink-faint)' }}>
+                    <span className="mono" style={{ fontSize: 10, color: 'var(--ink-soft)' }}>
                       {openPct.toFixed(0)}%
                     </span>
                   </span>
@@ -749,7 +749,7 @@ function NewsletterCard({ data }: { readonly data: FolkNewsletter }): React.JSX.
                     }}
                   >
                     {s.clicks}{' '}
-                    <span className="mono" style={{ fontSize: 10, color: 'var(--ink-faint)' }}>
+                    <span className="mono" style={{ fontSize: 10, color: 'var(--ink-soft)' }}>
                       {clickPct.toFixed(1)}%
                     </span>
                   </span>
@@ -765,7 +765,7 @@ function NewsletterCard({ data }: { readonly data: FolkNewsletter }): React.JSX.
                     }}
                   >
                     {s.conversions}{' '}
-                    <span className="mono" style={{ fontSize: 10, color: 'var(--ink-faint)' }}>
+                    <span className="mono" style={{ fontSize: 10, color: 'var(--ink-soft)' }}>
                       {convPct.toFixed(1)}%
                     </span>
                   </span>
@@ -803,9 +803,9 @@ function NewsletterAvg({
       <div
         className="mono"
         style={{
-          fontSize: 9,
+          fontSize: 10,
           letterSpacing: 1.3,
-          color: 'var(--ink-faint)',
+          color: 'var(--ink-soft)',
           textTransform: 'uppercase',
           marginTop: 3,
         }}
@@ -881,7 +881,7 @@ function AtRiskCard({ risks }: { readonly risks: readonly FolkAtRiskEntry[] }): 
               <div
                 className="mono"
                 style={{
-                  fontSize: 9,
+                  fontSize: 10,
                   letterSpacing: 1.3,
                   color: 'var(--vellum-shadow)',
                   textTransform: 'uppercase',
@@ -1115,7 +1115,7 @@ function TierCard({ tier }: { readonly tier: FolkTier }): React.JSX.Element {
                 fontFamily: 'var(--font-display)',
                 fontStyle: 'italic',
                 fontSize: 18,
-                color: 'var(--ink-faint)',
+                color: 'var(--ink-soft)',
               }}
             >
               $
@@ -1137,7 +1137,7 @@ function TierCard({ tier }: { readonly tier: FolkTier }): React.JSX.Element {
                 fontFamily: 'var(--font-body)',
                 fontStyle: 'italic',
                 fontSize: 15,
-                color: 'var(--ink-faint)',
+                color: 'var(--ink-soft)',
               }}
             >
               /mo
@@ -1204,9 +1204,9 @@ function TierCard({ tier }: { readonly tier: FolkTier }): React.JSX.Element {
           <div
             className="mono"
             style={{
-              fontSize: 9,
+              fontSize: 10,
               letterSpacing: 1.3,
-              color: 'var(--ink-faint)',
+              color: 'var(--ink-soft)',
               textTransform: 'uppercase',
               marginTop: 2,
             }}
@@ -1282,7 +1282,7 @@ function MRRBlock({
         </div>
         <div>
           {paying.length === 0 ? (
-            <p className="body-italic" style={{ color: 'var(--ink-quiet)' }}>
+            <p className="body-italic" style={{ color: 'var(--ink-soft)' }}>
               no paying tiers yet — when you open a tier in settings, the composition bar lights up
               here.
             </p>
@@ -1327,7 +1327,7 @@ function MRRBlock({
                       >
                         {t.name}
                       </span>
-                      <span className="mono" style={{ fontSize: 10, color: 'var(--ink-faint)' }}>
+                      <span className="mono" style={{ fontSize: 10, color: 'var(--ink-soft)' }}>
                         {t.count}×${t.rate}
                       </span>
                       <span
@@ -1419,21 +1419,21 @@ function MembersTable({ members }: { readonly members: readonly FolkMember[] }):
               <RoleChip role={m.role} />
             </Td>
             <Td>
-              <span className="mono" style={{ color: 'var(--ink-faint)' }}>
+              <span className="mono" style={{ color: 'var(--ink-soft)' }}>
                 {m.enrolmentCount}
               </span>
             </Td>
             <Td>
               <span style={{ color: 'var(--ink)' }}>
                 {m.level}
-                <span className="mono" style={{ color: 'var(--ink-faint)', marginLeft: 6 }}>
+                <span className="mono" style={{ color: 'var(--ink-soft)', marginLeft: 6 }}>
                   · {m.xp} xp
                 </span>
               </span>
             </Td>
             <Td>
               {m.streakDays === 0 ? (
-                <span style={{ color: 'var(--ink-quiet)' }}>—</span>
+                <span style={{ color: 'var(--ink-soft)' }}>—</span>
               ) : (
                 <span
                   className="mono"

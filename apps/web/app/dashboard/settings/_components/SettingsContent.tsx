@@ -347,7 +347,7 @@ function BillingSection({ billing }: { readonly billing: BillingData }): React.J
             style={{
               fontSize: 10,
               letterSpacing: 1.3,
-              color: 'var(--ink-faint)',
+              color: 'var(--ink-soft)',
               textTransform: 'uppercase',
               marginTop: 4,
             }}
@@ -407,7 +407,7 @@ function BillingSection({ billing }: { readonly billing: BillingData }): React.J
                   </span>
                 </SettingsTd>
                 <SettingsTd>
-                  <span className="mono" style={{ color: 'var(--ink-faint)', fontSize: 11 }}>
+                  <span className="mono" style={{ color: 'var(--ink-soft)', fontSize: 11 }}>
                     {inv.reference}
                   </span>
                 </SettingsTd>
@@ -619,9 +619,9 @@ function IntegrationCard({ tile }: { readonly tile: IntegrationTile }): React.JS
           <div
             className="mono"
             style={{
-              fontSize: 9,
+              fontSize: 10,
               letterSpacing: 1.3,
-              color: 'var(--ink-faint)',
+              color: 'var(--ink-soft)',
               textTransform: 'uppercase',
               marginTop: 2,
             }}
@@ -780,7 +780,7 @@ function SecuritySection({ security }: { readonly security: SecurityData }): Rea
                   style={{
                     fontSize: 10,
                     letterSpacing: 1.3,
-                    color: 'var(--ink-faint)',
+                    color: 'var(--ink-soft)',
                     textTransform: 'uppercase',
                     marginTop: 2,
                   }}

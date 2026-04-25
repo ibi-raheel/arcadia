@@ -75,14 +75,14 @@ export function CatalogScroll({
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              color: 'var(--ink-quiet)',
+              color: 'var(--ink-soft)',
               padding: 8,
               fontSize: 16,
               lineHeight: 1,
               borderRadius: 3,
             }}
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--wax)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-quiet)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-soft)')}
           >
             ✕
           </button>
@@ -119,7 +119,7 @@ export function CatalogScroll({
           {stalls.length === 0 ? (
             <p
               className="body-italic"
-              style={{ marginTop: 24, color: 'var(--ink-quiet)', textAlign: 'center' }}
+              style={{ marginTop: 24, color: 'var(--ink-soft)', textAlign: 'center' }}
             >
               no stalls in the market yet.
             </p>
@@ -257,7 +257,7 @@ function StallRow({
             marginTop: 4,
             fontSize: 10,
             letterSpacing: 1.5,
-            color: 'var(--ink-faint)',
+            color: 'var(--ink-soft)',
           }}
         >
           {stall.lessonCount} LESSONS · {stall.enrolmentCount} ENROLLED

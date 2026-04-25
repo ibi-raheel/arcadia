@@ -198,7 +198,7 @@ export function WrittenLessonEditor({ courseId, lesson }: Props): React.JSX.Elem
 
       <p
         className="mono"
-        style={{ marginTop: 8, textAlign: 'right', color: 'var(--ink-faint)', fontSize: 11 }}
+        style={{ marginTop: 8, textAlign: 'right', color: 'var(--ink-soft)', fontSize: 11 }}
       >
         {content.length.toLocaleString()} / {LESSON_CONTENT_MAX.toLocaleString()}
       </p>

@@ -67,7 +67,7 @@ export default function LoginPage(): React.JSX.Element {
                 fallback={
                   <p
                     className="body-italic"
-                    style={{ marginTop: 18, color: 'var(--ink-quiet)', textAlign: 'center' }}
+                    style={{ marginTop: 18, color: 'var(--ink-soft)', textAlign: 'center' }}
                   >
                     ~ unfurling the scroll ~
                   </p>

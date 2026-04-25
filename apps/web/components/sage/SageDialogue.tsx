@@ -156,14 +156,14 @@ export function SageDialogue({ onClose }: Props): React.JSX.Element {
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              color: 'var(--ink-quiet)',
+              color: 'var(--ink-soft)',
               padding: 8,
               fontSize: 16,
               lineHeight: 1,
               borderRadius: 3,
             }}
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--wax)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-quiet)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-soft)')}
           >
             ✕
           </button>
