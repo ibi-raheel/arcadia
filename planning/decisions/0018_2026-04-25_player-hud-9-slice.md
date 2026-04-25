@@ -1,0 +1,123 @@
+# ADR 0018 — Persistent player HUD: Kenney 9-slice borders + SVG shield
+
+**Date:** 2026-04-25
+**Status:** Accepted
+**Related:** Phase 14 plan, ADR 0009 (design-system tokens own colour), ADR 0016 (interactables baked in PNG — same "art-on-disk, behaviour-in-React" pattern)
+
+## Context
+
+Phase 14 adds a persistent in-game HUD: top-left circular avatar
+portrait + display name; top-right XP progress bar + level shield.
+The HUD must be visible across every Phaser scene (`/world`,
+`/coworking/inside`, the three `*-outside` neighbours, `/tavern`)
+and obscured by modals (Sage popup, jukebox overlay, etc.).
+
+Three asset/rendering choices need recording:
+
+1. **Frame style.** Hand-drawing fantasy-style ornament frames in
+   CSS is fiddly and inconsistent. The user supplied Kenney's
+   "Fantasy UI Borders" pack (CC0). Twelve panel variants would
+   match the visual target; we use one.
+
+2. **9-slice mechanics.** Kenney panels are 48×48 PNGs with
+   transparent middles and 1–3 px corner ornaments. They are
+   designed to be 9-sliced via CSS `border-image` so a single PNG
+   serves any rectangle size.
+
+3. **Level shield.** A heraldic shield shape is **not** in the
+   Kenney pack — the pack is rectangles + circles only. We need
+   something distinct from the rectangular XP panel so the level
+   reads as a separate "badge."
+
+## Decision
+
+**Frame style:** Kenney "Fantasy UI Borders" v1.0, `panel-001.png`
+variant (corner-cross ornament). Subset checked in at
+`apps/web/public/hud/kenney/` (4 PNGs + license + attribution),
+not the full 140-file pack. Additional variants imported only when
+actually used.
+
+**Render path:** CSS `border-image` against `panel.png`. Background
+fill is a CSS variable from the existing midnight-scriptorium token
+set (`--night` / `--ink-deep`), **not** baked into the PNG. This
+keeps the dark navy in lock-step with the rest of the design system
+and lets us re-skin without re-exporting art.
+
+**Pixel-art crispness:** `image-rendering: pixelated` on the panel
+elements. The Kenney pack is pixel-art; default browser scaling
+would blur the ornaments.
+
+**Level shield:** Inline SVG (not PNG, not asset). A simple
+heraldic shield path (~10 lines) drawn in the existing palette
+(`--bronze` outline, `--ink-deep` fill, `--gilt` accent for the
+level number). Reasons for SVG over a new PNG:
+- Crisp at every zoom level without `image-rendering` hacks.
+- Themeable via CSS variables (same colours as the rest of the
+  HUD; future re-skins are one token swap).
+- One file, no upload/license bookkeeping.
+- Trivially recoloured for level milestones (e.g. tint at L10,
+  L20).
+
+**Avatar portrait:** Crop the top-left frame from the existing
+`public/avatars/<id>/idle.png` sheet at runtime (`background-image`
++ `background-position` on a circular `clip-path` div). No new
+asset needed; portraits stay in lock-step with sprite art when an
+avatar's body changes.
+
+## Consequences
+
+**Good:**
+- One ornament style across the entire HUD; consistent visual
+  language with the existing midnight-scriptorium UI.
+- Single 48×48 PNG (~150 bytes) handles every panel size.
+- Re-skinning the HUD is changing CSS tokens, not exporting art.
+- The level shield doesn't fight the panel ornaments — different
+  shape (shield) signals different meaning (status badge).
+- No new asset license bookkeeping for the shield.
+
+**Bad:**
+- `border-image-slice` browser quirks exist in older browsers but
+  are fine in everything Next 14 targets.
+- The corner-cross style is locked in; changing it later means
+  swapping `panel.png` (one file) plus visual review.
+- The SVG shield is hand-drawn pixels (literally a path I wrote);
+  if a brand-design pass later wants a richer crest, it gets
+  replaced with an asset.
+
+**Neutral:**
+- We import only 4 of 140 PNGs from the Kenney pack. If we need
+  more variants, the workflow is in `public/CLAUDE.md` (and in the
+  attribution file).
+
+## Alternatives considered
+
+1. **Generate the frame entirely in CSS** (gradients + pseudo-
+   elements for corner ornaments). Possible, but the ornament
+   shapes are non-trivial; a pixel-art PNG is cleaner and matches
+   the established midnight-scriptorium "art-on-disk, behaviour-
+   in-React" pattern (ADR 0016).
+
+2. **Render the HUD inside Phaser** (as a fixed-camera GameObject).
+   Rejected: the HUD needs to be obscured by React modals; living
+   in Phaser would require z-index gymnastics on the canvas itself
+   and break with `JukeboxOverlay`-style fullscreen overlays.
+
+3. **Ship a heraldic-shield PNG asset.** Rejected: no good free
+   asset matches our palette; making one ourselves duplicates
+   what an SVG path does in 10 lines.
+
+4. **Add `xp` to the Colyseus `AvatarState` schema** so the bar
+   syncs through the room. Rejected for now — XP is not used by
+   any other client in the room (Sage / jukebox / pomodoro don't
+   read XP), so adding it would mean broadcasting an extra field
+   to every member for nobody's benefit. Phase 14 fetches XP from
+   Supabase and listens to Realtime memberships UPDATE; if a use
+   case for shared XP appears (leaderboards in-room?) we'll
+   promote it to AvatarState then.
+
+## Implementation
+
+Tracked under Phase 14 (`phases/phase-14_plan.md`). Four sub-
+phases: 14.0 plan + ADR + asset ingest, 14.1 shared progress
+helper + extended fetchSession, 14.2 PlayerHud component, 14.3
+mount across game pages, 14.4 docs.

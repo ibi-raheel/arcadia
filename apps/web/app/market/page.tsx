@@ -27,7 +27,7 @@ export default async function MarketPage({ searchParams }: Params): Promise<Reac
 
   const { data: membership } = await supabase
     .from('memberships')
-    .select('realm_id, avatar_id, display_name')
+    .select('realm_id, avatar_id, display_name, xp')
     .eq('member_id', user.id)
     .maybeSingle();
   if (!membership?.avatar_id || !isAvatarId(membership.avatar_id) || !membership.realm_id) {
@@ -39,6 +39,7 @@ export default async function MarketPage({ searchParams }: Params): Promise<Reac
     realmId: membership.realm_id,
     avatarId: membership.avatar_id,
     displayName: membership.display_name ?? 'Player',
+    xp: typeof membership.xp === 'number' ? membership.xp : 0,
   };
 
   // RLS already scopes to published + same-realm (course_member_read).

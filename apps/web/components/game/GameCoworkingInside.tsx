@@ -15,6 +15,7 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 import { BuildingTransition } from './BuildingTransition';
 import { LevelUpBanner } from './LevelUpBanner';
+import { PlayerHud } from '@/components/hud/PlayerHud';
 import { useLevelSync } from './net/use-level-sync';
 import { connectToRoom, type ColyseusConnection } from './net/colyseus-client';
 import { BootScene } from './scenes/boot/BootScene';
@@ -53,7 +54,7 @@ async function fetchSession(): Promise<SessionFetch> {
   }
   const { data, error } = await supabase
     .from('memberships')
-    .select('avatar_id, display_name, realm_id')
+    .select('avatar_id, display_name, realm_id, xp')
     .eq('member_id', session.user.id)
     .maybeSingle();
   if (error) return { status: 'error', message: error.message };
@@ -70,6 +71,7 @@ async function fetchSession(): Promise<SessionFetch> {
       realmId: data.realm_id,
       avatarId,
       displayName: data.display_name ?? 'Player',
+      xp: typeof data.xp === 'number' ? data.xp : 0,
     },
     accessToken: session.access_token,
   };
@@ -224,6 +226,14 @@ export default function GameCoworkingInside(): React.JSX.Element {
         gameRef={gameRef as unknown as React.MutableRefObject<PhaserGameLike | null>}
         connection={colyseusConn}
       />
+      {fetchState.status === 'ready' && (
+        <PlayerHud
+          memberId={fetchState.member.memberId}
+          avatarId={fetchState.member.avatarId}
+          displayName={fetchState.member.displayName}
+          initialXp={fetchState.member.xp}
+        />
+      )}
     </div>
   );
 }

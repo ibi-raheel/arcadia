@@ -25,8 +25,9 @@ export function HearthPill({ memberCount, pomodoro }: Props): React.JSX.Element 
   return (
     <div
       style={{
+        // 80 (not 16) so the player HUD (top: 12, height ~56) sits clear above.
         position: 'fixed',
-        top: 16,
+        top: 80,
         right: 16,
         zIndex: 70,
         padding: '8px 14px',
