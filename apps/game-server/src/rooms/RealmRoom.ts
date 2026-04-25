@@ -7,6 +7,7 @@ import { authenticateJoin, type AuthSupabase } from './realm-auth';
 import { getRoomConfig } from './room-config';
 import {
   applyMove,
+  applySetFocus,
   applySetJukebox,
   applyStartPomodoro,
   applyStopPomodoro,
@@ -78,6 +79,12 @@ export class RealmRoom extends Room<RealmRoomState> {
 
     this.onMessage(MSG.STOP_POMODORO, () => {
       applyStopPomodoro(this.state.pomodoro);
+    });
+
+    this.onMessage(MSG.SET_FOCUS, (client, payload) => {
+      const avatar = this.state.avatars.get(client.sessionId);
+      if (!avatar) return;
+      applySetFocus(avatar, payload);
     });
 
     // Server tick — once per second, advance pomodoro phases when
