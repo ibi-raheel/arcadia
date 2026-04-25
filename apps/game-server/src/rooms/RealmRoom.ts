@@ -7,9 +7,13 @@ import { authenticateJoin, type AuthSupabase } from './realm-auth';
 import { getRoomConfig } from './room-config';
 import {
   applyMove,
+  applySetJukebox,
+  applyStartPomodoro,
+  applyStopPomodoro,
   applyUpdateLevel,
   createAvatarState,
   parseBuildingPayload,
+  tickPomodoro,
   type AuthInfo,
 } from './realm-handlers';
 
@@ -55,6 +59,33 @@ export class RealmRoom extends Room<RealmRoomState> {
       if (!building) return;
       console.log(`[${this.roomName}] ${client.sessionId} LEAVE_BUILDING ${building}`);
     });
+
+    // Phase 12 — coworking productivity messages. Only meaningful in
+    // the coworking-realm1 room type, but the handlers are harmless
+    // in other rooms (state.jukebox + state.pomodoro exist on every
+    // RealmRoomState — they just go unused outside the tents).
+    this.onMessage(MSG.SET_JUKEBOX, (client, payload) => {
+      const avatar = this.state.avatars.get(client.sessionId);
+      if (!avatar) return;
+      applySetJukebox(this.state.jukebox, payload, avatar.memberId, Date.now());
+    });
+
+    this.onMessage(MSG.START_POMODORO, (client, payload) => {
+      const avatar = this.state.avatars.get(client.sessionId);
+      if (!avatar) return;
+      applyStartPomodoro(this.state.pomodoro, payload, avatar.memberId, Date.now());
+    });
+
+    this.onMessage(MSG.STOP_POMODORO, () => {
+      applyStopPomodoro(this.state.pomodoro);
+    });
+
+    // Server tick — once per second, advance pomodoro phases when
+    // their `endsAt` passes. Cheap (only mutates when something is
+    // actually due) and Colyseus only re-broadcasts on diff.
+    this.clock.setInterval(() => {
+      tickPomodoro(this.state.pomodoro, Date.now());
+    }, 1000);
   }
 
   override async onAuth(

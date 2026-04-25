@@ -4,9 +4,13 @@ import { AvatarState } from '@arcadia/shared';
 
 import {
   applyMove,
+  applySetJukebox,
+  applyStartPomodoro,
+  applyStopPomodoro,
   applyUpdateLevel,
   createAvatarState,
   parseBuildingPayload,
+  tickPomodoro,
   type AuthInfo,
 } from '../realm-handlers';
 import type { RoomBounds } from '../room-config';
@@ -170,5 +174,136 @@ describe('parseBuildingPayload', () => {
     expect(parseBuildingPayload({})).toBeNull();
     expect(parseBuildingPayload(null)).toBeNull();
     expect(parseBuildingPayload('tavern')).toBeNull();
+  });
+});
+
+// Phase 12 — coworking productivity (jukebox + pomodoro)
+
+describe('applySetJukebox', () => {
+  const fresh = (): import('@arcadia/shared').JukeboxState => {
+    const { JukeboxState } = require('@arcadia/shared');
+    return new JukeboxState();
+  };
+
+  it('sets the playlist + stamps startedAt + lastChangedBy', () => {
+    const j = fresh();
+    expect(applySetJukebox(j, { playlist: 'lofi' }, 'm-1', 1700000000000)).toBe(true);
+    expect(j.playlist).toBe('lofi');
+    expect(j.startedAt).toBe(1700000000000);
+    expect(j.lastChangedBy).toBe('m-1');
+  });
+
+  it('clears state when playlist is empty', () => {
+    const j = fresh();
+    applySetJukebox(j, { playlist: 'lofi' }, 'm-1', 1000);
+    applySetJukebox(j, { playlist: '' }, 'm-2', 2000);
+    expect(j.playlist).toBe('');
+    expect(j.startedAt).toBe(0);
+    expect(j.lastChangedBy).toBe('');
+  });
+
+  it('rejects malformed payloads', () => {
+    const j = fresh();
+    expect(applySetJukebox(j, null, 'm', 1)).toBe(false);
+    expect(applySetJukebox(j, { playlist: 42 }, 'm', 1)).toBe(false);
+    expect(applySetJukebox(j, {}, 'm', 1)).toBe(false);
+  });
+});
+
+describe('applyStartPomodoro', () => {
+  const fresh = (): import('@arcadia/shared').PomodoroState => {
+    const { PomodoroState } = require('@arcadia/shared');
+    return new PomodoroState();
+  };
+
+  it('starts a session from idle with default 25/5/4', () => {
+    const p = fresh();
+    expect(applyStartPomodoro(p, {}, 'm-1', 1000)).toBe(true);
+    expect(p.phase).toBe('work');
+    expect(p.cycle).toBe(1);
+    expect(p.totalCycles).toBe(4);
+    expect(p.workMinutes).toBe(25);
+    expect(p.endsAt).toBe(1000 + 25 * 60_000);
+    expect(p.startedBy).toBe('m-1');
+  });
+
+  it('clamps out-of-range durations', () => {
+    const p = fresh();
+    applyStartPomodoro(p, { workMinutes: 999, breakMinutes: -1, totalCycles: 100 }, 'm', 0);
+    expect(p.workMinutes).toBe(90);
+    expect(p.breakMinutes).toBe(1);
+    expect(p.totalCycles).toBe(8);
+  });
+
+  it('refuses to start while a session is running', () => {
+    const p = fresh();
+    applyStartPomodoro(p, {}, 'm-1', 0);
+    expect(applyStartPomodoro(p, {}, 'm-2', 100)).toBe(false);
+    expect(p.startedBy).toBe('m-1');
+  });
+});
+
+describe('applyStopPomodoro', () => {
+  const fresh = (): import('@arcadia/shared').PomodoroState => {
+    const { PomodoroState } = require('@arcadia/shared');
+    return new PomodoroState();
+  };
+
+  it('resets a running session to idle', () => {
+    const p = fresh();
+    applyStartPomodoro(p, {}, 'm', 0);
+    expect(applyStopPomodoro(p)).toBe(true);
+    expect(p.phase).toBe('idle');
+    expect(p.endsAt).toBe(0);
+    expect(p.startedBy).toBe('');
+  });
+
+  it('returns false on already-idle state', () => {
+    const p = fresh();
+    expect(applyStopPomodoro(p)).toBe(false);
+  });
+});
+
+describe('tickPomodoro', () => {
+  const fresh = (): import('@arcadia/shared').PomodoroState => {
+    const { PomodoroState } = require('@arcadia/shared');
+    return new PomodoroState();
+  };
+
+  it('does nothing while phase is idle', () => {
+    const p = fresh();
+    expect(tickPomodoro(p, 999_999)).toBe(false);
+  });
+
+  it('does nothing while now < endsAt', () => {
+    const p = fresh();
+    applyStartPomodoro(p, { workMinutes: 25 }, 'm', 0);
+    expect(tickPomodoro(p, 24 * 60_000)).toBe(false);
+  });
+
+  it('advances work → break at endsAt', () => {
+    const p = fresh();
+    applyStartPomodoro(p, { workMinutes: 25, breakMinutes: 5 }, 'm', 0);
+    expect(tickPomodoro(p, 25 * 60_000)).toBe(true);
+    expect(p.phase).toBe('break');
+    expect(p.endsAt).toBe(25 * 60_000 + 5 * 60_000);
+  });
+
+  it('advances break → next work cycle', () => {
+    const p = fresh();
+    applyStartPomodoro(p, { workMinutes: 25, breakMinutes: 5, totalCycles: 4 }, 'm', 0);
+    tickPomodoro(p, 25 * 60_000); // → break
+    expect(tickPomodoro(p, 30 * 60_000)).toBe(true);
+    expect(p.phase).toBe('work');
+    expect(p.cycle).toBe(2);
+  });
+
+  it('closes the session after the final work phase', () => {
+    const p = fresh();
+    applyStartPomodoro(p, { workMinutes: 25, breakMinutes: 5, totalCycles: 1 }, 'm', 0);
+    expect(tickPomodoro(p, 25 * 60_000)).toBe(true);
+    expect(p.phase).toBe('idle');
+    expect(p.cycle).toBe(0);
+    expect(p.startedBy).toBe('');
   });
 });
