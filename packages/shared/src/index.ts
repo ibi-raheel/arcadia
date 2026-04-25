@@ -2,6 +2,8 @@
 // Import from '@arcadia/shared' — never from individual file paths.
 
 export { AvatarState, AVATAR_DIRECTIONS, type AvatarDirection } from './schemas/AvatarState';
+export { JukeboxState } from './schemas/JukeboxState';
+export { PomodoroState, type PomodoroPhase } from './schemas/PomodoroState';
 export { RealmRoomState } from './schemas/RealmRoomState';
 
 export {
@@ -12,6 +14,8 @@ export {
   type EnterBuildingPayload,
   type LeaveBuildingPayload,
   type UpdateLevelPayload,
+  type SetJukeboxPayload,
+  type StartPomodoroPayload,
   type MessagePayloads,
 } from './protocol/messages';
 
