@@ -4,6 +4,60 @@ Source plan: `phase-10_plan.md`. Entries chronological, newest on top.
 Per the sub-phase ritual in root `CLAUDE.md`: one line per sub-phase
 as it lands.
 
+## 2026-04-25 — 10.12 · final docs + merge
+
+- `phases/phase-10_plan.md` updated with 10.10 + 10.11 (post-hoc
+  sub-phases) + this entry as 10.12.
+- `docs/changelog/2026-04-25_phase-10-ai-course-maker.md` updated
+  with every post-initial-PR change.
+- Root README Phase-10 line expanded to cover the scribe's memory,
+  TipTap editor, Gemini swap.
+
+## 2026-04-25 — 10.11 · scriptorium editor (TipTap)
+
+- Replaced `@uiw/react-md-editor` split-pane with a TipTap-based
+  WYSIWYG surface. StarterKit + Link + Placeholder + tiptap-markdown.
+- Five toolbar groups (headings, marks, lists, code/link, history).
+- Editor CSS re-uses `.scriptorium-prose` rules — what you edit IS
+  what the academy viewer renders.
+- Content still round-trips as markdown; DB + academy untouched.
+
+## 2026-04-25 — 10.10 · scribe's memory
+
+- Migration `20260425000003` applied: `creator_preferences` table
+  (voice_guide, image_style, audience) per-creator RLS.
+- `ScribeMemory` collapsible LedgerCard at top of conjure workbench.
+- Preferences injected into outline / lesson / image prompts via
+  `lib/scribe/preferences.ts`. 4 new vitest cases — 250 total.
+
+## 2026-04-25 — image gen hotfixes
+
+- Gemini 2.5 Flash Image preview deprecated on v1beta → swapped
+  image model to Imagen 4 Fast (`imagen-4.0-fast-generate-001`) via
+  `google.image()` + `experimental_generateImage`. Same Gemini
+  API key, dedicated endpoint.
+- Image card "re-roll" now opens an inline "what should change?"
+  field and re-runs generation with the feedback appended to the
+  prompt. Prompt used is shown in a collapsible mono panel so the
+  creator can see what was sent.
+
+## 2026-04-25 — stage-transition + approve hotfixes
+
+- Loosened `canAdvance` to allow any stage skip (forward or back);
+  only staying on the same stage is rejected. Covers the legitimate
+  satchel → lessons jump the outline route performs.
+- Approve callbacks (outline + lesson + image) now reloadDraft on
+  success so server-side stage auto-advances surface in the client
+  immediately. Surfaces errors in crimson hand-script lines instead
+  of silent no-ops.
+
+## 2026-04-25 — provider swap: Gateway → Gemini direct (ADR 0013)
+
+- Swapped from Vercel AI Gateway to Google's Generative AI API
+  directly. One env var (`GOOGLE_GENERATIVE_AI_API_KEY`) covers
+  text + images. SCRIBE_MODEL_ID per stage: gemini-2.5-pro (outline)
+  / gemini-2.5-flash (lesson) / imagen-4.0-fast-generate-001 (image).
+
 ## 2026-04-25 — 10.9 · docs + PR
 
 - Changelog `docs/changelog/2026-04-25_phase-10-ai-course-maker.md`.
