@@ -6,14 +6,15 @@
 
 *Changes in v1.1 vs v1.0 are summarised at the end of this document.*
 
-> **2026-04-25 status update.** Phases 0–5 (the original 12-week plan below) shipped 2026-04-21. **Six extension phases shipped on top by 2026-04-25** and aren't re-described in this doc — see the README + the per-phase changelog entries in `/docs/changelog/`:
+> **2026-04-25 status update.** Phases 0–5 (the original 12-week plan below) shipped 2026-04-21. **Seven extension phases shipped on top by 2026-04-25** and aren't re-described in this doc — see the README + the per-phase changelog entries in `/docs/changelog/`:
 >
 > - **(rendering rebuild, 2026-04-22)** — world swap from Tiled to image-backed central square + 3 outdoor neighbour scenes + per-building Colyseus sharding.
 > - **Phase 8 — UI wire-up.** Every React surface rebuilt on the midnight-scriptorium design system. Public `/kit` + `/preview/*` routes added.
 > - **Phase 9 — async feed + live events.** Tavern feed (tablet trigger) + `/dashboard/events` + verdigris live-now banner + YouTube stage embed.
 > - **Phase 10 — the Scribe.** AI course maker at `/dashboard/courses/conjure` + TipTap WYSIWYG lesson editor (replacing `@uiw/react-md-editor`).
-> - **Phase 11 — the Sage.** AI guide NPC in `/world` + UI legibility audit.
+> - **Phase 11 — the Sage** *(AI portion retired in Phase 13)*. Bearded-merchant NPC in `/world` + UI legibility audit. Originally a Gemini-backed chat; replaced same week by Phase 13's static welcome (ADR 0017 supersedes 0014).
 > - **Phase 12.A — coworking productivity.** Jukebox + hourglass (shared Pomodoro) + hearth pill (occupancy) + focus pill ("what I'm working on") wired to objects in the coworking-inside tent. 12.B (bookshelf / easel / round-table) deferred indefinitely pending usage data.
+> - **Phase 13 — sage as static welcome.** Ripped the AI Sage chat. The wanderer's popup is now a static "welcome, traveller" panel + four flip cards introducing Academy / Square / Dashboard / Coworking. Zero recurring API cost; the Scribe's Gemini wiring is untouched.
 >
 > The phase-plan format below was kept as the source of truth for the original 12-week scope; new phases follow the **Sub-phase ritual** codified in `CLAUDE.md` (plan → implement → test → review → commit → log per sub-phase) and ship under their own `phases/phase-NN_plan.md` + `phase-NN_status.md`.
 

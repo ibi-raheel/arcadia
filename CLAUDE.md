@@ -101,7 +101,7 @@ The MVP documents are the source of truth for scope, architecture, and sequencin
 
 ## Naming conventions
 
-- **Phase plans:** `phase-NN_plan.md` starting at `phase-00_plan.md` (Foundation). Six plans for the MVP core (`phase-00` through `phase-05`); extension phases (`phase-06` through `phase-12`) added 2026-04-22 onward as the build kept compounding past the original scope. Phase 12.A closed 2026-04-25.
+- **Phase plans:** `phase-NN_plan.md` starting at `phase-00_plan.md` (Foundation). Six plans for the MVP core (`phase-00` through `phase-05`); extension phases (`phase-06` through `phase-13`) added 2026-04-22 onward as the build kept compounding past the original scope. Phase 12.A closed and Phase 13 (sage as static welcome — ADR 0017 supersedes 0014) shipped 2026-04-25.
 - **Phase status logs:** `phase-NN_status.md`
 - **Feature specs:** `feature-name_spec.md` (kebab-case)
 - **Architecture docs:** `topic.md` in `/planning/architecture/` (e.g. `rendering.md`, `realtime.md`, `data-model.md`, `auth.md`)
