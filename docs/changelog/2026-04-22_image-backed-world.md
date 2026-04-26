@@ -1,5 +1,7 @@
 # 2026-04-22 — Image-backed world + outdoor areas + per-building Colyseus
 
+> **Follow-up hotfix 2026-04-25 (PR #44):** the *server's* room-bounds in `apps/game-server/src/rooms/room-config.ts` were not updated alongside this client-side migration. `world-realm1` and `tavern-realm1` kept the old iso bounds (`±1200 / -100..1000` and `±600 / -100..600`), so `applyMove` silently clamped any incoming MOVE coord outside those ranges — peers saw each other at the clamped position. See [`2026-04-25_hotfix-server-room-bounds.md`](2026-04-25_hotfix-server-room-bounds.md) for the full diagnosis. Lesson worth recording: any world-rendering rebuild needs a multi-client smoke test before it ships.
+
 Replaces the Tiled orthogonal town square (ADR 0007, shipped 2026-04-22 earlier today) with an image-backed Phaser scene at `/world`. Adds three new outdoor image-backed scenes + one new multiplayer interior. Each outdoor scene sits between the square and the existing interiors and uses a SPACE-prompt mechanic at building entrances. The three tavern doors and five coworking tents are now distinct Colyseus "buildings" that auto-shard at 20-person capacity.
 
 ## Routes

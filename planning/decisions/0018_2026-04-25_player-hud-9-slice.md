@@ -122,10 +122,10 @@ phases: 14.0 plan + ADR + asset ingest, 14.1 shared progress
 helper + extended fetchSession, 14.2 PlayerHud component, 14.3
 mount across game pages, 14.4 docs.
 
-**14.5 — Post-ship polish (PR #30 → #42, all 2026-04-25).** The
+**14.5 — Post-ship polish (PR #30 → #45, all 2026-04-25).** The
 initial ship used a two-corner layout (`AvatarBadge` top-left +
 `XPLevelBadge` top-right) and `position: fixed`. After the user
-saw it in-world, eleven polish PRs reshaped the design (counting
+saw it in-world, twelve polish PRs reshaped the design (counting
 doc sweeps and one short-lived intermediate) without re-opening
 any sub-phase:
 
@@ -172,12 +172,16 @@ any sub-phase:
   bold → `'JetBrains Mono', Menlo, Consolas, monospace`. The
   badge palette echoes the HUD shield in a smaller form factor.
   `AvatarVisuals` shape grew `levelBadge` + `levelText` fields;
-  layout `[badge][6 px gap][name]` centred under the avatar. New
+  layout `[badge][gap][name]` centred under the avatar. New
   `setVisualsNameplateVisible(visuals, visible)` helper toggles
   all three pieces together, used by `LocalAvatar` to hide its
   own nameplate.
+- PR #45 bumped nameplate sizes a touch after the user said the
+  badge + text read small at the initial 10/12/15 dimensions:
+  `NAMEPLATE_BADGE_RADIUS` 10 → 12, `NAMEPLATE_BADGE_GAP` 6 → 7,
+  level digit 12px → 14px, name 15px → 17px.
 
-The four polish PRs are documented in the Phase 14 changelog
-("Polish trail" section). The decision rationale (Kenney 9-slice
-+ SVG shield + CSS-token fill) above is still load-bearing —
-none of the polish overturned it.
+The polish PRs are documented in the Phase 14 changelog ("Polish
+trail" section). The decision rationale (Kenney 9-slice + SVG
+shield + CSS-token fill) above is still load-bearing — none of
+the polish overturned it.
