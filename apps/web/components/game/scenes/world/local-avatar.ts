@@ -14,6 +14,7 @@ import type { AvatarAction, TileCoord } from '../shared/types';
 import { animationKey } from './avatar-animations';
 import {
   createAvatarVisuals,
+  setVisualsNameplateVisible,
   destroyVisuals,
   setVisualsDepth,
   setVisualsFocus,
@@ -78,7 +79,7 @@ export class LocalAvatar {
     // HUD bar at the top of the screen, so the in-world nameplate above
     // their own avatar is redundant. Remote peers (RemoteAvatar) keep
     // theirs — that's the only way to identify other people in the room.
-    this.visuals.nameText.setVisible(false);
+    setVisualsNameplateVisible(this.visuals, false);
 
     const bodyOffset = options.bodyOffset ?? cfg.bodyOffset;
     scene.physics.add.existing(this.visuals.gameObject);
