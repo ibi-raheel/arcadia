@@ -109,7 +109,6 @@ export function AmbientMusic(): React.JSX.Element {
 
   return (
     <>
-      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <audio
         ref={audioRef}
         src={TRACK_SRC}
