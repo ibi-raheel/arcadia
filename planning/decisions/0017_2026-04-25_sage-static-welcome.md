@@ -28,7 +28,7 @@ team-authored static surface does that better than an LLM call.
 
 Replace the Sage's chat UI with a **static welcome panel + four
 flip cards** introducing Arcadia's main neighbourhoods:
-**Academy, Square, Dashboard, Coworking**. Each card has a front
+**Academy, Square, Tavern, Coworking** (post-decision PR #39 swapped the third card from Dashboard → Tavern; the dashboard is creator-only, so Tavern reaches every traveller). Each card has a front
 (sigil + label + tagline) and a back (2–3 sentences + a
 navigation hint). Click / Enter / Space flips the card.
 

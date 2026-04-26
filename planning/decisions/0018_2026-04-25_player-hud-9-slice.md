@@ -122,11 +122,12 @@ phases: 14.0 plan + ADR + asset ingest, 14.1 shared progress
 helper + extended fetchSession, 14.2 PlayerHud component, 14.3
 mount across game pages, 14.4 docs.
 
-**14.5 — Post-ship polish (PR #30 → #36, all 2026-04-25).** The
+**14.5 — Post-ship polish (PR #30 → #42, all 2026-04-25).** The
 initial ship used a two-corner layout (`AvatarBadge` top-left +
 `XPLevelBadge` top-right) and `position: fixed`. After the user
-saw it in-world, seven polish PRs reshaped the design without
-re-opening any sub-phase:
+saw it in-world, eleven polish PRs reshaped the design (counting
+doc sweeps and one short-lived intermediate) without re-opening
+any sub-phase:
 
 - The two-corner panels were consolidated into one full-width
   `PlayerBar` with the shield as the left anchor (avatar circle
@@ -158,6 +159,23 @@ re-opening any sub-phase:
   per user feedback).
 - The Chat icon was added between Profile and Quests (PR #36) —
   the menu now reads Profile · Chat · Quests · Events · Settings.
+- The HUD username font swapped from IM Fell italic 17px →
+  JetBrains Mono 600/15px (PR #38) so it pairs with the Shield
+  digit. Same PR hid the local player's in-world nameplate via
+  `LocalAvatar`; remote peers keep theirs (multiplayer would be
+  anonymous otherwise).
+- Remote nameplate format: PR #40 tried `(2) Sample` (parens-
+  prefix, single Phaser Text) — superseded ten minutes later by
+  PR #42, which replaced the parens with a real Phaser `Arc`
+  badge (radius 10, dark `--ink` fill, 1.5 px bronze stroke,
+  gilt 12 px digit centred) and switched the name font Georgia
+  bold → `'JetBrains Mono', Menlo, Consolas, monospace`. The
+  badge palette echoes the HUD shield in a smaller form factor.
+  `AvatarVisuals` shape grew `levelBadge` + `levelText` fields;
+  layout `[badge][6 px gap][name]` centred under the avatar. New
+  `setVisualsNameplateVisible(visuals, visible)` helper toggles
+  all three pieces together, used by `LocalAvatar` to hide its
+  own nameplate.
 
 The four polish PRs are documented in the Phase 14 changelog
 ("Polish trail" section). The decision rationale (Kenney 9-slice
