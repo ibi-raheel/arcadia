@@ -2,12 +2,13 @@
 
 Source plan: `phase-14_plan.md`. Entries chronological, newest on top.
 
-## 2026-04-25 — 14.5 · post-ship polish (PR #30 → #42 trail)
+## 2026-04-25 — 14.5 · post-ship polish (PR #30 → #45 trail)
 
-After the initial PR #29 ship, eleven polish PRs reshaped the HUD
-based on user feedback (counting doc sweeps #34 + #37 and the
-short-lived #40 that #42 superseded). Consolidated entry rather
-than separate ones because they all landed within a few hours:
+After the initial PR #29 ship, twelve polish PRs reshaped the HUD
+based on user feedback (counting doc sweeps #34 + #37 + #43 and
+the short-lived #40 that #42 superseded). Consolidated entry
+rather than separate ones because they all landed within a few
+hours:
 
 - **PR #30 — `feat(hud): consolidate into one full-width bar`** —
   replaced the two-corner layout (`AvatarBadge` + `XPLevelBadge`)
@@ -61,17 +62,22 @@ than separate ones because they all landed within a few hours:
   asked for a real circular badge, and #42 implemented that.
 - **PR #42 — `feat(world): mono-font nameplate + circular level
   badge`** — replaces the parens prefix with a real Phaser `Arc`
-  badge (radius 10, dark `--ink` fill, 1.5 px bronze stroke, gilt
-  12 px digit centred). Nameplate font switched Georgia bold →
-  `'JetBrains Mono', Menlo, Consolas, monospace`. `AvatarVisuals`
-  shape grew `levelBadge` + `levelText`; `nameText` is now name-
-  only. Layout `[badge][6 px gap][name]` centred under the avatar.
-  New `setVisualsNameplateVisible(visuals, visible)` helper
-  toggles all three pieces together; `LocalAvatar` switched its
-  hide call to use the helper.
+  badge (dark `--ink` fill, 1.5 px bronze stroke, gilt digit
+  centred). Nameplate font switched Georgia bold → `'JetBrains
+  Mono', Menlo, Consolas, monospace`. `AvatarVisuals` shape grew
+  `levelBadge` + `levelText`; `nameText` is now name-only. Layout
+  `[badge][gap][name]` centred under the avatar. New
+  `setVisualsNameplateVisible(visuals, visible)` helper toggles
+  all three pieces together; `LocalAvatar` switched its hide
+  call to use the helper.
+- **PR #45 — `chore(world): bump nameplate sizes a touch`** —
+  per user feedback the badge + text read a bit small. Modest
+  bumps with no other layout changes: `NAMEPLATE_BADGE_RADIUS`
+  10 → 12, `NAMEPLATE_BADGE_GAP` 6 → 7, level digit font
+  `12px` → `14px`, display name font `15px` → `17px`.
 
-All eleven CI green on every merge. No phase 14 sub-phase reopened
-— this is post-ship polish on the same feature.
+All twelve CI green on every merge. No phase 14 sub-phase
+reopened — this is post-ship polish on the same feature.
 
 ## 2026-04-25 — 14.4 · docs (changelog + README + phase-plan + CLAUDE.md routing)
 

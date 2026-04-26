@@ -86,13 +86,13 @@ visible while a pomodoro is running). All three got bumped from
 `top: 16` → `top: 80` so the new global HUD sits clear above them.
 Same z-index (70), same modal-obscuration behaviour.
 
-## Polish trail (PR #30 → #42, all merged 2026-04-25)
+## Polish trail (PR #30 → #45, all merged 2026-04-25)
 
 The initial ship in PR #29 used a **two-corner layout** with
 `AvatarBadge` (top-left) + `XPLevelBadge` (top-right) both at
-`position: fixed`. Eleven polish PRs reshaped it into the final
-single-bar form (the doc sweeps PR #34 and PR #37 are also part
-of the trail; #40 was superseded by #42 within an hour):
+`position: fixed`. Twelve polish PRs reshaped it into the final
+single-bar form (the doc sweeps PR #34, PR #37, PR #43 are also
+part of the trail; #40 was superseded by #42 within an hour):
 
 - **PR #30 — `feat(hud): consolidate into one full-width bar`** —
   Replaced the two-corner layout with a single full-width
@@ -145,15 +145,21 @@ of the trail; #40 was superseded by #42 within an hour):
   before PR #42 replaced it with a real circular badge.
 - **PR #42 — `feat(world): mono-font nameplate + circular level
   badge`** — replaces the parens prefix with a real Phaser `Arc`
-  (radius 10, dark `--ink` fill, 1.5 px bronze stroke, gilt 12 px
-  digit centred), echoing the HUD shield's palette. Nameplate
-  font switched Georgia bold → `'JetBrains Mono', Menlo,
-  Consolas, monospace` (15 px bold) to match the HUD username.
-  `AvatarVisuals` shape gained `levelBadge` + `levelText` fields;
-  `nameText` now renders the display name only. Layout:
-  `[badge][6 px gap][name]` centred horizontally under the
-  avatar. New `setVisualsNameplateVisible(visuals, visible)`
-  helper toggles all three pieces together.
+  (dark `--ink` fill, 1.5 px bronze stroke, gilt digit centred),
+  echoing the HUD shield's palette. Nameplate font switched
+  Georgia bold → `'JetBrains Mono', Menlo, Consolas, monospace`
+  bold to match the HUD username. `AvatarVisuals` shape gained
+  `levelBadge` + `levelText` fields; `nameText` now renders the
+  display name only. Layout: `[badge][gap][name]` centred
+  horizontally under the avatar. New `setVisualsNameplateVisible
+  (visuals, visible)` helper toggles all three pieces together.
+- **PR #45 — `chore(world): bump nameplate sizes a touch`** —
+  per user feedback the badge + text read a bit small. Modest
+  bumps with no other layout changes: `NAMEPLATE_BADGE_RADIUS`
+  10 → 12, `NAMEPLATE_BADGE_GAP` 6 → 7, level digit font 12 →
+  14, display name font 15 → 17. `syncVisualAttachments`
+  recomputes the composite width from `nameText.displayWidth`
+  each frame so no other code needed changes.
 
 ## Files added (final state)
 
