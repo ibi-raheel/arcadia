@@ -51,7 +51,7 @@ export function TavernFeatures({ gameRef, buildingId, canPost }: Props): React.J
     return result.value;
   }, []);
   const mock = useMemo(() => ({ posts: FEED_FIXTURE.posts, events: EVENTS_FIXTURE.events }), []);
-  const { data, loading } = useFetchOrMock<{
+  const { data, loading, refetch } = useFetchOrMock<{
     readonly posts: readonly FeedPost[];
     readonly events: readonly LiveEvent[];
   }>(realFetcher, mock);
@@ -94,10 +94,18 @@ export function TavernFeatures({ gameRef, buildingId, canPost }: Props): React.J
   );
   const live = useMemo(() => liveEvent(eventsHere), [eventsHere]);
 
-  const handlePost = useCallback(async (body: string): Promise<{ ok: boolean; error?: string }> => {
-    const result = await createPost({ body, kind: 'text' });
-    return result.ok ? { ok: true } : { ok: false, error: result.error };
-  }, []);
+  const handlePost = useCallback(
+    async (body: string): Promise<{ ok: boolean; error?: string }> => {
+      const result = await createPost({ body, kind: 'text' });
+      // The server action writes the post + revalidates the cache, but
+      // useFetchOrMock holds the React state — `revalidatePath` doesn't
+      // auto-refresh client state. Without an explicit refetch, the
+      // poster never sees their own post until the modal closes + reopens.
+      if (result.ok) refetch();
+      return result.ok ? { ok: true } : { ok: false, error: result.error };
+    },
+    [refetch],
+  );
 
   const focusStage = useCallback(() => {
     // The stage is anchored in-world (see StageEmbed below); closing the
