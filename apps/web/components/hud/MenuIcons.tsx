@@ -4,10 +4,17 @@
 //
 // All icons are inline filled SVGs in the same drawing style as the
 // Shield: cut-out detail bands for contrast, themeable via
-// `.hud-icon-btn` (`color` token). No click handlers yet — wire to
-// real routes when those land.
+// `.hud-icon-btn` (`color` token).
+//
+// Wiring: each entry can carry an `href`. If set, the icon renders as
+// a Next `<Link>` (still styled as the button) and routes on click.
+// If unset, it renders as a `<button>` placeholder for future wiring.
+// Member icons stay placeholders for now — the user has design files
+// landing for the member dashboard, then we wire those.
 
 'use client';
+
+import Link from 'next/link';
 
 import './panel.css';
 
@@ -127,9 +134,14 @@ type IconEntry = {
   readonly id: string;
   readonly label: string;
   readonly Icon: (props: IconProps) => React.JSX.Element;
+  /** When set, the icon renders as a Next `<Link>` and navigates on
+   *  click. When unset, it renders as a placeholder `<button>`. */
+  readonly href?: string;
 };
 
-/** Member view: identity + social + activity + personal settings. */
+/** Member view: identity + social + activity + personal settings.
+ *  All placeholders for now — wire to real routes when the member
+ *  dashboard ships. */
 const MEMBER_ICONS: ReadonlyArray<IconEntry> = [
   { id: 'profile', label: 'Profile', Icon: ProfileIcon },
   { id: 'chat', label: 'Chat', Icon: ChatIcon },
@@ -138,13 +150,17 @@ const MEMBER_ICONS: ReadonlyArray<IconEntry> = [
   { id: 'settings', label: 'Settings', Icon: SettingsIcon },
 ];
 
-/** Creator / admin view: the studio's day-to-day tools. */
+/** Creator / admin view: the studio's day-to-day tools. Each links
+ *  to the matching dashboard tab. */
 const CREATOR_ICONS: ReadonlyArray<IconEntry> = [
-  { id: 'courses', label: 'Courses', Icon: QuestsIcon }, // scroll re-used
-  { id: 'events', label: 'Events', Icon: EventsIcon },
-  { id: 'members', label: 'Members', Icon: MembersIcon },
-  { id: 'billing', label: 'Billing', Icon: BillingIcon },
-  { id: 'settings', label: 'Settings', Icon: SettingsIcon },
+  { id: 'courses', label: 'Courses', Icon: QuestsIcon, href: '/dashboard/courses' },
+  { id: 'events', label: 'Events', Icon: EventsIcon, href: '/dashboard/events' },
+  // Tab route stays `/dashboard/folk`; only the user-facing label is
+  // "Members" (renamed in DashboardShell tabs at the same time).
+  { id: 'members', label: 'Members', Icon: MembersIcon, href: '/dashboard/folk' },
+  // Same here — tab route is `/dashboard/payouts`; label is "Billing".
+  { id: 'billing', label: 'Billing', Icon: BillingIcon, href: '/dashboard/payouts' },
+  { id: 'settings', label: 'Settings', Icon: SettingsIcon, href: '/dashboard/settings' },
 ];
 
 export type HudRole = 'member' | 'creator' | 'admin';
@@ -158,21 +174,27 @@ export function MenuIcons({ role = 'member' }: Props): React.JSX.Element {
   const icons = role === 'member' ? MEMBER_ICONS : CREATOR_ICONS;
   return (
     <div className="hud-icon-row">
-      {icons.map(({ id, label, Icon }) => (
-        <button
-          key={id}
-          type="button"
-          className="hud-icon-btn"
-          aria-label={label}
-          title={label}
-          // Placeholders — wired up in a follow-up phase.
-          onClick={() => {
-            /* no-op: placeholder */
-          }}
-        >
-          <Icon />
-        </button>
-      ))}
+      {icons.map(({ id, label, Icon, href }) =>
+        href ? (
+          <Link key={id} href={href} className="hud-icon-btn" aria-label={label} title={label}>
+            <Icon />
+          </Link>
+        ) : (
+          <button
+            key={id}
+            type="button"
+            className="hud-icon-btn"
+            aria-label={label}
+            title={label}
+            // Placeholder — no href yet.
+            onClick={() => {
+              /* no-op: placeholder */
+            }}
+          >
+            <Icon />
+          </button>
+        ),
+      )}
     </div>
   );
 }

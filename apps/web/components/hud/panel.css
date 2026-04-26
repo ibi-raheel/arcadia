@@ -87,6 +87,10 @@
   color: var(--bronze-bright, #d4a868);
   cursor: pointer;
   padding: 0;
+  /* Reset anchor defaults — `MenuIcons` renders this class on either a
+     `<button>` (member placeholders) or a Next `<Link>` (creator icons
+     that route to dashboard tabs). */
+  text-decoration: none;
   transition: transform 120ms ease-out, color 120ms ease-out, filter 120ms ease-out;
 }
 .hud-icon-btn:hover {
