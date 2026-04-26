@@ -162,14 +162,20 @@
 /* Decorative divider PNGs flanking the location label. They take all
  * available space on each side so the label stays dead-centre. The
  * Kenney divider is a thin centred line so stretching it horizontally
- * looks correct (no end-cap distortion). */
+ * looks correct (no end-cap distortion). Height was 22 px; trimmed to
+ * 15 px (~30% smaller) per user — was dominating the middle section. */
 .hud-divider {
   flex: 1 1 0;
   min-width: 0;
-  height: 22px;
+  height: 15px;
   object-fit: contain;
   opacity: 0.85;
   image-rendering: pixelated;
+}
+/* Right-side divider mirrors the left so the decorative cap points
+ * outward on both ends. Same PNG, flipped via CSS. */
+.hud-divider-flipped {
+  transform: scaleX(-1);
 }
 
 /* Responsive icon scaling — narrow viewports (phone, ~360–700 px)

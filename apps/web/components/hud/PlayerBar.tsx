@@ -91,7 +91,11 @@ export function PlayerBar({
       <div className="hud-section hud-section-middle" aria-label={`location: ${location}`}>
         <img src="/hud/kenney/divider-bronze.png" alt="" className="hud-divider" />
         <span className="hud-location">{location}</span>
-        <img src="/hud/kenney/divider-bronze.png" alt="" className="hud-divider" />
+        <img
+          src="/hud/kenney/divider-bronze.png"
+          alt=""
+          className="hud-divider hud-divider-flipped"
+        />
       </div>
 
       {/* RIGHT 1/3 — menu icons, justify-end so they sit flush right.
