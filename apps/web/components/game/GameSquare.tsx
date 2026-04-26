@@ -18,6 +18,7 @@ import { BuildingTransition } from './BuildingTransition';
 import { LevelUpBanner } from './LevelUpBanner';
 import { PlayerHud } from '@/components/hud/PlayerHud';
 import { useLevelSync } from './net/use-level-sync';
+import { useRoomOccupants } from './net/use-room-occupants';
 import { connectToRoom, type ColyseusConnection } from './net/colyseus-client';
 import { BootScene } from './scenes/boot/BootScene';
 import {
@@ -102,6 +103,7 @@ export default function GameSquare(): React.JSX.Element {
   const [connectError, setConnectError] = useState<string | null>(null);
   const [preloadProgress, setPreloadProgress] = useState<number | null>(null);
   const [colyseusConn, setColyseusConn] = useState<ColyseusConnection | null>(null);
+  const occupants = useRoomOccupants(colyseusConn);
 
   // Re-entry continuity: `?from=<origin>` spawns the avatar at the bridge
   // they just walked through instead of the default centre spawn.
@@ -227,6 +229,7 @@ export default function GameSquare(): React.JSX.Element {
           initialXp={fetchState.member.xp}
           location="The Square"
           role={fetchState.role}
+          occupants={occupants}
           loaded={sceneReady}
         />
       )}

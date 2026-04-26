@@ -216,6 +216,7 @@ export default function GameOutdoor({
           initialXp={fetchState.member.xp}
           location={spec.transitionName}
           role={fetchState.role}
+          occupants={1}
           loaded={sceneReady}
         />
       )}
