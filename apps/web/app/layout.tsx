@@ -10,6 +10,8 @@ import {
 import './globals.css';
 import './scriptorium.css';
 
+import { AmbientMusic } from '@/components/audio/AmbientMusic';
+
 // Midnight Scriptorium — six faces. Each binds to its --font-* CSS variable
 // consumed by globals.css + Tailwind utilities (`font-display`, etc). Weights
 // minimal — we mostly italicize / letter-space the Regular cut. See
@@ -75,7 +77,14 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${fontVars} antialiased`}>{children}</body>
+      <body className={`${fontVars} antialiased`}>
+        {children}
+        {/* Sibling-of-children placement so the audio element survives
+            every client-side navigation (root layout doesn't unmount).
+            The component itself paths-gates: silent on /login, /signup,
+            /onboarding/*; plays elsewhere. */}
+        <AmbientMusic />
+      </body>
     </html>
   );
 }
