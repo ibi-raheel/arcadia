@@ -81,7 +81,11 @@ const VARIANT_MAP: Record<OutdoorVariant, VariantSpec> = {
 type SessionFetch =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; member: SceneMember };
+  | {
+      status: 'ready';
+      member: SceneMember;
+      role: 'member' | 'creator' | 'admin';
+    };
 
 async function fetchSession(): Promise<SessionFetch> {
   const supabase = getSupabaseBrowserClient();
@@ -94,7 +98,7 @@ async function fetchSession(): Promise<SessionFetch> {
   }
   const { data, error } = await supabase
     .from('memberships')
-    .select('avatar_id, display_name, realm_id, xp')
+    .select('avatar_id, display_name, realm_id, role, xp')
     .eq('member_id', session.user.id)
     .maybeSingle();
   if (error) return { status: 'error', message: error.message };
@@ -106,6 +110,10 @@ async function fetchSession(): Promise<SessionFetch> {
     return { status: 'error', message: 'No realm for member.' };
   }
   const avatarId: AvatarId = data.avatar_id;
+  const role =
+    data.role === 'creator' || data.role === 'admin'
+      ? (data.role as 'creator' | 'admin')
+      : 'member';
   return {
     status: 'ready',
     member: {
@@ -115,6 +123,7 @@ async function fetchSession(): Promise<SessionFetch> {
       displayName: data.display_name ?? 'Player',
       xp: typeof data.xp === 'number' ? data.xp : 0,
     },
+    role,
   };
 }
 
@@ -206,6 +215,7 @@ export default function GameOutdoor({
           displayName={fetchState.member.displayName}
           initialXp={fetchState.member.xp}
           location={spec.transitionName}
+          role={fetchState.role}
           loaded={sceneReady}
         />
       )}

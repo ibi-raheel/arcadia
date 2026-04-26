@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 import { PlayerBar } from './PlayerBar';
+import type { HudRole } from './MenuIcons';
 
 type Props = {
   readonly memberId: string;
@@ -22,6 +23,8 @@ type Props = {
   /** Place name shown in the middle of the bar (e.g. "The Square",
    *  "The Iron Chalice", "Tent 3", "Academy Grounds"). */
   readonly location: string;
+  /** Picks the right-section icon set. Default 'member'. */
+  readonly role?: HudRole;
   /** When false (scene still preloading), the bar reserves layout
    *  space but renders invisible. Default true. */
   readonly loaded?: boolean;
@@ -32,6 +35,7 @@ export function PlayerHud({
   displayName,
   initialXp,
   location,
+  role,
   loaded = true,
 }: Props): React.JSX.Element {
   const [xp, setXp] = useState(initialXp);
@@ -67,5 +71,7 @@ export function PlayerHud({
     };
   }, [memberId]);
 
-  return <PlayerBar displayName={displayName} xp={xp} location={location} loaded={loaded} />;
+  return (
+    <PlayerBar displayName={displayName} xp={xp} location={location} role={role} loaded={loaded} />
+  );
 }

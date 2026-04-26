@@ -1,9 +1,11 @@
-// Top-right menu — four placeholder icon buttons (Profile, Quests,
-// Events, Settings). Inline SVGs in the same drawing style as the
-// Shield: pixel-art-flavoured strokes on `currentColor`, themeable
-// via `.hud-icon-btn` (`color` token). No click handlers yet — all
-// four are placeholders flagged with `aria-label` so the wiring is
-// trivial when the routes land.
+// Top-right menu — role-aware. Members get the "what's around me" set
+// (Profile, Chat, Quests, Events, Settings); creators + admins get the
+// creator-tooling set (Courses, Events, Members, Billing, Settings).
+//
+// All icons are inline filled SVGs in the same drawing style as the
+// Shield: cut-out detail bands for contrast, themeable via
+// `.hud-icon-btn` (`color` token). No click handlers yet — wire to
+// real routes when those land.
 
 'use client';
 
@@ -39,6 +41,7 @@ function ChatIcon({ size = 28 }: IconProps): React.JSX.Element {
 
 function QuestsIcon({ size = 28 }: IconProps): React.JSX.Element {
   // Filled scroll with two darker text bands cut out of it.
+  // (Reused as the "Courses" icon in the creator set.)
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden>
       <path
@@ -67,6 +70,59 @@ function EventsIcon({ size = 28 }: IconProps): React.JSX.Element {
   );
 }
 
+function MembersIcon({ size = 28 }: IconProps): React.JSX.Element {
+  // Three overlapping head + shoulders — "the folk in your realm".
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden>
+      {/* Back-left head */}
+      <circle cx="5.5" cy="7.5" r="2.4" fill="rgba(0,0,0,0.4)" />
+      <path
+        d="M1.5 17.5C1.5 14.3 3.4 12.5 5.5 12.5C6.4 12.5 7.2 12.7 7.9 13.1"
+        fill="rgba(0,0,0,0.4)"
+      />
+      {/* Back-right head */}
+      <circle cx="14.5" cy="7.5" r="2.4" fill="rgba(0,0,0,0.4)" />
+      <path
+        d="M12.1 13.1C12.8 12.7 13.6 12.5 14.5 12.5C16.6 12.5 18.5 14.3 18.5 17.5"
+        fill="rgba(0,0,0,0.4)"
+      />
+      {/* Front centred head */}
+      <circle cx="10" cy="6" r="2.9" fill="currentColor" />
+      <path
+        d="M4.5 17.5C4.5 13.9 6.8 11.5 10 11.5C13.2 11.5 15.5 13.9 15.5 17.5Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function BillingIcon({ size = 28 }: IconProps): React.JSX.Element {
+  // Stack of three coins with a dollar/$ sign cut out of the top one.
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden>
+      {/* Bottom coin */}
+      <ellipse cx="10" cy="15.2" rx="6.5" ry="1.7" fill="rgba(0,0,0,0.45)" />
+      {/* Middle coin */}
+      <ellipse cx="10" cy="12" rx="6.5" ry="1.7" fill="currentColor" />
+      <ellipse cx="10" cy="11.4" rx="6.5" ry="1.4" fill="rgba(0,0,0,0.25)" />
+      {/* Top coin (with $ glyph) */}
+      <ellipse cx="10" cy="8.8" rx="6.5" ry="1.7" fill="currentColor" />
+      <ellipse cx="10" cy="8.2" rx="6.5" ry="1.4" fill="currentColor" />
+      <text
+        x="10"
+        y="9.8"
+        textAnchor="middle"
+        fontFamily="'JetBrains Mono', monospace"
+        fontSize="3"
+        fontWeight="700"
+        fill="rgba(0,0,0,0.55)"
+      >
+        $
+      </text>
+    </svg>
+  );
+}
+
 function SettingsIcon({ size = 28 }: IconProps): React.JSX.Element {
   // Filled eight-tooth gear with a punched-out hub.
   return (
@@ -81,11 +137,14 @@ function SettingsIcon({ size = 28 }: IconProps): React.JSX.Element {
   );
 }
 
-const ICONS: ReadonlyArray<{
+type IconEntry = {
   readonly id: string;
   readonly label: string;
   readonly Icon: (props: IconProps) => React.JSX.Element;
-}> = [
+};
+
+/** Member view: identity + social + activity + personal settings. */
+const MEMBER_ICONS: ReadonlyArray<IconEntry> = [
   { id: 'profile', label: 'Profile', Icon: ProfileIcon },
   { id: 'chat', label: 'Chat', Icon: ChatIcon },
   { id: 'quests', label: 'Quests', Icon: QuestsIcon },
@@ -93,10 +152,27 @@ const ICONS: ReadonlyArray<{
   { id: 'settings', label: 'Settings', Icon: SettingsIcon },
 ];
 
-export function MenuIcons(): React.JSX.Element {
+/** Creator / admin view: the studio's day-to-day tools. */
+const CREATOR_ICONS: ReadonlyArray<IconEntry> = [
+  { id: 'courses', label: 'Courses', Icon: QuestsIcon }, // scroll re-used
+  { id: 'events', label: 'Events', Icon: EventsIcon },
+  { id: 'members', label: 'Members', Icon: MembersIcon },
+  { id: 'billing', label: 'Billing', Icon: BillingIcon },
+  { id: 'settings', label: 'Settings', Icon: SettingsIcon },
+];
+
+export type HudRole = 'member' | 'creator' | 'admin';
+
+type Props = {
+  /** Picks the icon set: 'member' → MEMBER_ICONS; 'creator'/'admin' → CREATOR_ICONS. */
+  readonly role?: HudRole;
+};
+
+export function MenuIcons({ role = 'member' }: Props): React.JSX.Element {
+  const icons = role === 'member' ? MEMBER_ICONS : CREATOR_ICONS;
   return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-      {ICONS.map(({ id, label, Icon }) => (
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      {icons.map(({ id, label, Icon }) => (
         <button
           key={id}
           type="button"

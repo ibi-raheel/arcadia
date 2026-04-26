@@ -253,6 +253,7 @@ export default function GameTavern(): React.JSX.Element {
           displayName={fetchState.member.displayName}
           initialXp={fetchState.member.xp}
           location={tavernName}
+          role={fetchState.role}
           loaded={sceneReady}
         />
       )}
