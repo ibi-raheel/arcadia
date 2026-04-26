@@ -17,8 +17,8 @@ export const DISPLAY_NAME_MAX = 16;
 
 // Nameplate badge dimensions (2026-04-25 — replaced the parens prefix
 // with a real circular badge to match the HUD shield's visual style).
-const NAMEPLATE_BADGE_RADIUS = 10;
-const NAMEPLATE_BADGE_GAP = 6;
+const NAMEPLATE_BADGE_RADIUS = 12;
+const NAMEPLATE_BADGE_GAP = 7;
 const NAMEPLATE_FONT_FAMILY = "'JetBrains Mono', Menlo, Consolas, monospace";
 
 export type AvatarSize = { readonly width: number; readonly height: number };
@@ -91,7 +91,7 @@ export function createAvatarVisuals(
   // pair with the level badge digit.
   const nameText = addCrispText(scene, x, y - size.height / 2 - 6, displayName, {
     fontFamily: NAMEPLATE_FONT_FAMILY,
-    fontSize: '15px',
+    fontSize: '17px',
     fontStyle: 'bold',
     color: '#fef3c7',
     stroke: '#1c1917',
@@ -106,7 +106,7 @@ export function createAvatarVisuals(
 
   const levelText = addCrispText(scene, x, y - size.height / 2 - 6, `${level}`, {
     fontFamily: NAMEPLATE_FONT_FAMILY,
-    fontSize: '12px',
+    fontSize: '14px',
     fontStyle: 'bold',
     color: '#e7c66c',
   }).setOrigin(0.5, 0.5);
