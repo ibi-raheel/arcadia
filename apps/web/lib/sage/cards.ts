@@ -8,7 +8,7 @@
 
 export type SageCard = {
   /** Stable id; used for React keys + analytics if we ever add it. */
-  readonly id: 'academy' | 'square' | 'dashboard' | 'coworking';
+  readonly id: 'academy' | 'square' | 'tavern' | 'coworking';
   /** Title shown on the front face. */
   readonly label: string;
   /** Single uppercase letter rendered as a wax seal on the front. */
@@ -39,12 +39,12 @@ export const SAGE_CARDS: readonly SageCard[] = [
     hint: "You're standing in it now.",
   },
   {
-    id: 'dashboard',
-    label: 'Your Dashboard',
-    sigil: 'D',
-    tagline: 'The creator workshop. Members never see it.',
-    body: 'Your dashboard is the private workshop — build courses, summon the Scribe to draft lessons from your notes, schedule events, and watch who is reading what. Anything published from here lands in the academy or market.',
-    hint: 'Open the menu in the top-right — your name, then "dashboard".',
+    id: 'tavern',
+    label: 'The Tavern',
+    sigil: 'T',
+    tagline: 'Gather, chat, watch the leaderboard, follow the feed.',
+    body: 'The tavern is the social hall. Pull up a chair to chat with whoever is there, glance at the leaderboard for the top travellers, and read the feed for ongoing discussions. The tavern also hosts live events — livestreams, Q&As, AMAs.',
+    hint: 'Walk east from the square; pick any of the three tavern doors.',
   },
   {
     id: 'coworking',
