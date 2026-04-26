@@ -1,12 +1,16 @@
 // Per-room static config: spawn positions + coarse bounds used by the MOVE
 // validator. Bounds are deliberately generous — a loose DoS guard against
 // clients claiming absurd coordinates, not a tile-perfect collision check
-// (tilemap collision is enforced client-side by Phase 1 Arcade Physics).
+// (collision is enforced client-side).
 //
-// Spawn x / y match the client's iso projection of
-// `worldSpritesConfig.avatar.spawnTile` at 64×32 (2:1): pixelX = (tx-ty)*32,
-// pixelY = (tx+ty)*16. World spawn tile is (15, 15) → (0, 480). Tavern
-// interior lands in Phase 2 Week 7 Step 10 — placeholder (0, 0) for now.
+// **Coordinate system: image-backed pixel space.** Origin (0, 0) is the
+// top-left of each scene's background PNG; positive X right, positive Y
+// down. Spawn coords + bounds must mirror what the client's
+// `*/sprites.config.ts` and `*/camera.config.ts` use — desync there
+// causes silent server-side clamping (see PR #45 fix; for the gory details
+// of the bug, the symptom was peers seeing each other at clamped coords
+// after the world swapped from the iso 30×30 map to image-backed scenes
+// on 2026-04-22 but server bounds were forgotten).
 
 export type RoomBounds = {
   readonly minX: number;
@@ -21,19 +25,21 @@ export type RoomConfig = {
 };
 
 export const ROOM_CONFIGS: Record<string, RoomConfig> = {
+  // Central square: image-backed at `public/worlds/square-2508x2508.png`.
+  // Client default spawn = `squareSpritesConfig.avatar.spawnPixel` (1254, 1380).
   'world-realm1': {
-    spawn: { x: 0, y: 480 },
-    // 30×30 iso map: screenX extent ±(29 * 32), screenY extent up to (29 * 16) + one tile
-    bounds: { minX: -1200, maxX: 1200, minY: -100, maxY: 1000 },
+    spawn: { x: 1254, y: 1380 },
+    bounds: { minX: 0, maxX: 2508, minY: 0, maxY: 2508 },
   },
+  // Tavern interior: image-backed at `public/tavern-interior.png` (1536×1024).
+  // Client default spawn = `tavernSpritesConfig.avatar.spawnPixel` (768, 960).
   'tavern-realm1': {
-    spawn: { x: 0, y: 0 },
-    // Interior room — tightened once tavern.tmj lands.
-    bounds: { minX: -600, maxX: 600, minY: -100, maxY: 600 },
+    spawn: { x: 768, y: 960 },
+    bounds: { minX: 0, maxX: 1536, minY: 0, maxY: 1024 },
   },
-  // 2026-04-22: coworking tent interior. `tavern-realm1` and this share the
-  // same RealmRoom class; per-building sharding is done via filterBy in
-  // `index.ts`, not here. Bounds sized for the 2508×2508 image.
+  // Coworking tent interior: image-backed (2508×2508). `tavern-realm1` and
+  // this share the same RealmRoom class; per-building sharding is done via
+  // filterBy in `index.ts`, not here.
   'coworking-realm1': {
     spawn: { x: 1254, y: 1254 },
     bounds: { minX: 0, maxX: 2508, minY: 0, maxY: 2508 },
