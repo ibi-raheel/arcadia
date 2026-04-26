@@ -25,6 +25,9 @@ type Props = {
   readonly location: string;
   /** Picks the right-section icon set. Default 'member'. */
   readonly role?: HudRole;
+  /** Live count of people in the current room/scene. Renders as
+   *  `(N wandering)` below the location. Omit to hide the line. */
+  readonly occupants?: number;
   /** When false (scene still preloading), the bar reserves layout
    *  space but renders invisible. Default true. */
   readonly loaded?: boolean;
@@ -36,6 +39,7 @@ export function PlayerHud({
   initialXp,
   location,
   role,
+  occupants,
   loaded = true,
 }: Props): React.JSX.Element {
   const [xp, setXp] = useState(initialXp);
@@ -72,6 +76,13 @@ export function PlayerHud({
   }, [memberId]);
 
   return (
-    <PlayerBar displayName={displayName} xp={xp} location={location} role={role} loaded={loaded} />
+    <PlayerBar
+      displayName={displayName}
+      xp={xp}
+      location={location}
+      role={role}
+      occupants={occupants}
+      loaded={loaded}
+    />
   );
 }
