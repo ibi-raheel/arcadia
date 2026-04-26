@@ -1,5 +1,5 @@
 // Full-width top HUD bar — three equal flex sections:
-//   [ left: shield + name + xp ] [ middle: ─ location ─ ] [ right: menu icons ]
+//   [ left: shield + name + xp ] [ middle: location + (N wandering) ] [ right: menu icons ]
 // Each section is `flex: 1 1 0; min-width: 0` so they're guaranteed
 // thirds at any viewport width. Right-section icons shrink on narrow
 // viewports via media queries in panel.css so they can't crowd the
@@ -24,6 +24,10 @@ type Props = {
   readonly location: string;
   /** Picks the right-section icon set. Default 'member'. */
   readonly role?: HudRole;
+  /** People in the current scene (Colyseus avatars.size, or 1 for
+   *  single-player outdoor scenes). Renders below the location label
+   *  as `(N wandering)`. Hidden if undefined. */
+  readonly occupants?: number;
   /** When false (e.g. while a scene is preloading), the bar reserves
    *  layout space but renders invisible — keeps the Phaser canvas
    *  height stable across the loading → ready transition. Default true. */
@@ -35,6 +39,7 @@ export function PlayerBar({
   xp,
   location,
   role = 'member',
+  occupants,
   loaded = true,
 }: Props): React.JSX.Element {
   const { level, percent, currentLevelXp, nextLevelXp } = progressToNextLevel(xp);
@@ -86,16 +91,22 @@ export function PlayerBar({
         </div>
       </div>
 
-      {/* MIDDLE 1/3 — `── Location ──`. The dividers `flex: 1` so they
-          fill the space on either side of the centred label. */}
-      <div className="hud-section hud-section-middle" aria-label={`location: ${location}`}>
-        <img src="/hud/kenney/divider-bronze.png" alt="" className="hud-divider" />
-        <span className="hud-location">{location}</span>
-        <img
-          src="/hud/kenney/divider-bronze.png"
-          alt=""
-          className="hud-divider hud-divider-flipped"
-        />
+      {/* MIDDLE 1/3 — location title + occupants count, both centred.
+          No dividers (removed per user — felt cluttered). */}
+      <div
+        className="hud-section hud-section-middle"
+        aria-label={
+          occupants !== undefined
+            ? `location: ${location}, ${occupants} ${occupants === 1 ? 'person' : 'people'} here`
+            : `location: ${location}`
+        }
+      >
+        <div className="hud-location-stack">
+          <span className="hud-location">{location}</span>
+          {occupants !== undefined && (
+            <span className="hud-occupants">({occupants} wandering)</span>
+          )}
+        </div>
       </div>
 
       {/* RIGHT 1/3 — menu icons, justify-end so they sit flush right.

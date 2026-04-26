@@ -157,6 +157,16 @@
   line-height: 1.1;
 }
 
+/* Stacks the location title above the occupants count. Both centred,
+ * tight gap between them. */
+.hud-location-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
 /* Centred location name in the middle section — mono italic so it
  * reads as "place title" rather than "data". */
 .hud-location {
@@ -166,27 +176,20 @@
   color: var(--gilt, #e7c66c);
   letter-spacing: 0.02em;
   white-space: nowrap;
-  flex-shrink: 0;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
 }
 
-/* Decorative divider PNGs flanking the location label. They take all
- * available space on each side so the label stays dead-centre. The
- * Kenney divider is a thin centred line so stretching it horizontally
- * looks correct (no end-cap distortion). Height was 22 px; trimmed to
- * 15 px (~30% smaller) per user — was dominating the middle section. */
-.hud-divider {
-  flex: 1 1 0;
-  min-width: 0;
-  height: 15px;
-  object-fit: contain;
+/* Live occupants count below the location, e.g. "(2 wandering)" —
+ * small, muted mono so it reads as quiet status data rather than
+ * competing with the place title. */
+.hud-occupants {
+  font-family: var(--font-mono, JetBrains Mono, monospace);
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--vellum-shadow, rgba(254, 243, 199, 0.65));
+  letter-spacing: 0.04em;
+  white-space: nowrap;
   opacity: 0.85;
-  image-rendering: pixelated;
-}
-/* Right-side divider mirrors the left so the decorative cap points
- * outward on both ends. Same PNG, flipped via CSS. */
-.hud-divider-flipped {
-  transform: scaleX(-1);
 }
 
 /* Responsive icon scaling — narrow viewports (phone, ~360–700 px)

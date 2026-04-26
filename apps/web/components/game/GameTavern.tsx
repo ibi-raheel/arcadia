@@ -21,6 +21,7 @@ import { LevelUpBanner } from './LevelUpBanner';
 import { PlayerHud } from '@/components/hud/PlayerHud';
 import { tavernDisplayName } from './scenes/shared/building-names';
 import { useLevelSync } from './net/use-level-sync';
+import { useRoomOccupants } from './net/use-room-occupants';
 import { connectToRoom, type ColyseusConnection } from './net/colyseus-client';
 import {
   TAVERN_BUILDING_ID_REGISTRY_KEY,
@@ -116,6 +117,7 @@ export default function GameTavern(): React.JSX.Element {
   const [connectError, setConnectError] = useState<string | null>(null);
   const [preloadProgress, setPreloadProgress] = useState<number | null>(null);
   const [colyseusConn, setColyseusConn] = useState<ColyseusConnection | null>(null);
+  const occupants = useRoomOccupants(colyseusConn);
 
   useLevelSync({
     memberId: fetchState.status === 'ready' ? fetchState.member.memberId : null,
@@ -254,6 +256,7 @@ export default function GameTavern(): React.JSX.Element {
           initialXp={fetchState.member.xp}
           location={tavernName}
           role={fetchState.role}
+          occupants={occupants}
           loaded={sceneReady}
         />
       )}
