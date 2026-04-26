@@ -28,7 +28,7 @@ export const SAGE_CARDS: readonly SageCard[] = [
     sigil: 'A',
     tagline: 'Where members learn from your courses.',
     body: 'The academy is a hall of study scrolls. Each course is a wing; each lesson opens like a chapter you can read at your own pace. Progress is tracked as you go, and finishing a course earns you sigils.',
-    hint: 'Look east of the square — through the academy doors.',
+    hint: 'Walk north of the square, and weave through the doors.',
   },
   {
     id: 'square',
@@ -52,6 +52,6 @@ export const SAGE_CARDS: readonly SageCard[] = [
     sigil: 'C',
     tagline: 'A quiet tent for working alongside others.',
     body: 'The coworking grove is body-doubling, by design. Step inside, queue an ambient track on the jukebox, start a Pomodoro on the hourglass, set what you are working on — and other travellers can do the same beside you, quietly.',
-    hint: 'Walk south-west from the square; through the canvas flaps.',
+    hint: 'Walk west from the square, and enter any tent you like.',
   },
 ] as const;
