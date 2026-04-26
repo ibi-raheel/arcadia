@@ -129,6 +129,17 @@
 }
 .hud-section-right {
   justify-content: flex-end;
+}
+
+/* Spacing BETWEEN menu icon buttons. Lives on the inner row wrapper
+ * (not on `.hud-section-right`) because the icons are inside a single
+ * child div — a gap on the section wouldn't separate siblings inside
+ * that wrapper, and the screenshot showed icons clustered tight as a
+ * result. Member + creator sets share this row so they get identical
+ * spacing automatically. */
+.hud-icon-row {
+  display: flex;
+  align-items: center;
   gap: 8px;
 }
 
@@ -187,7 +198,7 @@
     width: 32px;
     height: 32px;
   }
-  .hud-section-right {
+  .hud-icon-row {
     gap: 4px;
   }
 }
@@ -196,7 +207,7 @@
     width: 26px;
     height: 26px;
   }
-  .hud-section-right {
+  .hud-icon-row {
     gap: 2px;
   }
   .hud-name {

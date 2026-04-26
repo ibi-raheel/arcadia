@@ -71,51 +71,37 @@ function EventsIcon({ size = 28 }: IconProps): React.JSX.Element {
 }
 
 function MembersIcon({ size = 28 }: IconProps): React.JSX.Element {
-  // Three overlapping head + shoulders — "the folk in your realm".
+  // List glyph — three horizontal rows with bullet dots on the left.
+  // (User's fallback after the multi-silhouette didn't read at small
+  // sizes; "list" reads cleanly as "the folk in your realm".)
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden>
-      {/* Back-left head */}
-      <circle cx="5.5" cy="7.5" r="2.4" fill="rgba(0,0,0,0.4)" />
-      <path
-        d="M1.5 17.5C1.5 14.3 3.4 12.5 5.5 12.5C6.4 12.5 7.2 12.7 7.9 13.1"
-        fill="rgba(0,0,0,0.4)"
-      />
-      {/* Back-right head */}
-      <circle cx="14.5" cy="7.5" r="2.4" fill="rgba(0,0,0,0.4)" />
-      <path
-        d="M12.1 13.1C12.8 12.7 13.6 12.5 14.5 12.5C16.6 12.5 18.5 14.3 18.5 17.5"
-        fill="rgba(0,0,0,0.4)"
-      />
-      {/* Front centred head */}
-      <circle cx="10" cy="6" r="2.9" fill="currentColor" />
-      <path
-        d="M4.5 17.5C4.5 13.9 6.8 11.5 10 11.5C13.2 11.5 15.5 13.9 15.5 17.5Z"
-        fill="currentColor"
-      />
+      <circle cx="4.2" cy="6" r="1.2" fill="currentColor" />
+      <rect x="7.2" y="5.1" width="10" height="1.8" rx="0.6" fill="currentColor" />
+      <circle cx="4.2" cy="10" r="1.2" fill="currentColor" />
+      <rect x="7.2" y="9.1" width="10" height="1.8" rx="0.6" fill="currentColor" />
+      <circle cx="4.2" cy="14" r="1.2" fill="currentColor" />
+      <rect x="7.2" y="13.1" width="10" height="1.8" rx="0.6" fill="currentColor" />
     </svg>
   );
 }
 
 function BillingIcon({ size = 28 }: IconProps): React.JSX.Element {
-  // Stack of three coins with a dollar/$ sign cut out of the top one.
+  // Single coin with a prominent $ glyph centred. Earlier "stack of
+  // coins" version read as flat ellipses at small sizes and the $
+  // was almost invisible (font-size 3).
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden>
-      {/* Bottom coin */}
-      <ellipse cx="10" cy="15.2" rx="6.5" ry="1.7" fill="rgba(0,0,0,0.45)" />
-      {/* Middle coin */}
-      <ellipse cx="10" cy="12" rx="6.5" ry="1.7" fill="currentColor" />
-      <ellipse cx="10" cy="11.4" rx="6.5" ry="1.4" fill="rgba(0,0,0,0.25)" />
-      {/* Top coin (with $ glyph) */}
-      <ellipse cx="10" cy="8.8" rx="6.5" ry="1.7" fill="currentColor" />
-      <ellipse cx="10" cy="8.2" rx="6.5" ry="1.4" fill="currentColor" />
+      <circle cx="10" cy="10" r="7.2" fill="currentColor" />
+      <circle cx="10" cy="10" r="6" fill="rgba(0,0,0,0.4)" />
       <text
         x="10"
-        y="9.8"
+        y="13.6"
         textAnchor="middle"
-        fontFamily="'JetBrains Mono', monospace"
-        fontSize="3"
+        fontFamily="Georgia, 'Times New Roman', serif"
+        fontSize="10"
         fontWeight="700"
-        fill="rgba(0,0,0,0.55)"
+        fill="currentColor"
       >
         $
       </text>
@@ -171,7 +157,7 @@ type Props = {
 export function MenuIcons({ role = 'member' }: Props): React.JSX.Element {
   const icons = role === 'member' ? MEMBER_ICONS : CREATOR_ICONS;
   return (
-    <div style={{ display: 'flex', alignItems: 'center' }}>
+    <div className="hud-icon-row">
       {icons.map(({ id, label, Icon }) => (
         <button
           key={id}
