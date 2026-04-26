@@ -214,6 +214,7 @@ export default function GameSquare(): React.JSX.Element {
           memberId={fetchState.member.memberId}
           displayName={fetchState.member.displayName}
           initialXp={fetchState.member.xp}
+          location="The Square"
           loaded={sceneReady}
         />
       )}

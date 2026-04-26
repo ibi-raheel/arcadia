@@ -103,3 +103,100 @@
   outline-offset: 2px;
   border-radius: 4px;
 }
+
+/* Icon glyph fills 75% of the button — overrides the SVG's intrinsic
+ * `width`/`height` attributes so that media-query button shrinkage
+ * scales the glyph too. */
+.hud-icon-btn svg {
+  width: 75%;
+  height: 75%;
+}
+
+/* Three equal sections (left / middle / right) — `flex: 1 1 0` +
+ * `min-width: 0` makes them true thirds at any viewport. */
+.hud-section {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+.hud-section-left {
+  gap: 16px;
+}
+.hud-section-middle {
+  justify-content: center;
+  gap: 12px;
+}
+.hud-section-right {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Display name in the left section — mono so it pairs with the
+ * Shield digit. */
+.hud-name {
+  font-family: var(--font-mono, JetBrains Mono, monospace);
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--vellum);
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.1;
+}
+
+/* Centred location name in the middle section — mono italic so it
+ * reads as "place title" rather than "data". */
+.hud-location {
+  font-family: var(--font-display, 'IM Fell English', Georgia, serif);
+  font-style: italic;
+  font-size: 18px;
+  color: var(--gilt, #e7c66c);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+}
+
+/* Decorative divider PNGs flanking the location label. They take all
+ * available space on each side so the label stays dead-centre. The
+ * Kenney divider is a thin centred line so stretching it horizontally
+ * looks correct (no end-cap distortion). */
+.hud-divider {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 22px;
+  object-fit: contain;
+  opacity: 0.85;
+  image-rendering: pixelated;
+}
+
+/* Responsive icon scaling — narrow viewports (phone, ~360–700 px)
+ * shrink the right-section buttons so they can't crowd the left
+ * section's name + XP bar (the 5-icon strip at full size was wider
+ * than a phone's 1/3 split). */
+@media (max-width: 900px) {
+  .hud-icon-btn {
+    width: 32px;
+    height: 32px;
+  }
+  .hud-section-right {
+    gap: 4px;
+  }
+}
+@media (max-width: 600px) {
+  .hud-icon-btn {
+    width: 26px;
+    height: 26px;
+  }
+  .hud-section-right {
+    gap: 2px;
+  }
+  .hud-name {
+    font-size: 14px;
+  }
+  .hud-location {
+    font-size: 14px;
+  }
+}
