@@ -2,6 +2,27 @@
 
 Source plan: `phase-13_plan.md`. Entries chronological, newest on top.
 
+## 2026-04-25 — 13.A · post-ship polish on Sage flip cards
+
+Two small post-ship tweaks landed after Phase 13's initial close:
+
+- **PR #39 — `feat(sage): replace Dashboard flip card with Tavern`** —
+  the Wanderer's third card swapped Dashboard → Tavern. Reasoning:
+  the dashboard is a creator-only surface; the tavern is what
+  every traveller actually uses (chat / leaderboard / feed / live
+  events — livestreams, Q&As, AMAs). `SageCard.id` type went from
+  `'academy' | 'square' | 'dashboard' | 'coworking'` →
+  `'academy' | 'square' | 'tavern' | 'coworking'`. Vitest cards
+  pin updated.
+- **PR #41 — `chore(sage): refresh direction hints`** — Academy
+  hint now reads *"Walk north of the square, and weave through
+  the doors."*; Coworking Grove hint now reads *"Walk west from
+  the square, and enter any tent you like."*. Square + Tavern
+  hints unchanged.
+
+No re-opening of any Phase 13 sub-phase — pure copy + content
+iteration on `apps/web/lib/sage/cards.ts`.
+
 ## 2026-04-25 — 13.5 · docs (changelog + README + phase-plan banner)
 
 - New `docs/changelog/2026-04-25_phase-13-sage-static-welcome.md`

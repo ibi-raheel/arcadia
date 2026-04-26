@@ -86,12 +86,13 @@ visible while a pomodoro is running). All three got bumped from
 `top: 16` → `top: 80` so the new global HUD sits clear above them.
 Same z-index (70), same modal-obscuration behaviour.
 
-## Polish trail (PR #30 → #36, all merged 2026-04-25)
+## Polish trail (PR #30 → #42, all merged 2026-04-25)
 
 The initial ship in PR #29 used a **two-corner layout** with
 `AvatarBadge` (top-left) + `XPLevelBadge` (top-right) both at
-`position: fixed`. Seven polish PRs reshaped it into the final
-single-bar form:
+`position: fixed`. Eleven polish PRs reshaped it into the final
+single-bar form (the doc sweeps PR #34 and PR #37 are also part
+of the trail; #40 was superseded by #42 within an hour):
 
 - **PR #30 — `feat(hud): consolidate into one full-width bar`** —
   Replaced the two-corner layout with a single full-width
@@ -130,6 +131,29 @@ single-bar form:
   inserted into `MenuIcons.tsx` between Profile and Quests. Menu
   now reads Profile · Chat · Quests · Events · Settings (5 icons,
   was 4). Placeholder `onClick` until the chat route lands.
+- **PR #38 — `fix(hud): mono font for username + hide local-avatar
+  nameplate`** — `PlayerBar` display name swapped from IM Fell
+  English Italic 17px → JetBrains Mono 600/15px so it reads as a
+  tabular pair with the Shield digit. `LocalAvatar` calls
+  `setVisualsNameplateVisible(visuals, false)` (helper added in
+  PR #42) — the local player's in-world nameplate is hidden
+  because the persistent HUD already shows it. Remote peers keep
+  their nameplate so multiplayer stays identifiable.
+- **PR #40 → superseded by PR #42.** PR #40 changed the remote
+  nameplate format from `Sample · Lv 2` → `(2) Sample`
+  (parens-prefix, single Phaser Text). Lived for ~10 minutes
+  before PR #42 replaced it with a real circular badge.
+- **PR #42 — `feat(world): mono-font nameplate + circular level
+  badge`** — replaces the parens prefix with a real Phaser `Arc`
+  (radius 10, dark `--ink` fill, 1.5 px bronze stroke, gilt 12 px
+  digit centred), echoing the HUD shield's palette. Nameplate
+  font switched Georgia bold → `'JetBrains Mono', Menlo,
+  Consolas, monospace` (15 px bold) to match the HUD username.
+  `AvatarVisuals` shape gained `levelBadge` + `levelText` fields;
+  `nameText` now renders the display name only. Layout:
+  `[badge][6 px gap][name]` centred horizontally under the
+  avatar. New `setVisualsNameplateVisible(visuals, visible)`
+  helper toggles all three pieces together.
 
 ## Files added (final state)
 
