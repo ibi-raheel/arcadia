@@ -14,8 +14,10 @@ introducing Arcadia's main neighbourhoods:
 
 - **The Academy** — where members learn from your courses.
 - **The Square** — the crossroads where every traveller passes.
-- **Your Dashboard** — the creator workshop. Members never see it.
+- **The Tavern** — gather, chat, watch the leaderboard, follow the feed (also hosts livestreams / Q&As / AMAs). *(Was "Your Dashboard" until PR #39 — replaced because the dashboard is creator-only, the tavern is what every member uses.)*
 - **The Coworking Grove** — a quiet tent for working alongside others.
+
+Direction hints were also iterated post-ship in PR #41: Academy now points "north of the square, weave through the doors"; Coworking Grove now points "west from the square, enter any tent you like".
 
 Each card has a front (sigil + label + tagline) and a back (2–3
 sentences of body copy + a navigation hint). Click / Enter / Space

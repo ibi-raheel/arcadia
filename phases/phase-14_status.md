@@ -2,11 +2,12 @@
 
 Source plan: `phase-14_plan.md`. Entries chronological, newest on top.
 
-## 2026-04-25 — 14.5 · post-ship polish (PR #30 → #36 trail)
+## 2026-04-25 — 14.5 · post-ship polish (PR #30 → #42 trail)
 
-After the initial PR #29 ship, seven polish PRs reshaped the HUD
-based on user feedback. Consolidated entry rather than separate
-ones because they all landed within a few hours:
+After the initial PR #29 ship, eleven polish PRs reshaped the HUD
+based on user feedback (counting doc sweeps #34 + #37 and the
+short-lived #40 that #42 superseded). Consolidated entry rather
+than separate ones because they all landed within a few hours:
 
 - **PR #30 — `feat(hud): consolidate into one full-width bar`** —
   replaced the two-corner layout (`AvatarBadge` + `XPLevelBadge`)
@@ -48,8 +49,28 @@ ones because they all landed within a few hours:
   inserted into `MenuIcons.tsx` between Profile and Quests. Menu
   now reads Profile · Chat · Quests · Events · Settings (5 icons,
   was 4). Placeholder `onClick` until the chat route lands.
+- **PR #38 — `fix(hud): mono font for username + hide local-avatar
+  nameplate`** — `PlayerBar` username swapped IM Fell italic 17px
+  → JetBrains Mono 600/15px (matches the Shield digit font).
+  `LocalAvatar.visuals.nameText.setVisible(false)` (later wrapped
+  by the PR #42 helper) — local in-world nameplate hidden because
+  the HUD already shows the same info. Remotes keep theirs.
+- **PR #40 — `feat(world): nameplate format (N) Name`** —
+  superseded by PR #42 within ten minutes. Kept the trail entry
+  for context: parens-prefix was the user's first idea, then they
+  asked for a real circular badge, and #42 implemented that.
+- **PR #42 — `feat(world): mono-font nameplate + circular level
+  badge`** — replaces the parens prefix with a real Phaser `Arc`
+  badge (radius 10, dark `--ink` fill, 1.5 px bronze stroke, gilt
+  12 px digit centred). Nameplate font switched Georgia bold →
+  `'JetBrains Mono', Menlo, Consolas, monospace`. `AvatarVisuals`
+  shape grew `levelBadge` + `levelText`; `nameText` is now name-
+  only. Layout `[badge][6 px gap][name]` centred under the avatar.
+  New `setVisualsNameplateVisible(visuals, visible)` helper
+  toggles all three pieces together; `LocalAvatar` switched its
+  hide call to use the helper.
 
-All seven CI green on every merge. No phase 14 sub-phase reopened
+All eleven CI green on every merge. No phase 14 sub-phase reopened
 — this is post-ship polish on the same feature.
 
 ## 2026-04-25 — 14.4 · docs (changelog + README + phase-plan + CLAUDE.md routing)
