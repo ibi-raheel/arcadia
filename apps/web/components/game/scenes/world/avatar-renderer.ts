@@ -22,10 +22,11 @@ export type AvatarVisuals = {
   /** Non-null only when the avatar rendered as a Sprite (sheet registered). */
   readonly sprite: Phaser.GameObjects.Sprite | null;
   /**
-   * Combined "Name · Lv N" label above the avatar. 2026-04-23: merged
-   * from separate name + level badge into a single bigger label per
-   * user feedback ("increase font size, display level right next to
-   * the name, better looking font").
+   * Combined level + name label above the avatar — formatted as
+   * `(N) DisplayName` with the level digit in parentheses on the
+   * left. 2026-04-25: switched from `Name · Lv N` per user feedback;
+   * the parens read as a small badge prefix without needing a
+   * separate Phaser Graphics circle.
    */
   readonly nameText: Phaser.GameObjects.Text;
   /**
@@ -78,7 +79,7 @@ export function createAvatarVisuals(
     displayNameRaw.trim().length > 0 ? displayNameRaw.trim() : AVATAR_NAMES[avatarId];
   const displayName = cleanName.slice(0, DISPLAY_NAME_MAX);
 
-  const nameText = addCrispText(scene, x, y - size.height / 2 - 6, `${displayName} · Lv ${level}`, {
+  const nameText = addCrispText(scene, x, y - size.height / 2 - 6, `(${level}) ${displayName}`, {
     // Warm serif face reads as an RPG nameplate and scales well
     // without getting pixel-fuzzy at the new larger size.
     fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
@@ -128,7 +129,7 @@ export function setVisualsDepth(visuals: AvatarVisuals, depth: number): void {
 /** Update the level portion of the combined nameplate. */
 export function setVisualsLevel(visuals: AvatarVisuals, level: number): void {
   visuals.level = level;
-  visuals.nameText.setText(`${visuals.displayName} · Lv ${level}`);
+  visuals.nameText.setText(`(${level}) ${visuals.displayName}`);
 }
 
 /**
