@@ -70,11 +70,13 @@ export function PlayerBar({ displayName, xp, loaded = true }: Props): React.JSX.
       >
         <span
           style={{
-            fontFamily: 'var(--font-display)',
-            fontStyle: 'italic',
-            fontSize: 17,
+            // Mono — matches the level digit on the Shield so name + level
+            // read as a tabular pair instead of two voices.
+            fontFamily: 'var(--font-mono, JetBrains Mono, monospace)',
+            fontWeight: 600,
+            fontSize: 15,
             color: 'var(--vellum)',
-            letterSpacing: 0.2,
+            letterSpacing: '-0.01em',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',

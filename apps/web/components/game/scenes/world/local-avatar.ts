@@ -74,6 +74,12 @@ export class LocalAvatar {
       options.size,
     );
 
+    // The local player's name + level already render in the persistent
+    // HUD bar at the top of the screen, so the in-world nameplate above
+    // their own avatar is redundant. Remote peers (RemoteAvatar) keep
+    // theirs — that's the only way to identify other people in the room.
+    this.visuals.nameText.setVisible(false);
+
     const bodyOffset = options.bodyOffset ?? cfg.bodyOffset;
     scene.physics.add.existing(this.visuals.gameObject);
     this.body = this.visuals.gameObject.body as Phaser.Physics.Arcade.Body;
