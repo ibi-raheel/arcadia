@@ -205,6 +205,7 @@ export default function GameOutdoor({
           memberId={fetchState.member.memberId}
           displayName={fetchState.member.displayName}
           initialXp={fetchState.member.xp}
+          location={spec.transitionName}
           loaded={sceneReady}
         />
       )}

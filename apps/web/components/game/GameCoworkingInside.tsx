@@ -30,6 +30,7 @@ import {
   COWORKING_INSIDE_SCENE_KEY,
 } from './scenes/coworking-inside/CoworkingInsideScene';
 import { isAvatarId, type AvatarId } from './scenes/shared/avatar-palette';
+import { tentDisplayName } from './scenes/shared/building-names';
 import {
   COLYSEUS_CONNECTION_REGISTRY_KEY,
   MEMBER_REGISTRY_KEY,
@@ -220,6 +221,7 @@ export default function GameCoworkingInside(): React.JSX.Element {
           memberId={fetchState.member.memberId}
           displayName={fetchState.member.displayName}
           initialXp={fetchState.member.xp}
+          location={tentDisplayName(buildingId)}
           loaded={sceneReady}
         />
       )}

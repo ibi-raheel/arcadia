@@ -19,6 +19,9 @@ type Props = {
   readonly displayName: string;
   /** XP at mount; the HUD subscribes to Realtime updates from then on. */
   readonly initialXp: number;
+  /** Place name shown in the middle of the bar (e.g. "The Square",
+   *  "The Iron Chalice", "Tent 3", "Academy Grounds"). */
+  readonly location: string;
   /** When false (scene still preloading), the bar reserves layout
    *  space but renders invisible. Default true. */
   readonly loaded?: boolean;
@@ -28,6 +31,7 @@ export function PlayerHud({
   memberId,
   displayName,
   initialXp,
+  location,
   loaded = true,
 }: Props): React.JSX.Element {
   const [xp, setXp] = useState(initialXp);
@@ -63,5 +67,5 @@ export function PlayerHud({
     };
   }, [memberId]);
 
-  return <PlayerBar displayName={displayName} xp={xp} loaded={loaded} />;
+  return <PlayerBar displayName={displayName} xp={xp} location={location} loaded={loaded} />;
 }
