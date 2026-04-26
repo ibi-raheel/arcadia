@@ -15,6 +15,12 @@ export type AvatarBody = Phaser.GameObjects.Rectangle | Phaser.GameObjects.Sprit
 
 export const DISPLAY_NAME_MAX = 16;
 
+// Nameplate badge dimensions (2026-04-25 — replaced the parens prefix
+// with a real circular badge to match the HUD shield's visual style).
+const NAMEPLATE_BADGE_RADIUS = 10;
+const NAMEPLATE_BADGE_GAP = 6;
+const NAMEPLATE_FONT_FAMILY = "'JetBrains Mono', Menlo, Consolas, monospace";
+
 export type AvatarSize = { readonly width: number; readonly height: number };
 
 export type AvatarVisuals = {
@@ -22,13 +28,15 @@ export type AvatarVisuals = {
   /** Non-null only when the avatar rendered as a Sprite (sheet registered). */
   readonly sprite: Phaser.GameObjects.Sprite | null;
   /**
-   * Combined level + name label above the avatar — formatted as
-   * `(N) DisplayName` with the level digit in parentheses on the
-   * left. 2026-04-25: switched from `Name · Lv N` per user feedback;
-   * the parens read as a small badge prefix without needing a
-   * separate Phaser Graphics circle.
+   * Display name in mono — sits to the right of the level badge.
+   * 2026-04-25: split from the combined label into name-only when the
+   * level badge became a real circular Arc.
    */
   readonly nameText: Phaser.GameObjects.Text;
+  /** Circular bronze-rimmed badge containing the level digit. */
+  readonly levelBadge: Phaser.GameObjects.Arc;
+  /** Single-digit level text centred inside `levelBadge`. */
+  readonly levelText: Phaser.GameObjects.Text;
   /**
    * Phase 12 — "what I'm working on" line shown above the nameplate
    * inside coworking tents. Only visible when `currentFocus` is
@@ -79,16 +87,29 @@ export function createAvatarVisuals(
     displayNameRaw.trim().length > 0 ? displayNameRaw.trim() : AVATAR_NAMES[avatarId];
   const displayName = cleanName.slice(0, DISPLAY_NAME_MAX);
 
-  const nameText = addCrispText(scene, x, y - size.height / 2 - 6, `(${level}) ${displayName}`, {
-    // Warm serif face reads as an RPG nameplate and scales well
-    // without getting pixel-fuzzy at the new larger size.
-    fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
-    fontSize: '20px',
+  // Display name — mono, matches the HUD username font for a tabular
+  // pair with the level badge digit.
+  const nameText = addCrispText(scene, x, y - size.height / 2 - 6, displayName, {
+    fontFamily: NAMEPLATE_FONT_FAMILY,
+    fontSize: '15px',
     fontStyle: 'bold',
     color: '#fef3c7',
     stroke: '#1c1917',
     strokeThickness: 4,
-  }).setOrigin(0.5, 1);
+  }).setOrigin(0, 0.5);
+
+  // Circular level badge — dark fill, bronze rim, gilt digit. Echoes
+  // the HUD shield's palette in a smaller form factor.
+  const levelBadge = scene.add
+    .circle(x, y - size.height / 2 - 6, NAMEPLATE_BADGE_RADIUS, 0x140a05)
+    .setStrokeStyle(1.5, 0x8a6a3a, 1);
+
+  const levelText = addCrispText(scene, x, y - size.height / 2 - 6, `${level}`, {
+    fontFamily: NAMEPLATE_FONT_FAMILY,
+    fontSize: '12px',
+    fontStyle: 'bold',
+    color: '#e7c66c',
+  }).setOrigin(0.5, 0.5);
 
   // Focus line — sits above the nameplate. Italic, slightly muted,
   // hidden by default (empty text is invisible thanks to the
@@ -105,31 +126,67 @@ export function createAvatarVisuals(
     .setOrigin(0.5, 1)
     .setVisible(false);
 
-  return { gameObject, sprite, nameText, focusText, size, displayName, level };
+  const visuals: AvatarVisuals = {
+    gameObject,
+    sprite,
+    nameText,
+    levelBadge,
+    levelText,
+    focusText,
+    size,
+    displayName,
+    level,
+  };
+  // Initial layout — positions badge + name as one centred composite.
+  syncVisualAttachments(visuals);
+  return visuals;
 }
 
 /**
- * Keep the name label glued to the current body position. Called every
- * frame from the scene's update() loop.
+ * Keep the nameplate composite (level badge + name) glued to the body
+ * position. Centres `[badge][gap][name]` horizontally under the avatar.
+ * Called every frame from the scene's update() loop.
  */
 export function syncVisualAttachments(visuals: AvatarVisuals): void {
   const dy = visuals.size.height / 2;
   const namePlateY = visuals.gameObject.y - dy - 6;
-  visuals.nameText.setPosition(visuals.gameObject.x, namePlateY);
+  const totalWidth =
+    NAMEPLATE_BADGE_RADIUS * 2 + NAMEPLATE_BADGE_GAP + visuals.nameText.displayWidth;
+  const startX = visuals.gameObject.x - totalWidth / 2;
+
+  visuals.levelBadge.setPosition(startX + NAMEPLATE_BADGE_RADIUS, namePlateY);
+  visuals.levelText.setPosition(visuals.levelBadge.x, visuals.levelBadge.y);
+  visuals.nameText.setPosition(
+    startX + NAMEPLATE_BADGE_RADIUS * 2 + NAMEPLATE_BADGE_GAP,
+    namePlateY,
+  );
   visuals.focusText.setPosition(visuals.gameObject.x, namePlateY - 26);
 }
 
 /** Apply the same depth to body + attachments (y-sort). */
 export function setVisualsDepth(visuals: AvatarVisuals, depth: number): void {
   visuals.gameObject.setDepth(depth);
+  visuals.levelBadge.setDepth(depth + 0.1);
+  visuals.levelText.setDepth(depth + 0.11);
   visuals.nameText.setDepth(depth + 0.1);
   visuals.focusText.setDepth(depth + 0.1);
 }
 
-/** Update the level portion of the combined nameplate. */
+/** Update the level digit shown in the badge. */
 export function setVisualsLevel(visuals: AvatarVisuals, level: number): void {
   visuals.level = level;
-  visuals.nameText.setText(`(${level}) ${visuals.displayName}`);
+  visuals.levelText.setText(`${level}`);
+}
+
+/**
+ * Toggle the entire nameplate composite (badge + level digit + name) —
+ * used by `LocalAvatar` to hide its own label since the persistent HUD
+ * already shows the local player's name + level.
+ */
+export function setVisualsNameplateVisible(visuals: AvatarVisuals, visible: boolean): void {
+  visuals.nameText.setVisible(visible);
+  visuals.levelBadge.setVisible(visible);
+  visuals.levelText.setVisible(visible);
 }
 
 /**
@@ -150,5 +207,7 @@ export function setVisualsFocus(visuals: AvatarVisuals, focus: string): void {
 export function destroyVisuals(visuals: AvatarVisuals): void {
   visuals.gameObject.destroy();
   visuals.nameText.destroy();
+  visuals.levelBadge.destroy();
+  visuals.levelText.destroy();
   visuals.focusText.destroy();
 }
