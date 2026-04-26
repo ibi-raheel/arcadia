@@ -109,6 +109,33 @@ export class RealmRoom extends Room<RealmRoomState> {
   }
 
   override onJoin(client: Client, _options: unknown, auth: AuthInfo): void {
+    // Single-session-per-member enforcement (last-writer-wins).
+    // If this member already has an avatar in the room (e.g. they
+    // opened a second browser tab), evict the older session so only
+    // the new tab is connected. Without this, the same person
+    // appears twice in the world.
+    //
+    // Limitation: this only catches duplicates in the SAME shard.
+    // With per-building filterBy + 20-cap auto-sharding, two tabs
+    // for the same building usually land in the same shard, so this
+    // covers the common case. Cross-shard enforcement would need
+    // an external presence service (Redis pub/sub) — out of scope.
+    for (const [sessionId, avatar] of this.state.avatars.entries()) {
+      if (avatar.memberId !== auth.memberId) continue;
+      console.log(
+        `[${this.roomName}] evicting stale session ${sessionId} for member=${auth.memberId} (new tab joined)`,
+      );
+      const stale = this.clients.find((c) => c.sessionId === sessionId);
+      if (stale) {
+        // 4001 = custom Colyseus close code: "logged in elsewhere".
+        // The client treats it as a non-reconnectable disconnect.
+        stale.leave(4001);
+      }
+      // Delete from state immediately so the new join's onAdd
+      // doesn't see the duplicate even before onLeave fires.
+      this.state.avatars.delete(sessionId);
+    }
+
     console.log(`[${this.roomName}] join ${client.sessionId} member=${auth.memberId}`);
     const { spawn } = getRoomConfig(this.roomName);
     this.state.avatars.set(client.sessionId, createAvatarState(auth, spawn));

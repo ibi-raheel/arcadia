@@ -66,6 +66,13 @@ export type ColyseusConnection = {
 };
 
 export const INTENTIONAL_LEAVE_CODE = 1000;
+/**
+ * Server-side custom close code: "evicted because the same member joined
+ * from another tab". Used by `RealmRoom.onJoin` for single-session
+ * enforcement. The client must NOT auto-reconnect on this code (would
+ * cause a kick loop with the new tab).
+ */
+export const EVICTED_BY_NEW_SESSION_CODE = 4001;
 
 export const RECONNECT_BASE_MS = 1000;
 export const RECONNECT_MAX_DELAY_MS = 30000;
@@ -82,8 +89,9 @@ export function calculateReconnectDelayMs(attempt: number): number {
  * join resolves before this function returns — use `subscribeConnected` to
  * wire state handlers that also need to re-run on reconnect.
  *
- * Disconnects with code === INTENTIONAL_LEAVE_CODE do not trigger
- * reconnect. All other codes schedule a retry with `calculateReconnectDelayMs`.
+ * Disconnects with code === INTENTIONAL_LEAVE_CODE or
+ * EVICTED_BY_NEW_SESSION_CODE do not trigger reconnect. All other
+ * codes schedule a retry with `calculateReconnectDelayMs`.
  */
 export async function connectToRoom(opts: ConnectOptions): Promise<ColyseusConnection> {
   const { Client } = await import('colyseus.js');
@@ -116,6 +124,12 @@ export async function connectToRoom(opts: ConnectOptions): Promise<ColyseusConne
       currentRoom = null;
       opts.onDisconnected?.(code);
       if (intentionallyLeft || code === INTENTIONAL_LEAVE_CODE) return;
+      // Server kicked us because the same member joined from another
+      // tab. Stay disconnected — reconnecting would create a kick loop.
+      if (code === EVICTED_BY_NEW_SESSION_CODE) {
+        intentionallyLeft = true;
+        return;
+      }
       scheduleReconnect();
     });
 
