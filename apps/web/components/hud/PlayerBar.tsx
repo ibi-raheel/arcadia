@@ -14,7 +14,7 @@
 
 import { progressToNextLevel } from '@arcadia/shared';
 
-import { MenuIcons } from './MenuIcons';
+import { MenuIcons, type HudRole } from './MenuIcons';
 import { Shield } from './Shield';
 import './panel.css';
 
@@ -22,13 +22,21 @@ type Props = {
   readonly displayName: string;
   readonly xp: number;
   readonly location: string;
+  /** Picks the right-section icon set. Default 'member'. */
+  readonly role?: HudRole;
   /** When false (e.g. while a scene is preloading), the bar reserves
    *  layout space but renders invisible — keeps the Phaser canvas
    *  height stable across the loading → ready transition. Default true. */
   readonly loaded?: boolean;
 };
 
-export function PlayerBar({ displayName, xp, location, loaded = true }: Props): React.JSX.Element {
+export function PlayerBar({
+  displayName,
+  xp,
+  location,
+  role = 'member',
+  loaded = true,
+}: Props): React.JSX.Element {
   const { level, percent, currentLevelXp, nextLevelXp } = progressToNextLevel(xp);
   const widthPct = Math.round(percent * 100);
   const ariaText =
@@ -86,9 +94,12 @@ export function PlayerBar({ displayName, xp, location, loaded = true }: Props): 
         <img src="/hud/kenney/divider-bronze.png" alt="" className="hud-divider" />
       </div>
 
-      {/* RIGHT 1/3 — menu icons, justify-end so they sit flush right. */}
+      {/* RIGHT 1/3 — menu icons, justify-end so they sit flush right.
+          Icon set differs by role: members get Profile/Chat/Quests/
+          Events/Settings; creators+admins get Courses/Events/Members/
+          Billing/Settings. */}
       <div className="hud-section hud-section-right">
-        <MenuIcons />
+        <MenuIcons role={role} />
       </div>
     </div>
   );
