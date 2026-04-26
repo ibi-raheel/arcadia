@@ -42,7 +42,12 @@ const COLYSEUS_ENDPOINT = process.env.NEXT_PUBLIC_COLYSEUS_URL ?? '';
 type SessionFetch =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; member: SceneMember; accessToken: string };
+  | {
+      status: 'ready';
+      member: SceneMember;
+      accessToken: string;
+      role: 'member' | 'creator' | 'admin';
+    };
 
 async function fetchSession(): Promise<SessionFetch> {
   const supabase = getSupabaseBrowserClient();
@@ -55,7 +60,7 @@ async function fetchSession(): Promise<SessionFetch> {
   }
   const { data, error } = await supabase
     .from('memberships')
-    .select('avatar_id, display_name, realm_id, xp')
+    .select('avatar_id, display_name, realm_id, role, xp')
     .eq('member_id', session.user.id)
     .maybeSingle();
   if (error) return { status: 'error', message: error.message };
@@ -65,6 +70,10 @@ async function fetchSession(): Promise<SessionFetch> {
   }
   if (!data.realm_id) return { status: 'error', message: 'No realm for member.' };
   const avatarId: AvatarId = data.avatar_id;
+  const role =
+    data.role === 'creator' || data.role === 'admin'
+      ? (data.role as 'creator' | 'admin')
+      : 'member';
   return {
     status: 'ready',
     member: {
@@ -75,6 +84,7 @@ async function fetchSession(): Promise<SessionFetch> {
       xp: typeof data.xp === 'number' ? data.xp : 0,
     },
     accessToken: session.access_token,
+    role,
   };
 }
 
@@ -222,6 +232,7 @@ export default function GameCoworkingInside(): React.JSX.Element {
           displayName={fetchState.member.displayName}
           initialXp={fetchState.member.xp}
           location={tentDisplayName(buildingId)}
+          role={fetchState.role}
           loaded={sceneReady}
         />
       )}
