@@ -27,8 +27,11 @@ const TABS = [
   { key: 'studio', label: 'studio', href: '/dashboard' },
   { key: 'courses', label: 'courses', href: '/dashboard/courses' },
   { key: 'events', label: 'events', href: '/dashboard/events' },
-  { key: 'folk', label: 'folk', href: '/dashboard/folk' },
-  { key: 'payouts', label: 'payouts', href: '/dashboard/payouts' },
+  // 2026-04-26: tab labels renamed (HUD wiring) — `folk` → "members"
+  // and `payouts` → "billing". Routes kept as-is to avoid migration
+  // churn on bookmarks; only the visible tab text changed.
+  { key: 'folk', label: 'members', href: '/dashboard/folk' },
+  { key: 'payouts', label: 'billing', href: '/dashboard/payouts' },
   { key: 'settings', label: 'settings', href: '/dashboard/settings' },
 ] as const;
 
