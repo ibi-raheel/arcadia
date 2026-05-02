@@ -14,12 +14,15 @@ This PRD defines the Arcadia MVP — a working, demo-ready product scoped to gen
 
 The MVP demonstrates the spatial experience end-to-end across four member-facing surfaces (World, Tavern, Academy, Market) plus a creator dashboard with course builder and basic analytics. Payments are excluded.
 
-> **2026-04-25 amendment.** The original 6-phase MVP (phases 0–5) shipped 2026-04-21. Five extension phases shipped on top by 2026-04-25:
+> **2026-04-25 amendment.** The original 6-phase MVP (phases 0–5) shipped 2026-04-21. Eight extension phases shipped on top by 2026-04-26:
 >
 > - **Phase 8 — UI wire-up.** Every React surface rebuilt on the midnight-scriptorium design system.
 > - **Phase 9 — async feed + live events.** Tavern feed (tablet trigger) + `/dashboard/events`.
 > - **Phase 10 — the Scribe.** AI course maker via Gemini (`/dashboard/courses/conjure`) + TipTap WYSIWYG lesson editor (replacing `@uiw/react-md-editor`).
-> - **Phase 11 — the Sage.** AI guide NPC in `/world` (Gemini-backed chat popup grounded in the curated MVP docs + ADRs).
+> - **Phase 11 — the Sage.** AI guide NPC in `/world` (Gemini-backed chat popup grounded in the curated MVP docs + ADRs). *Retired in Phase 13 — see below.*
+> - **Phase 12.A — coworking productivity.** Jukebox + shared Pomodoro hourglass + hearth pill (occupancy) + focus pill ("what I'm working on") wired to objects in the coworking-inside tent.
+> - **Phase 13 — sage as static welcome.** Ripped the AI Sage chat (ADR 0017 supersedes 0014). Wanderer's popup is now a static panel + four flip cards (Academy / Square / Tavern / Coworking).
+> - **Phase 14 — persistent player HUD.** Full-width top bar (shield + name + XP + 5 menu icons) on every Phaser scene; creator icons open dashboard tabs as an in-world overlay (PR #57); persistent ambient music in root layout (PR #56).
 >
 > Sections below describe the MVP-as-shipped, with the AI surfaces noted inline. The "out of scope" table in §2 still reflects what was deliberately excluded from the MVP build itself.
 

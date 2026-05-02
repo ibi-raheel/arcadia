@@ -2,6 +2,61 @@
 
 Source plan: `phase-14_plan.md`. Entries chronological, newest on top.
 
+## 2026-04-26 — 14.6 · post-ship wiring (PR #48 → #57)
+
+Second polish wave on the same feature. Where 14.5 was visual
+refinement, this one was wiring: making the bar's three sections do
+real work, making the right-hand icons role-aware and clickable, and
+adding the persistent ambient music that justifies the overlay
+choice. Two unrelated fixes (single-session kick + tavern feed
+refetch) shipped in the same window so they're listed here for
+continuity rather than splitting the trail.
+
+Bundled write-up in
+[`docs/changelog/2026-04-26_phase-14-post-ship-wiring.md`](../docs/changelog/2026-04-26_phase-14-post-ship-wiring.md).
+
+- **PR #48 — three-section bar** — `.hud-section-left/-middle/-right`
+  with `flex: 1 1 0` so the three slots are real thirds. Location
+  title moved into the middle.
+- **PR #49 — role-aware right-section icons** — `MenuIcons` learned
+  a `role` prop. Members keep the original 5 placeholders;
+  creators/admins get Courses/Events/Members/Billing/Settings.
+- **PR #50 (server) — single-session-per-member** — Colyseus room
+  tracks one client per `member_id`, kicks the older session on a
+  new join with custom close code `4001`.
+  `EVICTED_BY_NEW_SESSION_CODE` exported from
+  `colyseus-client.ts`.
+- **PR #51 + #52 — divider experiment, then Billing + Members
+  redesigns** — short-lived vertical bronze dividers; reverted.
+  Multi-silhouette `MembersIcon` swapped for a list glyph; coin
+  stack `BillingIcon` swapped for a single coin with a serif `$`.
+- **PR #53 — occupants count + drop dividers** — middle section
+  now stacks the location title above a small `(N wandering)`
+  count from a new `useRoomOccupants(room)` hook. Dividers gone.
+- **PR #54 — tavern feed refetch** — `TavernFeatures.tsx` refetches
+  after `createPost` so the poster sees their own post immediately.
+- **PR #55 — wire creator icons to dashboard tabs + rename
+  Folk/Payouts** — gave each creator `IconEntry` an `href`. Visible
+  tab labels in `DashboardShell.tsx` renamed (`folk` → "members",
+  `payouts` → "billing"); routes unchanged so old bookmarks work.
+- **PR #56 — persistent ambient music** — new
+  `apps/web/components/audio/AmbientMusic.tsx` mounted as a
+  sibling of `{children}` in `apps/web/app/layout.tsx`. Survives
+  every navigation; gated silent on `/login`, `/signup`,
+  `/onboarding/*`. Track at
+  `public/audio/Woven_Paths_at_Nightfall.mp3`.
+- **PR #57 — open creator dashboard tabs as in-world overlay** —
+  the `<Link>`-based route change from #55 tore down the music +
+  Phaser canvas + Colyseus state on every click and was surfacing
+  a runtime error we couldn't reproduce in the Safari console.
+  Replaced `href` with `tab?: DashboardTab`; new
+  `DashboardOverlay.tsx` renders an iframe modal at z-index 80
+  (Esc + backdrop dismiss; `key={tab}` forces a fresh iframe on
+  switch). Dashboard pages remain reachable directly via URL.
+
+All seven CI green on every merge. Member icons remain placeholders
+pending the member-dashboard design.
+
 ## 2026-04-25 — 14.5 · post-ship polish (PR #30 → #45 trail)
 
 After the initial PR #29 ship, twelve polish PRs reshaped the HUD
