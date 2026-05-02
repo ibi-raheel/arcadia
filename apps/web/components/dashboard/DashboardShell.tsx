@@ -101,11 +101,16 @@ export function DashboardShell({ title, kicker, tagline, actions, children }: Pr
                   ← return to the world
                 </GhostButton>
               </Link>
-              <Link href="/" style={{ textDecoration: 'none' }}>
-                <GhostButton size="sm" onDark>
-                  exit
+              {/* Logout. `target="_top"` so when the dashboard is opened
+                  inside the in-world `DashboardOverlay` iframe, the
+                  signout response replaces the *parent* window — both
+                  iframe and parent end up on `/` post-redirect, instead
+                  of the parent staying authed-looking with stale state. */}
+              <form action="/api/auth/signout" method="post" target="_top" style={{ margin: 0 }}>
+                <GhostButton size="sm" onDark type="submit">
+                  logout
                 </GhostButton>
-              </Link>
+              </form>
             </div>
             <TagNav items={[...TABS]} active={active} />
             <SimulationToggle />

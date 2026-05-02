@@ -16,7 +16,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { DashboardOverlay, type DashboardTab } from './DashboardOverlay';
 import './panel.css';
@@ -174,6 +174,33 @@ type Props = {
 export function MenuIcons({ role = 'member' }: Props): React.JSX.Element {
   const icons = role === 'member' ? MEMBER_ICONS : CREATOR_ICONS;
   const [activeTab, setActiveTab] = useState<DashboardTab | null>(null);
+
+  // Pre-warm a hidden iframe pointed at /dashboard once the browser
+  // is idle. Warms the Next.js server module cache + auth-cookie
+  // round-trip + the scriptorium JS bundle so the FIRST creator-icon
+  // click drops the open-overlay latency from ~600–1500 ms down to
+  // ~50–200 ms. Gated on creator/admin role (members don't have
+  // dashboard access) and gated behind requestIdleCallback so it
+  // doesn't compete with the Phaser scene preload.
+  const isCreator = role === 'creator' || role === 'admin';
+  const [prewarm, setPrewarm] = useState(false);
+  useEffect(() => {
+    if (!isCreator) return;
+    type IdleHandle = number;
+    const ric = (window as unknown as { requestIdleCallback?: (cb: () => void) => IdleHandle })
+      .requestIdleCallback;
+    const cic = (window as unknown as { cancelIdleCallback?: (h: IdleHandle) => void })
+      .cancelIdleCallback;
+    let handle: IdleHandle | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    if (ric) handle = ric(() => setPrewarm(true));
+    else timer = setTimeout(() => setPrewarm(true), 1500);
+    return () => {
+      if (handle != null && cic) cic(handle);
+      if (timer != null) clearTimeout(timer);
+    };
+  }, [isCreator]);
+
   return (
     <>
       <div className="hud-icon-row">
@@ -193,6 +220,22 @@ export function MenuIcons({ role = 'member' }: Props): React.JSX.Element {
         ))}
       </div>
       <DashboardOverlay tab={activeTab} onClose={() => setActiveTab(null)} />
+      {isCreator && prewarm ? (
+        <iframe
+          src="/dashboard"
+          aria-hidden
+          tabIndex={-1}
+          title="dashboard prewarm"
+          style={{
+            position: 'fixed',
+            width: 0,
+            height: 0,
+            border: 0,
+            opacity: 0,
+            pointerEvents: 'none',
+          }}
+        />
+      ) : null}
     </>
   );
 }
