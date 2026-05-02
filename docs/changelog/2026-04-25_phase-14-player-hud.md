@@ -1,8 +1,9 @@
 # Phase 14 — Persistent player HUD (shield + name + XP + menu icons)
 
 **Date:** 2026-04-25
-**Branch:** `feature/player-hud` (initial ship: PR #29) + four polish PRs (#30 → #33), all merged to `main` 2026-04-25.
+**Branch:** `feature/player-hud` (initial ship: PR #29) + twelve polish PRs (#30 → #45), all merged to `main` 2026-04-25.
 **ADRs:** [0018](../../planning/decisions/0018_2026-04-25_player-hud-9-slice.md) (Kenney 9-slice + SVG shield)
+**Follow-up cluster:** the 2026-04-26 wiring batch (PR #48–#57 — three-section bar, role-aware icons, occupants count, creator icons → dashboard overlay, persistent ambient music) is captured separately in [`2026-04-26_phase-14-post-ship-wiring.md`](./2026-04-26_phase-14-post-ship-wiring.md).
 
 ## What shipped (final state, after #29 + #30 + #31 + #32 + #33)
 
@@ -20,9 +21,11 @@ Left → right inside the bar:
 - **Display name** in IM Fell English Italic.
 - **XP progress bar** — fills bronze→gilt to the ratio of XP earned
   within the current level → next level threshold.
-- **Four placeholder menu icons** — Profile / Quests / Events /
+- **Five placeholder menu icons** — Profile / Chat / Quests / Events /
   Settings — as filled SVG silhouettes (no surrounding button
-  frame).
+  frame). Chat was added in PR #36; the 2026-04-26 follow-up cluster
+  (see header) makes the right-section role-aware and wires the
+  creator set to dashboard overlays.
 
 The bar uses Kenney "Fantasy UI Borders" v1.0 (CC0), one PNG
 (`panel-bronze.png`) as a 9-sliced `border-image` over a dark
@@ -167,8 +170,9 @@ part of the trail; #40 was superseded by #42 within an hour):
   XP subscription.
 - `apps/web/components/hud/PlayerBar.tsx` — the in-flow flex bar
   rendering Shield + name + XP + MenuIcons (PR #30).
-- `apps/web/components/hud/MenuIcons.tsx` — four filled SVG icons
-  (PR #30 + #31 + #33).
+- `apps/web/components/hud/MenuIcons.tsx` — five filled SVG icons
+  (PR #30 + #31 + #33 + #36 added Chat). Made role-aware in the
+  2026-04-26 cluster.
 - `apps/web/components/hud/Shield.tsx` — inline SVG heraldic shield.
 - `apps/web/components/hud/panel.css` — `.hud-panel` border-image
   rules + `.hud-xp-track` / `.hud-xp-fill` / `.hud-icon-btn`.
@@ -216,8 +220,8 @@ Local runs:
 - `next build` — production compile succeeded.
 
 Visual verification deferred to user (no browser MCP available in
-this session): boot `/world`, confirm the HUD lands top-left + top-
-right; navigate to `/coworking/inside`, confirm the HearthPill +
-FocusPill sit BELOW the HUD without overlap; open the Sage popup,
-confirm it covers the HUD; navigate to `/academy-outside`, confirm
-the HUD persists.
+this session): boot `/world`, confirm the HUD spans the full width
+of the top edge as a single bar; navigate to `/coworking/inside`,
+confirm the HearthPill + FocusPill sit BELOW the HUD without overlap;
+open the Sage popup, confirm it covers the HUD; navigate to
+`/academy-outside`, confirm the HUD persists.
