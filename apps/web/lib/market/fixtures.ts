@@ -9,13 +9,13 @@
 
 import type { MarketItem } from './types';
 
-const PATTERNS: ReadonlyArray<MarketItem> = [
+const TEMPLATES: ReadonlyArray<MarketItem> = [
   {
-    id: 'pattern-launch-checklist',
-    category: 'patterns',
+    id: 'template-launch-checklist',
+    category: 'templates',
     title: 'The Course Launch Checklist',
     creatorName: 'Mira Hollow',
-    kicker: 'a pattern · notion doc',
+    kicker: 'a template · notion doc',
     tagline: '47 steps from idea to first sale, copy-paste into Notion.',
     description:
       'Every block I run before pressing Publish on a paid course — pricing tests, asset list, email warm-up sequence, day-of broadcast plan, refund policy template. Lifted from launches that earned $20k+ each.',
@@ -34,11 +34,11 @@ const PATTERNS: ReadonlyArray<MarketItem> = [
     owned: false,
   },
   {
-    id: 'pattern-figma-coverpack',
-    category: 'patterns',
+    id: 'template-figma-coverpack',
+    category: 'templates',
     title: 'Coverpack — 24 Course-Cover Templates',
     creatorName: 'Idris Vellum',
-    kicker: 'a pattern · figma file',
+    kicker: 'a template · figma file',
     tagline: '24 cover templates for course thumbnails, sized for every platform.',
     description:
       'Drop your title in, swap the colour, export. Sized for YouTube (1280×720), Skool (1024×512), Twitter (1600×900) and a square 1080. Includes the variable-font setup and three palette presets.',
@@ -51,11 +51,11 @@ const PATTERNS: ReadonlyArray<MarketItem> = [
     owned: false,
   },
   {
-    id: 'pattern-cohort-emails',
-    category: 'patterns',
+    id: 'template-cohort-emails',
+    category: 'templates',
     title: 'Cohort-Welcome Email Sequence',
     creatorName: 'Tama Reedwright',
-    kicker: 'a pattern · 5-email sequence',
+    kicker: 'a template · 5-email sequence',
     tagline: 'Five emails that cut your no-show rate in half.',
     description:
       'Five plain-text emails — sign-up confirm, calendar nudge, day-before, "we start in an hour", and a recap. The sequence I run for every cohort. Variables marked, plug into your ESP of choice.',
@@ -67,11 +67,11 @@ const PATTERNS: ReadonlyArray<MarketItem> = [
     owned: false,
   },
   {
-    id: 'pattern-content-grid',
-    category: 'patterns',
+    id: 'template-content-grid',
+    category: 'templates',
     title: 'The Weekly Content Grid',
     creatorName: 'Nox Penmark',
-    kicker: 'a pattern · spreadsheet',
+    kicker: 'a template · spreadsheet',
     tagline: 'A single sheet that decides what you post for a month.',
     description:
       'A spreadsheet with 28 days down the side and 4 channels across the top. Each cell suggests a content type (essay, clip, thread, recap). Stop guessing what to post; just fill the grid.',
@@ -206,7 +206,7 @@ const EXCLUSIVES: ReadonlyArray<MarketItem> = [
 ];
 
 export const FIXTURE_ITEMS_BY_CATEGORY = {
-  patterns: PATTERNS,
+  templates: TEMPLATES,
   tools: TOOLS,
   exclusives: EXCLUSIVES,
 } as const;
