@@ -117,6 +117,10 @@ export function AmbientMusic(): React.JSX.Element {
         // retry above handles the autoplay-policy rejection.
         autoPlay
         preload="auto"
+        // The login form looks this up by attribute and calls play()
+        // synchronously inside its submit handler so the user-gesture
+        // grant carries from /login → /. See app/login/page.tsx.
+        data-arcadia-ambient="true"
       />
       {showButton && (
         <button
