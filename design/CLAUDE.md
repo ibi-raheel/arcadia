@@ -61,6 +61,6 @@ Hand-kept, lantern-lit, made-of-paper. A dark room around a pool of warm light o
 
 ## Cross-references
 
-- Root `CLAUDE.md` routes the UI-heavy rows (Web client, Creator dashboard, Academy React viewer, Market `StallView`, Creator analytics) here.
+- Root `CLAUDE.md` routes the UI-heavy rows (Web client, Creator dashboard, Academy React viewer, Market `MarketOverlay` + four-stall dashboard, Creator analytics) here.
 - Technical architecture: `/planning/architecture/` and `/docs/mvp/tad.md`.
 - This workspace's existence is recorded in ADR 0009.
