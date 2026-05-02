@@ -95,6 +95,24 @@ function LoginForm(): React.JSX.Element {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
+
+    // Bank the click as a user gesture for the persistent ambient
+    // music. Without this, `audio.play()` on `/` runs *after* the
+    // `await` below and is no longer inside a fresh user-activation
+    // window — Chrome's autoplay policy rejects it and the music
+    // waits for the user's NEXT click anywhere. Calling play()
+    // synchronously here grants the audio element permission for the
+    // rest of this top-level browsing context; AmbientMusic re-pauses
+    // it immediately on /login (muted route), then plays cleanly on /.
+    try {
+      const audio = document.querySelector<HTMLAudioElement>('audio[data-arcadia-ambient]');
+      void audio?.play().catch(() => {
+        // ignore — best-effort gesture-bank, AmbientMusic will retry
+      });
+    } catch {
+      // ignore — non-DOM environments / SSR shouldn't reach this anyway
+    }
+
     setError(null);
     setLoading(true);
 
