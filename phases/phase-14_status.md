@@ -2,6 +2,48 @@
 
 Source plan: `phase-14_plan.md`. Entries chronological, newest on top.
 
+## 2026-05-02 — 14.8 · market + audio polish (PR #61)
+
+Three rounds of follow-up on PR #58 → #60, all bundled into a single
+PR (three commits — d15e60d, f8e21d4, 5680d7d). Same Phase-14 banner
+because the work is still polish on the same in-world-overlay
+pattern.
+
+Bundled write-up in
+[`docs/changelog/2026-05-02_market-and-audio-polish.md`](../docs/changelog/2026-05-02_market-and-audio-polish.md).
+
+- **Round 1 (d15e60d)** — initial pass: dashboard ← return-to-world
+  removed (logout-only); mute button z-index 50 → 95; square south
+  edge tagged `?from=square`; MarketOverlay header conditionally
+  rendered (✕ for square entry; ← world + logout for direct);
+  CategoryPicker switched to 3 + 1 layout with a gilt halo on
+  Exclusives.
+- **Round 2 (f8e21d4)** — user feedback: strip the ← world / logout
+  buttons entirely (rolling back the path-aware `enteredVia`
+  plumbing — square south edge route reverted to plain `/market`,
+  searchParams Params + GameMarket prop + MarketOverlay branch all
+  removed). CategoryPicker top row made responsive (3 → 2 → 1
+  cols via `.market-picker-top-row` class + media queries).
+  CategoryView item rows tightened (compact `PriceTag` pill instead
+  of the heavy `<Chip>`). Exclusives glow class moved from a
+  wrapper div onto the `LedgerCard` itself (matching border-radius)
+  and beefed up significantly (3 px solid gilt rim + 24 px halo
+  baseline, 4 px / 42 px peak).
+- **Round 3 (5680d7d)** — AmbientMusic full rewrite. User report:
+  *"starts paused sometimes, mute button doesn't toggle, autoplays
+  on its own."* Root causes: `<audio autoPlay>` racing JS `play()`,
+  retry-on-`window`-pointerdown missing iframe clicks, separate
+  effects for muted / volume / play racing each other, hydration
+  flash before localStorage mute kicked in. Replaced with a single
+  state-machine YouTube-pattern player: always start muted,
+  `effectiveMuted = userMuted || !activated`, one useEffect drives
+  everything, document-level capture-phase listener catches
+  same-origin iframe clicks too.
+
+All three rounds CI green on every push. Member icons in the HUD
+remain placeholders pending the member-dashboard design (unchanged
+from §14.7).
+
 ## 2026-05-02 — 14.7 · market rework + HUD/auth polish (PR #58 → #60)
 
 Three-PR cluster on top of 14.6, all merged 2026-05-02. The HUD + auth

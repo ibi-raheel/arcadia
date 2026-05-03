@@ -3,6 +3,7 @@
 **Date:** 2026-05-02
 **PRs:** #59 (initial four-stall market) → #60 (overlay rework + polish)
 **Supersedes:** the React-only `/market` page that briefly shipped in #59. The Phaser MarketScene is back as the route; the dashboard is now an in-world overlay.
+**Superseded in part by [PR #61](./2026-05-02_market-and-audio-polish.md)** — the ← return-to-world + logout buttons described in the overlay header section below were removed later the same day. The overlay header is now just ✕ close. The picker also grew the 3 + 1 layout (the description below pre-dates that change).
 
 The four-stall market dashboard (Courses / Templates / Tools / Exclusives) shipped in PR #59 as a pure React page at `/market` — the Phaser `MarketScene` was preserved on disk but not rendered. PR #60 reworks that decision: `/market` is the Phaser scene again, and the dashboard opens as a fullscreen React overlay when the player walks up to the central crystal and presses ENTER.
 
