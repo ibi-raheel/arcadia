@@ -3,7 +3,7 @@
 // pane; the action button changes shape based on price + ownership.
 //
 // For Courses, the action button calls the real `enrolInCourse` server
-// action. For Patterns / Tools / Exclusives the "purchase" is
+// action. For Templates / Tools / Exclusives the "purchase" is
 // simulated — a short delay + a local-state flip — and the parent
 // (Market.tsx) tracks ownership for the rest of the session.
 
@@ -62,7 +62,7 @@ export function CategoryView({ meta, items, onBack, onAcquired }: Props): React.
       <Desk>
         <div
           style={{
-            maxWidth: 1180,
+            maxWidth: 1480,
             margin: '0 auto',
             padding: '40px 28px 60px',
             display: 'flex',
@@ -107,7 +107,7 @@ export function CategoryView({ meta, items, onBack, onAcquired }: Props): React.
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'minmax(280px, 360px) 1fr',
+              gridTemplateColumns: 'minmax(320px, 420px) 1fr',
               gap: 24,
               alignItems: 'start',
             }}
@@ -425,7 +425,7 @@ function CheckoutFooter({ item, meta, onAcquired }: CheckoutFooterProps): React.
     if (item.owned) {
       // Owned: route to academy for courses; placeholder for others.
       if (isCourse) router.push(`/academy/${item.id}`);
-      // Patterns/Tools/Exclusives "download" — no-op; future: real
+      // Templates/Tools/Exclusives "download" — no-op; future: real
       // download URL. The state already shows ✓ so we don't flip.
       return;
     }
@@ -478,7 +478,7 @@ function CheckoutFooter({ item, meta, onAcquired }: CheckoutFooterProps): React.
         </WaxButton>
       ) : (
         <BronzeButton onClick={handleAction} disabled={busy}>
-          {busy ? 'stamping…' : `${meta.paidVerb} · ${item.price.coin} coin`}
+          {busy ? 'stamping…' : `${meta.paidVerb} · $${item.price.coin}`}
         </BronzeButton>
       )}
     </footer>
@@ -511,7 +511,7 @@ function PriceTag({
         whiteSpace: 'nowrap',
       }}
     >
-      {item.price.coin} coin
+      ${item.price.coin}
     </span>
   );
 }

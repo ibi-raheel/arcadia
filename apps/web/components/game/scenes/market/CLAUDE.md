@@ -1,6 +1,8 @@
 # MarketScene
 
-Phase 4 course catalogue. Member walks a 1536×1024 interior and steps up to a central **crystal** — pressing ENTER opens a React catalog scroll (`CatalogScroll`) that lists every published stall in the realm. Clicking a stall row drops `?course=<id>` into the URL, which opens the existing `StallView` modal over a blurred Phaser canvas. Single-player; no Colyseus.
+The realm's market hall. Member walks a 1536×1024 interior and steps up to a central **crystal** — pressing ENTER opens the **four-stall market dashboard** (`MarketOverlay`, hosting `<Market>`) in a fullscreen React overlay over the Phaser canvas. Stalls are: Courses · Templates · Tools · Exclusives. Single-player; no Colyseus.
+
+The dashboard is React-on-the-same-page (not an iframe) — keeps the Phaser canvas + ambient music alive while open. Closing returns the player to the scene exactly where they were.
 
 ## Files
 
@@ -18,18 +20,16 @@ Phase 4 course catalogue. Member walks a 1536×1024 interior and steps up to a c
 ## Synced with
 
 - **No Colyseus.** Single-player. Multiplayer would mirror `tavern-realm1`; punt to Phase 5 if wanted.
-- Supabase: courses + enrolment state fetched server-side by `app/market/page.tsx`; passed to the scene via `MARKET_STALLS_REGISTRY_KEY` and forwarded to `CatalogScroll` in React.
+- Supabase: courses + enrolment state fetched server-side by `app/market/page.tsx`. Real `courses` rows are shaped into `MarketItem` and passed to `GameMarket` → `MarketOverlay` → `Market`. Templates / Tools / Exclusives are hand-authored fixtures (`@/lib/market/fixtures`) — the "purchase" for those is simulated (700 ms delay + local-state flip). Courses still go through the real `enrolInCourse` server action. `MARKET_STALLS_REGISTRY_KEY` is no longer set; the registry constant is exported but unused (kept for backwards compat with anything that may reference it).
 
 ## React ↔ scene events (on `game.events`)
 
-- `MARKET_OPEN_CATALOG_EVENT` — fired when the member is inside the crystal radius and presses ENTER. `GameMarket` listens and opens the `CatalogScroll` modal. No payload.
+- `MARKET_OPEN_CATALOG_EVENT` — fired when the member is inside the crystal radius and presses ENTER. `GameMarket` listens and toggles `MarketOverlay`'s `open` prop. No payload.
 
 ## React overlays
 
-- `CatalogScroll` — full-screen scriptorium `MapCard` dialog listing every stall (title, creator, lesson count, enrolment count, enrolled-chip). Row click → `router.replace('/market?course=<id>')`.
-- `StallView` — existing full-course modal. Open/close is URL-driven (`?course=<id>`) exactly as before; `locallyEnrolledIds` keeps "Open in Academy" after a session enrol (Phase 7 item M6).
-- `← Return to World` button — removed 2026-04-23 (the top-archway ENTER exit covers it).
-- `Search stalls…` input — removed 2026-04-23; the catalog scroll is the browse affordance now.
+- `MarketOverlay` (`app/market/_components/MarketOverlay.tsx`) — fullscreen four-stall dashboard. Header carries ✕ close, ← return to world, and a real signout form (`target="_top"` so the parent navigates cleanly post-logout). The dashboard inside is `<Market>` (CategoryPicker → CategoryView with list rail + preview pane + simulated checkout footer). Esc dismisses.
+- `CatalogScroll` + `StallView` — preserved on disk for reference but no longer imported (replaced 2026-05-02). The per-course `?course=<id>` URL pattern is gone with them.
 
 ## Controls
 

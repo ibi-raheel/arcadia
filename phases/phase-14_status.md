@@ -2,6 +2,63 @@
 
 Source plan: `phase-14_plan.md`. Entries chronological, newest on top.
 
+## 2026-05-02 — 14.7 · market rework + HUD/auth polish (PR #58 → #60)
+
+Three-PR cluster on top of 14.6, all merged 2026-05-02. The HUD + auth
+PR (#58) is small follow-up wiring; the market PRs (#59 → #60) are
+big enough that they could have been their own phase, but staying
+under Phase 14's "post-ship polish" banner keeps history coherent
+since they share the in-world overlay pattern PR #57 introduced.
+
+Bundled write-ups:
+- HUD/auth small-wires: `feat(hud+auth): logout button + login music
+  gesture-bank + dashboard prewarm` (PR #58 commit message).
+- Market rework + polish:
+  [`docs/changelog/2026-05-02_market-overlay-and-polish.md`](../docs/changelog/2026-05-02_market-overlay-and-polish.md).
+
+- **PR #58 — HUD + auth small wires**
+  - Dashboard "exit" button (a `<Link href="/">`) replaced with a
+    real signout `<form action="/api/auth/signout" target="_top">`
+    labelled "logout". `target="_top"` matters because the dashboard
+    now opens inside the `DashboardOverlay` iframe — without it the
+    parent window would still look authed.
+  - Login form `handleSubmit` synchronously banks autoplay
+    permission on the audio element (now tagged
+    `data-arcadia-ambient`) before the await — fixes the autoplay-
+    policy delay where music waited for the user's next click on /.
+  - `MenuIcons` mounts a hidden 0×0 prewarm `<iframe>` at
+    `/dashboard` for creators on `requestIdleCallback` — drops the
+    first creator-icon click latency from ~600–1500 ms to
+    ~50–200 ms.
+- **PR #59 — four-stall market (initial)** — `/market` rewired from
+  the Phaser scene to a React four-stall dashboard (Courses /
+  Patterns / Tools / Exclusives). Hand-authored fixtures for the 3
+  simulated categories (`apps/web/lib/market/fixtures.ts`). Real
+  `enrolInCourse` action used for Courses; simulated 700 ms
+  "stamping…" for the others. Phaser `MarketScene` + `CatalogScroll`
+  + `StallView` preserved on disk, unmounted.
+- **PR #60 — market rework: in-world overlay + polish** — Reverses
+  PR #59's "kill the Phaser scene" decision. `/market` routes back
+  to the Phaser `MarketScene`; the four-stall dashboard now opens
+  as a fullscreen `MarketOverlay` over the canvas when the player
+  walks to the central crystal and presses ENTER (same-page React,
+  not iframe — keeps Phaser canvas + ambient music alive). Bundled:
+  - **Patterns → Templates** rename everywhere (type id, fixtures
+    key, fixture id prefix `pattern-` → `template-`, kicker text,
+    picker copy). Tools' seal letter shifted T → W to dodge the
+    new T-clash.
+  - **`$X` pricing** instead of "X coin" — both `PriceTag` and the
+    paid action button label.
+  - **Wider layout** — picker maxWidth 1080→1280, category view
+    1180→1480, list rail 280-360 → 320-420.
+  - **Logout + return-to-world buttons** in the overlay header
+    (top-right, z-index 90) — closes the gap where members had no
+    logout path from `/market`.
+
+All three CI green on every merge. The legacy `CatalogScroll` +
+`?course=<id>`-driven `StallView` flow is fully retired; the
+components stay on disk for reference.
+
 ## 2026-04-26 — 14.6 · post-ship wiring (PR #48 → #57)
 
 Second polish wave on the same feature. Where 14.5 was visual

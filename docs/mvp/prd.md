@@ -22,7 +22,7 @@ The MVP demonstrates the spatial experience end-to-end across four member-facing
 > - **Phase 11 — the Sage.** AI guide NPC in `/world` (Gemini-backed chat popup grounded in the curated MVP docs + ADRs). *Retired in Phase 13 — see below.*
 > - **Phase 12.A — coworking productivity.** Jukebox + shared Pomodoro hourglass + hearth pill (occupancy) + focus pill ("what I'm working on") wired to objects in the coworking-inside tent.
 > - **Phase 13 — sage as static welcome.** Ripped the AI Sage chat (ADR 0017 supersedes 0014). Wanderer's popup is now a static panel + four flip cards (Academy / Square / Tavern / Coworking).
-> - **Phase 14 — persistent player HUD.** Full-width top bar (shield + name + XP + 5 menu icons) on every Phaser scene; creator icons open dashboard tabs as an in-world overlay (PR #57); persistent ambient music in root layout (PR #56).
+> - **Phase 14 — persistent player HUD.** Full-width top bar (shield + name + XP + 5 menu icons) on every Phaser scene; creator icons open dashboard tabs as an in-world overlay (PR #57); persistent ambient music in root layout (PR #56). **2026-05-02 follow-up cluster (PR #58 → #60):** dashboard "exit" → real logout, autoplay-permission gesture-bank in the login submit handler, hidden `/dashboard` prewarm iframe for creators, and a four-stall market dashboard (Courses · Templates · Tools · Exclusives, `$X` pricing, simulated checkout for the latter three) opening as an in-world `MarketOverlay` over the Phaser `MarketScene`. See `docs/changelog/2026-05-02_market-overlay-and-polish.md`.
 >
 > Sections below describe the MVP-as-shipped, with the AI surfaces noted inline. The "out of scope" table in §2 still reflects what was deliberately excluded from the MVP build itself.
 
@@ -128,6 +128,10 @@ The MVP demonstrates the spatial experience end-to-end across four member-facing
 - All other lessons show a locked state with an Enrol CTA (button inactive in MVP — no payments yet)
 
 ### 4.5 The Market
+
+> **2026-05-02 amendment.** The original "grid of course cards" has been superseded by the four-stall market dashboard. `/market` now routes to a Phaser interior (image-backed); walking up to the central crystal and pressing ENTER opens a fullscreen `MarketOverlay` over the canvas with **four stalls**: Courses · Templates · Tools · Exclusives. Each stall shows a list rail + preview pane + checkout footer. Pricing displays as `$X`. Real `enrolInCourse` action wires the **Courses** stall to the database; **Templates / Tools / Exclusives** are hand-authored fixtures with simulated 700 ms "stamping…" purchase (no payment integration). See `docs/changelog/2026-05-02_market-overlay-and-polish.md`.
+
+Pre-amendment shape (kept for context):
 
 - Grid of course cards: title, thumbnail, short description, price label, lesson count
 - Course detail view: full description, section and lesson list, instructor info

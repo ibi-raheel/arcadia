@@ -1,59 +1,81 @@
-# Area: the market (React StallView modal)
+# Area: the market (Phaser interior + four-stall React overlay)
 
-**Route:** `/market` (Phaser hall) → `StallView` React modal on stall click
-**Lexicon name:** the market; a creator's presence there is a "stall"
-**Reference:** not yet in `reference/`. Commit a starter mockup when the first StallView surface is designed.
+**Route:** `/market` (Phaser `MarketScene`) → walk to central crystal + ENTER → fullscreen `MarketOverlay` over the canvas
+**Lexicon name:** the market; each category is a "stall" (Courses · Templates · Tools · Exclusives); a creator's offering inside a stall is a "good" (a course, template, tool, or sealed coffer)
+**Reference:** not yet in `reference/`. Commit a starter mockup once the four-stall layout settles.
 
 ## Scope boundary
 
-**This file governs the React `StallView` modal only.** The Phaser stall hall (`apps/web/components/game/scenes/market/`) is game rendering — governed by its own per-scene CLAUDE.md. The catalogue page outside the hall (if it exists) is also covered here. Clicking a stall in Phaser opens the StallView modal.
+**This file governs the React `MarketOverlay` and the four-stall dashboard inside it (`Market` → `CategoryPicker` → `CategoryView`).** The Phaser interior (`apps/web/components/game/scenes/market/`) is game rendering — governed by its own per-scene CLAUDE.md. There is no per-stall click pattern in Phaser; the only interaction is the central crystal proximity prompt.
 
 ## Purpose
 
-Where a prospective member meets a creator's offering. It is NOT a product detail page — it is a visit to a stall. Read the stall-keeper's shingle, see the volumes on offer, decide whether to step inside (enrol).
+Where a member browses the realm's offerings. The market is no longer a single course catalogue — it's a four-stall hall:
+
+- **Courses** — long-form lessons (real DB rows, free for the demo).
+- **Templates** — pattern sheets, swipe files, design files, Notion docs (simulated fixtures, mix of free + paid).
+- **Tools** — software, scripts, browser extensions, CLIs (simulated fixtures, mix of free + paid).
+- **Exclusives** — sealed bundles ("coffers") containing a mix of the above (simulated fixtures, mix of free + paid).
+
+The first thing a member sees is the four-stall picker (`CategoryPicker`); clicking a card opens that stall's catalogue inside the same overlay (`CategoryView`).
 
 ## Mood (starter)
 
 Daytime-ish compared to the academy (which is late evening). Still on the same desk, still lantern-lit, but the envelope and map primitives come out — because a stall is about place, goods, and a ledger of what's sold.
 
-Hand-drawn signage feel. The modal arrives with a slight "dropped onto the desk" motion — a gentle scale-in + shadow bloom. Not sliding, not fading, not a spring.
+The overlay arrives over the Phaser scene (no slide, no fade — it's a full-canvas dashboard, not a popover). The Phaser canvas behind keeps existing; closing returns the player to the same spot.
 
-## Signature surfaces (proposed)
+## Signature surfaces
 
-- **Modal frame** — the modal IS a `map-card` with the desk still visible through a backdrop wash. Map-card because a stall is a place on the market, not just a record.
-- **Stall header** — scribe's name + bronze medallion (their guild mark) + a Caveat one-line hand-written "what this stall is about."
-- **Courses on offer** — a row of `envelope-card`s. Each envelope has a wax seal stamped with the first letter of the course title. Hovering the envelope does NOT lift it (not an interactive card until clicked — the click opens the course preview).
-- **Enrol CTA** — wax button: "seal the pact" or "step inside" depending on whether payment is involved.
-- **Ledger of "sold" or "enroled"** — small journal strip at the bottom: `31 scribes have visited · 12 stepped inside`.
+- **CategoryPicker landing** — four large doorway cards (Courses / Templates / Tools / Exclusives), echoing the realm-hub doorways on `/`. Each card carries its own `WaxSeal`-style sigil (C / T / W / E) in a category-specific accent (verdigris / wax / bronze / gilt) and shows the item count + a one-line tagline.
+- **CategoryView shell** — `NightRoom + Desk` background. Header with a `DropCap`, the category name in italic display, the item count in `Hand`, and a `← back to the market` ghost button.
+- **Two-column layout** — left rail = scrollable item list (each row: title, creator name in small-caps mono, price chip / `$X`); right pane = preview + checkout. Selecting a row swaps the preview pane.
+- **Preview pane** — a `MapCard` with the item's title, creator, kicker, description, and a preview block. Three preview kinds:
+  - `text` — short scriptorium pre-block (mono).
+  - `list` — bulleted list (for checklists + bundle contents).
+  - `mock-screenshot` — italic caption describing a hypothetical screenshot (no real image assets needed for the sim).
+- **Checkout footer** — `PriceTag` on the left (chip for free / `$X` mono label for paid / `owned` chip post-purchase) + the action button on the right. Verb varies by category meta: free → "claim the template", "claim the tool", "unbind the coffer", etc. Paid → "pay & download · $X" or similar. Owned → "step inside →" (Courses), "download →" (Templates / Tools), "open the coffer →" (Exclusives).
+- **Overlay actions cluster** — top-right of the viewport, z-index 90: ✕ close (returns to scene), ← return to the world (full nav to /world), and a real signout form (logout, `target="_top"`).
 
 ## Components likely needed
 
-- Modal wrapper with desk-backdrop (not a standard semi-transparent black overlay — use night + vignette).
-- Map-card modal body.
-- Envelope-card course-tile component.
-- Wax-seal letter variant (first letter of course title).
-- Host-guild medallion (specific creator's bronze).
-- "Step inside" / "Seal the pact" CTA with appropriate variants.
+- `MarketOverlay` wrapper — fullscreen modal with the dashboard inside + the actions cluster.
+- `Market` orchestrator — owns the active-category state + in-memory ownership set.
+- `CategoryPicker` — 4-card landing.
+- `CategoryView` — list rail + preview pane + checkout footer.
+- `PriceTag` — chip / `$X` / `owned` variants.
+- `WaxSeal` letter variant — already in scriptorium kit; reused for category sigils.
+- `Chip` — for "free", "owned", and bundle-contents pills.
 
 ## Copy voice
 
-- Modal title: scribe's name in italic display. Tagline in Caveat below.
-- Course tile labels: small-caps title, mono price/duration chip.
-- Enrol confirmation: "welcome in. your scroll has been signed." — not "Enrollment successful ✓"
-- Empty stall: "this stall is still being set out. check again by lamplight." — NOT "No courses yet"
+- Picker landing kicker: "the market is open".
+- Picker landing tagline (per stall): "long-form lessons by lamplight" (Courses), "templates, swipe files, blueprints" (Templates), "software, scripts, plugins" (Tools), "sealed bundles · members-only" (Exclusives).
+- Item title: italic display.
+- Creator name: `by <name>` in small-caps mono.
+- Empty stall: "this stall is being set out. come back by lamplight." — NOT "No items yet".
+- Action verbs: scriptorium-flavoured per category (see CategoryMeta). Avoid "Buy now", "Add to cart".
+- Pay confirmation: the "stamping…" label during the simulated 700 ms delay flips to "✓ owned" via the chip — no toast.
 
-## Open questions (commit during first design pass)
+## Open questions
 
-- Close affordance: X button, or "set aside" wax tag at the top? (Leaning wax tag — more in voice.)
-- When the stall is empty, do we still allow visiting, or 404-equivalent? Probably visitable with "still being set out" empty state.
-- Price display — mono chip, or a tiny wax-seal with a number? Proposal: small `envelope-card`-top wax seal with the price printed in Caveat beside it ("three silver").
-- How does a preview of a course inside the stall look — opens ANOTHER modal on top, or navigates to a new route?
+- Real preview imagery for Templates / Tools — currently `mock-screenshot` is a caption. When the first real asset ships, swap the preview kind to `image`.
+- Coffer (Exclusives) "what's inside" pills — currently a flat `Chip` row. Should they hover-link back to the underlying items in their own stalls? Worth designing once item count grows.
+- The `← back to the market` button vs. ✕ close — back returns to the picker; close dismisses the whole overlay. Both are useful; the visual hierarchy could be sharper.
+- Real payment integration — out of scope; current "purchase" is in-memory. When this lands, the checkout footer will need a payment form rather than a one-click button.
 
 ## Code pointers
 
-- `apps/web/components/game/scenes/market/` — Phaser hall (NOT this file's scope).
-- `StallView` React modal — current location TBD; check `apps/web/app/market/`.
+- `apps/web/components/game/scenes/market/` — Phaser interior (NOT this file's scope).
+- `apps/web/components/game/GameMarket.tsx` — Phaser mount + MarketOverlay toggle on `MARKET_OPEN_CATALOG_EVENT`.
+- `apps/web/app/market/_components/MarketOverlay.tsx` — fullscreen modal + actions cluster.
+- `apps/web/app/market/_components/Market.tsx` — top-level dashboard orchestrator.
+- `apps/web/app/market/_components/CategoryPicker.tsx` — 4-card landing.
+- `apps/web/app/market/_components/CategoryView.tsx` — list + preview + checkout for one stall.
+- `apps/web/lib/market/types.ts` — `MarketCategoryId`, `MarketItem`, `CATEGORY_META`, `CATEGORY_ORDER`.
+- `apps/web/lib/market/fixtures.ts` — Templates / Tools / Exclusives fixtures.
+- `apps/web/app/market/_components/{CatalogScroll,StallView}.tsx` — preserved on disk for reference (the pre-2026-05-02 per-course modal flow), no longer imported.
 
 ## Review log
 
-*(To fill in as surfaces ship.)*
+- **2026-05-02** — Phase-15-ish rework. Replaced the per-course `CatalogScroll` + URL-driven `StallView` modal pair with a four-stall dashboard (`MarketOverlay` / `Market` / `CategoryPicker` / `CategoryView`) opened from the crystal proximity prompt. Pricing changed from "X coin" to `$X`. Categories: Courses · Templates · Tools · Exclusives. See `docs/changelog/2026-05-02_market-overlay-and-polish.md`.
