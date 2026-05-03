@@ -1,27 +1,27 @@
-// `/market` — the four-stall market: Courses · Patterns · Tools ·
-// Exclusives. Lands on a 4-card picker; clicking a card opens that
-// stall's catalogue with a list rail, preview pane, and (simulated)
-// checkout footer.
+// `/market` — the Phaser MarketScene (image-backed interior + central
+// crystal). Walking up to the crystal and pressing ENTER opens the
+// four-stall market dashboard as an in-world overlay (Courses ·
+// Templates · Tools · Exclusives) — see `MarketOverlay.tsx`. The
+// dashboard is React-on-the-same-page so the Phaser canvas + audio
+// don't tear down on every open.
 //
-// **Courses** are real DB rows (published + same-realm via RLS) and
-// flow through the existing `enrolInCourse` server action when the
-// member claims one. **Patterns / Tools / Exclusives** are
-// hand-authored fixtures (`@/lib/market/fixtures`) and the "purchase"
-// is simulated — ownership is in-memory, resets on reload. No payment
-// integration; no new migrations.
-//
-// The earlier Phaser-backed market (`MarketScene` + `StallView` modal)
-// is preserved on disk under `app/market/_components/StallView.tsx`
-// and `components/game/scenes/market/` for reference, but no longer
-// rendered. See `docs/changelog/<TBD>_market-categories.md`.
+// The earlier per-course `CatalogScroll` + `StallView` modal pair
+// (one row per course, click → modal) is preserved on disk under
+// `_components/{CatalogScroll,StallView}.tsx` for reference, but no
+// longer rendered — the new overlay routes Courses through the same
+// `enrolInCourse` server action, just with a different shell.
 
+import nextDynamic from 'next/dynamic';
 import { redirect } from 'next/navigation';
 
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
+import { isAvatarId } from '@/components/game/scenes/shared/avatar-palette';
+import type { SceneMember } from '@/components/game/scenes/world/WorldScene';
+
 import type { MarketItem } from '@/lib/market/types';
 
-import { Market } from './_components/Market';
+const GameMarket = nextDynamic(() => import('@/components/game/GameMarket'), { ssr: false });
 
 export const dynamic = 'force-dynamic';
 
@@ -35,12 +35,20 @@ export default async function MarketPage(): Promise<React.JSX.Element> {
 
   const { data: membership } = await supabase
     .from('memberships')
-    .select('realm_id, avatar_id')
+    .select('realm_id, avatar_id, display_name, xp')
     .eq('member_id', user.id)
     .maybeSingle();
-  if (!membership?.avatar_id || !membership.realm_id) {
+  if (!membership?.avatar_id || !isAvatarId(membership.avatar_id) || !membership.realm_id) {
     redirect('/onboarding/avatar');
   }
+
+  const member: SceneMember = {
+    memberId: user.id,
+    realmId: membership.realm_id,
+    avatarId: membership.avatar_id,
+    displayName: membership.display_name ?? 'Player',
+    xp: typeof membership.xp === 'number' ? membership.xp : 0,
+  };
 
   // RLS scopes to published + same-realm.
   const [{ data: courses }, { data: myEnrolments }, { data: creators }] = await Promise.all([
@@ -59,9 +67,8 @@ export default async function MarketPage(): Promise<React.JSX.Element> {
     creatorNameById.set(m.member_id, m.display_name ?? 'Anonymous Creator');
   }
 
-  // All Courses are free for the demo (the original /market never sold
-  // them). Pricing here is the simulated layer — Patterns/Tools/
-  // Exclusives carry coin in fixtures; Courses always say "free".
+  // Shape DB courses into MarketItem so the overlay can render them
+  // alongside the (simulated) Templates / Tools / Exclusives fixtures.
   const courseItems: ReadonlyArray<MarketItem> = (courses ?? []).map((c) => ({
     id: c.id,
     category: 'courses',
@@ -82,5 +89,5 @@ export default async function MarketPage(): Promise<React.JSX.Element> {
     owned: enrolledSet.has(c.id),
   }));
 
-  return <Market courses={courseItems} />;
+  return <GameMarket member={member} courses={courseItems} />;
 }

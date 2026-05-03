@@ -44,7 +44,7 @@ export function Market({ courses }: Props): React.JSX.Element {
       item.owned || ownedThisSession.has(item.id) ? { ...item, owned: true } : item;
     return {
       courses: courses.map(overlay),
-      patterns: FIXTURE_ITEMS_BY_CATEGORY.patterns.map(overlay),
+      templates: FIXTURE_ITEMS_BY_CATEGORY.templates.map(overlay),
       tools: FIXTURE_ITEMS_BY_CATEGORY.tools.map(overlay),
       exclusives: FIXTURE_ITEMS_BY_CATEGORY.exclusives.map(overlay),
     } as const;
@@ -53,7 +53,7 @@ export function Market({ courses }: Props): React.JSX.Element {
   if (active === null) {
     const counts = {
       courses: itemsByCategory.courses.length,
-      patterns: itemsByCategory.patterns.length,
+      templates: itemsByCategory.templates.length,
       tools: itemsByCategory.tools.length,
       exclusives: itemsByCategory.exclusives.length,
     };

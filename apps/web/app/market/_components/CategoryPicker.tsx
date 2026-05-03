@@ -34,7 +34,7 @@ export function CategoryPicker({ counts, onPick }: Props): React.JSX.Element {
       <Desk>
         <div
           style={{
-            maxWidth: 1080,
+            maxWidth: 1280,
             margin: '0 auto',
             padding: '60px 28px 60px',
             display: 'flex',
@@ -77,7 +77,7 @@ export function CategoryPicker({ counts, onPick }: Props): React.JSX.Element {
                   fontSize: 17,
                 }}
               >
-                Pick a stall. Long-form lessons, ready-made patterns, sharpened tools, or sealed
+                Pick a stall. Long-form lessons, ready-made templates, sharpened tools, or sealed
                 coffers — the keepers of this realm have laid them all out.
               </p>
             </div>
@@ -86,7 +86,7 @@ export function CategoryPicker({ counts, onPick }: Props): React.JSX.Element {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
               gap: 22,
               width: '100%',
               marginTop: 4,
@@ -130,7 +130,7 @@ function PickerCard({ meta, count, onPick }: PickerCardProps): React.JSX.Element
       : meta.accent === 'bronze'
         ? 'var(--night)'
         : 'var(--vellum)';
-  const tilt = ({ courses: -0.6, patterns: 0.4, tools: -0.3, exclusives: 0.5 } as const)[meta.id];
+  const tilt = ({ courses: -0.6, templates: 0.4, tools: -0.3, exclusives: 0.5 } as const)[meta.id];
 
   return (
     <button

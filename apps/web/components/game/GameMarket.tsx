@@ -1,23 +1,23 @@
-// Phase 4 market mount. Single-player scene + a full-screen catalog
-// scroll (opens when the scene emits MARKET_OPEN_CATALOG_EVENT) + the
-// StallView modal (opens when a catalog row is picked; URL carries
-// ?course=<id>).
+// /market mount. Loads the Phaser MarketScene (image-backed interior +
+// central crystal) and a single React overlay — `MarketOverlay` —
+// hosting the four-stall dashboard (Courses / Templates / Tools /
+// Exclusives). Walking up to the crystal + ENTER fires
+// MARKET_OPEN_CATALOG_EVENT; we listen and toggle the overlay.
 //
-// 2026-04-24 — retired the floating-card stall pattern. Stall picking
-// is now a catalog-scroll click that drops ?course=<id> directly into
-// the URL; the scene no longer emits a per-stall event. Deep links
-// with ?course= still open the StallView the same way they did before.
-//
-// Earlier behaviour retained:
-//   - URL `?course=<id>` drives StallView open/close.
-//   - `locallyEnrolledIds` set keeps "Open in Academy" after a session
-//     enrol without a full page reload (Phase 7 item M6).
+// **2026-05-02 — overlay rework.** Replaced the legacy
+// `CatalogScroll` (one row per course) + URL-driven `StallView`
+// pair with the four-stall dashboard. Both files stay on disk for
+// reference but are no longer imported here. The Phaser scene
+// itself is unchanged; only the React surface that opens on the
+// crystal interaction is different.
 
 'use client';
 
 import * as Phaser from 'phaser';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { MarketOverlay } from '@/app/market/_components/MarketOverlay';
+import type { MarketItem } from '@/lib/market/types';
 
 import { BuildingTransition } from './BuildingTransition';
 import { LevelUpBanner } from './LevelUpBanner';
@@ -30,51 +30,23 @@ import {
 import {
   MARKET_OPEN_CATALOG_EVENT,
   MARKET_SCENE_KEY,
-  MARKET_STALLS_REGISTRY_KEY,
   MarketScene,
-  type MarketStall,
 } from './scenes/market/MarketScene';
 import { marketCameraConfig } from './scenes/market/camera.config';
 import { MEMBER_REGISTRY_KEY, type SceneMember } from './scenes/world/WorldScene';
 
-import type { StallData } from '@/app/market/_components/StallView';
-import { StallView } from '@/app/market/_components/StallView';
-import { CatalogScroll } from '@/app/market/_components/CatalogScroll';
-
 type Props = {
   readonly member: SceneMember;
-  readonly stalls: readonly MarketStall[];
-  readonly stallDetails: Readonly<Record<string, StallData>>;
+  readonly courses: ReadonlyArray<MarketItem>;
 };
 
-export default function GameMarket({ member, stalls, stallDetails }: Props): React.JSX.Element {
+export default function GameMarket({ member, courses }: Props): React.JSX.Element {
   useLevelSync({ memberId: member.memberId });
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const [preloadProgress, setPreloadProgress] = useState<number | null>(null);
-  const [catalogOpen, setCatalogOpen] = useState(false);
-
-  const [locallyEnrolledIds, setLocallyEnrolledIds] = useState<ReadonlySet<string>>(
-    () => new Set(),
-  );
-  const markEnrolled = useCallback((courseId: string): void => {
-    setLocallyEnrolledIds((prev) => {
-      if (prev.has(courseId)) return prev;
-      const next = new Set(prev);
-      next.add(courseId);
-      return next;
-    });
-  }, []);
-
-  const openCourseId = searchParams.get('course');
-
-  const routerRef = useRef(router);
-  useEffect(() => {
-    routerRef.current = router;
-  }, [router]);
+  const [overlayOpen, setOverlayOpen] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current || gameRef.current) return;
@@ -94,16 +66,15 @@ export default function GameMarket({ member, stalls, stallDetails }: Props): Rea
     });
 
     game.registry.set(MEMBER_REGISTRY_KEY, member);
-    game.registry.set(MARKET_STALLS_REGISTRY_KEY, stalls);
     game.registry.set(NEXT_SCENE_KEY_REGISTRY_KEY, MARKET_SCENE_KEY);
     game.registry.set(PROGRESS_CALLBACK_REGISTRY_KEY, (progress: number) => {
       setPreloadProgress(progress);
     });
 
-    const handleOpenCatalog = (): void => {
-      setCatalogOpen(true);
+    const handleOpenOverlay = (): void => {
+      setOverlayOpen(true);
     };
-    game.events.on(MARKET_OPEN_CATALOG_EVENT, handleOpenCatalog);
+    game.events.on(MARKET_OPEN_CATALOG_EVENT, handleOpenOverlay);
 
     setPreloadProgress(0);
     gameRef.current = game;
@@ -112,50 +83,20 @@ export default function GameMarket({ member, stalls, stallDetails }: Props): Rea
       const g = gameRef.current;
       gameRef.current = null;
       if (g) {
-        g.events.off(MARKET_OPEN_CATALOG_EVENT, handleOpenCatalog);
+        g.events.off(MARKET_OPEN_CATALOG_EVENT, handleOpenOverlay);
         g.destroy(true);
       }
     };
-  }, [member, stalls]);
+  }, [member]);
 
-  const pickStall = useCallback((courseId: string) => {
-    setCatalogOpen(false);
-    routerRef.current.replace(`/market?course=${courseId}`, { scroll: false });
-  }, []);
-
-  const closeStall = useCallback(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete('course');
-    const qs = params.toString();
-    router.replace(qs ? `/market?${qs}` : '/market', { scroll: false });
-  }, [router, searchParams]);
-
-  const closeCatalog = useCallback(() => setCatalogOpen(false), []);
-
-  const activeStall = useMemo(() => {
-    if (!openCourseId) return null;
-    const base = stallDetails[openCourseId];
-    if (!base) return null;
-    return base.enrolled || !locallyEnrolledIds.has(openCourseId)
-      ? base
-      : { ...base, enrolled: true };
-  }, [openCourseId, stallDetails, locallyEnrolledIds]);
+  const closeOverlay = useCallback(() => setOverlayOpen(false), []);
 
   const ready = preloadProgress !== null && preloadProgress >= 1;
 
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <div ref={containerRef} className="absolute inset-0" />
-      <CatalogScroll
-        open={catalogOpen && !activeStall}
-        onClose={closeCatalog}
-        stalls={stalls}
-        locallyEnrolledIds={locallyEnrolledIds}
-        onPick={pickStall}
-      />
-      {activeStall && (
-        <StallView stall={activeStall} onClose={closeStall} onEnrolled={markEnrolled} />
-      )}
+      <MarketOverlay open={overlayOpen} onClose={closeOverlay} courses={courses} />
       <BuildingTransition
         ready={ready}
         displayName="The Market"

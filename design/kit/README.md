@@ -2,7 +2,7 @@
 
 > *A room by lamplight, built by hand.*
 
-**Arcadia** is an online platform where content creators build their own medieval-ish "realms" and invite their community to live inside them. Members can buy and browse creator-made courses in the **Market**, finish them (and earn XP) inside the **Academy**, gather and chat with other players in **Taverns**, and co-work together — voice and music on — inside **Tents**.
+**Arcadia** is an online platform where content creators build their own medieval-ish "realms" and invite their community to live inside them. Members can browse and buy creator-made goods in the **Market** — across four stalls (Courses · Templates · Tools · Exclusives, priced in `$X`) — finish courses (and earn XP) inside the **Academy**, gather and chat with other players in **Taverns**, and co-work together — voice and music on — inside **Tents**.
 
 The world is styled after a late-medieval scriptorium: candles, vellum, wax seals, bronze studs, hand-illuminated manuscripts. There's a *whisper* of tech/magic — a warm lantern-glow over dark oak — but nothing is cyber, nothing is neon. Everything is kept by hand.
 

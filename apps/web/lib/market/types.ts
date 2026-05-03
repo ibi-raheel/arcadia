@@ -5,7 +5,7 @@
 // four so `<CategoryView>` doesn't need to branch on category, just on
 // preview kind + price kind.
 
-export type MarketCategoryId = 'courses' | 'patterns' | 'tools' | 'exclusives';
+export type MarketCategoryId = 'courses' | 'templates' | 'tools' | 'exclusives';
 
 export type MarketPrice =
   | { readonly kind: 'free' }
@@ -66,15 +66,15 @@ export const CATEGORY_META: Record<MarketCategoryId, CategoryMeta> = {
     paidVerb: 'pay & enrol',
     ownedVerb: 'step inside →',
   },
-  patterns: {
-    id: 'patterns',
-    label: 'patterns',
+  templates: {
+    id: 'templates',
+    label: 'templates',
     tagline: 'templates, swipe files, blueprints',
     blurb:
-      'Pattern sheets you can reach for when the page is blank — Notion docs, design files, copy starters.',
-    seal: 'P',
+      'Templates you can reach for when the page is blank — Notion docs, design files, copy starters.',
+    seal: 'T',
     accent: 'wax',
-    freeVerb: 'claim the sheet',
+    freeVerb: 'claim the template',
     paidVerb: 'pay & download',
     ownedVerb: 'download →',
   },
@@ -84,7 +84,7 @@ export const CATEGORY_META: Record<MarketCategoryId, CategoryMeta> = {
     tagline: 'software, scripts, plugins',
     blurb:
       'Sharpened implements — small programs, browser extensions, automation scripts the keeper has forged.',
-    seal: 'T',
+    seal: 'W',
     accent: 'bronze',
     freeVerb: 'claim the tool',
     paidVerb: 'pay & download',
@@ -106,7 +106,7 @@ export const CATEGORY_META: Record<MarketCategoryId, CategoryMeta> = {
 
 export const CATEGORY_ORDER: ReadonlyArray<MarketCategoryId> = [
   'courses',
-  'patterns',
+  'templates',
   'tools',
   'exclusives',
 ];
