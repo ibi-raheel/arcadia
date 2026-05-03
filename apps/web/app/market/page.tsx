@@ -25,15 +25,7 @@ const GameMarket = nextDynamic(() => import('@/components/game/GameMarket'), { s
 
 export const dynamic = 'force-dynamic';
 
-type Params = {
-  /** Set by `SQUARE_EDGE_TRIGGERS.bottom.route` so the overlay can
-   *  show only the ✕ close affordance instead of the full ←-world +
-   *  logout cluster. Anything else (or no param) is treated as a
-   *  direct entry. */
-  readonly searchParams?: { readonly from?: string };
-};
-
-export default async function MarketPage({ searchParams }: Params): Promise<React.JSX.Element> {
+export default async function MarketPage(): Promise<React.JSX.Element> {
   const supabase = getSupabaseServerClient();
 
   const {
@@ -97,7 +89,5 @@ export default async function MarketPage({ searchParams }: Params): Promise<Reac
     owned: enrolledSet.has(c.id),
   }));
 
-  const enteredVia: 'square' | 'direct' = searchParams?.from === 'square' ? 'square' : 'direct';
-
-  return <GameMarket member={member} courses={courseItems} enteredVia={enteredVia} />;
+  return <GameMarket member={member} courses={courseItems} />;
 }

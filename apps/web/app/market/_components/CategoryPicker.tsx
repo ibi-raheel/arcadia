@@ -84,16 +84,10 @@ export function CategoryPicker({ counts, onPick }: Props): React.JSX.Element {
             </div>
           </header>
 
-          {/* Top row — three equal cards. */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 22,
-              width: '100%',
-              marginTop: 4,
-            }}
-          >
+          {/* Top row — three equal cards. Responsive: 3 → 2 → 1
+              columns as the viewport narrows (see globals.css
+              `.market-picker-top-row` media queries). */}
+          <div className="market-picker-top-row">
             {TOP_ROW.map((id) => (
               <PickerCard
                 key={id}
@@ -168,8 +162,11 @@ function PickerCard({ meta, count, onPick }: PickerCardProps): React.JSX.Element
 
 /** The wide bottom-row Exclusives card. Same content shape as the
  *  top row but: full width, slightly taller, LedgerCard primitive
- *  (gilt-leaf surface), and wrapped in `.market-exclusives-glow`
- *  for the pulsing border. */
+ *  (gilt-leaf surface). The `.market-exclusives-glow` className is
+ *  applied directly to the LedgerCard so the pulsing box-shadow
+ *  follows the card's actual rounded edge — wrapping it in a div
+ *  with mismatched border-radius left a visible gap (user
+ *  feedback 2026-05-02). */
 function ExclusiveCard({ meta, count, onPick }: PickerCardProps): React.JSX.Element {
   return (
     <button
@@ -183,27 +180,26 @@ function ExclusiveCard({ meta, count, onPick }: PickerCardProps): React.JSX.Elem
       }}
       aria-label={`open the ${meta.label} stall (${count} items)`}
     >
-      <div className="market-exclusives-glow">
-        <LedgerCard
-          rotate={0.3}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 10,
-            minHeight: 200,
-            position: 'relative',
-            transition: 'transform 200ms ease',
-          }}
-        >
-          <CardSeal meta={meta} />
-          <Kicker>~ {meta.tagline} ~</Kicker>
-          <h3 style={{ ...cardTitleStyle, fontSize: 34 }}>{meta.label}</h3>
-          <p className="body-italic" style={{ ...cardBlurbStyle, fontSize: 15, maxWidth: 720 }}>
-            {meta.blurb}
-          </p>
-          <CardFooter count={count} cta="open the coffer →" />
-        </LedgerCard>
-      </div>
+      <LedgerCard
+        rotate={0.3}
+        className="market-exclusives-glow"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
+          minHeight: 200,
+          position: 'relative',
+          transition: 'transform 200ms ease',
+        }}
+      >
+        <CardSeal meta={meta} />
+        <Kicker>~ {meta.tagline} ~</Kicker>
+        <h3 style={{ ...cardTitleStyle, fontSize: 34 }}>{meta.label}</h3>
+        <p className="body-italic" style={{ ...cardBlurbStyle, fontSize: 15, maxWidth: 720 }}>
+          {meta.blurb}
+        </p>
+        <CardFooter count={count} cta="open the coffer →" />
+      </LedgerCard>
     </button>
   );
 }

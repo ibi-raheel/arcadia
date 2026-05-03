@@ -188,12 +188,14 @@ function ItemRow({ item, selected, onSelect }: ItemRowProps): React.JSX.Element 
       onClick={onSelect}
       style={{
         all: 'unset',
+        boxSizing: 'border-box',
+        width: '100%',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
-        gap: 4,
-        padding: '10px 12px',
-        borderRadius: 4,
+        gap: 2,
+        padding: '7px 10px',
+        borderRadius: 3,
         border: selected ? '1px solid var(--bronze)' : '1px solid rgba(138, 106, 58, 0.18)',
         background: selected ? 'rgba(212, 165, 116, 0.16)' : 'rgba(255, 244, 210, 0.4)',
         transition: 'background 120ms ease, border-color 120ms ease',
@@ -204,17 +206,24 @@ function ItemRow({ item, selected, onSelect }: ItemRowProps): React.JSX.Element 
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'baseline',
+          alignItems: 'center',
           gap: 8,
+          width: '100%',
+          minWidth: 0,
         }}
       >
         <span
           style={{
             fontFamily: 'var(--font-display)',
             fontStyle: 'italic',
-            fontSize: 16,
+            fontSize: 15,
             color: 'var(--ink)',
-            lineHeight: 1.2,
+            lineHeight: 1.15,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            minWidth: 0,
+            flex: 1,
           }}
         >
           {item.title}
@@ -224,10 +233,13 @@ function ItemRow({ item, selected, onSelect }: ItemRowProps): React.JSX.Element 
       <span
         className="mono"
         style={{
-          fontSize: 10,
-          letterSpacing: 1.4,
+          fontSize: 9,
+          letterSpacing: 1.2,
           textTransform: 'uppercase',
           color: 'var(--ink-soft)',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
         }}
       >
         by {item.creatorName}
@@ -494,6 +506,36 @@ function PriceTag({
   readonly item: MarketItem;
   readonly compact?: boolean;
 }): React.JSX.Element {
+  // List-rail (`compact`) renders a tight inline mono pill — the
+  // standard `<Chip>` was too large there and dominated the row.
+  // The footer (non-compact) keeps the full Chip so the action
+  // bar reads at full weight.
+  if (compact) {
+    const label = item.owned
+      ? 'owned'
+      : item.price.kind === 'free'
+        ? 'free'
+        : `$${item.price.coin}`;
+    return (
+      <span
+        className="mono"
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 9,
+          letterSpacing: 1.2,
+          color: 'var(--bronze-deep)',
+          whiteSpace: 'nowrap',
+          padding: '2px 6px',
+          borderRadius: 8,
+          border: '1px dashed rgba(138, 106, 58, 0.35)',
+          textTransform: 'uppercase',
+          flexShrink: 0,
+        }}
+      >
+        {label}
+      </span>
+    );
+  }
   if (item.owned) {
     return <Chip>owned</Chip>;
   }
@@ -505,7 +547,7 @@ function PriceTag({
       className="mono"
       style={{
         fontFamily: 'var(--font-mono)',
-        fontSize: compact ? 11 : 13,
+        fontSize: 13,
         letterSpacing: 1.3,
         color: 'var(--bronze-deep)',
         whiteSpace: 'nowrap',
