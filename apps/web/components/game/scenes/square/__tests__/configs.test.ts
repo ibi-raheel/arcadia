@@ -47,7 +47,7 @@ describe('square layers config', () => {
   it('all four cardinal edges have routes', () => {
     expect(SQUARE_EDGE_TRIGGERS.top?.route).toBe('/academy-outside');
     expect(SQUARE_EDGE_TRIGGERS.right?.route).toBe('/tavern-outside');
-    expect(SQUARE_EDGE_TRIGGERS.bottom?.route).toBe('/market');
+    expect(SQUARE_EDGE_TRIGGERS.bottom?.route).toBe('/market?from=square');
     expect(SQUARE_EDGE_TRIGGERS.left?.route).toBe('/coworking');
   });
 

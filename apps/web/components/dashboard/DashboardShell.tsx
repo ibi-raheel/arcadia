@@ -7,7 +7,6 @@
 
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
@@ -96,16 +95,16 @@ export function DashboardShell({ title, kicker, tagline, actions, children }: Pr
             style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-end' }}
           >
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              <Link href="/world" style={{ textDecoration: 'none' }}>
-                <GhostButton size="sm" onDark>
-                  ← return to the world
-                </GhostButton>
-              </Link>
               {/* Logout. `target="_top"` so when the dashboard is opened
                   inside the in-world `DashboardOverlay` iframe, the
                   signout response replaces the *parent* window — both
                   iframe and parent end up on `/` post-redirect, instead
-                  of the parent staying authed-looking with stale state. */}
+                  of the parent staying authed-looking with stale state.
+                  ← return to the world removed 2026-05-02: the dashboard
+                  opens via the in-world overlay (creators) or stands
+                  alone at /dashboard (direct URL); in both cases the
+                  player either has a ✕ in the overlay or the browser
+                  back button. */}
               <form action="/api/auth/signout" method="post" target="_top" style={{ margin: 0 }}>
                 <GhostButton size="sm" onDark type="submit">
                   logout

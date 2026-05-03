@@ -38,9 +38,16 @@ import { MEMBER_REGISTRY_KEY, type SceneMember } from './scenes/world/WorldScene
 type Props = {
   readonly member: SceneMember;
   readonly courses: ReadonlyArray<MarketItem>;
+  /** Drives MarketOverlay's header — `square` shows only ✕ close
+   *  (the player has the Phaser scene to fall back to); `direct`
+   *  shows ← return-to-world + logout (the overlay is the player's
+   *  only navigation surface). Set by `app/market/page.tsx` from
+   *  `?from=square` (the only param the south-edge edge-trigger
+   *  appends). */
+  readonly enteredVia: 'square' | 'direct';
 };
 
-export default function GameMarket({ member, courses }: Props): React.JSX.Element {
+export default function GameMarket({ member, courses, enteredVia }: Props): React.JSX.Element {
   useLevelSync({ memberId: member.memberId });
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -96,7 +103,12 @@ export default function GameMarket({ member, courses }: Props): React.JSX.Elemen
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <div ref={containerRef} className="absolute inset-0" />
-      <MarketOverlay open={overlayOpen} onClose={closeOverlay} courses={courses} />
+      <MarketOverlay
+        open={overlayOpen}
+        onClose={closeOverlay}
+        courses={courses}
+        enteredVia={enteredVia}
+      />
       <BuildingTransition
         ready={ready}
         displayName="The Market"

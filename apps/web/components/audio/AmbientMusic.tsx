@@ -11,8 +11,13 @@
 //     starts on the first user gesture anywhere on the page.
 //   - localStorage-persisted mute state — the user's choice carries
 //     across reloads.
-//   - Tiny mute toggle anchored bottom-right at z-index 50 (below
-//     modals at 80 but above scenes/HUDs).
+//   - Tiny mute toggle anchored bottom-right at z-index 95 (above
+//     the DashboardOverlay + MarketOverlay at 80 + their action
+//     clusters at 90; also above scenes/HUDs). Bumped from 50 →
+//     95 on 2026-05-02 because at the lower z-index the button
+//     was clickable on plain Phaser pages but unreachable any
+//     time an overlay was open — which is most of the time the
+//     user actually wants to mute.
 
 'use client';
 
@@ -132,7 +137,7 @@ export function AmbientMusic(): React.JSX.Element {
             position: 'fixed',
             bottom: 14,
             right: 14,
-            zIndex: 50,
+            zIndex: 95,
             width: 36,
             height: 36,
             display: 'inline-flex',

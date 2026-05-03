@@ -55,7 +55,11 @@ export const SQUARE_EDGE_TRIGGERS: EdgeTriggers = {
     span: { min: 1050, max: 1500 },
   },
   bottom: {
-    route: '/market',
+    // `?from=square` so the market overlay (opened at the central
+    // crystal) can show only the ✕ close affordance — vs. direct
+    // /market entry where the player needs ← return-to-world +
+    // logout to navigate away. See MarketOverlay.tsx.
+    route: '/market?from=square',
     threshold: 300,
     promptLabel: 'Press ENTER to visit the Market',
   },

@@ -4,10 +4,21 @@
 // `MARKET_OPEN_CATALOG_EVENT`; `GameMarket.tsx` listens and toggles
 // this overlay's `open` prop).
 //
-// Header carries three actions: ✕ close (returns to the Phaser
-// scene), ← return to world (full navigation to /world), and logout
-// (POSTs the signout endpoint at the top level so any in-world
-// state is cleanly torn down). Esc closes the overlay (same as ✕).
+// **Header is path-aware (2026-05-02):**
+//   - **`enteredVia: 'square'`** (member walked from /world's south
+//     edge, which routes to `/market?from=square`) — they have the
+//     Phaser scene behind to fall back to, so the only header
+//     action is **✕ close**. ← return-to-world + logout would be
+//     redundant: closing the overlay puts them back in the scene,
+//     and the scene's top archway already returns to /world.
+//   - **`enteredVia: 'direct'`** (any other entry — e.g. from `/`
+//     after sign-in, or a bookmark) — the overlay IS the navigation
+//     surface, so the header carries **← return to the world** +
+//     **logout**. No ✕ since there's nothing meaningful to fall
+//     back to behind it.
+//
+// Esc closes the overlay regardless (the keyboard fallback is
+// always present even when the visible ✕ isn't).
 //
 // We intentionally keep the overlay as React-on-the-same-page (not
 // an iframe) because the parent route is the Phaser scene — losing
@@ -29,9 +40,15 @@ type Props = {
   readonly open: boolean;
   readonly onClose: () => void;
   readonly courses: ReadonlyArray<MarketItem>;
+  readonly enteredVia: 'square' | 'direct';
 };
 
-export function MarketOverlay({ open, onClose, courses }: Props): React.JSX.Element | null {
+export function MarketOverlay({
+  open,
+  onClose,
+  courses,
+  enteredVia,
+}: Props): React.JSX.Element | null {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent): void => {
@@ -60,7 +77,7 @@ export function MarketOverlay({ open, onClose, courses }: Props): React.JSX.Elem
       }}
     >
       <Market courses={courses} />
-      <OverlayActions onClose={onClose} />
+      <OverlayActions onClose={onClose} enteredVia={enteredVia} />
     </div>
   );
 }
@@ -68,7 +85,45 @@ export function MarketOverlay({ open, onClose, courses }: Props): React.JSX.Elem
 /** Top-right button cluster. Sits above the dashboard at z-index 90
  *  so it's reachable from both the picker and the category view
  *  without each of those needing to know about navigation. */
-function OverlayActions({ onClose }: { readonly onClose: () => void }): React.JSX.Element {
+function OverlayActions({
+  onClose,
+  enteredVia,
+}: {
+  readonly onClose: () => void;
+  readonly enteredVia: 'square' | 'direct';
+}): React.JSX.Element {
+  if (enteredVia === 'square') {
+    // Walked here from /world — the Phaser scene is right behind.
+    // Single ✕ that drops the overlay and returns the player to
+    // the spot they were standing.
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          top: 16,
+          right: 16,
+          zIndex: 90,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+        }}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close the market"
+          title="Close (Esc)"
+          style={closeButtonStyle}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gilt, #e7c66c)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--bronze-bright, #d4a868)')}
+        >
+          ✕
+        </button>
+      </div>
+    );
+  }
+  // Direct entry — overlay is the only navigation surface. Show
+  // ← return-to-world + logout so the player can leave.
   return (
     <div
       style={{
@@ -95,17 +150,6 @@ function OverlayActions({ onClose }: { readonly onClose: () => void }): React.JS
           logout
         </GhostButton>
       </form>
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label="Close the market"
-        title="Close (Esc)"
-        style={closeButtonStyle}
-        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gilt, #e7c66c)')}
-        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--bronze-bright, #d4a868)')}
-      >
-        ✕
-      </button>
     </div>
   );
 }
