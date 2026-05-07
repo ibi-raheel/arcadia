@@ -1,5 +1,7 @@
 # AcademyScene
 
+> *Demo NPCs (PR #62 · 2026-05-06): when simulation mode is on, `NpcSwarm` (`../shared/npc-swarm.ts`) spawns **5 wandering NPCs** in the lecture hall at the player's `walkSpeed`. Sim off (default) = no NPCs.*
+
 Interior room (Phase 3.5). Mirror of TavernScene's image-backed shape, minus the multiplayer and chat machinery. Member walks around a 1536×1024 interior and steps up to a central **lectern** — pressing ENTER opens a React scroll modal (`LedgerScroll`) listing the courses in their library; each row in the scroll links to `/academy/[courseId]`.
 
 ## Files

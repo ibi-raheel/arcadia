@@ -1,5 +1,7 @@
 # TavernOutsideScene
 
+> *Demo NPCs (PR #62 · 2026-05-06): when simulation mode is on, `NpcSwarm` (`../shared/npc-swarm.ts`) spawns **5 wandering NPCs** between the tavern doors at the player's `walkSpeed`. Wired via the `OutdoorSceneBase` parent. Sim off (default) = no NPCs.*
+
 Single-player outdoor area east of the square. Three tavern buildings stacked vertically — the user-facing names are **The Three Ravens** (top / `tavern-a`), **The Iron Chalice** (middle / `tavern-b`), **The Sleeping Hollow** (bottom / `tavern-c`). Each door is a distinct Colyseus "building"; all three doors lead to the same interior image, but members in different buildings are in different `tavern-realm1` rooms thanks to `filterBy(['building'])` on the game server.
 
 ## Files

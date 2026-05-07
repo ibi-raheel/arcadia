@@ -1,5 +1,7 @@
 # MarketScene
 
+> *Demo NPCs (PR #62 · 2026-05-06): when simulation mode is on, `NpcSwarm` (`../shared/npc-swarm.ts`) spawns **5 wandering NPCs** in the hall at the player's `walkSpeed`. Sim off (default) = no NPCs.*
+
 The realm's market hall. Member walks a 1536×1024 interior and steps up to a central **crystal** — pressing ENTER opens the **four-stall market dashboard** (`MarketOverlay`, hosting `<Market>`) in a fullscreen React overlay over the Phaser canvas. Stalls are: Courses · Templates · Tools · Exclusives. Single-player; no Colyseus.
 
 The dashboard is React-on-the-same-page (not an iframe) — keeps the Phaser canvas + ambient music alive while open. Closing returns the player to the scene exactly where they were.
