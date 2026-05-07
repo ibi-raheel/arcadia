@@ -1,4 +1,4 @@
-// Simulation-toggle UI. Two pieces:
+// Simulation-toggle UI. Three pieces:
 //
 //   <SimulationToggle /> — a small switch that flips the `sim` state.
 //     Mount inside a dashboard shell / header row so builders / demos
@@ -7,10 +7,25 @@
 //   <SimulationBadge /> — a fixed top-right lantern-coloured pill that
 //     shows while sim is ON, so fake data is never mistaken for real.
 //     Clicking the badge turns sim off.
+//
+//   <SimulationPill /> — a fixed bottom-left pill that's always
+//     visible (off-state outline, on-state lantern fill), pairs with
+//     the bottom-right ambient-music mute toggle. Used on every
+//     in-world Phaser page so demoers can flip NPCs on/off without
+//     digging through the dashboard.
 
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { useSimulationMode } from '@/lib/simulation-mode';
+
+/** Routes where the SimulationPill is hidden (pre-auth flows — the
+ *  user has nothing to simulate yet). Matches AmbientMusic's gate. */
+function isHiddenRoute(pathname: string): boolean {
+  if (pathname === '/login' || pathname === '/signup') return true;
+  if (pathname.startsWith('/onboarding')) return true;
+  return false;
+}
 
 type Props = { readonly className?: string };
 
@@ -40,6 +55,51 @@ export function SimulationToggle({ className }: Props) {
       }}
     >
       {on ? '◈ simulation · on' : 'simulation · off'}
+    </button>
+  );
+}
+
+/** Fixed bottom-left always-visible toggle pill. Used on in-world
+ *  Phaser pages where the SimulationToggle isn't mounted in any
+ *  header — pairs visually with the bottom-right ambient-music
+ *  mute toggle. */
+export function SimulationPill() {
+  const [on, setOn] = useSimulationMode();
+  const pathname = usePathname() ?? '/';
+  if (isHiddenRoute(pathname)) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => setOn(!on)}
+      aria-pressed={on}
+      aria-label={on ? 'turn simulation off' : 'turn simulation on'}
+      title={on ? 'simulation on — click to turn off' : 'simulation off — click to turn on'}
+      style={{
+        position: 'fixed',
+        bottom: 14,
+        left: 14,
+        zIndex: 95,
+        padding: '7px 12px',
+        borderRadius: 20,
+        border: on ? '1.5px solid var(--wax-deep)' : '1px dashed var(--bronze)',
+        background: on
+          ? 'linear-gradient(135deg, var(--lantern-core), var(--lantern))'
+          : 'rgba(20, 10, 5, 0.7)',
+        color: on ? 'var(--night)' : 'var(--bronze-bright, #d4a868)',
+        fontFamily: 'var(--font-mono, JetBrains Mono, monospace)',
+        fontSize: 11,
+        letterSpacing: 1.4,
+        textTransform: 'uppercase',
+        fontWeight: on ? 600 : 500,
+        cursor: 'pointer',
+        boxShadow: on ? '0 6px 14px rgba(0, 0, 0, 0.5)' : '0 2px 8px rgba(0, 0, 0, 0.35)',
+        opacity: on ? 1 : 0.75,
+        transition: 'opacity 120ms ease-out, color 120ms ease-out',
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+      onMouseLeave={(e) => (e.currentTarget.style.opacity = on ? '1' : '0.75')}
+    >
+      {on ? '◈ sim · on' : 'sim · off'}
     </button>
   );
 }

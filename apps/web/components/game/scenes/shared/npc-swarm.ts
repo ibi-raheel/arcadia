@@ -30,6 +30,8 @@ import type Phaser from 'phaser';
 
 import type { AvatarDirection } from '@arcadia/shared';
 
+import { isSimulationOnClient, SIM_CHANGE_EVENT } from '@/lib/simulation-mode';
+
 import { animationKey } from '../world/avatar-animations';
 import {
   createAvatarVisuals,
@@ -164,22 +166,64 @@ function randomInRange(min: number, max: number): number {
 
 export class NpcSwarm {
   private readonly scene: Phaser.Scene;
+  private readonly options: NpcSwarmOptions;
   private readonly bounds: NpcBounds;
   private readonly speed: number;
   private readonly idleMinMs: number;
   private readonly idleMaxMs: number;
   private readonly npcs: Npc[] = [];
+  /** Window-level handler bound to the SIM_CHANGE_EVENT — kept as a
+   *  field so `destroy()` can remove it cleanly. */
+  private readonly simChangeHandler: (e: Event) => void;
 
   constructor(scene: Phaser.Scene, options: NpcSwarmOptions) {
     this.scene = scene;
+    this.options = options;
     this.bounds = options.bounds;
     this.speed = options.speed ?? 200;
     this.idleMinMs = options.idleMinMs ?? 1000;
     this.idleMaxMs = options.idleMaxMs ?? 4000;
-    const levelMin = options.levelRange?.min ?? 1;
-    const levelMax = options.levelRange?.max ?? 12;
 
-    for (let i = 0; i < options.count; i++) {
+    // Spawn only when simulation mode is on. The persistent player
+    // is otherwise alone in the scene.
+    if (isSimulationOnClient()) {
+      this.spawnAll();
+    }
+
+    // React to the global toggle. Flipping ON spawns a fresh batch
+    // (same logic the constructor uses); flipping OFF tears them
+    // down, including any pending speech bubbles. Bound to the
+    // window so it survives scene re-renders inside the same React
+    // tree (Phaser scene lifetime > swarm lifetime is a non-goal —
+    // the React mount destroys + recreates the scene on navigation,
+    // and the swarm goes with it).
+    this.simChangeHandler = (e: Event): void => {
+      const detail = (e as CustomEvent<boolean>).detail;
+      if (detail) {
+        if (this.npcs.length === 0) this.spawnAll();
+      } else {
+        this.despawnAll();
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener(SIM_CHANGE_EVENT, this.simChangeHandler);
+    }
+
+    // Also clean up when the scene tears down (route change, etc) so
+    // the listener doesn't leak past the Phaser game's lifetime.
+    scene.events.once('shutdown', () => this.destroy());
+    scene.events.once('destroy', () => this.destroy());
+  }
+
+  /** Spawns the configured number of NPCs at random positions and
+   *  stagger-initialised speak/idle timers. Idempotent only after a
+   *  preceding `despawnAll()` — calling it twice in a row would
+   *  double the population. */
+  private spawnAll(): void {
+    const levelMin = this.options.levelRange?.min ?? 1;
+    const levelMax = this.options.levelRange?.max ?? 12;
+
+    for (let i = 0; i < this.options.count; i++) {
       const persona = NPC_PERSONAS[i % NPC_PERSONAS.length]!;
       const x = randomInRange(this.bounds.minX, this.bounds.maxX);
       const y = randomInRange(this.bounds.minY, this.bounds.maxY);
@@ -187,13 +231,13 @@ export class NpcSwarm {
       // (1, 4, 7, 12, …) rather than every NPC reading "Lv 1".
       const level = Math.floor(randomInRange(levelMin, levelMax + 1));
       const visuals = createAvatarVisuals(
-        scene,
+        this.scene,
         persona.avatarId,
         x,
         y,
         persona.name,
         level,
-        options.size,
+        this.options.size,
       );
       this.npcs.push({
         visuals,
@@ -202,18 +246,32 @@ export class NpcSwarm {
         targetX: x,
         targetY: y,
         // Stagger first-move so they don't all start walking on frame 1.
-        idleUntil: scene.time.now + Math.random() * 1500,
+        idleUntil: this.scene.time.now + Math.random() * 1500,
         direction: 's',
         currentAnimKey: null,
         // Stagger first-bubble across the full max delay so the
         // swarm chatters at different beats instead of in sync.
         nextSpeakAt:
-          scene.time.now + NPC_SPEECH_MIN_DELAY_MS + Math.random() * NPC_SPEECH_MAX_DELAY_MS,
+          this.scene.time.now + NPC_SPEECH_MIN_DELAY_MS + Math.random() * NPC_SPEECH_MAX_DELAY_MS,
         bubble: null,
       });
       // Start each NPC in idle-south (matches LocalAvatar default).
       this.playAnim(this.npcs[this.npcs.length - 1]!, 'idle', 's');
     }
+  }
+
+  /** Tears down every NPC + their pending bubble, leaving the
+   *  internal array empty. The next `spawnAll()` builds fresh
+   *  visuals + timers. */
+  private despawnAll(): void {
+    for (const npc of this.npcs) {
+      if (npc.bubble) {
+        npc.bubble.destroy();
+        npc.bubble = null;
+      }
+      destroyVisuals(npc.visuals);
+    }
+    this.npcs.length = 0;
   }
 
   update(time?: number, deltaMs?: number): void {
@@ -301,14 +359,10 @@ export class NpcSwarm {
   }
 
   destroy(): void {
-    for (const npc of this.npcs) {
-      if (npc.bubble) {
-        npc.bubble.destroy();
-        npc.bubble = null;
-      }
-      destroyVisuals(npc.visuals);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener(SIM_CHANGE_EVENT, this.simChangeHandler);
     }
-    this.npcs.length = 0;
+    this.despawnAll();
   }
 
   private playAnim(npc: Npc, action: 'idle' | 'walk', direction: AvatarDirection): void {

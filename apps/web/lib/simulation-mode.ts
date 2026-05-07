@@ -18,7 +18,10 @@ import { useCallback, useEffect, useState } from 'react';
 const STORAGE_KEY = 'arcadia.sim';
 const COOKIE_KEY = 'sim';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
-const CHANGE_EVENT = 'arcadia:sim-change';
+/** Window-level event fired whenever simulation mode is flipped.
+ *  Detail is the new boolean. Non-React subscribers (e.g. Phaser
+ *  scenes) listen for this directly via `addEventListener`. */
+export const SIM_CHANGE_EVENT = 'arcadia:sim-change';
 
 function readUrlParam(): '1' | '0' | null {
   if (typeof window === 'undefined') return null;
@@ -75,7 +78,7 @@ export function setSimulation(on: boolean): void {
   writeLocalStorage(on);
   writeCookie(on);
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: on }));
+    window.dispatchEvent(new CustomEvent(SIM_CHANGE_EVENT, { detail: on }));
   }
 }
 
@@ -106,8 +109,8 @@ export function useSimulationMode(): readonly [boolean, (on: boolean) => void] {
       const detail = (e as CustomEvent<boolean>).detail;
       setOn(detail);
     };
-    window.addEventListener(CHANGE_EVENT, handler);
-    return () => window.removeEventListener(CHANGE_EVENT, handler);
+    window.addEventListener(SIM_CHANGE_EVENT, handler);
+    return () => window.removeEventListener(SIM_CHANGE_EVENT, handler);
   }, []);
 
   const toggle = useCallback((next: boolean) => setSimulation(next), []);
