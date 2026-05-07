@@ -17,6 +17,8 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+
 import { useSimulationMode } from '@/lib/simulation-mode';
 
 /** Routes where the SimulationPill is hidden (pre-auth flows — the
@@ -62,11 +64,27 @@ export function SimulationToggle({ className }: Props) {
 /** Fixed bottom-left always-visible toggle pill. Used on in-world
  *  Phaser pages where the SimulationToggle isn't mounted in any
  *  header — pairs visually with the bottom-right ambient-music
- *  mute toggle. */
+ *  mute toggle. **Hidden inside iframes** so when the dashboard
+ *  opens as an in-world iframe overlay (DashboardOverlay), the
+ *  iframe's own copy of this pill doesn't compete with the
+ *  inline `<SimulationToggle />` in `<DashboardShell>`. The parent
+ *  page's pill stays at z-70 (below the overlay's z-80 backdrop)
+ *  for the same reason — the dashboard view should expose only
+ *  one sim control, the inline toggle. */
 export function SimulationPill() {
   const [on, setOn] = useSimulationMode();
   const pathname = usePathname() ?? '/';
+  const [inIframe, setInIframe] = useState(false);
+  useEffect(() => {
+    try {
+      setInIframe(window.parent !== window);
+    } catch {
+      // Cross-origin parent access throws — that's still an iframe.
+      setInIframe(true);
+    }
+  }, []);
   if (isHiddenRoute(pathname)) return null;
+  if (inIframe) return null;
   return (
     <button
       type="button"
@@ -78,7 +96,7 @@ export function SimulationPill() {
         position: 'fixed',
         bottom: 14,
         left: 14,
-        zIndex: 95,
+        zIndex: 70,
         padding: '7px 12px',
         borderRadius: 20,
         border: on ? '1.5px solid var(--wax-deep)' : '1px dashed var(--bronze)',
