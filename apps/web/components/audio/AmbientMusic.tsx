@@ -4,15 +4,46 @@
 // client-side navigation: walking from `/world` → `/dashboard` →
 // `/coworking/inside` doesn't restart the track.
 //
-// Behaviour:
-//   - Pauses on /login, /signup, /onboarding/* (the user isn't "in
-//     the world" yet).
-//   - Tries autoplay; if blocked by the browser (Chrome's policy),
-//     starts on the first user gesture anywhere on the page.
-//   - localStorage-persisted mute state — the user's choice carries
-//     across reloads.
-//   - Tiny mute toggle anchored bottom-right at z-index 50 (below
-//     modals at 80 but above scenes/HUDs).
+// **Algorithm (rewritten 2026-05-02 after a "starts paused / mute
+// doesn't toggle / autoplays on its own" round of bugs):**
+//
+// We follow the **YouTube pattern**: muted-autoplay is universally
+// allowed by browsers, audible-autoplay is not. So we always start
+// the audio element muted-and-playing. The user's *intent* is the
+// `userMuted` state (persisted in localStorage). The actual audible
+// output is gated on two things:
+//   1. The browser has user activation (the user has interacted with
+//      the page at least once — required by Chrome/Safari autoplay
+//      policy to start audible playback).
+//   2. `userMuted === false` (the user has not toggled mute off).
+//
+// `effectiveMuted = userMuted || !activated`. The `<audio>` element's
+// `muted` property tracks this; it flips to `false` only when both
+// conditions hold. One useEffect drives play/pause + mute together so
+// state can't desync.
+//
+// **Why the previous version misbehaved:**
+//   - `<audio autoPlay>` and a JS `play()` retry both raced; the
+//     retry's `{ once: true }` listener could miss an iframe-only
+//     click and never fire again.
+//   - `userMuted` defaulted to `false` and was hydrated from
+//     localStorage in a separate effect — there was a render frame
+//     where the audio was unmuted, briefly playing loud, before the
+//     mute kicked in.
+//   - Multiple useEffects updated `audio.muted` from different deps
+//     and could fight each other when the mute button was clicked
+//     during the autoplay-retry window.
+//
+// **Behaviour now:**
+//   - Pauses on /login, /signup, /onboarding/* (pre-world flows).
+//   - Always starts muted on first mount (no audible flash).
+//   - First user click anywhere → unmutes, if `userMuted === false`.
+//   - Mute button toggles `userMuted`; the audio element follows
+//     synchronously via the unified effect.
+//   - localStorage-persisted mute preference; carries across reloads.
+//   - Tiny mute toggle anchored bottom-right at z-index 95 (above
+//     the DashboardOverlay + MarketOverlay at 80 + their action
+//     clusters at 90; also above scenes/HUDs).
 
 'use client';
 
@@ -33,75 +64,95 @@ function isMutedRoute(pathname: string): boolean {
 export function AmbientMusic(): React.JSX.Element {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pathname = usePathname() ?? '/';
-  const [muted, setMuted] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
 
-  // Hydrate user's mute preference from localStorage. Defer to
-  // useEffect so SSR + hydration match (mute starts false on server).
+  /** User's mute *intent*. Hydrated from localStorage post-mount.
+   *  Initial `false` means "the user wants music" — but the audio
+   *  stays silent until `activated` flips, so there's no audible
+   *  flash if their stored preference is actually muted. */
+  const [userMuted, setUserMuted] = useState(false);
+
+  /** True once the page has received its first user gesture
+   *  (Chrome's "user activation"). Required for audible playback. */
+  const [activated, setActivated] = useState(false);
+
+  // Hydrate userMuted from localStorage. Deferred to useEffect
+  // because SSR can't read localStorage; the audio element starts
+  // muted regardless, so a stale `false` here is harmless.
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(MUTE_STORAGE_KEY);
-      if (stored === '1') setMuted(true);
+      if (stored === '1') setUserMuted(true);
     } catch {
       // localStorage may be blocked (private mode, etc) — fall through.
     }
-    setHydrated(true);
   }, []);
 
-  // Persist mute changes.
+  // Persist userMuted changes. No-op on the initial false → false
+  // hydration pass; only writes when the user actually toggles.
   useEffect(() => {
-    if (!hydrated) return;
     try {
-      window.localStorage.setItem(MUTE_STORAGE_KEY, muted ? '1' : '0');
+      window.localStorage.setItem(MUTE_STORAGE_KEY, userMuted ? '1' : '0');
     } catch {
       // ignore
     }
-  }, [muted, hydrated]);
+  }, [userMuted]);
 
-  // Configure volume + mute attribute on the audio element.
+  // Detect first user gesture. After it fires, audible playback is
+  // allowed. We listen at the capture phase on `document` so even
+  // clicks inside iframes-from-the-same-origin fire it (the only
+  // real edge case here is the dashboard overlay iframe, where a
+  // click inside doesn't bubble to window — capture-on-document does
+  // catch it). One-shot.
+  useEffect(() => {
+    if (activated) return;
+    const handler = (): void => {
+      setActivated(true);
+    };
+    document.addEventListener('pointerdown', handler, { once: true, capture: true });
+    document.addEventListener('keydown', handler, { once: true, capture: true });
+    return () => {
+      document.removeEventListener('pointerdown', handler, true);
+      document.removeEventListener('keydown', handler, true);
+    };
+  }, [activated]);
+
+  const shouldPlayRoute = !isMutedRoute(pathname);
+  // Audio is silent unless the user wants sound AND the page has
+  // received user activation. This matches what browsers will
+  // actually allow.
+  const effectiveMuted = userMuted || !activated;
+
+  // Single effect drives the audio element. Re-runs whenever the
+  // route's play-eligibility, the effective mute state, or the
+  // element ref change. No racing with the `<audio autoPlay>` HTML
+  // attribute because we don't use one — JS owns the state.
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
     audio.volume = VOLUME;
-    audio.muted = muted;
-  }, [muted]);
-
-  // Pause on auth/onboarding routes, play otherwise. Browsers may
-  // reject the play() promise (autoplay policy) — listen for the
-  // first user gesture and retry.
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    const shouldPlay = !isMutedRoute(pathname);
-    if (!shouldPlay) {
+    audio.muted = effectiveMuted;
+    if (!shouldPlayRoute) {
       audio.pause();
       return;
     }
-    let cancelled = false;
-    const tryPlay = (): void => {
-      if (cancelled) return;
-      void audio.play().catch(() => {
-        // Autoplay blocked — wait for a user gesture and retry once.
-        const retry = (): void => {
-          window.removeEventListener('pointerdown', retry);
-          window.removeEventListener('keydown', retry);
-          void audio.play().catch(() => {
-            // Still blocked (rare, e.g. iOS Lock Screen) — give up
-            // silently. The mute toggle still lets the user start it
-            // manually after another gesture.
-          });
-        };
-        window.addEventListener('pointerdown', retry, { once: true });
-        window.addEventListener('keydown', retry, { once: true });
-      });
-    };
-    tryPlay();
-    return () => {
-      cancelled = true;
-    };
-  }, [pathname]);
+    // play() on a muted element is always allowed. play() on an
+    // audible element requires user activation — we already gate
+    // `effectiveMuted` on that, so by the time we ever call play()
+    // unmuted, the page has activation.
+    void audio.play().catch(() => {
+      // Extremely rare: even muted play() rejected (iOS Lock
+      // Screen, certain Safari edge cases). Don't loop — when the
+      // user gestures next, `activated` flips and this effect
+      // re-runs.
+    });
+  }, [shouldPlayRoute, effectiveMuted]);
 
-  const toggleMuted = useCallback(() => setMuted((m) => !m), []);
+  const toggleMuted = useCallback((): void => {
+    // Toggling counts as a user gesture, so flip both state slots
+    // in one go. `setActivated(true)` is idempotent if already true.
+    setActivated(true);
+    setUserMuted((m) => !m);
+  }, []);
 
   // The button hides on routes where music doesn't play. No point
   // showing "mute" for silence.
@@ -113,10 +164,13 @@ export function AmbientMusic(): React.JSX.Element {
         ref={audioRef}
         src={TRACK_SRC}
         loop
-        // Use `autoPlay` so the browser tries on first mount; the JS
-        // retry above handles the autoplay-policy rejection.
-        autoPlay
         preload="auto"
+        // Start muted via the HTML attribute too, so the very first
+        // paint is muted even before our effect runs. Our effect
+        // overrides it once it commits — but having it muted in JSX
+        // means we never hit the "unmuted-during-hydration" flash
+        // even if the effect schedules late.
+        muted
         // The login form looks this up by attribute and calls play()
         // synchronously inside its submit handler so the user-gesture
         // grant carries from /login → /. See app/login/page.tsx.
@@ -126,13 +180,13 @@ export function AmbientMusic(): React.JSX.Element {
         <button
           type="button"
           onClick={toggleMuted}
-          aria-label={muted ? 'unmute ambient music' : 'mute ambient music'}
-          title={muted ? 'unmute ambient music' : 'mute ambient music'}
+          aria-label={userMuted ? 'unmute ambient music' : 'mute ambient music'}
+          title={userMuted ? 'unmute ambient music' : 'mute ambient music'}
           style={{
             position: 'fixed',
             bottom: 14,
             right: 14,
-            zIndex: 50,
+            zIndex: 95,
             width: 36,
             height: 36,
             display: 'inline-flex',
@@ -150,7 +204,7 @@ export function AmbientMusic(): React.JSX.Element {
           onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
           onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.7')}
         >
-          {muted ? <SpeakerMutedIcon /> : <SpeakerOnIcon />}
+          {userMuted ? <SpeakerMutedIcon /> : <SpeakerOnIcon />}
         </button>
       )}
     </>
