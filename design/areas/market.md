@@ -27,25 +27,25 @@ The overlay arrives over the Phaser scene (no slide, no fade — it's a full-can
 
 ## Signature surfaces
 
-- **CategoryPicker landing** — four large doorway cards (Courses / Templates / Tools / Exclusives), echoing the realm-hub doorways on `/`. Each card carries its own `WaxSeal`-style sigil (C / T / W / E) in a category-specific accent (verdigris / wax / bronze / gilt) and shows the item count + a one-line tagline.
+- **CategoryPicker landing** — **3 + 1 layout**: three equal `VellumCard`s on the top row (Courses / Templates / Tools, all the same shell so they read as a cohesive set; only the wax-seal sigil + accent colour differs — C verdigris / T wax / W bronze) and one wide `LedgerCard` on the bottom row for **Exclusives** (E gilt), with a pulsing gilt halo (`.market-exclusives-glow` keyframes in `app/globals.css`) to signal premium tier. Responsive grid via `.market-picker-top-row`: 3 cols ≥ 760 px → 2 cols 520–760 → 1 col < 520. The bottom Exclusives card always spans full width via `width: 100%`. Echoes the realm-hub doorways on `/` but with deliberate hierarchy.
 - **CategoryView shell** — `NightRoom + Desk` background. Header with a `DropCap`, the category name in italic display, the item count in `Hand`, and a `← back to the market` ghost button.
-- **Two-column layout** — left rail = scrollable item list (each row: title, creator name in small-caps mono, price chip / `$X`); right pane = preview + checkout. Selecting a row swaps the preview pane.
+- **Two-column layout** — left rail = scrollable item list (each row: title in display-italic with single-line ellipsis, **`PriceTag compact`** = tight inline mono pill on the right (free / owned / `$X`), creator name in small-caps mono below); right pane = preview + checkout. Selecting a row swaps the preview pane. Rows are intentionally tight — title 15 px, padding 7/10, gap 2 — so the rail doesn't feel like a blog post column.
 - **Preview pane** — a `MapCard` with the item's title, creator, kicker, description, and a preview block. Three preview kinds:
   - `text` — short scriptorium pre-block (mono).
   - `list` — bulleted list (for checklists + bundle contents).
   - `mock-screenshot` — italic caption describing a hypothetical screenshot (no real image assets needed for the sim).
 - **Checkout footer** — `PriceTag` on the left (chip for free / `$X` mono label for paid / `owned` chip post-purchase) + the action button on the right. Verb varies by category meta: free → "claim the template", "claim the tool", "unbind the coffer", etc. Paid → "pay & download · $X" or similar. Owned → "step inside →" (Courses), "download →" (Templates / Tools), "open the coffer →" (Exclusives).
-- **Overlay actions cluster** — top-right of the viewport, z-index 90: ✕ close (returns to scene), ← return to the world (full nav to /world), and a real signout form (logout, `target="_top"`).
+- **Overlay actions cluster** — top-right of the viewport, z-index 90: **just ✕ close** (returns to the Phaser scene). The ← return-to-the-world + logout buttons that briefly shipped in PR #60's first cut were removed in PR #61 — closing returns the player to the scene where they came from, and logout lives on the dashboards (creator + future member).
 
 ## Components likely needed
 
-- `MarketOverlay` wrapper — fullscreen modal with the dashboard inside + the actions cluster.
+- `MarketOverlay` wrapper — fullscreen modal with the dashboard inside + the ✕ close button + Esc handler.
 - `Market` orchestrator — owns the active-category state + in-memory ownership set.
-- `CategoryPicker` — 4-card landing.
+- `CategoryPicker` — 3 + 1 landing (`PickerCard` for the top three, `ExclusiveCard` for the wide bottom one with the gilt halo).
 - `CategoryView` — list rail + preview pane + checkout footer.
-- `PriceTag` — chip / `$X` / `owned` variants.
+- `PriceTag` — `compact` (inline mono pill, used in the list rail) and full (uses `<Chip>`, used in the action footer) variants.
 - `WaxSeal` letter variant — already in scriptorium kit; reused for category sigils.
-- `Chip` — for "free", "owned", and bundle-contents pills.
+- `Chip` — for "free", "owned", and bundle-contents pills (action footer only; rail uses the compact pill).
 
 ## Copy voice
 
@@ -68,10 +68,11 @@ The overlay arrives over the Phaser scene (no slide, no fade — it's a full-can
 
 - `apps/web/components/game/scenes/market/` — Phaser interior (NOT this file's scope).
 - `apps/web/components/game/GameMarket.tsx` — Phaser mount + MarketOverlay toggle on `MARKET_OPEN_CATALOG_EVENT`.
-- `apps/web/app/market/_components/MarketOverlay.tsx` — fullscreen modal + actions cluster.
+- `apps/web/app/market/_components/MarketOverlay.tsx` — fullscreen modal + ✕ close button + Esc handler.
 - `apps/web/app/market/_components/Market.tsx` — top-level dashboard orchestrator.
-- `apps/web/app/market/_components/CategoryPicker.tsx` — 4-card landing.
+- `apps/web/app/market/_components/CategoryPicker.tsx` — 3 + 1 landing (`PickerCard` for the top three, `ExclusiveCard` for the wide bottom one with the gilt halo).
 - `apps/web/app/market/_components/CategoryView.tsx` — list + preview + checkout for one stall.
+- `apps/web/app/globals.css` — `.market-picker-top-row` (responsive grid) + `@keyframes market-exclusives-glow` + reduced-motion fallback.
 - `apps/web/lib/market/types.ts` — `MarketCategoryId`, `MarketItem`, `CATEGORY_META`, `CATEGORY_ORDER`.
 - `apps/web/lib/market/fixtures.ts` — Templates / Tools / Exclusives fixtures.
 - `apps/web/app/market/_components/{CatalogScroll,StallView}.tsx` — preserved on disk for reference (the pre-2026-05-02 per-course modal flow), no longer imported.
@@ -79,3 +80,4 @@ The overlay arrives over the Phaser scene (no slide, no fade — it's a full-can
 ## Review log
 
 - **2026-05-02** — Phase-15-ish rework. Replaced the per-course `CatalogScroll` + URL-driven `StallView` modal pair with a four-stall dashboard (`MarketOverlay` / `Market` / `CategoryPicker` / `CategoryView`) opened from the crystal proximity prompt. Pricing changed from "X coin" to `$X`. Categories: Courses · Templates · Tools · Exclusives. See `docs/changelog/2026-05-02_market-overlay-and-polish.md`.
+- **2026-05-02 (later same day · PR #61)** — Picker grew the **3 + 1 layout** (top three on identical Vellum cards; Exclusives on a wide LedgerCard with a pulsing gilt halo). Rail items tightened (compact PriceTag pill instead of the heavy `<Chip>`). Overlay header trimmed to **just ✕ close** — the ← return-to-the-world + logout cluster + the path-aware `enteredVia` plumbing it depended on were all rolled back. AmbientMusic also rewritten as a single-state-machine YouTube-pattern player (covered separately, but it's what fixed the "music doesn't autoplay reliably / mute button doesn't toggle" complaints). See `docs/changelog/2026-05-02_market-and-audio-polish.md`.

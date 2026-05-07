@@ -4,10 +4,13 @@
 // `MARKET_OPEN_CATALOG_EVENT`; `GameMarket.tsx` listens and toggles
 // this overlay's `open` prop).
 //
-// Header carries three actions: ✕ close (returns to the Phaser
-// scene), ← return to world (full navigation to /world), and logout
-// (POSTs the signout endpoint at the top level so any in-world
-// state is cleanly torn down). Esc closes the overlay (same as ✕).
+// **Header (2026-05-02 simplified)**: just the ✕ close button at
+// top-right (z-index 90). Earlier iterations carried ← return-to-
+// world + logout for direct-entry, plus a path-aware branch — both
+// removed per user feedback. The overlay is now a pure dashboard:
+// closing returns the player to the Phaser scene, where the top
+// archway returns to /world. Logout lives on the creator dashboard
+// (and the future member dashboard).
 //
 // We intentionally keep the overlay as React-on-the-same-page (not
 // an iframe) because the parent route is the Phaser scene — losing
@@ -16,10 +19,7 @@
 
 'use client';
 
-import Link from 'next/link';
 import { useEffect } from 'react';
-
-import { GhostButton } from '@/components/scriptorium';
 
 import type { MarketItem } from '@/lib/market/types';
 
@@ -60,41 +60,6 @@ export function MarketOverlay({ open, onClose, courses }: Props): React.JSX.Elem
       }}
     >
       <Market courses={courses} />
-      <OverlayActions onClose={onClose} />
-    </div>
-  );
-}
-
-/** Top-right button cluster. Sits above the dashboard at z-index 90
- *  so it's reachable from both the picker and the category view
- *  without each of those needing to know about navigation. */
-function OverlayActions({ onClose }: { readonly onClose: () => void }): React.JSX.Element {
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 16,
-        right: 16,
-        zIndex: 90,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-      }}
-    >
-      <Link href="/world" style={{ textDecoration: 'none' }}>
-        <GhostButton size="sm" onDark>
-          ← return to the world
-        </GhostButton>
-      </Link>
-      {/* `target="_top"` matters when the market overlay is itself
-          embedded — the form must replace the top-level window so
-          everything (Phaser canvas + audio + Colyseus) tears down
-          cleanly post-signout. */}
-      <form action="/api/auth/signout" method="post" target="_top" style={{ margin: 0 }}>
-        <GhostButton size="sm" onDark type="submit">
-          logout
-        </GhostButton>
-      </form>
       <button
         type="button"
         onClick={onClose}
@@ -111,6 +76,10 @@ function OverlayActions({ onClose }: { readonly onClose: () => void }): React.JS
 }
 
 const closeButtonStyle: React.CSSProperties = {
+  position: 'fixed',
+  top: 16,
+  right: 16,
+  zIndex: 90,
   width: 36,
   height: 36,
   display: 'inline-flex',
