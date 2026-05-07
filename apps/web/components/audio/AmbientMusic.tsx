@@ -61,9 +61,20 @@ function isMutedRoute(pathname: string): boolean {
   return false;
 }
 
-export function AmbientMusic(): React.JSX.Element {
+export function AmbientMusic(): React.JSX.Element | null {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pathname = usePathname() ?? '/';
+
+  /** True when this component is mounted inside an iframe — the
+   *  in-world `DashboardOverlay` loads `/dashboard` in an iframe,
+   *  which means root-layout components like AmbientMusic mount a
+   *  *second* time inside the iframe. The parent page already owns
+   *  the audio element + the mute button, so we bail entirely
+   *  inside iframes to avoid (a) two audio elements both trying
+   *  to play and (b) a duplicate mute button at the iframe's
+   *  bottom-right. Mirrors the same iframe-bail in
+   *  `<SimulationPill />`. */
+  const [inIframe, setInIframe] = useState(false);
 
   /** User's mute *intent*. Hydrated from localStorage post-mount.
    *  Initial `false` means "the user wants music" — but the audio
@@ -74,6 +85,17 @@ export function AmbientMusic(): React.JSX.Element {
   /** True once the page has received its first user gesture
    *  (Chrome's "user activation"). Required for audible playback. */
   const [activated, setActivated] = useState(false);
+
+  // Detect iframe context on mount. Runs once; if true, the
+  // component returns null below and skips every other effect.
+  useEffect(() => {
+    try {
+      setInIframe(window.parent !== window);
+    } catch {
+      // Cross-origin parent access throws — that's still an iframe.
+      setInIframe(true);
+    }
+  }, []);
 
   // Hydrate userMuted from localStorage. Deferred to useEffect
   // because SSR can't read localStorage; the audio element starts
@@ -157,6 +179,9 @@ export function AmbientMusic(): React.JSX.Element {
   // The button hides on routes where music doesn't play. No point
   // showing "mute" for silence.
   const showButton = useMemo(() => !isMutedRoute(pathname), [pathname]);
+
+  // Iframe bail (parent page already owns the audio + button).
+  if (inIframe) return null;
 
   return (
     <>
