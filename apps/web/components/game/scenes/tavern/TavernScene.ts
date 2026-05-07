@@ -202,12 +202,13 @@ export class TavernScene extends Phaser.Scene {
     this.wireKeyboardInput();
     this.wirePointerInput();
 
-    // Demo NPCs — three patrons drifting around the bar.
+    // Demo NPCs — three patrons drifting around the bar at the
+    // local avatar's walk speed.
     this.npcSwarm = new NpcSwarm(this, {
       count: 3,
       bounds: { minX: 200, minY: 200, maxX: bounds.width - 200, maxY: bounds.height - 200 },
       size: tavernSpritesConfig.avatar.size,
-      speed: 70, // slower in the tavern, like patrons milling
+      speed: tavernSpritesConfig.avatar.walkSpeed,
     });
 
     // Defensive reset — the React side emits a blur event on mount that

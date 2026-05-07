@@ -123,9 +123,10 @@ export abstract class OutdoorSceneBase extends Phaser.Scene {
     this.wireKeyboardInput();
     this.wirePointerInput();
 
-    // Demo NPCs — three folk wandering this outdoor area. All three
-    // outdoor scenes (academy / tavern / coworking outside) inherit
-    // this; bounds + size come from their `cfg.bounds` + `cfg.avatar.size`.
+    // Demo NPCs — three folk wandering this outdoor area at the
+    // local avatar's walk speed. All three outdoor scenes (academy /
+    // tavern / coworking outside) inherit this; bounds, size, and
+    // speed all come from their `cfg.avatar.*`.
     this.npcSwarm = new NpcSwarm(this, {
       count: 3,
       bounds: {
@@ -135,7 +136,7 @@ export abstract class OutdoorSceneBase extends Phaser.Scene {
         maxY: cfg.bounds.height - 320,
       },
       size: cfg.avatar.size,
-      speed: 100,
+      speed: cfg.avatar.walkSpeed,
     });
 
     this.enterPrompt = createEnterPromptManager(this, cfg.entryTriggers);

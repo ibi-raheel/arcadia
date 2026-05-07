@@ -100,11 +100,13 @@ export class AcademyScene extends Phaser.Scene {
 
     this.renderLectern();
 
-    // Demo NPCs — three folk wandering the lecture hall.
+    // Demo NPCs — three folk wandering the lecture hall at the
+    // local avatar's walk speed.
     this.npcSwarm = new NpcSwarm(this, {
       count: 3,
       bounds: { minX: 200, minY: 200, maxX: bounds.width - 200, maxY: bounds.height - 200 },
       size: academySpritesConfig.avatar.size,
+      speed: academySpritesConfig.avatar.walkSpeed,
     });
 
     // ENTER-gated exit at the bottom-centre archway (Phase 7 item AC10).

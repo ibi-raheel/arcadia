@@ -119,12 +119,13 @@ export class CoworkingInsideScene extends Phaser.Scene {
     this.wireKeyboardInput();
     this.wirePointerInput();
 
-    // Demo NPCs — three coworkers wandering the tent.
+    // Demo NPCs — three coworkers wandering the tent at the local
+    // avatar's walk speed.
     this.npcSwarm = new NpcSwarm(this, {
       count: 3,
       bounds: { minX: 300, minY: 300, maxX: bounds.width - 300, maxY: bounds.height - 300 },
       size: coworkingInsideSpritesConfig.avatar.size,
-      speed: 70,
+      speed: coworkingInsideSpritesConfig.avatar.walkSpeed,
     });
 
     const buildingId = this.registry.get(COWORKING_BUILDING_ID_REGISTRY_KEY) as string | null;

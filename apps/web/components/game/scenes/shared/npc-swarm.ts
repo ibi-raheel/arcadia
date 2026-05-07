@@ -69,15 +69,17 @@ export type NpcSwarmOptions = {
   readonly bounds: NpcBounds;
   /** Display size — should match the scene's player avatar size. */
   readonly size: AvatarSize;
-  /** Walk speed in px/s. Default 90 — slower than the player so they
-   *  read as ambient, not racing. */
+  /** Walk speed in px/s. Default 200. Pass the scene's player
+   *  `walkSpeed` so NPCs feel the same speed as the local avatar. */
   readonly speed?: number;
   /** Min idle ms on arrival. Default 1000. */
   readonly idleMinMs?: number;
   /** Max idle ms on arrival. Default 4000. */
   readonly idleMaxMs?: number;
-  /** Optional level shown in the nameplate badge. Default 1. */
-  readonly level?: number;
+  /** Inclusive level range used to randomise each NPC's nameplate
+   *  badge digit. Default 1–12 — keeps the badge to one or two
+   *  digits so the circular Arc isn't overflowed. */
+  readonly levelRange?: { readonly min: number; readonly max: number };
 };
 
 type NpcState = 'walking' | 'idle';
@@ -118,15 +120,19 @@ export class NpcSwarm {
   constructor(scene: Phaser.Scene, options: NpcSwarmOptions) {
     this.scene = scene;
     this.bounds = options.bounds;
-    this.speed = options.speed ?? 90;
+    this.speed = options.speed ?? 200;
     this.idleMinMs = options.idleMinMs ?? 1000;
     this.idleMaxMs = options.idleMaxMs ?? 4000;
-    const level = options.level ?? 1;
+    const levelMin = options.levelRange?.min ?? 1;
+    const levelMax = options.levelRange?.max ?? 12;
 
     for (let i = 0; i < options.count; i++) {
       const persona = NPC_PERSONAS[i % NPC_PERSONAS.length]!;
       const x = randomInRange(this.bounds.minX, this.bounds.maxX);
       const y = randomInRange(this.bounds.minY, this.bounds.maxY);
+      // Per-NPC randomised level so the badges show a mix of digits
+      // (1, 4, 7, 12, …) rather than every NPC reading "Lv 1".
+      const level = Math.floor(randomInRange(levelMin, levelMax + 1));
       const visuals = createAvatarVisuals(
         scene,
         persona.avatarId,
