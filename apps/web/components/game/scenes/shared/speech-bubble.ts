@@ -14,8 +14,12 @@ import type Phaser from 'phaser';
 
 import { addCrispText } from './crisp-text';
 
-/** How far above the avatar's center the bubble's tail-tip sits. */
-export const SPEECH_BUBBLE_Y_OFFSET = 110;
+/** How far above the avatar's center the bubble's tail-tip sits.
+ *  Bumped 110 → 145 on 2026-05-06 — at the larger 17 px nameplate
+ *  font (post-PR-#45) the bubble's tail tip was overlapping the
+ *  level badge + display name. The extra 35 px gives the nameplate
+ *  clear breathing room. */
+export const SPEECH_BUBBLE_Y_OFFSET = 145;
 /** How long a bubble stays on screen before it auto-destroys. */
 export const SPEECH_BUBBLE_DURATION_MS = 5000;
 /** Depth above HUDs / pills / capacity badges. Same value the tavern
