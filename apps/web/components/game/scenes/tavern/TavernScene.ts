@@ -18,7 +18,6 @@ import { isAvatarId } from '../shared/avatar-palette';
 // Capacity HUD removed 2026-04-25 (user-feedback hotfix). Auto-
 // sharding still happens at maxClients=20, just silently now.
 import { spawnColliders } from '../shared/colliders';
-import { addCrispText } from '../shared/crisp-text';
 import {
   createEnterPromptManager,
   type EnterPromptManager,
@@ -31,6 +30,12 @@ import {
 } from '../shared/proximity-prompt';
 import { applyFillZoom } from '../shared/fill-zoom';
 import { NpcSwarm } from '../shared/npc-swarm';
+import {
+  createSpeechBubble,
+  SPEECH_BUBBLE_DEPTH,
+  SPEECH_BUBBLE_DURATION_MS,
+  SPEECH_BUBBLE_Y_OFFSET,
+} from '../shared/speech-bubble';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -85,53 +90,11 @@ export const TAVERN_SPEECH_EVENT = 'tavern:speech';
 export const TAVERN_CHAT_FOCUS_EVENT = 'tavern:chat-focus';
 export const TAVERN_CHAT_BLUR_EVENT = 'tavern:chat-blur';
 
-const SPEECH_BUBBLE_DURATION_MS = 5000;
-const SPEECH_BUBBLE_DEPTH = 10_000;
-// Speech bubbles anchor this far above the avatar's y-origin. Must clear
-// the name tag (anchored at avatar-top minus 6, extending ~24px upward)
-// plus the bubble's own height/tail. 2026-04-23: bumped from 64 → 110 to
-// stop the bubble bg overlapping the name label on 135px avatars (Phase 7
-// item T3).
-const SPEECH_BUBBLE_Y_OFFSET = 110;
-const SPEECH_BUBBLE_MAX_WIDTH = 200;
-const SPEECH_BUBBLE_PAD_X = 10;
-const SPEECH_BUBBLE_PAD_Y = 6;
-
-/**
- * Build a speech-bubble Container (background rounded-rect + text). Origin
- * sits at the bottom-centre so callers can attach it directly above an
- * avatar's head by setting (x, y) to the avatar's top-of-head coord.
- */
-function createSpeechBubble(scene: Phaser.Scene, text: string): Phaser.GameObjects.Container {
-  const textObj = addCrispText(scene, 0, 0, text, {
-    fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
-    fontSize: '14px',
-    color: '#fef3c7',
-    wordWrap: { width: SPEECH_BUBBLE_MAX_WIDTH, useAdvancedWrap: true },
-  }).setOrigin(0.5, 0.5);
-
-  const w = textObj.width + SPEECH_BUBBLE_PAD_X * 2;
-  const h = textObj.height + SPEECH_BUBBLE_PAD_Y * 2;
-
-  // Graphics for rounded-rect background + tail. Drawn relative to the
-  // Container's origin, which we anchor at bottom-centre (so y is 0 at the
-  // tail tip, −(h+tail) at the top of the bubble).
-  const tailSize = 6;
-  const bg = scene.add.graphics();
-  bg.fillStyle(0x0a0a0a, 0.85);
-  bg.lineStyle(1, 0x4a4a4a, 1);
-  // Rounded rect anchored with bottom-centre = (0, -tailSize).
-  bg.fillRoundedRect(-w / 2, -h - tailSize, w, h, 6);
-  bg.strokeRoundedRect(-w / 2, -h - tailSize, w, h, 6);
-  // Triangle tail pointing down to the speaker.
-  bg.fillTriangle(-tailSize, -tailSize, tailSize, -tailSize, 0, 0);
-  bg.lineBetween(-tailSize, -tailSize, 0, 0);
-  bg.lineBetween(tailSize, -tailSize, 0, 0);
-
-  textObj.setPosition(0, -tailSize - h / 2);
-
-  return scene.add.container(0, 0, [bg, textObj]);
-}
+// (SPEECH_BUBBLE_* constants + createSpeechBubble factory live in
+// `../shared/speech-bubble` — extracted 2026-05-06 so the NPC swarm
+// and the tavern chat share one implementation. The 110 px Y-offset
+// is preserved per the 2026-04-23 bump that stopped the bubble bg
+// overlapping the name label on 135 px avatars.)
 
 type YSortableGameObject = YSortable & { setDepth: (depth: number) => unknown };
 

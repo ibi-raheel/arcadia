@@ -40,6 +40,12 @@ import {
   type AvatarVisuals,
 } from '../world/avatar-renderer';
 import type { AvatarId } from './avatar-palette';
+import {
+  createSpeechBubble,
+  SPEECH_BUBBLE_DEPTH,
+  SPEECH_BUBBLE_DURATION_MS,
+  SPEECH_BUBBLE_Y_OFFSET,
+} from './speech-bubble';
 
 /** Pool of NPC personas — alternates as we spawn so the same scene
  *  doesn't have four "Mira"s. Names borrowed from the market
@@ -54,6 +60,46 @@ const NPC_PERSONAS: ReadonlyArray<{ readonly avatarId: AvatarId; readonly name: 
   { avatarId: 'avatar-01', name: 'Nox' },
   { avatarId: 'avatar-02', name: 'Cassia' },
 ];
+
+/** Random ambient mutterings shown above NPC heads in the same
+ *  speech-bubble visual the tavern chat uses. Mix of in-character
+ *  scriptorium voice + lighter relatable lines so the world feels
+ *  alive without leaning too hard on the medieval gimmick. */
+const NPC_MESSAGES: ReadonlyArray<string> = [
+  'Bored… might have a pizza.',
+  'Where was that secret chest again?',
+  'I need a blacksmith. Too short for this armor.',
+  'Anyone seen the keeper today?',
+  'Brb, refilling the inkwell.',
+  'I swear the lantern moved on its own.',
+  '~ if I hear one more bard tonight ~',
+  'Did the scribe finish the new course?',
+  'Three coins for that? In this economy?',
+  'Pretty sure the wanderer just winked at me.',
+  'Just need ten minutes of focus, please.',
+  'Tomorrow. I will start tomorrow.',
+  'Found a typo in the third lesson. Again.',
+  'My XP bar moved! …half a pixel.',
+  'Tavern at sundown? Bring the lute.',
+  'The hourglass said five minutes. It lied.',
+  'Anyone good with Figma? Asking for a friend.',
+  'Pretty sure that course launch made me rich.',
+  'I am not late. The clock is early.',
+  'The jukebox is stuck on the same track.',
+  'I will get to inbox zero one day.',
+  'Anyone want to playtest a coffer with me?',
+  'Saw a dragon south of the market. Probably a goose.',
+  'Need coffee. Or a nap. Both, ideally.',
+  'My avatar keeps walking into walls. Theatrical.',
+  'Heard the sage is just a static panel now.',
+  'The scribe owes me a recap.',
+  'Two streams in three days. Send help.',
+  'New cohort starts Sunday. Bring tea.',
+  'You ever just stand in the rain on purpose?',
+];
+
+const NPC_SPEECH_MIN_DELAY_MS = 12_000;
+const NPC_SPEECH_MAX_DELAY_MS = 28_000;
 
 export type NpcBounds = {
   readonly minX: number;
@@ -96,6 +142,13 @@ type Npc = {
   /** Tracks whether the current `walk-<dir>` anim has been started so
    *  we don't restart it every frame and stutter the cycle. */
   currentAnimKey: string | null;
+  /** Scene clock ms when this NPC will speak again. Compared against
+   *  `scene.time.now` each tick. Initialised on construction with a
+   *  staggered offset so the swarm doesn't all chatter at once. */
+  nextSpeakAt: number;
+  /** Active bubble container (null when no bubble is up). Followed in
+   *  update() so it tracks the NPC's position as they walk. */
+  bubble: Phaser.GameObjects.Container | null;
 };
 
 /** Cardinal direction from a velocity vector. Matches the world's
@@ -152,6 +205,11 @@ export class NpcSwarm {
         idleUntil: scene.time.now + Math.random() * 1500,
         direction: 's',
         currentAnimKey: null,
+        // Stagger first-bubble across the full max delay so the
+        // swarm chatters at different beats instead of in sync.
+        nextSpeakAt:
+          scene.time.now + NPC_SPEECH_MIN_DELAY_MS + Math.random() * NPC_SPEECH_MAX_DELAY_MS,
+        bubble: null,
       });
       // Start each NPC in idle-south (matches LocalAvatar default).
       this.playAnim(this.npcs[this.npcs.length - 1]!, 'idle', 's');
@@ -207,11 +265,47 @@ export class NpcSwarm {
 
       syncVisualAttachments(npc.visuals);
       setVisualsDepth(npc.visuals, npc.visuals.gameObject.y);
+
+      // Speech bubble lifecycle. If the NPC has no bubble and it's
+      // time to speak, pick a random line and spawn one. If they
+      // have one, follow it to their head each frame.
+      if (npc.bubble === null && now >= npc.nextSpeakAt) {
+        const text =
+          NPC_MESSAGES[Math.floor(Math.random() * NPC_MESSAGES.length)] ?? NPC_MESSAGES[0]!;
+        const bubble = createSpeechBubble(this.scene, text);
+        bubble.setDepth(SPEECH_BUBBLE_DEPTH);
+        bubble.setPosition(
+          npc.visuals.gameObject.x,
+          npc.visuals.gameObject.y - SPEECH_BUBBLE_Y_OFFSET,
+        );
+        npc.bubble = bubble;
+        // Auto-destroy after the standard duration; clear the slot
+        // so the next-speak timer can re-fire.
+        this.scene.time.delayedCall(SPEECH_BUBBLE_DURATION_MS, () => {
+          if (npc.bubble) {
+            npc.bubble.destroy();
+            npc.bubble = null;
+          }
+          npc.nextSpeakAt =
+            this.scene.time.now +
+            NPC_SPEECH_MIN_DELAY_MS +
+            Math.random() * (NPC_SPEECH_MAX_DELAY_MS - NPC_SPEECH_MIN_DELAY_MS);
+        });
+      } else if (npc.bubble !== null) {
+        npc.bubble.setPosition(
+          npc.visuals.gameObject.x,
+          npc.visuals.gameObject.y - SPEECH_BUBBLE_Y_OFFSET,
+        );
+      }
     }
   }
 
   destroy(): void {
     for (const npc of this.npcs) {
+      if (npc.bubble) {
+        npc.bubble.destroy();
+        npc.bubble = null;
+      }
       destroyVisuals(npc.visuals);
     }
     this.npcs.length = 0;
