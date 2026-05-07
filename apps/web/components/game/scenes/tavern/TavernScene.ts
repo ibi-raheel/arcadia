@@ -30,6 +30,7 @@ import {
   type ProximityPromptManager,
 } from '../shared/proximity-prompt';
 import { applyFillZoom } from '../shared/fill-zoom';
+import { NpcSwarm } from '../shared/npc-swarm';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -137,6 +138,7 @@ type YSortableGameObject = YSortable & { setDepth: (depth: number) => unknown };
 export class TavernScene extends Phaser.Scene {
   private readonly ySortables: YSortableGameObject[] = [];
   private localAvatar?: LocalAvatar;
+  private npcSwarm?: NpcSwarm;
 
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasdKeys?: {
@@ -199,6 +201,14 @@ export class TavernScene extends Phaser.Scene {
     this.createLocalAvatar();
     this.wireKeyboardInput();
     this.wirePointerInput();
+
+    // Demo NPCs — three patrons drifting around the bar.
+    this.npcSwarm = new NpcSwarm(this, {
+      count: 3,
+      bounds: { minX: 200, minY: 200, maxX: bounds.width - 200, maxY: bounds.height - 200 },
+      size: tavernSpritesConfig.avatar.size,
+      speed: 70, // slower in the tavern, like patrons milling
+    });
 
     // Defensive reset — the React side emits a blur event on mount that
     // may arrive before this scene finishes `create()`. Guarantee the
@@ -517,11 +527,12 @@ export class TavernScene extends Phaser.Scene {
     this.lastMoveState = current;
   }
 
-  public override update(_time: number, deltaMs: number): void {
+  public override update(time: number, deltaMs: number): void {
     const dtSec = deltaMs / 1000;
     for (const remote of this.remoteAvatars.values()) {
       remote.tick(dtSec);
     }
+    this.npcSwarm?.update(time, deltaMs);
 
     if (this.localAvatar) {
       // Chat focused → hard-stop the avatar and skip all input processing.

@@ -27,6 +27,7 @@ import {
   type EnterPromptManager,
   type EntryTrigger,
 } from './enter-prompt';
+import { NpcSwarm } from './npc-swarm';
 import type { PixelRect } from './types';
 import { calculateYSortDepth, type YSortable } from './y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
@@ -82,6 +83,7 @@ export abstract class OutdoorSceneBase extends Phaser.Scene {
 
   private readonly ySortables: YSortableGameObject[] = [];
   private localAvatar?: LocalAvatar;
+  private npcSwarm?: NpcSwarm;
 
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasdKeys?: {
@@ -120,6 +122,21 @@ export abstract class OutdoorSceneBase extends Phaser.Scene {
     this.createLocalAvatar();
     this.wireKeyboardInput();
     this.wirePointerInput();
+
+    // Demo NPCs — three folk wandering this outdoor area. All three
+    // outdoor scenes (academy / tavern / coworking outside) inherit
+    // this; bounds + size come from their `cfg.bounds` + `cfg.avatar.size`.
+    this.npcSwarm = new NpcSwarm(this, {
+      count: 3,
+      bounds: {
+        minX: 320,
+        minY: 320,
+        maxX: cfg.bounds.width - 320,
+        maxY: cfg.bounds.height - 320,
+      },
+      size: cfg.avatar.size,
+      speed: 100,
+    });
 
     this.enterPrompt = createEnterPromptManager(this, cfg.entryTriggers);
     this.edgeTriggers = createEdgeTriggerManager(
@@ -211,6 +228,8 @@ export abstract class OutdoorSceneBase extends Phaser.Scene {
   }
 
   public override update(): void {
+    this.npcSwarm?.update();
+
     if (!this.localAvatar) return;
     const cfg = this.sceneConfig;
 

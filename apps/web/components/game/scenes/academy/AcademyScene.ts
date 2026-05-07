@@ -24,6 +24,7 @@ import {
   createProximityPromptManager,
   type ProximityPromptManager,
 } from '../shared/proximity-prompt';
+import { NpcSwarm } from '../shared/npc-swarm';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -61,6 +62,7 @@ type YSortableGameObject = YSortable & { setDepth: (depth: number) => unknown };
 export class AcademyScene extends Phaser.Scene {
   private readonly ySortables: YSortableGameObject[] = [];
   private localAvatar?: LocalAvatar;
+  private npcSwarm?: NpcSwarm;
 
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasdKeys?: {
@@ -97,6 +99,13 @@ export class AcademyScene extends Phaser.Scene {
     this.wirePointerInput();
 
     this.renderLectern();
+
+    // Demo NPCs — three folk wandering the lecture hall.
+    this.npcSwarm = new NpcSwarm(this, {
+      count: 3,
+      bounds: { minX: 200, minY: 200, maxX: bounds.width - 200, maxY: bounds.height - 200 },
+      size: academySpritesConfig.avatar.size,
+    });
 
     // ENTER-gated exit at the bottom-centre archway (Phase 7 item AC10).
     this.enterPrompt = createEnterPromptManager(this, [academyLayersConfig.exitArchway]);
@@ -243,7 +252,9 @@ export class AcademyScene extends Phaser.Scene {
     };
   }
 
-  public override update(_time: number, _deltaMs: number): void {
+  public override update(time: number, deltaMs: number): void {
+    this.npcSwarm?.update(time, deltaMs);
+
     if (!this.localAvatar) return;
 
     this.jumpBinding?.tryJump(this.localAvatar);
