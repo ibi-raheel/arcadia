@@ -2,6 +2,84 @@
 
 Source plan: `phase-14_plan.md`. Entries chronological, newest on top.
 
+## 2026-05-06 — 14.9 · demo NPCs + simulation toggle pill (PR #62)
+
+Pure demo polish so Loom recordings can show a populated world
+instead of an empty one. Six commits in a single PR
+(cc54b81 → b9313ed). Same Phase-14 banner since the work uses the
+existing avatar-renderer + scriptorium primitives + simulation-mode
+infra rather than introducing a new architectural layer.
+
+Bundled write-up in
+[`docs/changelog/2026-05-06_demo-npcs-and-sim-pill.md`](../docs/changelog/2026-05-06_demo-npcs-and-sim-pill.md).
+
+- **`apps/web/components/game/scenes/shared/npc-swarm.ts`** — new
+  `NpcSwarm` class. Reuses `avatar-renderer` + `avatar-animations`
+  so each NPC renders identical to a real remote peer (sprite +
+  nameplate + level badge + walk anims). State machine: walking →
+  arrive (within 6 px) → idle 1–4 s → pick new target → repeat.
+  Per-NPC random level (1–12). 8-persona pool alternating
+  avatar-01 + avatar-02 with placeholder names. Walk speed matches
+  each scene's player `walkSpeed`. **Visual-only** (no physics, no
+  collider awareness — NPCs may pass through chairs/crystals;
+  acceptable for demo). **Client-only** (not Colyseus-synced;
+  different tabs see different NPC arrangements).
+- **`apps/web/components/game/scenes/shared/speech-bubble.ts`** —
+  extracted from `TavernScene.ts`. `createSpeechBubble`,
+  `SPEECH_BUBBLE_DEPTH`, `SPEECH_BUBBLE_DURATION_MS`,
+  `SPEECH_BUBBLE_Y_OFFSET` now shared between the player tavern
+  chat and the NPC ambient mutterings. Visuals also bumped: font
+  14→18 px, max-width 200→290 px, padding 6/10→9/14 px.
+- **30 random ambient lines** (`NPC_MESSAGES` in npc-swarm.ts) —
+  mix of in-character ("the lantern moved on its own") and
+  creator-life ("brb refilling the inkwell"). Each NPC speaks
+  every 5–14 s with 5 s bubble lifetime; first-bubble offsets
+  staggered so the swarm doesn't chatter in sync.
+- **`apps/web/components/scriptorium/simulation.tsx`** — new
+  `<SimulationPill />` export. Fixed bottom-left, always-visible
+  toggle (off=outline, on=lantern fill). Mounted in
+  `app/layout.tsx` as a sibling of `<AmbientMusic />`. Path-gates
+  internally to skip /login, /signup, /onboarding/*. **Hidden
+  inside iframes** (so the in-world `DashboardOverlay`'s iframe
+  doesn't render its own pill) and at z-70 (below the overlay
+  backdrop at z-80).
+- **`apps/web/lib/simulation-mode.ts`** — exported `SIM_CHANGE_EVENT`
+  (was a module-private constant). The NPC swarm listens to this
+  on `window` so flipping the pill (or any other sim toggle)
+  spawns/despawns the entire swarm in real-time.
+- **`apps/web/components/dashboard/DashboardShell.tsx`** —
+  `<SimulationBadge />` mount removed. The inline
+  `<SimulationToggle />` already in the header is the canonical
+  sim control inside the dashboard view; the floating top-right
+  badge was an extra surface. The component itself is preserved
+  for `/kit` + `/preview/*` debug routes.
+- **8 scene `create()` patches** (3 lines each — field, swarm
+  spawn after `registerAvatarAnimations()`, tick in `update()`):
+  - SquareScene → 6 NPCs at speed 325
+  - MarketScene → 5 NPCs at speed 200
+  - AcademyScene → 5 NPCs at speed 200
+  - TavernScene → 5 NPCs at speed 200 + bubble factory imports
+    from shared (replaces local copy)
+  - CoworkingInsideScene → 5 NPCs at speed 270 (locked at 5 per
+    user feedback — focus pill UX competes for nameplate
+    attention)
+  - OutdoorSceneBase → 5 NPCs at speed 325 (applies to
+    AcademyOutsideScene + TavernOutsideScene + CoworkingOutsideScene
+    via inheritance)
+- **ADR 0010 amended** — the visible simulation indicator's
+  position + lifecycle changed (top-right badge → bottom-left pill;
+  always-visible vs only-when-on; iframe-aware). Persistence +
+  URL-override + cookie-mirror behaviour unchanged.
+
+Net result: ~36 NPCs across the world when sim is on; player is
+alone when sim is off (default). Toggle from anywhere — pill,
+inline dashboard toggle, `?sim=1` URL — and the swarm flips
+immediately, no scene reload.
+
+All six commits CI green on every push. No new ADR (this re-uses
+the existing simulation-mode infra; ADR 0010 amendment is
+sufficient).
+
 ## 2026-05-02 — 14.8 · market + audio polish (PR #61)
 
 Three rounds of follow-up on PR #58 → #60, all bundled into a single

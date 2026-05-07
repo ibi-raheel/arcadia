@@ -17,7 +17,6 @@ import {
   Hand,
   Kicker,
   NightRoom,
-  SimulationBadge,
   SimulationToggle,
   TagNav,
 } from '@/components/scriptorium';
@@ -63,7 +62,12 @@ export function DashboardShell({ title, kicker, tagline, actions, children }: Pr
 
   return (
     <NightRoom>
-      <SimulationBadge />
+      {/* `<SimulationBadge />` removed 2026-05-06 — the inline
+          `<SimulationToggle />` in the header below is the canonical
+          control for the dashboard's fixture-vs-real fork. The
+          floating top-right badge was an extra UI surface that
+          duplicated it (and stacked badly when the dashboard opened
+          inside the in-world iframe overlay). */}
       <Desk>
         <header
           style={{

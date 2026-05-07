@@ -11,6 +11,7 @@ import './globals.css';
 import './scriptorium.css';
 
 import { AmbientMusic } from '@/components/audio/AmbientMusic';
+import { SimulationPill } from '@/components/scriptorium/simulation';
 
 // Midnight Scriptorium — six faces. Each binds to its --font-* CSS variable
 // consumed by globals.css + Tailwind utilities (`font-display`, etc). Weights
@@ -84,6 +85,12 @@ export default function RootLayout({
             The component itself paths-gates: silent on /login, /signup,
             /onboarding/*; plays elsewhere. */}
         <AmbientMusic />
+        {/* Simulation toggle pill — fixed bottom-left, always-visible
+            on post-auth routes. Path-gates internally to skip /login,
+            /signup, /onboarding/*. Flipping it spawns / despawns the
+            demo NPC swarm in every Phaser scene, plus drives the
+            existing dashboard fixture-vs-real fork. */}
+        <SimulationPill />
       </body>
     </html>
   );

@@ -1,10 +1,12 @@
 # TavernScene
 
+> *Demo NPCs (PR #62 · 2026-05-06): when simulation mode is on, `NpcSwarm` (`../shared/npc-swarm.ts`) spawns **5 patrons** in the bar at the player's `walkSpeed`. They use the same speech-bubble visuals as the player chat. Sim off (default) = no NPCs.*
+
 Interior room. Image-backed background (1536×1024 pixel art, user-supplied 2026-04-20; prior 1376×768 cyberpunk image retired) with a local avatar, Colyseus-synced remote peers, and a React chat overlay. No tile collision yet — the avatar walks freely within the image's physics-world rectangle. Colliders are a follow-up.
 
 ## Files
 
-- `TavernScene.ts` — scene class. Renders `tavern-interior.png` as a depth-0 Image at origin (0, 0); reuses `LocalAvatar`, `RemoteAvatar`, `avatar-animations`, input resolvers, `move-throttle` from `scenes/world/`. Owns the speech-bubble machinery (see events below).
+- `TavernScene.ts` — scene class. Renders `tavern-interior.png` as a depth-0 Image at origin (0, 0); reuses `LocalAvatar`, `RemoteAvatar`, `avatar-animations`, input resolvers, `move-throttle` from `scenes/world/`. Owns the speech-bubble *lifecycle* (subscribe to chat events, position bubbles per frame); the bubble *visuals* live in the shared `scenes/shared/speech-bubble.ts` factory (extracted 2026-05-06 in PR #62 so the demo NPC swarm can render identical bubbles).
 - `camera.config.ts` — zoom `1.0×` (bumped down from 1.365 on 2026-04-23 to show more of the room); rect-shaped `bounds` matching `TAVERN_INTERIOR_SIZE` (1536×1024).
 - `sprites.config.ts` — avatar `spawnPixel: { 768, 960 }` (2026-04-23: at the archway so the "Press ENTER to leave" prompt is visible on arrival — consistent with the market/square pattern), `size = 135×135` (bumped from 90×90 on 2026-04-22 for readability), feet-body `45×22` at `(22, 62)` in **frame units** — Phaser Arcade scales it to match `sprite.scale` automatically (see ADR 0008), walk speed 200.
 - `layers.config.ts` — depth bands, y-sort config, empty colliders scaffold, and `TAVERN_EXIT_ARCHWAY` — a proximity zone at `(768, 960)` radius `150` now wired via `createEnterPromptManager` (ENTER-gated) rather than auto-fire. `TAVERN_RETURN_EDGE` is kept as an empty export for legacy import-compat.

@@ -1,5 +1,7 @@
 # CoworkingOutsideScene
 
+> *Demo NPCs (PR #62 · 2026-05-06): when simulation mode is on, `NpcSwarm` (`../shared/npc-swarm.ts`) spawns **5 wandering NPCs** around the tent encampment at the player's `walkSpeed`. Wired via the `OutdoorSceneBase` parent. Sim off (default) = no NPCs.*
+
 Single-player outdoor area west of the square. Five tent entrances arranged around a central campfire; each tent is a distinct Colyseus "building" (`tent-1` through `tent-5`). All tents lead to the same interior image but members in different tents are in different `coworking-realm1` rooms (sharded via `filterBy(['building'])`).
 
 ## Files
