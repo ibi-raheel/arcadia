@@ -25,6 +25,7 @@ import { isAvatarId } from '../shared/avatar-palette';
 // Auto-sharding still happens at maxClients=20, just silently now.
 import { spawnColliders } from '../shared/colliders';
 import { createEdgeTriggerManager, type EdgeTriggerManager } from '../shared/edge-triggers';
+import { NpcSwarm } from '../shared/npc-swarm';
 import { createEnterPromptManager, type EnterPromptManager } from '../shared/enter-prompt';
 import { applyFillZoom } from '../shared/fill-zoom';
 import { bindOverlayInputBridge } from '../shared/overlay-input-events';
@@ -75,6 +76,7 @@ type YSortableGameObject = YSortable & { setDepth: (depth: number) => unknown };
 export class SquareScene extends Phaser.Scene {
   private readonly ySortables: YSortableGameObject[] = [];
   private localAvatar?: LocalAvatar;
+  private npcSwarm?: NpcSwarm;
 
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasdKeys?: {
@@ -120,6 +122,17 @@ export class SquareScene extends Phaser.Scene {
     this.createLocalAvatar();
     this.wireKeyboardInput();
     this.wirePointerInput();
+
+    // Demo NPCs — wander the central square. Bounds inset by 320 px
+    // so they don't crowd the edge triggers (300 px threshold).
+    // Speed matches the local avatar's `walkSpeed` so peers and NPCs
+    // move at the same pace on screen.
+    this.npcSwarm = new NpcSwarm(this, {
+      count: 6,
+      bounds: { minX: 320, minY: 320, maxX: bounds.width - 320, maxY: bounds.height - 320 },
+      size: squareSpritesConfig.avatar.size,
+      speed: squareSpritesConfig.avatar.walkSpeed,
+    });
 
     this.edgeTriggers = createEdgeTriggerManager(
       this,
@@ -340,11 +353,12 @@ export class SquareScene extends Phaser.Scene {
     this.lastMoveState = current;
   }
 
-  public override update(_time: number, deltaMs: number): void {
+  public override update(time: number, deltaMs: number): void {
     const dtSec = deltaMs / 1000;
     for (const remote of this.remoteAvatars.values()) {
       remote.tick(dtSec);
     }
+    this.npcSwarm?.update(time, deltaMs);
 
     if (!this.localAvatar) return;
 

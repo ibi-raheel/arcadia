@@ -24,6 +24,7 @@ import {
   createProximityPromptManager,
   type ProximityPromptManager,
 } from '../shared/proximity-prompt';
+import { NpcSwarm } from '../shared/npc-swarm';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -90,6 +91,7 @@ type YSortableGameObject = YSortable & { setDepth: (depth: number) => unknown };
 export class MarketScene extends Phaser.Scene {
   private readonly ySortables: YSortableGameObject[] = [];
   private localAvatar?: LocalAvatar;
+  private npcSwarm?: NpcSwarm;
 
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasdKeys?: {
@@ -129,6 +131,17 @@ export class MarketScene extends Phaser.Scene {
     this.wirePointerInput();
 
     this.renderCrystal();
+
+    // Demo NPCs — populate the market hall with three wandering folk.
+    // Bounds skip a 320 px ring around the central crystal so they
+    // don't loiter on top of the proximity prompt. Speed matches the
+    // local avatar's `walkSpeed`.
+    this.npcSwarm = new NpcSwarm(this, {
+      count: 5,
+      bounds: { minX: 200, minY: 200, maxX: bounds.width - 200, maxY: bounds.height - 200 },
+      size: marketSpritesConfig.avatar.size,
+      speed: marketSpritesConfig.avatar.walkSpeed,
+    });
 
     // Walk off the top edge to return to /world (2026-04-22).
     this.edgeTriggers = createEdgeTriggerManager(
@@ -330,7 +343,9 @@ export class MarketScene extends Phaser.Scene {
     };
   }
 
-  public override update(time: number, _deltaMs: number): void {
+  public override update(time: number, deltaMs: number): void {
+    this.npcSwarm?.update(time, deltaMs);
+
     if (!this.localAvatar) return;
 
     this.jumpBinding?.tryJump(this.localAvatar);

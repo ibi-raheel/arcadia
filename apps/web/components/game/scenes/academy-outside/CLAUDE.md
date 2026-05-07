@@ -1,5 +1,7 @@
 # AcademyOutsideScene
 
+> *Demo NPCs (PR #62 · 2026-05-06): when simulation mode is on, `NpcSwarm` (`../shared/npc-swarm.ts`) spawns **5 wandering NPCs** outside the academy gate at the player's `walkSpeed`. Wired via the `OutdoorSceneBase` parent — same swarm in the other two outdoor scenes. Sim off (default) = no NPCs.*
+
 Single-player outdoor area north of the square. Image-backed. One ENTER-prompt gate trigger at the main entrance → `/academy`. One walk-onto return edge at the bottom → `/world`.
 
 ## Files

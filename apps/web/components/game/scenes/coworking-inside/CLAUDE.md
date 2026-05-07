@@ -1,5 +1,7 @@
 # CoworkingInsideScene
 
+> *Demo NPCs (PR #62 · 2026-05-06): when simulation mode is on, `NpcSwarm` (`../shared/npc-swarm.ts`) spawns **5 coworkers** in the tent at the player's `walkSpeed`. **Locked at 5** (deliberately less crowded than the outdoor + hub scenes since the focus-pill UX competes for nameplate attention). Sim off (default) = no NPCs.*
+
 Multiplayer interior for coworking tents. Image-backed (`coworkinginside-2508x2508.png`). Joined via Colyseus `coworking-realm1` with `filterBy(['building'])` — members who entered the same tent on the outdoor scene share this room; members who entered different tents don't see each other even if they chose the same route.
 
 ## Files

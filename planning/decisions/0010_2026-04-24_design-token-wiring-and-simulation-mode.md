@@ -92,3 +92,15 @@ Whenever sim mode is on, a lantern-yellow pill reading `◈ simulation` sits in 
 
 - Add a lint rule (custom ESLint rule or a CI script) to flag a new color hex literal in `apps/web/**` that isn't already in `tailwind.config.ts` or `globals.css`. Post-Phase-8.
 - If a second design theme is ever wanted (light mode, alternate skin), the three-layer wiring is the scaffold to do it on — flip the `:root` vars, regenerate Tailwind from a different palette object.
+
+## Amendment — 2026-05-06 (PR #62)
+
+The visible simulation indicator described above (`SimulationBadge.tsx`, "fixed top-right pill, lantern fill, click to turn off, only shown when sim is on") has been **superseded for in-world use** by `<SimulationPill />` in the same `simulation.tsx` file. The pill is **always-visible** (off-state outline + on-state lantern fill), pinned **bottom-left** at `z-index: 70`, and mounted as a sibling of `<AmbientMusic />` in `app/layout.tsx`. It path-gates internally to skip pre-auth routes (`/login`, `/signup`, `/onboarding/*`) and **hides itself inside iframes** (so the in-world `DashboardOverlay`'s iframe doesn't render its own pill on top of the dashboard).
+
+Reasoning: PR #62 introduced demo NPCs gated on the same toggle. Without an always-visible control, the only way to flip simulation from inside a Phaser scene was to navigate to the dashboard — which broke the demo flow. The pill exposes the toggle next to the in-world ambient-music mute (at `z-index: 95` bottom-right; see `AmbientMusic.tsx`).
+
+`SimulationBadge` itself is preserved for `/kit` + `/preview/*` debug routes, but **no longer mounted by `DashboardShell`** — the inline `<SimulationToggle />` in the header is the canonical sim control inside the dashboard view (one control per surface).
+
+Persistence + URL-override + cookie-mirror behaviour is unchanged — `useSimulationMode` still reads/writes the same `arcadia.sim` localStorage key and `sim` cookie, and the new `SIM_CHANGE_EVENT` window event (exported from `lib/simulation-mode.ts` so non-React subscribers like the NPC swarm can listen) was extracted from a previously module-private constant.
+
+See `docs/changelog/2026-05-06_demo-npcs-and-sim-pill.md`.

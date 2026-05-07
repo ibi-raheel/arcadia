@@ -1,5 +1,7 @@
 # SquareScene
 
+> *Demo NPCs (PR #62 · 2026-05-06): when simulation mode is on, `NpcSwarm` (`../shared/npc-swarm.ts`) spawns **6 wandering NPCs** here at the player's `walkSpeed`. They idle, walk, and pop random speech bubbles every 5–14 s. Sim off (default) = no NPCs.*
+
 Outdoor town square. Image-backed Phaser scene mounted at `/world` (replaces the Tiled orthogonal square at `app/world-square-v3/` as of 2026-04-22 — the Tiled files are retained on disk but no longer routed).
 
 ## Files

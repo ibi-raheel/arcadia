@@ -23,6 +23,7 @@ import {
   createProximityPromptManager,
   type ProximityPromptManager,
 } from '../shared/proximity-prompt';
+import { NpcSwarm } from '../shared/npc-swarm';
 import { calculateYSortDepth, type YSortable } from '../shared/y-sort';
 import { registerAvatarAnimations } from '../world/avatar-animations';
 import {
@@ -70,6 +71,7 @@ function labelFromBuildingId(id: string | null): string {
 export class CoworkingInsideScene extends Phaser.Scene {
   private readonly ySortables: YSortableGameObject[] = [];
   private localAvatar?: LocalAvatar;
+  private npcSwarm?: NpcSwarm;
 
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasdKeys?: {
@@ -116,6 +118,18 @@ export class CoworkingInsideScene extends Phaser.Scene {
     this.createLocalAvatar();
     this.wireKeyboardInput();
     this.wirePointerInput();
+
+    // Demo NPCs — five coworkers wandering the tent at the local
+    // avatar's walk speed. Locked at 5 (per user 2026-05-06: tent
+    // interiors stay deliberately less crowded than the outdoor +
+    // hub scenes since the focus-pill UX competes for nameplate
+    // attention).
+    this.npcSwarm = new NpcSwarm(this, {
+      count: 5,
+      bounds: { minX: 300, minY: 300, maxX: bounds.width - 300, maxY: bounds.height - 300 },
+      size: coworkingInsideSpritesConfig.avatar.size,
+      speed: coworkingInsideSpritesConfig.avatar.walkSpeed,
+    });
 
     const buildingId = this.registry.get(COWORKING_BUILDING_ID_REGISTRY_KEY) as string | null;
 
@@ -392,11 +406,12 @@ export class CoworkingInsideScene extends Phaser.Scene {
     this.lastMoveState = current;
   }
 
-  public override update(_time: number, deltaMs: number): void {
+  public override update(time: number, deltaMs: number): void {
     const dtSec = deltaMs / 1000;
     for (const remote of this.remoteAvatars.values()) {
       remote.tick(dtSec);
     }
+    this.npcSwarm?.update(time, deltaMs);
 
     if (!this.localAvatar) return;
 
