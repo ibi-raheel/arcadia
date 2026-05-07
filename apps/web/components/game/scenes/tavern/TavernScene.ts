@@ -168,7 +168,7 @@ export class TavernScene extends Phaser.Scene {
     // Demo NPCs — three patrons drifting around the bar at the
     // local avatar's walk speed.
     this.npcSwarm = new NpcSwarm(this, {
-      count: 3,
+      count: 5,
       bounds: { minX: 200, minY: 200, maxX: bounds.width - 200, maxY: bounds.height - 200 },
       size: tavernSpritesConfig.avatar.size,
       speed: tavernSpritesConfig.avatar.walkSpeed,

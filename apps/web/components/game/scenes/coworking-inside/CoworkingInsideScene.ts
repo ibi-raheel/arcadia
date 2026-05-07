@@ -119,10 +119,13 @@ export class CoworkingInsideScene extends Phaser.Scene {
     this.wireKeyboardInput();
     this.wirePointerInput();
 
-    // Demo NPCs — three coworkers wandering the tent at the local
-    // avatar's walk speed.
+    // Demo NPCs — five coworkers wandering the tent at the local
+    // avatar's walk speed. Locked at 5 (per user 2026-05-06: tent
+    // interiors stay deliberately less crowded than the outdoor +
+    // hub scenes since the focus-pill UX competes for nameplate
+    // attention).
     this.npcSwarm = new NpcSwarm(this, {
-      count: 3,
+      count: 5,
       bounds: { minX: 300, minY: 300, maxX: bounds.width - 300, maxY: bounds.height - 300 },
       size: coworkingInsideSpritesConfig.avatar.size,
       speed: coworkingInsideSpritesConfig.avatar.walkSpeed,

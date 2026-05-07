@@ -128,7 +128,7 @@ export class SquareScene extends Phaser.Scene {
     // Speed matches the local avatar's `walkSpeed` so peers and NPCs
     // move at the same pace on screen.
     this.npcSwarm = new NpcSwarm(this, {
-      count: 4,
+      count: 6,
       bounds: { minX: 320, minY: 320, maxX: bounds.width - 320, maxY: bounds.height - 320 },
       size: squareSpritesConfig.avatar.size,
       speed: squareSpritesConfig.avatar.walkSpeed,

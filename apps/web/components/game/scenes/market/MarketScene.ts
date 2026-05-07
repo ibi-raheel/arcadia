@@ -137,7 +137,7 @@ export class MarketScene extends Phaser.Scene {
     // don't loiter on top of the proximity prompt. Speed matches the
     // local avatar's `walkSpeed`.
     this.npcSwarm = new NpcSwarm(this, {
-      count: 3,
+      count: 5,
       bounds: { minX: 200, minY: 200, maxX: bounds.width - 200, maxY: bounds.height - 200 },
       size: marketSpritesConfig.avatar.size,
       speed: marketSpritesConfig.avatar.walkSpeed,

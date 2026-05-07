@@ -23,9 +23,9 @@ export const SPEECH_BUBBLE_DURATION_MS = 5000;
  *  its own scale. */
 export const SPEECH_BUBBLE_DEPTH = 10_000;
 
-const SPEECH_BUBBLE_MAX_WIDTH = 200;
-const SPEECH_BUBBLE_PAD_X = 10;
-const SPEECH_BUBBLE_PAD_Y = 6;
+const SPEECH_BUBBLE_MAX_WIDTH = 290;
+const SPEECH_BUBBLE_PAD_X = 14;
+const SPEECH_BUBBLE_PAD_Y = 9;
 
 /**
  * Build a speech-bubble Container (background rounded-rect + tail +
@@ -39,7 +39,7 @@ export function createSpeechBubble(
 ): Phaser.GameObjects.Container {
   const textObj = addCrispText(scene, 0, 0, text, {
     fontFamily: '"Georgia", "Cambria", "Times New Roman", serif',
-    fontSize: '14px',
+    fontSize: '18px',
     color: '#fef3c7',
     wordWrap: { width: SPEECH_BUBBLE_MAX_WIDTH, useAdvancedWrap: true },
   }).setOrigin(0.5, 0.5);

@@ -128,7 +128,7 @@ export abstract class OutdoorSceneBase extends Phaser.Scene {
     // tavern / coworking outside) inherit this; bounds, size, and
     // speed all come from their `cfg.avatar.*`.
     this.npcSwarm = new NpcSwarm(this, {
-      count: 3,
+      count: 5,
       bounds: {
         minX: 320,
         minY: 320,

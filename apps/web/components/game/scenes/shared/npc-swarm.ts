@@ -100,8 +100,8 @@ const NPC_MESSAGES: ReadonlyArray<string> = [
   'You ever just stand in the rain on purpose?',
 ];
 
-const NPC_SPEECH_MIN_DELAY_MS = 12_000;
-const NPC_SPEECH_MAX_DELAY_MS = 28_000;
+const NPC_SPEECH_MIN_DELAY_MS = 5_000;
+const NPC_SPEECH_MAX_DELAY_MS = 14_000;
 
 export type NpcBounds = {
   readonly minX: number;
