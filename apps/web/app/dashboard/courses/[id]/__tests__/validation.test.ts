@@ -1,16 +1,66 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  COURSE_DESCRIPTION_MAX,
+  COURSE_TITLE_MAX,
   LESSON_CONTENT_MAX,
   LESSON_TITLE_MAX,
   SECTION_TITLE_MAX,
   parseYouTubeId,
+  validateCourseDescription,
+  validateCourseTitle,
   validateLessonContent,
   validateLessonTitle,
   validateLessonType,
   validateReorderIds,
   validateSectionTitle,
 } from '../validation';
+
+describe('validateCourseTitle', () => {
+  it('trims whitespace and accepts', () => {
+    const r = validateCourseTitle('  An Introduction to Inkwork  ');
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value).toBe('An Introduction to Inkwork');
+  });
+
+  it('rejects empty / whitespace-only', () => {
+    expect(validateCourseTitle('').ok).toBe(false);
+    expect(validateCourseTitle('   ').ok).toBe(false);
+  });
+
+  it('accepts exactly at the limit', () => {
+    expect(validateCourseTitle('a'.repeat(COURSE_TITLE_MAX)).ok).toBe(true);
+  });
+
+  it('rejects over the limit', () => {
+    expect(validateCourseTitle('a'.repeat(COURSE_TITLE_MAX + 1)).ok).toBe(false);
+  });
+});
+
+describe('validateCourseDescription', () => {
+  it('trims and accepts non-empty', () => {
+    const r = validateCourseDescription('  five lessons by lamplight  ');
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value).toBe('five lessons by lamplight');
+  });
+
+  it('treats empty / whitespace-only as null (description is optional)', () => {
+    const empty = validateCourseDescription('');
+    expect(empty.ok).toBe(true);
+    if (empty.ok) expect(empty.value).toBe(null);
+    const ws = validateCourseDescription('   \n\t');
+    expect(ws.ok).toBe(true);
+    if (ws.ok) expect(ws.value).toBe(null);
+  });
+
+  it('accepts exactly at the limit', () => {
+    expect(validateCourseDescription('a'.repeat(COURSE_DESCRIPTION_MAX)).ok).toBe(true);
+  });
+
+  it('rejects over the limit', () => {
+    expect(validateCourseDescription('a'.repeat(COURSE_DESCRIPTION_MAX + 1)).ok).toBe(false);
+  });
+});
 
 describe('validateSectionTitle', () => {
   it('trims whitespace and accepts', () => {

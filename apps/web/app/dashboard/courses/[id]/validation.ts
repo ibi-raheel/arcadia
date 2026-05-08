@@ -1,9 +1,38 @@
 // Pure validators for the course-editor server actions. Extracted so
 // Vitest can import without the `@/` alias.
 
+export const COURSE_TITLE_MAX = 140;
+export const COURSE_DESCRIPTION_MAX = 500;
 export const SECTION_TITLE_MAX = 120;
 export const LESSON_TITLE_MAX = 120;
 export const LESSON_CONTENT_MAX = 50_000; // ~10k words of Markdown; plenty for a lesson.
+
+export function validateCourseTitle(
+  raw: string,
+): { ok: true; value: string } | { ok: false; error: string } {
+  const title = raw.trim();
+  if (title.length === 0) return { ok: false, error: 'Course title is required.' };
+  if (title.length > COURSE_TITLE_MAX) {
+    return { ok: false, error: `Course title must be ${COURSE_TITLE_MAX} characters or fewer.` };
+  }
+  return { ok: true, value: title };
+}
+
+/** Course description is optional — empty / whitespace-only input
+ *  is allowed and stored as `null`. */
+export function validateCourseDescription(
+  raw: string,
+): { ok: true; value: string | null } | { ok: false; error: string } {
+  const description = raw.trim();
+  if (description.length === 0) return { ok: true, value: null };
+  if (description.length > COURSE_DESCRIPTION_MAX) {
+    return {
+      ok: false,
+      error: `Course description must be ${COURSE_DESCRIPTION_MAX} characters or fewer.`,
+    };
+  }
+  return { ok: true, value: description };
+}
 
 export function validateSectionTitle(
   raw: string,
