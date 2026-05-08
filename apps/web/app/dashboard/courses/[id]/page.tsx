@@ -5,6 +5,7 @@ import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { Chip, GhostButton, WaxSeal } from '@/components/scriptorium';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
+import { CourseDetailsEditor } from './_components/CourseDetailsEditor';
 import { PublishToggle } from './_components/PublishToggle';
 import { SectionTree, type SectionRow } from './_components/SectionTree';
 import { VideoLessonEditor, type VideoLesson } from './_components/VideoLessonEditor';
@@ -76,9 +77,20 @@ export default async function CourseEditorPage({
 
   return (
     <DashboardShell
+      // Title + tagline are editable now, so we render an inline
+      // `<CourseDetailsEditor />` as the title prop. DashboardShell
+      // wraps `title` in an `<h1>` styled at fontSize:48 — the
+      // editor's input has its own fontSize and renders inside.
+      // (The browser tolerates the resulting h1>div nesting; the
+      // input itself acts as the heading control.)
       kicker={course.published ? 'signed · published' : 'drying · draft'}
-      title={course.title}
-      tagline={course.description ?? undefined}
+      title={
+        <CourseDetailsEditor
+          courseId={course.id}
+          initialTitle={course.title}
+          initialDescription={course.description}
+        />
+      }
       actions={
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {course.published ? <WaxSeal letter="P" /> : <Chip>draft</Chip>}

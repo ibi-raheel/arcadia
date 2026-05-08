@@ -6,6 +6,8 @@ import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 import {
   parseYouTubeId,
+  validateCourseDescription,
+  validateCourseTitle,
   validateLessonContent,
   validateLessonTitle,
   validateLessonType,
@@ -231,6 +233,39 @@ export async function setCoursePublished(courseId: string, published: boolean): 
 
   revalidatePath(`/dashboard/courses/${courseId}`);
   revalidatePath('/dashboard');
+  return { ok: true };
+}
+
+/** Update the course's title and (optional) description. Empty
+ *  description input clears the field to NULL. Members on /market +
+ *  /academy see the new strings on next fetch — `revalidatePath`
+ *  hits the editor + the parent dashboard list + both member
+ *  surfaces so the change propagates without a full reload. */
+export async function updateCourseDetails(
+  courseId: string,
+  rawTitle: string,
+  rawDescription: string,
+): Promise<Result> {
+  const ownerCheck = await assertOwner(courseId);
+  if (!ownerCheck.ok) return ownerCheck;
+
+  const titleResult = validateCourseTitle(rawTitle);
+  if (!titleResult.ok) return titleResult;
+  const descResult = validateCourseDescription(rawDescription);
+  if (!descResult.ok) return descResult;
+
+  const supabase = getSupabaseServerClient();
+  const { error } = await supabase
+    .from('courses')
+    .update({ title: titleResult.value, description: descResult.value })
+    .eq('id', courseId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/dashboard/courses/${courseId}`);
+  revalidatePath('/dashboard');
+  revalidatePath('/dashboard/courses');
+  revalidatePath('/market');
+  revalidatePath(`/academy/${courseId}`);
   return { ok: true };
 }
 
