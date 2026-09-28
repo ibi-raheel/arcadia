@@ -1,10 +1,60 @@
+<div align="center">
+
+<img src=".github/assets/cover.png" alt="Arcadia" width="100%">
+
 # Arcadia
 
-Browser-based 2.5D isometric virtual world platform for content creators and their communities.
+**A 2.5D multiplayer world for creators and their communities, with an AI scribe that turns a PDF into a full course.**
 
-Each community (**Realm**) gives members an avatar, a space to gather (**Tavern**), a course viewer (**Academy**), and a course catalogue (**Market**).
+<p>
+<a href="https://arcadia-web-swart.vercel.app"><img alt="Live" src="https://img.shields.io/badge/Live-open%20%E2%86%97-c8f560?style=for-the-badge&labelColor=0b0c10"></a>
+<a href="https://ibiraheel.com/p/arcadia"><img alt="Case study" src="https://img.shields.io/badge/Case%20study-ibiraheel.com-0b0c10?style=for-the-badge&labelColor=c8f560"></a>
+</p>
 
----
+<p>
+<img alt="Next.js" src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white">
+<img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white">
+<img alt="Phaser" src="https://img.shields.io/badge/Phaser-30363D?style=flat-square">
+<img alt="Colyseus" src="https://img.shields.io/badge/Colyseus-F76B15?style=flat-square">
+<img alt="Supabase" src="https://img.shields.io/badge/Supabase-3FCF8E?style=flat-square&logo=supabase&logoColor=white">
+<img alt="Gemini 2.5 + Imagen 4" src="https://img.shields.io/badge/Gemini%202.5%20%2B%20Imagen%204-8E75B2?style=flat-square&logo=googlegemini&logoColor=white">
+<img alt="TipTap" src="https://img.shields.io/badge/TipTap-30363D?style=flat-square">
+<img alt="Vercel" src="https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white">
+<img alt="Railway" src="https://img.shields.io/badge/Railway-0B0D0E?style=flat-square&logo=railway&logoColor=white">
+<img alt="vitest" src="https://img.shields.io/badge/vitest-646CFF?style=flat-square&logo=vite&logoColor=white">
+</p>
+
+</div>
+
+<br>
+
+> **MVP shipped in six phases, then eight more**  
+> for content creators who want a world, not a Discord, for their community
+
+## What it did
+
+Live multiplayer town square, taverns, coworking tents, an academy with real courses, and the Scribe: an AI course maker that drafts outline, lessons, and images from uploaded material across four approvable stages.
+
+<sub>Outcome: reported by the owner.</sub>
+
+## How it works
+
+<p align="center"><img src=".github/assets/architecture.svg" alt="Architecture" width="100%"></p>
+
+1. Monorepo: Next.js web app on Vercel, Colyseus game server on Railway, shared package for protocol types.
+2. Rooms auto-shard at 20 clients and filter by building, so three taverns with the same art stay socially distinct.
+3. The Scribe streams Gemini output in four stages (outline, lessons, images, seal) and only writes real course rows on seal.
+4. An AI guide NPC shipped in Phase 11 and was retired in Phase 13 for a static welcome: zero recurring cost, ADR recorded.
+5. Every phase has an ADR and a changelog; 298 commits with the decision trail intact.
+
+## Screenshots
+
+<table>
+<tr>
+<td width="50%"><img src=".github/assets/preview-studio.png" alt="Creator studio in the midnight-scriptorium design system"><br><sub>Creator studio in the midnight-scriptorium design system</sub></td>
+<td width="50%"><img src=".github/assets/kit.png" alt="The kit: live design-system spec with every token"><br><sub>The kit: live design-system spec with every token</sub></td>
+</tr>
+</table>
 
 ## Status
 
@@ -101,3 +151,11 @@ npm run format     # Prettier write across code files
 ```
 
 Per-workspace dev commands (e.g. `next dev`, `tsx watch`) live in each `apps/*` and `packages/*` `package.json`.
+
+---
+
+<div align="center">
+
+<sub>Built by <a href="https://github.com/ibi-raheel">Muhammad Ibrahim Raheel</a> · more work at <a href="https://ibiraheel.com">ibiraheel.com</a></sub>
+
+</div>
